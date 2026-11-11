@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f5d3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Wouaf Balades">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Trouvez des balades à faire avec votre chien autour de vous : sentiers balisés, parcs à chiens, forêts, points d'eau.">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Wouaf Balades – balades avec mon chien</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f2ea; --card:#fffdf8; --ink:#1f2a22; --muted:#6b7366; --line:#e5dfd2;
+    --green:#2f5d3a; --green-2:#4c8a5a; --sand:#e9dcc3; --accent:#d9792b; --warn:#b4452f;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,sans-serif}
+  header{
+    padding:calc(env(safe-area-inset-top) + 18px) 18px 14px;
+    background:var(--green);color:#fff;
+  }
+  header h1{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:26px;margin:0 0 2px;letter-spacing:-.3px}
+  header p{margin:0;opacity:.85;font-size:14px}
+  .wrap{max-width:900px;margin:0 auto;padding:0 14px calc(env(safe-area-inset-bottom) + 30px)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:-6px;position:relative;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  button,.btn{
+    font:inherit;font-weight:600;border:0;border-radius:12px;padding:11px 14px;cursor:pointer;
+    background:var(--green);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+  }
+  button.ghost,.btn.ghost{background:#eef3ec;color:var(--green)}
+  button:disabled{opacity:.5}
+  input[type=search]{flex:1;min-width:160px;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .filters{margin-top:12px;display:grid;gap:10px}
+  .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px;overflow-x:auto}
+  .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:8px 10px;border-radius:10px;white-space:nowrap;font-size:14px}
+  .seg button.on{background:#fff;color:var(--green);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px}
+  .check input{width:18px;height:18px;accent-color:var(--green)}
+  #status{margin:14px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
+  #status.err{color:var(--warn)}
+  #map{height:42vh;min-height:260px;border-radius:var(--radius);border:1px solid var(--line);margin-top:6px;z-index:0}
+  .tabs{display:flex;gap:6px;margin:16px 0 8px}
+  .tabs button{background:transparent;color:var(--muted);padding:8px 12px}
+  .tabs button.on{background:var(--sand);color:var(--ink)}
+  .list{display:grid;gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;cursor:pointer;transition:border-color .15s}
+  .card.sel{border-color:var(--green-2);box-shadow:0 0 0 2px rgba(76,138,90,.25)}
+  .card .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .card h3{margin:0;font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:600;line-height:1.25}
+  .kind{font-size:12px;color:var(--muted);margin-top:2px}
+  .score{flex:none;font-weight:700;color:var(--green);background:#eef3ec;border-radius:10px;padding:4px 8px;font-size:13px}
+  .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:14px}
+  .meta b{font-weight:600}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .badge{font-size:12px;padding:3px 8px;border-radius:999px;background:#f1ece1;color:#4a4a3f}
+  .badge.good{background:#e3f0e3;color:#25502f}
+  .badge.warn{background:#fbe6df;color:#8a3220}
+  .actions{display:none;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .card.sel .actions{display:flex}
+  .actions .btn{padding:9px 12px;font-size:14px}
+  .desc{font-size:14px;color:#3f463e;margin-top:8px;display:none}
+  .card.sel .desc{display:block}
+  .empty{color:var(--muted);text-align:center;padding:24px 10px}
+  footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
+  footer a{color:var(--muted)}
+  .leaflet-container{font:inherit}
+  button.big{width:100%;justify-content:center;font-size:17px;padding:16px;border-radius:14px}
+  details summary{cursor:pointer;color:var(--green);font-weight:600;font-size:14px;padding:4px 0;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"⚙️ "}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  button:focus-visible,a:focus-visible,input:focus-visible,.card:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  input[type=search]{font-size:16px} /* évite le zoom auto sur iPhone */
+  .you{width:16px;height:16px;border-radius:50%;background:#2a7de1;border:3px solid #fff;box-shadow:0 0 0 2px rgba(42,125,225,.35)}
+  .pin{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--green);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .pin span{transform:rotate(45deg);font-size:14px}
+  .poi{font-size:15px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap" style="padding-bottom:10px">
+    <h1>🐾 Wouaf Balades</h1>
+    <p>Sentiers balisés, parcs à chiens, forêts et espaces verts autour de vous.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <button id="locate" class="big">📍 Trouver des balades près de moi</button>
+    <form id="searchForm" class="row" style="margin-top:10px" role="search">
+      <label for="q" class="sr">Adresse ou ville</label>
+      <input id="q" type="search" placeholder="Ou tapez une ville, une adresse…" autocomplete="off" enterkeyhint="search">
+      <button class="ghost" type="submit">OK</button>
+    </form>
+    <div class="filters">
+      <div>
+        <div class="flabel" id="durLabel">Combien de temps ?</div>
+        <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
+          <button data-v="any" class="on">Peu importe</button>
+          <button data-v="short">&lt; 30 min</button>
+          <button data-v="mid">30 min – 1 h</button>
+          <button data-v="long">1 h – 2 h</button>
+          <button data-v="xl">2 h +</button>
+        </div>
+      </div>
+      <details>
+        <summary>Plus d'options</summary>
+        <div style="display:grid;gap:12px;margin-top:10px">
+          <div>
+            <div class="flabel" id="radLabel">Distance maximale</div>
+            <div class="seg" id="radiusSeg" role="group" aria-labelledby="radLabel">
+              <button data-v="2000">2 km</button>
+              <button data-v="5000" class="on">5 km</button>
+              <button data-v="10000">10 km</button>
+              <button data-v="20000">20 km</button>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" id="offleash"> Mettre en avant les lieux où il peut courir sans laisse</label>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div id="status">Localisez-vous ou cherchez un lieu pour commencer.</div>
+  <div id="map"></div>
+
+  <div class="tabs">
+    <button class="on" data-tab="results">Suggestions</button>
+    <button data-tab="favs">⭐ Mes balades</button>
+  </div>
+  <div id="list" class="list"></div>
+
+  <footer>
+    Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL), via l'API Overpass et Nominatim.
+    Tracés GPX via <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>.
+    Les durées sont des estimations (≈ 3,5 km/h, rythme « chien qui renifle »). Vérifiez toujours la signalisation sur place :
+    réserves naturelles, période de nidification (15 avril – 30 juin en forêt) et arrêtés municipaux peuvent imposer la laisse ou interdire les chiens.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Config ----------
+  const OVERPASS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+  ];
+  const NOMINATIM = "https://nominatim.openstreetmap.org/search";
+  const SPEED_KMH = 3.5;
+  const DUR = { any:[0,Infinity], short:[0,30], mid:[30,60], long:[60,120], xl:[120,Infinity] };
+
+  const state = {
+    center: null, label: "", radius: 5000, dur: "any", offleash: false,
+    items: [], pois: [], selected: null, tab: "results", raw: null
+  };
+
+  // ---------- Storage (favoris) ----------
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+  let favs = store.get("balades-favs", {});
+  const prefs = store.get("balades-prefs", null);
+  if (prefs){ state.radius = prefs.radius || 5000; state.dur = prefs.dur || "any"; state.offleash = !!prefs.offleash; }
+
+  // ---------- Map ----------
+  const map = L.map("map", { zoomControl:true, attributionControl:true }).setView([46.6, 2.4], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
+    maxZoom: 19, subdomains:"abc",
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+  const layers = { you: L.layerGroup().addTo(map), items: L.layerGroup().addTo(map), routes: L.layerGroup().addTo(map), pois: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), circle: L.layerGroup().addTo(map) };
+
+  // ---------- Helpers ----------
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const R = 6371000;
+  function dist(a, b){
+    const toR = Math.PI/180, dLat=(b.lat-a.lat)*toR, dLon=(b.lon-a.lon)*toR;
+    const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*toR)*Math.cos(b.lat*toR)*Math.sin(dLon/2)**2;
+    return 2*R*Math.asin(Math.sqrt(x));
+  }
+  const fmtKm = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",")} km`;
+  function fmtMin(min){
+    if (!isFinite(min) || min <= 0) return "—";
+    if (min < 60) return `${Math.max(5, Math.round(min/5)*5)} min`;
+    const h = Math.floor(min/60), m = Math.round((min%60)/15)*15;
+    return m === 60 ? `${h+1} h` : (m ? `${h} h ${String(m).padStart(2,"0")}` : `${h} h`);
+  }
+  function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
+  function savePrefs(){ store.set("balades-prefs", { radius: state.radius, dur: state.dur, offleash: state.offleash }); }
+
+  function parseDistanceTag(v){
+    if (!v) return null;
+    const m = String(v).replace(",", ".").match(/([\d.]+)\s*(km|m|mi)?/i);
+    if (!m) return null;
+    const n = parseFloat(m[1]); if (!isFinite(n) || n <= 0) return null;
+    const u = (m[2]||"km").toLowerCase();
+    return u === "m" ? n : u === "mi" ? n*1609 : n*1000;
+  }
+  function bboxOf(b){ return b ? { s:b.minlat, w:b.minlon, n:b.maxlat, e:b.maxlon } : null; }
+  function bboxCenter(b){ return { lat:(b.s+b.n)/2, lon:(b.w+b.e)/2 }; }
+  function bboxSize(b){
+    const w = dist({lat:(b.s+b.n)/2, lon:b.w}, {lat:(b.s+b.n)/2, lon:b.e});
+    const h = dist({lat:b.s, lon:b.w}, {lat:b.n, lon:b.w});
+    return { w, h };
+  }
+  function lineLength(pts){ let s=0; for (let i=1;i<pts.length;i++) s += dist(pts[i-1], pts[i]); return s; }
+
+  // ---------- Overpass ----------
+  async function overpass(q){
+    let lastErr;
+    for (const url of OVERPASS){
+      try{
+        const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 45000);
+        const r = await fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" }, signal: ctrl.signal });
+        clearTimeout(t);
+        if (!r.ok) throw new Error("HTTP "+r.status);
+        return await r.json();
+      }catch(e){ lastErr = e; }
+    }
+    throw lastErr || new Error("Overpass indisponible");
+  }
+
+  function buildQuery(c, r){
+    const A = `(around:${r},${c.lat.toFixed(6)},${c.lon.toFixed(6)})`;
+    // bbox englobant pour découper la géométrie des grands itinéraires
+    const dLat = r/111320, dLon = r/(111320*Math.cos(c.lat*Math.PI/180));
+    const bb = `${(c.lat-dLat).toFixed(5)},${(c.lon-dLon).toFixed(5)},${(c.lat+dLat).toFixed(5)},${(c.lon+dLon).toFixed(5)}`;
+    return `[out:json][timeout:40];
+relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
+.routes out geom(${bb});
+(
+  nwr["leisure"="dog_park"]${A};
+  nwr["leisure"="park"]["name"]${A};
+  nwr["landuse"="forest"]["name"]${A};
+  nwr["natural"="wood"]["name"]${A};
+  nwr["leisure"="nature_reserve"]["name"]${A};
+  nwr["natural"="beach"]["dog"~"^(yes|leashed|unleashed|designated)$"]${A};
+  nwr["leisure"="common"]["name"]${A};
+  nwr["landuse"="meadow"]["name"]["access"!~"^(private|no)$"]${A};
+)->.areas;
+.areas out tags bb;
+(
+  node["amenity"="drinking_water"]${A};
+  node["vending"="excrement_bags"]${A};
+  node["amenity"="dog_toilet"]${A};
+  node["amenity"="watering_place"]${A};
+  nwr["natural"="water"]["name"]${A};
+)->.pois;
+.pois out tags center;`;
+  }
+
+  // ---------- Transformation des données ----------
+  const DOG_OK = /^(yes|designated|unleashed|permissive)$/;
+  function dogInfo(t){
+    const d = (t.dog || "").toLowerCase();
+    if (d === "no") return "no";
+    if (t.access === "private" || t.access === "no") return "no";
+    if (DOG_OK.test(d)) return d === "unleashed" ? "free" : "yes";
+    if (d === "leashed") return "leash";
+    return "unknown";
+  }
+
+  function kindOf(el){
+    const t = el.tags || {};
+    if (el.type === "relation" && t.type === "route") return "route";
+    if (t.leisure === "dog_park") return "dogpark";
+    if (t.natural === "beach") return "beach";
+    if (t.leisure === "nature_reserve") return "reserve";
+    if (t.landuse === "forest" || t.natural === "wood") return "forest";
+    if (t.landuse === "meadow" || t.leisure === "common") return "meadow";
+    return "park";
+  }
+  const KIND = {
+    route:   { label:"Sentier balisé",      icon:"🥾", base:4 },
+    dogpark: { label:"Parc à chiens",       icon:"🐕", base:3 },
+    forest:  { label:"Forêt / bois",        icon:"🌲", base:3.2 },
+    beach:   { label:"Plage ouverte aux chiens", icon:"🏖️", base:3.5 },
+    meadow:  { label:"Prairie / espace ouvert",  icon:"🌾", base:2.5 },
+    reserve: { label:"Espace naturel protégé",   icon:"🦉", base:1.8 },
+    park:    { label:"Parc / jardin",       icon:"🌳", base:1.6 }
+  };
+
+  function transform(data, center){
+    const items = [], pois = [];
+    const seen = new Set();
+    for (const el of data.elements || []){
+      const t = el.tags || {};
+      // POIs
+      if (t.amenity === "drinking_water" || t.vending === "excrement_bags" || t.amenity === "dog_toilet" || t.amenity === "watering_place" || (t.natural === "water" && t.name)){
+        const p = el.type === "node" ? { lat:el.lat, lon:el.lon } : el.center ? { lat:el.center.lat, lon:el.center.lon } : null;
+        if (!p) continue;
+        p.type = t.natural === "water" ? "lake" : (t.vending === "excrement_bags" || t.amenity === "dog_toilet") ? "bags" : "water";
+        p.name = t.name || ""; pois.push(p); continue;
+      }
+      const kind = kindOf(el);
+      const dog = dogInfo(t);
+      if (dog === "no") continue;
+      const key = el.type + el.id; if (seen.has(key)) continue; seen.add(key);
+
+      const it = { id:key, osmType:el.type, osmId:el.id, kind, dog, tags:t, name: t.name || t["name:fr"] || t.ref || null };
+
+      if (kind === "route"){
+        // géométrie découpée : on assemble les segments
+        const segs = [];
+        let clipped = false;
+        for (const m of el.members || []){
+          if (m.type !== "way") continue;
+          if (!m.geometry){ clipped = true; continue; }
+          let cur = [];
+          for (const g of m.geometry){
+            if (!g){ clipped = true; if (cur.length > 1) segs.push(cur); cur = []; continue; }
+            cur.push({ lat:g.lat, lon:g.lon });
+          }
+          if (cur.length > 1) segs.push(cur);
+        }
+        if (!segs.length) continue;
+        it.segs = segs;
+        const geomLen = segs.reduce((s, sg) => s + lineLength(sg), 0);
+        const tagLen = parseDistanceTag(t.distance);
+        it.length = tagLen || geomLen;
+        it.lengthApprox = !tagLen;
+        it.partial = !tagLen && clipped;
+        it.long = (it.length > 25000) || /^(nwn|iwn)$/.test(t.network || "");
+        // point d'accès le plus proche
+        let best = null, bd = Infinity;
+        for (const sg of segs) for (const p of sg){ const d = dist(center, p); if (d < bd){ bd = d; best = p; } }
+        it.access = best; it.dist = bd;
+        it.round = t.roundtrip === "yes" || (segs.length && dist(segs[0][0], segs[segs.length-1][segs[segs.length-1].length-1]) < 300);
+        if (!it.name) it.name = t.ref ? `Sentier ${t.ref}` : "Sentier sans nom";
+      } else {
+        const b = el.type === "node" ? { s:el.lat, n:el.lat, w:el.lon, e:el.lon } : bboxOf(el.bounds);
+        if (!b) continue;
+        it.bbox = b;
+        const c = bboxCenter(b);
+        it.access = c;
+        const sz = bboxSize(b);
+        it.areaSize = sz;
+        // distance approx : bord de la zone si on est dedans/à côté
+        const clamp = { lat: Math.min(Math.max(center.lat, b.s), b.n), lon: Math.min(Math.max(center.lon, b.w), b.e) };
+        it.dist = dist(center, clamp);
+        if (it.dist < 30) it.dist = 0;
+        // boucle estimée : ~ 70 % du périmètre de la boîte englobante, plafonnée
+        const perim = 2*(sz.w + sz.h);
+        it.length = kind === "dogpark" ? null : Math.min(Math.max(perim*0.7, 300), 15000);
+        it.lengthApprox = true;
+        it.long = perim > 20000;
+        if (!it.name) it.name = kind === "dogpark" ? "Parc à chiens" : KIND[kind].label;
+        // petits squares sans intérêt pour un chien : on écarte < 0,6 ha environ
+        if (kind === "park" && sz.w*sz.h < 6000) continue;
+      }
+      items.push(it);
+    }
+
+    // attributs de proximité (eau, sacs, plans d'eau)
+    for (const it of items){
+      const ref = it.kind === "route" ? it.segs.flat().filter((_, i) => i % 6 === 0) : [it.access];
+      const near = (type, rad) => pois.some(p => p.type === type && (it.bbox && inBox(p, it.bbox, 0.002) || ref.some(q => dist(p, q) < rad)));
+      it.hasWater = near("water", 350);
+      it.hasBags = near("bags", 350);
+      it.hasLake = near("lake", 400);
+    }
+    return { items, pois };
+  }
+  function inBox(p, b, pad){ return p.lat >= b.s-pad && p.lat <= b.n+pad && p.lon >= b.w-pad && p.lon <= b.e+pad; }
+
+  function minutesOf(it){ return it.length ? (it.length/1000)/SPEED_KMH*60 : null; }
+
+  function score(it){
+    let s = KIND[it.kind].base;
+    if (it.kind === "route"){
+      const net = it.tags.network || "";
+      if (net === "lwn") s += 0.8;
+      if (it.round) s += 0.6;
+    }
+    if (it.dog === "free") s += 2.5; else if (it.dog === "yes") s += 1.5; else if (it.dog === "leash") s += 0.2;
+    if (state.offleash){
+      if (it.kind === "dogpark" || it.dog === "free") s += 3;
+      else if (it.kind === "forest" || it.kind === "meadow" || it.kind === "beach") s += 0.8;
+      if (it.kind === "park") s -= 0.8;
+    }
+    if (it.hasWater) s += 0.6;
+    if (it.hasBags) s += 0.4;
+    if (it.hasLake) s += 0.5;
+    if (it.tags.description || it.tags.website || it.tags.wikipedia || it.tags.wikidata) s += 0.3;
+    // proximité : pénalité douce
+    s -= Math.min(it.dist/1000, 30) * (state.radius <= 5000 ? 0.45 : 0.18);
+    // adéquation à la durée voulue
+    if (state.dur !== "any"){
+      const [lo, hi] = DUR[state.dur];
+      const min = minutesOf(it);
+      if (it.kind === "dogpark") s += state.dur === "short" ? 1 : -0.5;
+      else if (it.long) s += lo >= 60 ? 1 : 0.2; // on peut toujours faire un tronçon
+      else if (min != null){
+        if (min >= lo*0.8 && min <= hi*1.2) s += 1.5;
+        else s -= Math.min(3, Math.abs(Math.log((min+1)/((lo+Math.min(hi,240))/2+1))) * 1.5);
+      }
+    }
+    return s;
+  }
+
+  // ---------- Rendu ----------
+  function badgesOf(it){
+    const b = [];
+    if (it.dog === "free") b.push(["good","🐕 Liberté autorisée"]);
+    else if (it.dog === "yes") b.push(["good","🐕 Chiens bienvenus"]);
+    else if (it.dog === "leash") b.push(["","🦮 En laisse"]);
+    if (it.kind === "dogpark") b.push(["good","🎾 Espace clos"]);
+    if (it.hasWater) b.push(["good","💧 Point d'eau"]);
+    if (it.hasLake) b.push(["","💦 Plan d'eau proche"]);
+    if (it.hasBags) b.push(["","🛍️ Sacs à crottes"]);
+    if (it.kind === "route" && it.round) b.push(["","🔁 Boucle"]);
+    if (it.long) b.push(["","✂️ Faites-en un tronçon"]);
+    if (it.kind === "reserve") b.push(["warn","⚠️ Règles strictes possibles"]);
+    if (it.kind === "forest" || it.kind === "reserve") b.push(["warn","🐣 Laisse 15/4 – 30/6"]);
+    return b;
+  }
+
+  function descOf(it){
+    const t = it.tags, parts = [];
+    if (t.description) parts.push(esc(t.description));
+    if (it.kind === "route"){
+      if (t.from && t.to) parts.push(`De <b>${esc(t.from)}</b> à <b>${esc(t.to)}</b>.`);
+      if (t.operator) parts.push(`Balisage : ${esc(t.operator)}.`);
+      if (t.osmc_symbol || t["osmc:symbol"]) parts.push(`Suivez le balisage ${esc((t["osmc:symbol"]||t.osmc_symbol).split(":")[0])}.`);
+      parts.push(`Point d'accès le plus proche à ${fmtKm(it.dist)} de vous.`);
+    } else if (it.kind === "dogpark"){
+      parts.push("Espace dédié où votre chien peut se dépenser sans laisse.");
+    }
+    if (t.opening_hours) parts.push(`Horaires : ${esc(t.opening_hours)}.`);
+    if (t.surface) parts.push(`Sol : ${esc(t.surface)}.`);
+    if (t.website) parts.push(`<a href="${esc(t.website)}" target="_blank" rel="noopener">Site web</a>`);
+    return parts.join(" ");
+  }
+
+  function lengthText(it){
+    if (it.kind === "dogpark") return "";
+    if (!it.length) return "";
+    if (it.kind === "route"){
+      const pre = it.partial ? "Tronçon proche ≈ " : it.lengthApprox ? "≈ " : "";
+      return `<span>🚶 <b>${pre}${fmtKm(it.length)}</b> · ${fmtMin(minutesOf(it))}${it.round ? "" : " (aller)"}</span>`;
+    }
+    return `<span>🚶 Tour ≈ <b>${fmtKm(it.length)}</b> · ${fmtMin(minutesOf(it))}</span>`;
+  }
+
+  function dirLinks(it){
+    const p = it.access;
+    const g = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`;
+    const a = `https://maps.apple.com/?daddr=${p.lat},${p.lon}&dirflg=w`;
+    return { g, a };
+  }
+
+  function cardHTML(it, rank){
+    const k = KIND[it.kind];
+    const d = dirLinks(it);
+    const fav = !!favs[it.id];
+    const gpx = it.kind === "route" ? `<a class="btn ghost" href="https://hiking.waymarkedtrails.org/api/v1/details/relation/${it.osmId}/gpx" target="_blank" rel="noopener">⬇️ GPX</a>
+      <a class="btn ghost" href="https://hiking.waymarkedtrails.org/#route?id=${it.osmId}" target="_blank" rel="noopener">🗺️ Tracé complet</a>` : "";
+    return `<div class="card" tabindex="0" data-id="${esc(it.id)}">
+      <div class="top">
+        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${k.label}${it.tags.network ? " · " + ({lwn:"local",rwn:"régional",nwn:"national",iwn:"international"}[it.tags.network]||"") : ""}</div></div>
+        ${rank != null ? `<div class="score">#${rank+1}</div>` : ""}
+      </div>
+      <div class="meta">
+        ${it.dist != null ? `<span>📍 ${it.dist === 0 ? "Vous y êtes" : "à <b>" + fmtKm(it.dist) + "</b>"}</span>` : ""}
+        ${lengthText(it)}
+      </div>
+      <div class="badges">${badgesOf(it).map(([c, t]) => `<span class="badge ${c}">${t}</span>`).join("")}</div>
+      <div class="desc">${descOf(it)}</div>
+      <div class="actions">
+        <a class="btn" href="${d.g}" target="_blank" rel="noopener">🧭 Y aller</a>
+        <a class="btn ghost" href="${d.a}" target="_blank" rel="noopener"> Plans</a>
+        ${gpx}
+        <button class="ghost" data-fav="${esc(it.id)}">${fav ? "★ Retirer" : "☆ Garder"}</button>
+        <a class="btn ghost" href="https://www.openstreetmap.org/${it.osmType}/${it.osmId}" target="_blank" rel="noopener">OSM</a>
+      </div>
+    </div>`;
+  }
+
+  function filtered(){
+    return state.items
+      .map(it => ({ it, s: score(it) }))
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 40)
+      .map(x => x.it);
+  }
+
+  function render(){
+    const list = $("#list");
+    if (state.tab === "favs"){
+      const arr = Object.values(favs);
+      list.innerHTML = arr.length ? arr.map(it => cardHTML(it, null)).join("") : `<div class="empty">Aucune balade gardée pour l'instant.<br>Touchez « ☆ Garder » sur une suggestion.</div>`;
+      bindCards(arr);
+      drawMarkers(arr);
+      return;
+    }
+    if (!state.items.length){
+      list.innerHTML = state.center ? `<div class="empty">Rien trouvé dans ce rayon. Essayez d'élargir la zone.</div>` : "";
+      drawMarkers([]);
+      return;
+    }
+    const arr = filtered();
+    list.innerHTML = arr.map((it, i) => cardHTML(it, i)).join("");
+    bindCards(arr);
+    drawMarkers(arr);
+  }
+
+  function bindCards(arr){
+    const byId = Object.fromEntries(arr.map(it => [it.id, it]));
+    document.querySelectorAll(".card").forEach(el => {
+      el.addEventListener("click", e => {
+        if (e.target.closest("a")) return;
+        const fb = e.target.closest("[data-fav]");
+        if (fb){ e.stopPropagation(); toggleFav(byId[fb.dataset.fav]); return; }
+        select(byId[el.dataset.id], true);
+      });
+      el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(byId[el.dataset.id], true); } });
+    });
+    if (state.selected && byId[state.selected]) highlightCard(state.selected);
+  }
+
+  function toggleFav(it){
+    if (!it) return;
+    if (favs[it.id]) delete favs[it.id];
+    else {
+      // version allégée pour le stockage
+      const { segs, ...rest } = it;
+      favs[it.id] = { ...rest, segs: it.segs ? it.segs.map(s => s.filter((_, i) => i % 3 === 0 || i === s.length-1)) : undefined, dist: null };
+    }
+    store.set("balades-favs", favs);
+    render();
+  }
+
+  function pinIcon(it){
+    return L.divIcon({ className:"", html:`<div class="pin" style="${it.kind==='dogpark'?'background:#d9792b':''}"><span>${KIND[it.kind].icon}</span></div>`, iconSize:[30,30], iconAnchor:[15,30] });
+  }
+
+  function drawMarkers(arr){
+    layers.items.clearLayers(); layers.routes.clearLayers(); layers.sel.clearLayers();
+    for (const it of arr){
+      if (it.segs){
+        for (const sg of it.segs){
+          L.polyline(sg.map(p => [p.lat, p.lon]), { color:"#4c8a5a", weight:3, opacity:.55 }).addTo(layers.routes).on("click", () => select(it, false));
+        }
+      }
+      L.marker([it.access.lat, it.access.lon], { icon: pinIcon(it), title: it.name }).addTo(layers.items).on("click", () => select(it, false));
+    }
+    layers.pois.clearLayers();
+    if (state.tab === "results"){
+      for (const p of state.pois){
+        if (p.type === "lake") continue;
+        L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:`<div class="poi">${p.type === "water" ? "💧" : "🛍️"}</div>`, iconSize:[16,16], iconAnchor:[8,8] }), interactive:false }).addTo(layers.pois);
+      }
+    }
+  }
+
+  function highlightCard(id){
+    document.querySelectorAll(".card").forEach(c => c.classList.toggle("sel", c.dataset.id === id));
+  }
+
+  function select(it, fromList){
+    if (!it) return;
+    state.selected = it.id;
+    highlightCard(it.id);
+    layers.sel.clearLayers();
+    if (it.segs){
+      const all = [];
+      for (const sg of it.segs){
+        const ll = sg.map(p => [p.lat, p.lon]); all.push(...ll);
+        L.polyline(ll, { color:"#d9792b", weight:6, opacity:.9 }).addTo(layers.sel);
+      }
+      if (fromList) map.fitBounds(L.latLngBounds(all).extend(state.center ? [state.center.lat, state.center.lon] : all[0]), { padding:[30,30], maxZoom:16 });
+    } else if (it.bbox && it.bbox.s !== it.bbox.n){
+      const b = [[it.bbox.s, it.bbox.w], [it.bbox.n, it.bbox.e]];
+      L.rectangle(b, { color:"#d9792b", weight:2, fill:true, fillOpacity:.08, dashArray:"6 6" }).addTo(layers.sel);
+      if (fromList) map.fitBounds(b, { padding:[30,30], maxZoom:17 });
+    } else if (fromList){
+      map.setView([it.access.lat, it.access.lon], 16);
+    }
+    L.circleMarker([it.access.lat, it.access.lon], { radius:8, color:"#d9792b", weight:3, fillColor:"#fff", fillOpacity:1 }).addTo(layers.sel);
+    if (!fromList){
+      const el = document.querySelector(`.card[data-id="${CSS.escape(it.id)}"]`);
+      if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
+    } else {
+      window.scrollTo({ top: $("#map").offsetTop - 10, behavior:"smooth" });
+    }
+  }
+
+  // ---------- Recherche ----------
+  let reqId = 0;
+  async function search(center, label, auto){
+    state.center = center; state.label = label ?? state.label;
+    const my = ++reqId;
+    layers.you.clearLayers(); layers.circle.clearLayers();
+    L.marker([center.lat, center.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[16,16], iconAnchor:[8,8] }) }).addTo(layers.you);
+    const circ = L.circle([center.lat, center.lon], { radius: state.radius, color:"#2f5d3a", weight:1, fillOpacity:.04, dashArray:"4 6" }).addTo(layers.circle);
+    map.fitBounds(circ.getBounds(), { padding:[10,10] });
+    setStatus(`<span class="spinner"></span>Je cherche des balades ${state.label ? "autour de " + esc(state.label) : "autour de vous"}…`);
+    $("#list").innerHTML = "";
+    try{
+      const data = await overpass(buildQuery(center, state.radius));
+      if (my !== reqId) return;
+      const { items, pois } = transform(data, center);
+      // peu de résultats : on élargit automatiquement une fois
+      if (items.length < 5 && state.radius < 20000 && !auto){
+        state.radius = state.radius < 5000 ? 5000 : state.radius < 10000 ? 10000 : 20000;
+        document.querySelectorAll("#radiusSeg button").forEach(b => b.classList.toggle("on", +b.dataset.v === state.radius));
+        return search(center, state.label, true);
+      }
+      state.items = items; state.pois = pois; state.selected = null;
+      const nRoutes = items.filter(i => i.kind === "route").length;
+      const nDog = items.filter(i => i.kind === "dogpark").length;
+      setStatus(items.length
+        ? `<b>${items.length}</b> lieux trouvés${state.label ? " autour de " + esc(state.label) : ""} : ${nRoutes} sentier${nRoutes>1?"s":""} balisé${nRoutes>1?"s":""}, ${nDog} parc${nDog>1?"s":""} à chiens, et des espaces verts. Touchez une carte pour le détail.`
+        : `Aucun lieu trouvé dans ce rayon.`);
+      if (state.tab !== "results") switchTab("results"); else render();
+    }catch(e){
+      if (my !== reqId) return;
+      setStatus(`Impossible de joindre OpenStreetMap pour l'instant (${esc(e.message)}). Réessayez dans un instant ou réduisez le rayon.`, true);
+    }
+  }
+
+  function locate(){
+    if (!navigator.geolocation){ setStatus("La géolocalisation n'est pas disponible ici : tapez une adresse.", true); return; }
+    setStatus(`<span class="spinner"></span>Localisation en cours…`);
+    navigator.geolocation.getCurrentPosition(
+      pos => search({ lat: pos.coords.latitude, lon: pos.coords.longitude }, ""),
+      err => setStatus(err.code === 1
+        ? "Accès à la position refusé. Autorisez-le dans les réglages du navigateur, ou tapez une adresse."
+        : "Position introuvable pour le moment. Tapez une adresse ou réessayez.", true),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+    );
+  }
+
+  async function geocode(q){
+    setStatus(`<span class="spinner"></span>Recherche de « ${esc(q)} »…`);
+    try{
+      const r = await fetch(`${NOMINATIM}?format=jsonv2&limit=1&accept-language=fr&q=${encodeURIComponent(q)}`, { headers:{ "Accept":"application/json" } });
+      const j = await r.json();
+      if (!j.length){ setStatus(`Je ne trouve pas « ${esc(q)} ».`, true); return; }
+      const name = (j[0].name || j[0].display_name.split(",")[0]);
+      search({ lat: +j[0].lat, lon: +j[0].lon }, name);
+    }catch(e){ setStatus("Recherche d'adresse indisponible pour le moment.", true); }
+  }
+
+  function switchTab(tab){
+    state.tab = tab;
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+    render();
+  }
+
+  // ---------- UI bindings ----------
+  function seg(id, key, cb){
+    const el = $(id);
+    el.querySelectorAll("button").forEach(b => {
+      b.classList.toggle("on", String(state[key]) === b.dataset.v);
+      b.addEventListener("click", () => {
+        el.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+        state[key] = key === "radius" ? +b.dataset.v : b.dataset.v;
+        savePrefs(); cb();
+      });
+    });
+  }
+  seg("#radiusSeg", "radius", () => { if (state.center) search(state.center, state.label); });
+  seg("#durSeg", "dur", () => render());
+  $("#offleash").checked = state.offleash;
+  $("#offleash").addEventListener("change", e => { state.offleash = e.target.checked; savePrefs(); render(); });
+  $("#locate").addEventListener("click", locate);
+  $("#searchForm").addEventListener("submit", e => { e.preventDefault(); const q = $("#q").value.trim(); if (q) geocode(q); });
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+
+  // Lancement auto si la permission est déjà accordée
+  if (navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
+  }
+  render();
+
+  // export pour tests
+  window.__balades = { transform, score, state, buildQuery, fmtMin, fmtKm };
+})();
+</script>
+</body>
+</html>
