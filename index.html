@@ -389,7 +389,7 @@ out tags center;`;
     beach:   { label:"Plage ouverte aux chiens", icon:"🏖️", base:3.5 },
     meadow:  { label:"Prairie / espace ouvert",  icon:"🌾", base:2.5 },
     reserve: { label:"Espace naturel protégé",   icon:"🦉", base:1.8 },
-    park:    { label:"Parc / jardin",       icon:"🌳", base:1.6 }
+    park:    { label:"Parc / jardin",       icon:"🌳", base:2.2 }
   };
 
   function transform(data, center){
@@ -521,7 +521,7 @@ out tags center;`;
         const diff = Math.abs(plan.min - target) / target;
         s += 1.6 - Math.min(4, diff*3.5);
       }
-      if (plan.mode === "section") s -= 1.4;   // un vrai circuit vaut mieux qu'un bout de grand sentier
+      if (plan.mode === "section") s -= 3;   // un vrai circuit vaut mieux qu'un bout de grand sentier
       if (plan.mode === "free") s -= 0.3;
     } else if (it.kind === "route" && it.length > 25000) s -= 1.5;
     return s;
@@ -791,7 +791,7 @@ out tags center;`;
     const vb = viewBox(0.15);
     state.items = [...routeItems, ...areaItems].filter(it => it.kind === "route"
       ? it.segs.some(sg => sg.some(p => inBox(p, vb, 0)))
-      : inBox(it.access, vb, 0));
+      : it.bbox ? (it.bbox.s <= vb.n && it.bbox.n >= vb.s && it.bbox.w <= vb.e && it.bbox.e >= vb.w) : inBox(it.access, vb, 0));
     state.pois = pois;
     render();
     if (state.selected){
