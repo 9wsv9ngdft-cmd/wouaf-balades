@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wouaf Balades">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Une balade avec votre chien qui part de là où vous êtes et y revient : 30 min, 45 min ou 1 h.">
+<meta name="description" content="Des balades avec votre chien qui partent de là où vous êtes et y reviennent : 30 min, 45 min, 1 h, 1 h 30.">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -32,27 +32,51 @@
   button.ghost{background:#eef3ec;color:var(--green)}
   button.big{width:100%;font-size:17px;padding:16px;border-radius:14px}
   button:disabled{opacity:.55}
-  button:focus-visible,.prop:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  button:focus-visible,.prop:focus-visible,.entry:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
   .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px}
-  .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:10px 6px;border-radius:10px;font-size:15px}
+  .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:10px 4px;border-radius:10px;font-size:15px}
   .seg button.on{background:#fff;color:var(--green);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-  #status{margin:14px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chips button{flex:none;font-size:14px;font-weight:500;padding:8px 12px;border-radius:999px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .chips button.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .tabs{display:flex;gap:6px;margin:14px 0 4px}
+  .tabs button{background:transparent;color:var(--muted);padding:8px 12px}
+  .tabs button.on{background:var(--sand);color:var(--ink)}
+  #meteo{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#eaf1f7;color:#21405e;font-size:14px;display:none}
+  #meteo.rain{background:#e4ebf6;color:#1d3a6b}
+  #meteo.hot{background:#fbebdc;color:#7a3d10}
+  #status{margin:12px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
   #status.err{color:var(--warn)}
-  .linkish{background:none;color:var(--green);padding:0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
-  #map{height:46vh;min-height:280px;border-radius:16px;border:1px solid var(--line);z-index:0}
+  #map{height:44vh;min-height:270px;border-radius:16px;border:1px solid var(--line);z-index:0}
   #map.picking{outline:3px dashed var(--accent);outline-offset:2px}
-  .props{display:grid;gap:10px;margin-top:14px}
+  .toolbar{display:flex;gap:8px;margin-top:12px}
+  .toolbar button{flex:1}
+  .props{display:grid;gap:10px;margin-top:12px}
   .prop{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
   .prop.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,121,43,.25)}
   .prop .ico{width:42px;height:42px;border-radius:12px;background:#eef3ec;display:flex;align-items:center;justify-content:center;font-size:22px}
   .prop h3{margin:0;font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:600;line-height:1.25}
   .prop .sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:#f1ece1;color:#4a4a3f;margin-right:4px;vertical-align:1px}
   .prop .time{font-weight:700;color:var(--green);font-size:16px;text-align:right;white-space:nowrap}
   .prop .time small{display:block;font-weight:500;color:var(--muted);font-size:12px}
   .go{grid-column:1/-1;display:none}
   .prop.sel .go{display:flex}
   .empty{color:var(--muted);text-align:center;padding:18px 10px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+  .stat b{display:block;font-family:Fraunces,Georgia,serif;font-size:22px;color:var(--green)}
+  .stat span{font-size:12px;color:var(--muted)}
+  .entry{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 13px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;cursor:pointer}
+  .entry.sel{border-color:var(--accent)}
+  .entry h4{margin:0;font-size:15px;font-weight:600}
+  .entry .when{font-size:12px;color:var(--muted)}
+  .entry .dur{font-weight:700;color:var(--green);text-align:right}
+  .entry .acts{grid-column:1/-1;display:none;gap:8px;margin-top:6px}
+  .entry.sel .acts{display:flex}
+  .entry .acts button{padding:8px 12px;font-size:14px}
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes sp{to{transform:rotate(360deg)}}
   .you{width:18px;height:18px;border-radius:50%;background:#2a7de1;border:3px solid #fff;box-shadow:0 0 0 3px rgba(42,125,225,.3)}
@@ -60,10 +84,10 @@
   .wp{background:#fff;border:2px solid var(--accent);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
   #walkbar{position:fixed;left:0;right:0;bottom:0;background:var(--green);color:#fff;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);display:none;z-index:1000;box-shadow:0 -6px 20px -8px rgba(0,0,0,.35)}
   #walkbar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
-  #walkbar .stats{flex:1;font-size:14px;line-height:1.35}
-  #walkbar .stats b{font-size:20px;font-family:Fraunces,Georgia,serif}
+  #walkbar .wstats{flex:1;font-size:14px;line-height:1.35}
+  #walkbar .wstats b{font-size:20px;font-family:Fraunces,Georgia,serif}
   #walkbar button{background:#fff;color:var(--green)}
-  body.walking .panel,body.walking .props,body.walking #status{display:none}
+  body.walking .panel,body.walking .tabs,body.walking #views,body.walking #status,body.walking #meteo{display:none !important}
   body.walking #walkbar{display:block}
   body.walking #map{height:calc(100vh - 210px)}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
@@ -75,7 +99,7 @@
 <header>
   <div class="wrap">
     <h1>🐾 Wouaf Balades</h1>
-    <p>Une balade qui part de là où vous êtes, et y revient.</p>
+    <p>Des balades qui partent de là où vous êtes, et y reviennent.</p>
   </div>
 </header>
 
@@ -87,23 +111,48 @@
       <button data-v="30">30 min</button>
       <button data-v="45">45 min</button>
       <button data-v="60">1 h</button>
+      <button data-v="90">1 h 30</button>
+    </div>
+    <div class="flabel" id="catLabel">Envie de…</div>
+    <div class="chips" id="filters" role="group" aria-labelledby="catLabel">
+      <button data-c="all" class="on">Tout</button>
+      <button data-c="nature">🌳 Nature</button>
+      <button data-c="water">💦 Bord de l'eau</button>
+      <button data-c="heritage">🏛️ Patrimoine</button>
+      <button data-c="dog">🐕 Parc à chiens</button>
+      <button data-c="discover">🏘️ Découverte</button>
     </div>
   </div>
 
-  <div id="status" aria-live="polite">Touchez « Me localiser » pour trouver une balade autour de vous.</div>
+  <div id="meteo" aria-live="polite"></div>
+  <div id="status" aria-live="polite">Touchez « Me localiser » pour trouver des balades autour de vous.</div>
   <div id="map"></div>
-  <div id="props" class="props"></div>
+
+  <div class="tabs" role="tablist">
+    <button class="on" data-tab="walks" role="tab">🐾 Balades</button>
+    <button data-tab="log" role="tab">📒 Mon carnet</button>
+  </div>
+  <div id="views">
+    <div id="v-walks">
+      <div class="toolbar" id="toolbar" style="display:none">
+        <button class="ghost" id="surprise">🎲 Surprends-moi</button>
+        <button class="ghost" id="more">🔄 Autres idées</button>
+      </div>
+      <div id="props" class="props"></div>
+    </div>
+    <div id="v-log" style="display:none"></div>
+  </div>
 
   <footer>
     Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL).
-    Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS / OSRM</a> · Parcs : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>.
+    Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS / OSRM</a> · Lieux : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a> · Météo : <a href="https://open-meteo.com">Open-Meteo</a> (Météo-France).
     Durées estimées à 3,5 km/h, rythme « chien qui renifle ». Vérifiez la signalisation sur place (laisse obligatoire, accès interdits aux chiens).
   </footer>
 </main>
 
 <div id="walkbar" role="region" aria-label="Balade en cours">
   <div class="in">
-    <div class="stats" id="walkstats"><b>0 min</b><br>C'est parti !</div>
+    <div class="wstats" id="walkstats"><b>0 min</b><br>C'est parti !</div>
     <button id="stop">Terminer</button>
   </div>
 </div>
@@ -120,16 +169,17 @@
   const OSRM = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
   const PHOTON = "https://photon.komoot.io/reverse";
   const WMT = "https://hiking.waymarkedtrails.org/api/v1";
+  const METEO = "https://api.open-meteo.com/v1/forecast";
 
   const $ = s => document.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const store = {
     get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
-    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
   };
 
-  const state = { start:null, dur: store.get("wouaf-dur", 45), props:[], sel:null, walking:false, picking:false };
-  if (![30, 45, 60].includes(state.dur)) state.dur = 45;
+  const state = { start:null, dur: store.get("wouaf-dur", 45), cat:"all", results:[], sel:null, walk:null, picking:false, tab:"walks", cands:null, round:0, exclude:new Set(), detour:null };
+  if (![30, 45, 60, 90].includes(state.dur)) state.dur = 45;
 
   // ---------- Géométrie ----------
   const R = 6371000, toR = Math.PI/180;
@@ -153,10 +203,11 @@
   const fmtKm = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(1).replace(".", ",")} km`;
   function fmtMin(min){
     min = Math.round(min);
-    if (min < 60) return `${Math.max(1, min)} min`;
+    if (min < 60) return `${Math.max(0, min)} min`;
     const h = Math.floor(min/60), m = min % 60;
     return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
   }
+  const fmtHour = d => d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
   function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
 
   async function getJSON(url, ms){
@@ -164,6 +215,7 @@
     try{ const r = await fetch(url, { signal:c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
     finally{ clearTimeout(t); }
   }
+  const within = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r([]), ms))]).catch(() => []);
 
   // ---------- Carte ----------
   const map = L.map("map", { zoomControl:true }).setView([48.8566, 2.3522], 12);
@@ -179,43 +231,71 @@
     youMarker = L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[18,18], iconAnchor:[9,9] }), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(layers.me);
   }
 
-  // ---------- Points d'intérêt autour de soi ----------
+  // ---------- Types de lieux ----------
+  const CATS = {
+    nature:   { icon:"🌳", label:"Nature" },
+    water:    { icon:"💦", label:"Bord de l'eau" },
+    heritage: { icon:"🏛️", label:"Patrimoine" },
+    dog:      { icon:"🐕", label:"Parc à chiens" },
+    discover: { icon:"🏘️", label:"Découverte" }
+  };
   const KINDS = {
-    park:   { icon:"🌳", label:"parc" },
-    forest: { icon:"🌲", label:"bois" },
-    dog:    { icon:"🐕", label:"parc à chiens" },
-    nature: { icon:"🦉", label:"espace naturel" },
-    trail:  { icon:"🥾", label:"sentier balisé" }
+    park:     { cat:"nature",   icon:"🌳", art:"un parc", q:1 },
+    forest:   { cat:"nature",   icon:"🌲", art:"un bois", q:2 },
+    nature:   { cat:"nature",   icon:"🦉", art:"un espace naturel", q:2 },
+    trail:    { cat:"nature",   icon:"🥾", art:"un sentier balisé", q:1.5 },
+    water:    { cat:"water",    icon:"💦", art:"un plan d'eau", q:2 },
+    river:    { cat:"water",    icon:"🌊", art:"la rivière", q:2.5 },
+    castle:   { cat:"heritage", icon:"🏰", art:"un château", q:2.5 },
+    church:   { cat:"heritage", icon:"⛪", art:"une église", q:1.2 },
+    view:     { cat:"heritage", icon:"👀", art:"un point de vue", q:2.5 },
+    sight:    { cat:"heritage", icon:"🏛️", art:"un lieu à voir", q:1.8 },
+    dog:      { cat:"dog",      icon:"🐕", art:"un parc à chiens", q:3 },
+    place:    { cat:"discover", icon:"🏘️", art:"un quartier", q:1 },
+    walk:     { cat:"discover", icon:"🏘️", art:"", q:0 }
   };
 
-  async function photonPlaces(start, reach){
-    const tags = ["leisure:park", "landuse:forest", "natural:wood", "leisure:dog_park", "leisure:nature_reserve"].map(t => "&osm_tag=" + t).join("");
-    const url = `${PHOTON}?lat=${start.lat}&lon=${start.lon}&radius=${(reach*1.3/1000).toFixed(2)}&limit=50${tags}`;
+  function kindOf(key, val){
+    if (val === "dog_park") return "dog";
+    if (val === "forest" || val === "wood") return "forest";
+    if (val === "nature_reserve") return "nature";
+    if (key === "leisure" && val === "park") return "park";
+    if (key === "natural" && val === "water") return "water";
+    if (key === "waterway" || val === "river" || val === "canal" || val === "marina") return "river";
+    if (val === "castle" || val === "ruins" || val === "fort") return "castle";
+    if (val === "place_of_worship") return "church";
+    if (val === "viewpoint") return "view";
+    if (key === "historic" || val === "attraction" || val === "monument") return "sight";
+    if (key === "place") return "place";
+    return null;
+  }
+
+  // ---------- Recherche des lieux autour de soi (Photon) ----------
+  async function photon(start, radiusM, tags, limit){
+    const url = `${PHOTON}?lat=${start.lat.toFixed(5)}&lon=${start.lon.toFixed(5)}&radius=${(radiusM/1000).toFixed(2)}&limit=${limit || 40}` + tags.map(t => "&osm_tag=" + t).join("");
     const j = await getJSON(url, 9000);
     const out = [];
     for (const f of j.features || []){
       const p = f.properties || {};
       if (!p.name) continue;
-      const v = p.osm_value;
-      const kind = v === "dog_park" ? "dog" : (v === "forest" || v === "wood") ? "forest" : v === "nature_reserve" ? "nature" : "park";
+      const kind = kindOf(p.osm_key, p.osm_value);
+      if (!kind) continue;
       const c = { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] };
       let pt = c, area = 0, inside = false;
-      if (p.extent){ // [ouest, nord, est, sud]
+      if (p.extent && kind !== "place"){ // [ouest, nord, est, sud]
         const [w, n, e, s] = p.extent;
         area = dist({lat:n, lon:w}, {lat:n, lon:e}) * dist({lat:n, lon:w}, {lat:s, lon:w});
         inside = start.lat <= n && start.lat >= s && start.lon >= w && start.lon <= e;
         if (inside){
-          // on est dedans : on vise un point vers le cœur du parc
           const dc = dist(start, c);
-          pt = dc > 60 ? dest(start, bearing(start, c), Math.min(dc, reach*0.6)) : dest(start, 0, reach*0.5);
+          pt = dc > 60 ? dest(start, bearing(start, c), Math.min(dc, radiusM*0.45)) : dest(start, 0, radiusM*0.35);
         } else {
-          // l'entrée la plus proche ≈ bord de l'emprise, un peu vers l'intérieur
           const edge = { lat: Math.min(Math.max(start.lat, s), n), lon: Math.min(Math.max(start.lon, w), e) };
           pt = { lat: edge.lat + (c.lat - edge.lat)*0.15, lon: edge.lon + (c.lon - edge.lon)*0.15 };
         }
       }
-      if (kind !== "dog" && area < 3000 && (area || kind === "forest")) continue;   // tout petit square, arbre isolé
-      out.push({ name: p.name, kind, pt, area, inside, d: dist(start, pt) });
+      if ((kind === "park" || kind === "forest") && area < 3000) continue;   // tout petit square, arbre isolé
+      out.push({ name: p.name, kind, cat: KINDS[kind].cat, pt, area, inside, d: dist(start, pt) });
     }
     return out;
   }
@@ -228,7 +308,7 @@
     for (const k of ["main", "appendices", "ways", "forward", "backward", "routes"]) if (Array.isArray(node[k])) node[k].forEach(n => wmtLines(n, out));
     return out;
   }
-  async function trailPlaces(start, reach){
+  async function trails(start, reach){
     const dLat = reach/111320, dLon = reach/(111320*Math.cos(start.lat*toR));
     const a = toMerc(start.lon - dLon, start.lat - dLat), z = toMerc(start.lon + dLon, start.lat + dLat);
     const list = await getJSON(`${WMT}/list/by_area?bbox=${a[0]},${a[1]},${z[0]},${z[1]}&limit=60`, 8000);
@@ -238,19 +318,107 @@
     await Promise.all(keep.map(async r => {
       try{
         const d = await getJSON(`${WMT}/details/relation/${r.id}`, 8000);
-        // point du sentier à environ la moitié de la portée (ni trop près, ni trop loin)
+        const name = d.name || r.name || "un sentier balisé";
+        // un point par sentier, à environ 60 % de la portée
         let best = null, score = Infinity;
         for (const line of wmtLines(d.route, [])) for (const p of line){
-          const dd = dist(start, p); const s = Math.abs(dd - reach*0.7);
+          const dd = dist(start, p); const s = Math.abs(dd - reach*0.6);
           if (dd <= reach*1.1 && s < score){ score = s; best = { p, dd }; }
         }
-        if (best) out.push({ name: d.name || r.name || ("sentier " + (d.ref || "")), kind:"trail", pt: best.p, area: 0, d: best.dd });
+        if (best) out.push({ name, kind:"trail", cat:"nature", pt: best.p, area: 0, d: best.dd });
       }catch(e){}
     }));
     return out;
   }
 
-  // ---------- Calcul des balades ----------
+  async function findPlaces(start, reach){
+    const R1 = reach*1.3;
+    const [nat, wat, her, dog, plc, trl] = await Promise.all([
+      within(photon(start, R1, ["leisure:park", "landuse:forest", "natural:wood", "leisure:nature_reserve"], 50), 9000),
+      within(photon(start, R1*1.2, ["natural:water", "waterway:river", "waterway:canal", "water:river", "water:canal", "leisure:marina"], 30), 9000),
+      within(photon(start, R1, ["historic:castle", "historic:ruins", "historic:fort", "historic:monument", "amenity:place_of_worship", "tourism:viewpoint", "tourism:attraction"], 40), 9000),
+      within(photon(start, R1*1.3, ["leisure:dog_park"], 15), 9000),
+      within(photon(start, R1*1.6, ["place:suburb", "place:town", "place:city", "place:village", "place:quarter", "place:neighbourhood", "place:hamlet"], 30), 9000),
+      within(trails(start, reach), 6000)
+    ]);
+    // un lieu par nom (le même parc revient parfois deux fois)
+    const seen = new Set(), all = [];
+    for (const c of [...dog, ...nat, ...wat, ...her, ...trl, ...plc]){
+      const k = c.kind + ":" + c.name.toLowerCase();
+      if (seen.has(k)) continue; seen.add(k); all.push(c);
+    }
+    return all;
+  }
+
+  // ---------- Idées de balades ----------
+  function quality(c){
+    let q = KINDS[c.kind].q;
+    if (c.area > 20000) q += 0.6; if (c.area > 150000) q += 0.8;
+    if (c.inside) q += 0.4;
+    return q;
+  }
+
+  function nearestPlaceName(cands, p, maxM){
+    let best = null, bd = maxM;
+    for (const c of cands) if (c.kind === "place"){ const d = dist(c.pt, p); if (d < bd){ bd = d; best = c.name; } }
+    return best;
+  }
+  const DIRS = ["le nord", "le nord-est", "l'est", "le sud-est", "le sud", "le sud-ouest", "l'ouest", "le nord-ouest"];
+  const dirName = b => DIRS[Math.round(b/45) % 8];
+
+  function ideasFor(start, cands, D, detour, round){
+    const list = [];
+    const ideal = D / (2*detour);
+    const pool = cands.filter(c => c.kind !== "place" && c.d >= 80);
+    // allers-retours
+    for (const c of pool){
+      const fit = Math.abs(c.d - ideal) / ideal;
+      if (fit > 0.55) continue;
+      list.push({ type:"ar", cat:c.cat, via:[c], rank: quality(c) - fit*4 + (c.inside ? 0.6 : 0) });
+    }
+    // boucles par deux lieux
+    for (let i = 0; i < pool.length; i++) for (let j = i+1; j < pool.length; j++){
+      const a = pool[i], b = pool[j];
+      if (angDiff(bearing(start, a.pt), bearing(start, b.pt)) < 35) continue;
+      const est = detour * (a.d + dist(a.pt, b.pt) + b.d);
+      const fit = Math.abs(est - D) / D;
+      if (fit > 0.4) continue;
+      const via = a.d <= b.d ? [a, b] : [b, a];
+      const cat = a.cat === b.cat ? a.cat : (quality(a) >= quality(b) ? a.cat : b.cat);
+      list.push({ type:"loop", cat, via, rank: (quality(a) + quality(b))*0.7 - fit*4 + 0.5 + (a.cat !== b.cat ? 0.3 : 0) });
+    }
+    // boucles « découverte » dans 8 directions, nommées d'après le quartier ou la ville vers lesquels elles vont
+    const s = D / (3*detour);
+    for (let k = 0; k < 8; k++){
+      const brg = (k*45 + round*22.5) % 360;
+      const p1 = dest(start, brg - 30, s), p2 = dest(start, brg + 30, s);
+      const far = dest(start, brg, s*0.9);
+      const town = nearestPlaceName(cands, far, s*0.9);
+      list.push({ type:"discover", cat:"discover", via:[{ name:"", kind:"walk", pt:p1 }, { name:"", kind:"walk", pt:p2 }],
+        town, dir: dirName(brg), key:"dir" + brg + ":" + (town || ""), rank: (town ? 1.2 : 0.6) - k*0.01 });
+    }
+    return list;
+  }
+
+  const keyOf = p => p.key || (p.type + ":" + p.via.map(v => v.name).join("|"));
+
+  function titleOf(p){
+    if (p._title) return p._title;
+    if (p.type === "discover") return p.town ? `Boucle vers ${p.town}` : `Boucle vers ${p.dir}`;
+    if (p.type === "ar") return `Aller-retour : ${p.via[0].name}`;
+    return `Boucle par ${p.via[0].name} et ${p.via[1].name}`;
+  }
+  function subOf(p){
+    if (p.type === "discover") return p.town ? `Un tour dans les rues, en direction de ${p.town}` : `Un tour dans les rues, vers ${p.dir}`;
+    const txt = p.via.map(v => KINDS[v.kind].art).join(" puis ");
+    return txt.charAt(0).toUpperCase() + txt.slice(1) + (p.type === "ar" ? " · aller puis retour" : " · retour au départ");
+  }
+  function iconOf(p){
+    if (p.type === "discover") return "🏘️";
+    const best = p.via.slice().sort((a, b) => quality(b) - quality(a))[0];
+    return best ? KINDS[best.kind].icon : "🐾";
+  }
+
   async function route(points){
     const coords = points.map(p => `${p.lon.toFixed(6)},${p.lat.toFixed(6)}`).join(";");
     const j = await getJSON(`${OSRM}/${coords}?overview=full&geometries=geojson&continue_straight=false`, 12000);
@@ -259,203 +427,197 @@
     return { line: r.geometry.coordinates.map(([lon, lat]) => ({ lat, lon })), m: r.distance };
   }
 
-  function quality(c){
-    let q = 0;
-    if (c.kind === "forest" || c.kind === "nature") q += 2;
-    if (c.kind === "dog") q += 2.5;
-    if (c.kind === "trail") q += 1.5;
-    if (c.area > 20000) q += 1; if (c.area > 150000) q += 1;
-    if (c.inside) q += 0.5;
-    return q;
-  }
-
-  // Doublons de noms (même parc renvoyé deux fois)
-  function uniq(cands){
-    const seen = new Set(); const out = [];
-    for (const c of cands){ const k = c.name.toLowerCase(); if (seen.has(k)) continue; seen.add(k); out.push(c); }
-    return out;
-  }
-
-  function plans(start, cands, D, DETOUR){
-    const list = [];
-    // Allers-retours : distance à vol d'oiseau idéale ≈ D / (2 × détour)
-    const ideal = D / (2*DETOUR);
-    for (const c of cands){
-      if (c.d < 80) continue;
-      const fit = Math.abs(c.d - ideal) / ideal;
-      if (fit > 0.6) continue;
-      list.push({ type:"ar", via:[c], est: 2*DETOUR*c.d, rank: quality(c) - fit*4 + (c.inside ? 0.8 : 0) });
+  // Deux balades qui suivent presque le même chemin : on n'en garde qu'une
+  function overlaps(line, others){
+    const step = Math.max(1, Math.floor(line.length / 24));
+    const sample = line.filter((_, i) => i % step === 0);
+    for (const o of others){
+      const pts = o.line.filter((_, i) => i % 2 === 0);
+      const hit = sample.filter(p => pts.some(q => Math.abs(q.lat - p.lat) < 0.0005 && Math.abs(q.lon - p.lon) < 0.0007 && dist(p, q) < 35)).length;
+      if (hit / sample.length > 0.6) return true;
     }
-    // Boucles par deux lieux
-    for (let i = 0; i < cands.length; i++) for (let j = i+1; j < cands.length; j++){
-      const a = cands[i], b = cands[j];
-      if (a.d < 80 || b.d < 80) continue;
-      if (angDiff(bearing(start, a.pt), bearing(start, b.pt)) < 35) continue;
-      const est = DETOUR * (a.d + dist(a.pt, b.pt) + b.d);
-      const fit = Math.abs(est - D) / D;
-      if (fit > 0.45) continue;
-      // ordre : on visite d'abord le plus proche
-      const via = a.d <= b.d ? [a, b] : [b, a];
-      list.push({ type:"loop", via, est, rank: (quality(a) + quality(b))*0.75 - fit*4 + 0.6 });
-    }
-    return list.sort((x, y) => y.rank - x.rank);
+    return false;
   }
 
-  function neighbourhoodLoop(start, D, angle, DETOUR){
-    const s = D / (3*DETOUR);
-    return { type:"quartier", detour: DETOUR, via:[
-      { name:"", kind:"walk", pt: dest(start, angle, s) },
-      { name:"", kind:"walk", pt: dest(start, angle + 60, s) }
-    ], est: D, rank: -10 };
-  }
-
-  function titleOf(p){
-    if (p.type === "quartier") return "Boucle du quartier";
-    if (p.type === "ar") return `Aller-retour : ${p.via[0].name}`;
-    return `Boucle par ${p.via[0].name} et ${p.via[1].name}`;
-  }
-  function subOf(p){
-    if (p.type === "quartier") return "Un tour dans les rues autour de vous";
-    const lab = v => ({ park:"un parc", forest:"un bois", dog:"un parc à chiens", nature:"un espace naturel", trail:"un sentier balisé" })[v.kind] || "un lieu";
-    const txt = p.via.map(lab).join(" puis ");
-    return txt.charAt(0).toUpperCase() + txt.slice(1) + (p.type === "ar" ? " · aller puis retour" : " · retour au départ");
-  }
-  function iconOf(p){
-    if (p.type === "quartier") return "🏘️";
-    const k = p.via.find(v => v.kind === "dog") || p.via.find(v => v.kind === "forest") || p.via[0];
-    return p.type === "loop" ? "🔁" : (KINDS[k.kind] ? KINDS[k.kind].icon : "🐾");
-  }
-
+  // ---------- Génération ----------
   let genId = 0;
-  async function generate(){
+  async function generate(opts){
+    opts = opts || {};
     const start = state.start; if (!start) return;
     const my = ++genId;
     const D = state.dur * M_PER_MIN;
     const reach = D / (2*DETOUR) * 1.35;
-    state.props = []; state.sel = null; layers.routes.clearLayers(); layers.sel.clearLayers();
-    $("#props").innerHTML = `<div class="empty"><span class="spinner"></span>Je cherche des balades de ${fmtMin(state.dur)} autour de vous…</div>`;
-    setStatus(`<span class="spinner"></span>Recherche des parcs et sentiers autour de vous…`);
-    map.setView([start.lat, start.lon], state.dur <= 30 ? 15 : 14);
+    const onlyCat = opts.cat || null;
+    if (!opts.append){ state.results = []; state.sel = null; layers.sel.clearLayers(); }
+    renderProps(true);
+    setStatus(`<span class="spinner"></span>${state.cands ? "Calcul des itinéraires…" : "Recherche des lieux sympas autour de vous…"}`);
 
-    const [parks, trails] = await Promise.all([
-      photonPlaces(start, reach).catch(() => []),
-      Promise.race([trailPlaces(start, reach), new Promise(r => setTimeout(() => r([]), 6000))]).catch(() => [])
-    ]);
-    if (my !== genId) return;
-    const cands = uniq([...parks, ...trails].sort((a, b) => quality(b) - quality(a))).slice(0, 25);
-    setStatus(`<span class="spinner"></span>Calcul des itinéraires…`);
-
-    // On calcule les meilleures idées ; si les chemins font plus de détours que prévu
-    // (relief, voies ferrées, domaines fermés…), on mesure le détour réel et on recommence.
-    const results = [];
-    const used = new Set();
+    if (!state.cands){
+      state.cands = await findPlaces(start, reach);
+      if (my !== genId) return;
+      setStatus(`<span class="spinner"></span>Calcul des itinéraires…`);
+    }
+    const cands = state.cands;
+    const target = onlyCat ? state.results.filter(r => r.cat === onlyCat).length + 4 : 8;
+    const used = new Set(state.results.flatMap(r => r.via.map(v => v.name)).filter(Boolean));
+    const tried = new Set([...state.results.map(keyOf), ...state.exclude]);
     const observed = [];
-    let detour = DETOUR, tries = 0;
-    const tried = new Set();
-    const keyOf = p => p.type + ":" + p.via.map(v => v.name).join("|");
-    const tryPlan = async p => {
+    let detour = state.detour || DETOUR, tries = 0;
+    const countCat = () => onlyCat ? state.results.filter(r => r.cat === onlyCat).length : state.results.length;
+    const goal = onlyCat ? target : 8;
+
+    const tryIdea = async p => {
       try{
         const r = await route([start, ...p.via.map(v => v.pt), start]);
-        observed.push(r.m / (p.est / p.detour));
+        const straight = p.via.reduce((s, v, i, arr) => s + dist(i ? arr[i-1].pt : start, v.pt), 0) + dist(p.via[p.via.length-1].pt, start);
+        observed.push(r.m / straight);
         const ratio = r.m / D;
         if (ratio < 0.7 || ratio > 1.25) return null;
         return Object.assign({}, p, r, { min: r.m / M_PER_MIN });
       }catch(e){ return null; }
     };
-    for (let round = 0; round < 3 && results.length < 3 && tries < 14; round++){
-      const ideas = plans(start, cands, D, detour).filter(p => !p.via.some(v => used.has(v.name)) && !tried.has(keyOf(p)));
+
+    const order = onlyCat ? [onlyCat] : ["nature", "water", "heritage", "dog", "discover"];
+    for (let round = 0; round < 5 && countCat() < goal && tries < 24; round++){
+      const ideas = ideasFor(start, cands, D, detour, state.round)
+        .filter(p => !tried.has(keyOf(p)) && !p.via.some(v => v.name && used.has(v.name)))
+        .filter(p => order.includes(p.cat))
+        .sort((a, b) => b.rank - a.rank);
+      if (!ideas.length) break;
+      // un lot varié : on prend à tour de rôle la meilleure idée de chaque type
+      const queues = order.map(c => ideas.filter(p => p.cat === c));
       const batch = [];
-      for (const p of ideas){
-        if (batch.length >= 4) break;
-        if (batch.some(q => q.via.some(v => p.via.includes(v)))) continue;
-        p.detour = detour; batch.push(p); tried.add(keyOf(p));
+      for (let k = 0; batch.length < 6 && k < 6; k++){
+        for (const q of queues){
+          const p = q.find(x => !batch.includes(x) && !batch.some(b => b.via.some(v => v.name && x.via.some(w => w.name === v.name))));
+          if (p && batch.length < 6) batch.push(p);
+        }
       }
       if (!batch.length) break;
+      batch.forEach(p => tried.add(keyOf(p)));
       tries += batch.length;
-      const got = await Promise.all(batch.map(tryPlan));
+      const got = await Promise.all(batch.map(tryIdea));
       if (my !== genId) return;
       for (const r of got){
-        if (!r || results.length >= 3 || r.via.some(v => used.has(v.name))) continue;
-        results.push(r); r.via.forEach(v => used.add(v.name));
+        if (!r || countCat() >= goal) continue;
+        if (r.via.some(v => v.name && used.has(v.name))) continue;
+        if (overlaps(r.line, state.results)) continue;
+        state.results.push(r); r.via.forEach(v => v.name && used.add(v.name));
       }
       if (observed.length){
-        const sorted = observed.slice().sort((x, y) => x - y);
-        detour = Math.min(2.6, Math.max(1.1, sorted[Math.floor(sorted.length/2)]));
+        const s = observed.slice().sort((x, y) => x - y);
+        detour = Math.min(2.6, Math.max(1.1, s[Math.floor(s.length/2)]));
+        state.detour = detour;
       }
-    }
-    // Toujours au moins deux idées : on complète avec des boucles de quartier
-    let ang = 30;
-    while (results.length < 2 && ang < 360){
-      const q = neighbourhoodLoop(start, D, ang, detour); q.detour = detour;
-      const r = await tryPlan(q);
-      if (my !== genId) return;
-      if (r) results.push(r);
-      ang += 150;
+      renderProps(countCat() < goal);
     }
     if (my !== genId) return;
-    state.props = results;
-    render();
-    if (!results.length){
+    renderProps(false);
+    const shown = visible();
+    if (!state.results.length){
       setStatus("Impossible de calculer un itinéraire pour le moment (service d'itinéraires indisponible). Réessayez dans un instant.", true);
-      $("#props").innerHTML = `<div class="empty"><button class="ghost" id="retry">Réessayer</button></div>`;
-      $("#retry").onclick = generate;
       return;
     }
-    setStatus(`${results.length} balade${results.length > 1 ? "s" : ""} de ${fmtMin(state.dur)} depuis votre position. Touchez-en une pour la voir.`);
-    select(0, true);
+    if (onlyCat && !shown.length) setStatus(`Pas de balade « ${CATS[onlyCat].label} » de ${fmtMin(state.dur)} autour de vous. Essayez une autre durée ou un autre type.`);
+    else setStatus(`${shown.length} balade${shown.length > 1 ? "s" : ""} de ${fmtMin(state.dur)} depuis votre position. Touchez-en une pour la voir.`);
+    if (state.sel == null && shown.length) select(state.results.indexOf(shown[0]), true);
   }
 
-  // ---------- Affichage ----------
-  const COLORS = ["#d9792b", "#2f7d46", "#3a6fb0"];
-  function render(){
+  // ---------- Affichage des balades ----------
+  const COLORS = ["#d9792b", "#2f7d46", "#3a6fb0", "#9b4fb0", "#b0503a", "#2d8c8c", "#7a7a2a", "#c2477a"];
+  const visible = () => state.results.filter(r => state.cat === "all" || r.cat === state.cat);
+
+  function renderProps(loading){
+    const shown = visible();
     layers.routes.clearLayers();
-    state.props.forEach((p, i) => {
-      L.polyline(p.line.map(q => [q.lat, q.lon]), { color: COLORS[i % 3], weight:4, opacity:.45 }).addTo(layers.routes).on("click", () => select(i));
+    shown.forEach(p => {
+      const i = state.results.indexOf(p);
+      L.polyline(p.line.map(q => [q.lat, q.lon]), { color: COLORS[i % COLORS.length], weight:4, opacity:.4 }).addTo(layers.routes).on("click", () => select(i));
     });
-    $("#props").innerHTML = state.props.map((p, i) => `
-      <div class="prop" tabindex="0" data-i="${i}" style="border-left:5px solid ${COLORS[i % 3]}">
+    $("#toolbar").style.display = shown.length ? "flex" : "none";
+    $("#props").innerHTML = shown.map(p => {
+      const i = state.results.indexOf(p);
+      return `<div class="prop${state.sel === i ? " sel" : ""}" tabindex="0" data-i="${i}" style="border-left:5px solid ${COLORS[i % COLORS.length]}">
         <div class="ico">${iconOf(p)}</div>
-        <div><h3>${esc(titleOf(p))}</h3><div class="sub">${esc(subOf(p))}</div></div>
+        <div><h3>${esc(titleOf(p))}</h3><div class="sub"><span class="tag">${CATS[p.cat].icon} ${CATS[p.cat].label}</span>${esc(subOf(p))}</div></div>
         <div class="time">${fmtMin(p.min)}<small>${fmtKm(p.m)}</small></div>
         <button class="go" data-go="${i}">🐾 C'est parti</button>
-      </div>`).join("");
+      </div>`;
+    }).join("") + (loading ? `<div class="empty"><span class="spinner"></span>Je prépare ${shown.length ? "d'autres balades" : `des balades de ${fmtMin(state.dur)}`}…</div>` : "");
     document.querySelectorAll(".prop").forEach(el => {
       el.addEventListener("click", e => {
         const g = e.target.closest("[data-go]");
-        if (g){ e.stopPropagation(); startWalk(+g.dataset.go); return; }
+        if (g){ e.stopPropagation(); startWalk(state.results[+g.dataset.go]); return; }
         select(+el.dataset.i);
       });
       el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(+el.dataset.i); } });
     });
   }
 
-  function select(i, quiet){
-    const p = state.props[i]; if (!p) return;
-    state.sel = i;
-    document.querySelectorAll(".prop").forEach(el => el.classList.toggle("sel", +el.dataset.i === i));
+  function drawSelected(p, color){
     layers.sel.clearLayers();
     const ll = p.line.map(q => [q.lat, q.lon]);
     L.polyline(ll, { color:"#fff", weight:9, opacity:.9 }).addTo(layers.sel);
-    L.polyline(ll, { color: COLORS[i % 3], weight:6, opacity:1 }).addTo(layers.sel);
-    p.via.filter(v => v.kind !== "walk").forEach(v => {
+    L.polyline(ll, { color, weight:6, opacity:1 }).addTo(layers.sel);
+    (p.via || []).filter(v => v.kind && v.kind !== "walk" && v.pt).forEach(v => {
       L.marker([v.pt.lat, v.pt.lon], { icon: L.divIcon({ className:"", html:`<div class="wp">${KINDS[v.kind] ? KINDS[v.kind].icon : "📍"}</div>`, iconSize:[26,26], iconAnchor:[13,13] }), title: v.name }).addTo(layers.sel);
     });
     map.fitBounds(L.latLngBounds(ll), { padding:[24,24] });
+  }
+
+  function select(i, quiet){
+    const p = state.results[i]; if (!p) return;
+    state.sel = i;
+    document.querySelectorAll(".prop").forEach(el => el.classList.toggle("sel", +el.dataset.i === i));
+    drawSelected(p, COLORS[i % COLORS.length]);
     if (!quiet){
       const el = document.querySelector(`.prop[data-i="${i}"]`);
       if (el) el.scrollIntoView({ behavior:"smooth", block:"nearest" });
     }
   }
 
+  // ---------- Météo (Open-Meteo, modèles Météo-France) ----------
+  async function meteo(p){
+    const box = $("#meteo");
+    try{
+      const j = await getJSON(`${METEO}?latitude=${p.lat.toFixed(3)}&longitude=${p.lon.toFixed(3)}&current=temperature_2m,precipitation,weather_code,is_day&minutely_15=precipitation&forecast_minutely_15=10&models=meteofrance_seamless&timezone=auto`, 8000);
+      const temp = Math.round(j.current.temperature_2m);
+      const times = (j.minutely_15 && j.minutely_15.time) || [], pr = (j.minutely_15 && j.minutely_15.precipitation) || [];
+      const off = (j.utc_offset_seconds || 0) * 1000;
+      // les heures renvoyées sont locales au lieu : on les convertit en instants
+      const toDate = t => new Date(Date.parse(t + "Z") - off);
+      const now = Date.now();
+      const slots = times.map((t, i) => ({ t: toDate(t), p: pr[i] || 0 })).filter(s => s.t.getTime() + 15*60000 > now);
+      const rainingNow = (j.current.precipitation || 0) > 0.05 || (slots[0] && slots[0].p > 0.05);
+      let msg, cls = "";
+      if (rainingNow){
+        const stop = slots.find(s => s.p <= 0.05);
+        msg = `🌧️ Il pleut en ce moment${stop ? `, accalmie prévue vers ${fmtHour(stop.t)}` : ""} · ${temp}°C`;
+        cls = "rain";
+      } else {
+        const next = slots.find(s => s.p > 0.05);
+        if (next){
+          const mins = Math.max(0, Math.round((next.t.getTime() - now) / 60000));
+          msg = `🌦️ Pluie prévue vers ${fmtHour(next.t)} (dans ${mins} min)` + (mins >= state.dur ? ` : le temps d'une balade de ${fmtMin(state.dur)}, partez maintenant !` : " : prenez un manteau ou attendez un peu.") + ` · ${temp}°C`;
+          cls = "rain";
+        } else msg = `${j.current.is_day ? "☀️" : "🌙"} Pas de pluie prévue dans les 2 h · ${temp}°C`;
+      }
+      if (temp >= 27){ msg += " · Chaud pour le chien : préférez les bois ombragés, évitez le bitume et prenez de l'eau."; cls = "hot"; }
+      else if (temp <= 0) msg += " · Attention au gel et au sel sur les trottoirs pour les coussinets.";
+      box.textContent = msg; box.className = cls; box.style.display = "block";
+    }catch(e){ box.style.display = "none"; }
+  }
+
   // ---------- Pendant la balade ----------
-  let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0;
-  async function startWalk(i){
-    select(i, true);
-    const p = state.props[i];
-    state.walking = true; document.body.classList.add("walking");
+  let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true;
+  async function startWalk(p){
+    if (!p) return;
+    state.walk = p;
+    drawSelected(p, "#d9792b");
+    document.body.classList.add("walking");
     setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
-    t0 = Date.now(); walked = 0;
+    t0 = Date.now(); walked = 0; followMap = true;
     try{ if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
     updateWalk(null);
     tick = setInterval(() => updateWalk(null), 15000);
@@ -468,14 +630,12 @@
       }, () => {}, { enableHighAccuracy:true, maximumAge:5000, timeout:20000 });
     }
   }
-  let followMap = true;
-  map.on("dragstart", () => { if (state.walking) followMap = false; });
+  map.on("dragstart", () => { if (state.walk) followMap = false; });
 
   function updateWalk(q){
-    const p = state.props[state.sel]; if (!p) return;
+    const p = state.walk; if (!p) return;
     const elapsed = (Date.now() - t0) / 60000;
     if (q){
-      // avancement : point du tracé le plus proche, sans revenir en arrière de plus de 150 m
       let best = 0, bd = Infinity;
       for (let k = 0; k < p.line.length; k++){
         const d = dist(q, p.line[k]);
@@ -488,21 +648,108 @@
   }
 
   function stopWalk(){
+    const p = state.walk;
     const elapsed = (Date.now() - t0) / 60000;
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
-    watchId = null; clearInterval(tick); followMap = true;
+    watchId = null; clearInterval(tick);
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
-    state.walking = false; document.body.classList.remove("walking");
+    state.walk = null; document.body.classList.remove("walking");
     if (state.start && youMarker) youMarker.setLatLng([state.start.lat, state.start.lon]);
     setTimeout(() => map.invalidateSize(), 50);
-    setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶 Touchez « Me localiser » pour en préparer une autre.`);
+    const saved = p && elapsed >= 2;
+    if (saved) saveToLog(p, elapsed);
+    setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${saved ? " Elle est notée dans votre carnet." : ""}`);
+    if (state.tab === "log") renderLog();
   }
   $("#stop").addEventListener("click", stopWalk);
 
+  // ---------- Carnet (gardé sur le téléphone) ----------
+  const LOG_KEY = "wouaf-carnet";
+  const getLog = () => store.get(LOG_KEY, []);
+  function saveToLog(p, elapsed){
+    const log = getLog();
+    const step = Math.max(1, Math.floor(p.line.length / 300));
+    log.unshift({
+      id: Date.now(), date: new Date().toISOString(), title: titleOf(p), cat: p.cat, icon: iconOf(p),
+      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(p.m),
+      line: p.line.filter((_, i) => i % step === 0 || i === p.line.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
+    });
+    while (log.length > 100) log.pop();
+    while (!store.set(LOG_KEY, log) && log.length > 10) log.pop();
+  }
+  let logSel = null;
+  function renderLog(){
+    const log = getLog();
+    const el = $("#v-log");
+    if (!log.length){ el.innerHTML = `<div class="empty">Votre carnet est vide.<br>Faites une balade et touchez « Terminer » : elle sera notée ici.</div>`; return; }
+    const monday = new Date(); monday.setHours(0, 0, 0, 0); monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const week = log.filter(e => new Date(e.date) >= monday);
+    const sum = arr => arr.reduce((s, e) => s + e.min, 0);
+    el.innerHTML = `<div class="stats">
+        <div class="stat"><b>${week.length}</b><span>balade${week.length > 1 ? "s" : ""} cette semaine · ${fmtMin(sum(week))}</span></div>
+        <div class="stat"><b>${fmtMin(sum(log))}</b><span>au total · ${log.length} balade${log.length > 1 ? "s" : ""} · ${fmtKm(log.reduce((s, e) => s + e.m, 0))}</span></div>
+      </div>
+      <div class="props">${log.map(e => `
+        <div class="entry${logSel === e.id ? " sel" : ""}" tabindex="0" data-id="${e.id}">
+          <div><h4>${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
+          <div class="dur">${fmtMin(e.min)}<div class="when">${fmtKm(e.m)}</div></div>
+          <div class="acts"><button data-redo="${e.id}">🐾 Refaire cette balade</button><button class="ghost" data-del="${e.id}">Supprimer</button></div>
+        </div>`).join("")}</div>`;
+    el.querySelectorAll(".entry").forEach(n => n.addEventListener("click", ev => {
+      const id = +n.dataset.id, e = getLog().find(x => x.id === id); if (!e) return;
+      const line = e.line.map(([lat, lon]) => ({ lat, lon }));
+      const redo = ev.target.closest("[data-redo]"), del = ev.target.closest("[data-del]");
+      if (del){ store.set(LOG_KEY, getLog().filter(x => x.id !== id)); logSel = null; renderLog(); return; }
+      const p = { line, m: e.m, min: e.plannedMin, cat: e.cat, type: "log", via: [], _title: e.title, _icon: e.icon };
+      if (redo){ startWalk(p); return; }
+      logSel = id; renderLog(); drawSelected(p, "#d9792b");
+    }));
+  }
+
+  // ---------- Onglets, filtres, boutons ----------
+  function switchTab(t){
+    state.tab = t;
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+    $("#v-walks").style.display = t === "walks" ? "" : "none";
+    $("#v-log").style.display = t === "log" ? "" : "none";
+    if (t === "log") renderLog();
+    else if (state.sel != null) select(state.sel, true);
+  }
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+
+  document.querySelectorAll("#filters button").forEach(b => b.addEventListener("click", () => {
+    state.cat = b.dataset.c;
+    document.querySelectorAll("#filters button").forEach(x => x.classList.toggle("on", x === b));
+    if (state.tab !== "walks") switchTab("walks");
+    state.sel = null; layers.sel.clearLayers();
+    renderProps(false);
+    const shown = visible();
+    if (shown.length) select(state.results.indexOf(shown[0]), true);
+    if (state.start && state.cat !== "all" && shown.length < 3) generate({ cat: state.cat, append: true });
+    else if (state.start) setStatus(`${shown.length} balade${shown.length > 1 ? "s" : ""} de ${fmtMin(state.dur)} depuis votre position.`);
+  }));
+
+  $("#more").addEventListener("click", () => {
+    state.round++;
+    state.results.forEach(r => state.exclude.add(keyOf(r)));
+    generate({ cat: state.cat !== "all" ? state.cat : null });
+  });
+  $("#surprise").addEventListener("click", () => {
+    const shown = visible(); if (!shown.length) return;
+    const p = shown[Math.floor(Math.random() * shown.length)];
+    select(state.results.indexOf(p), true);
+    startWalk(p);
+  });
+
   // ---------- Départ ----------
+  function resetSearch(){ state.cands = null; state.detour = null; state.round = 0; state.exclude = new Set(); }
   function setStart(p){
     state.start = p; state.picking = false; $("#map").classList.remove("picking");
-    showStart(p); generate();
+    resetSearch();
+    showStart(p); meteo(p);
+    map.setView([p.lat, p.lon], state.dur <= 45 ? 15 : 14);
+    if (state.tab !== "walks") switchTab("walks");
+    generate({ cat: state.cat !== "all" ? state.cat : null });
   }
   function locate(){
     if (!navigator.geolocation){ askPick("La localisation n'est pas disponible ici."); return; }
@@ -519,25 +766,23 @@
     state.picking = true; $("#map").classList.add("picking");
     setStatus(`${esc(msg)} Touchez la carte à l'endroit où vous êtes.`, true);
   }
-  map.on("click", e => { if (state.picking && !state.walking) setStart({ lat: e.latlng.lat, lon: e.latlng.lng }); });
+  map.on("click", e => { if (state.picking && !state.walk) setStart({ lat: e.latlng.lat, lon: e.latlng.lng }); });
 
-  // durée
   document.querySelectorAll("#durSeg button").forEach(b => {
     b.classList.toggle("on", +b.dataset.v === state.dur);
     b.addEventListener("click", () => {
       state.dur = +b.dataset.v; store.set("wouaf-dur", state.dur);
       document.querySelectorAll("#durSeg button").forEach(x => x.classList.toggle("on", x === b));
-      if (state.start) generate();
+      if (state.start){ resetSearch(); meteo(state.start); generate({ cat: state.cat !== "all" ? state.cat : null }); }
     });
   });
   $("#locate").addEventListener("click", locate);
 
-  // relance auto si la localisation est déjà autorisée
   if (navigator.permissions && navigator.permissions.query){
     navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
   }
 
-  window.__wouaf = { map, state, setStart, generate, plans, photonPlaces, trailPlaces };
+  window.__wouaf = { map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog };
 })();
 </script>
 </body>
