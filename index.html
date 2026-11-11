@@ -521,7 +521,7 @@ out tags center;`;
         const diff = Math.abs(plan.min - target) / target;
         s += 1.6 - Math.min(4, diff*3.5);
       }
-      if (plan.mode === "section") s -= 3;   // un vrai circuit vaut mieux qu'un bout de grand sentier
+      if (plan.mode === "section") s -= 4;   // un vrai circuit vaut mieux qu'un bout de grand sentier
       if (plan.mode === "free") s -= 0.3;
     } else if (it.kind === "route" && it.length > 25000) s -= 1.5;
     return s;
