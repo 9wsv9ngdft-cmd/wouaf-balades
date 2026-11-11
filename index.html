@@ -484,7 +484,7 @@
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
     const left = Math.max(0, p.m - walked);
-    $("#walkstats").innerHTML = `<b>${fmtMin(elapsed)}</b> de balade<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
+    $("#walkstats").innerHTML = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
   }
 
   function stopWalk(){
