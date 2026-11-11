@@ -119,22 +119,13 @@
       <details>
         <summary>Plus d'options</summary>
         <div style="display:grid;gap:12px;margin-top:10px">
-          <div>
-            <div class="flabel" id="radLabel">Distance maximale</div>
-            <div class="seg" id="radiusSeg" role="group" aria-labelledby="radLabel">
-              <button data-v="2000">2 km</button>
-              <button data-v="5000" class="on">5 km</button>
-              <button data-v="10000">10 km</button>
-              <button data-v="20000">20 km</button>
-            </div>
-          </div>
           <label class="check"><input type="checkbox" id="offleash"> Mettre en avant les lieux où il peut courir sans laisse</label>
         </div>
       </details>
     </div>
   </div>
 
-  <div id="status">Localisez-vous ou cherchez un lieu pour commencer.</div>
+  <div id="status" aria-live="polite">Localisez-vous, tapez une ville, ou zoomez sur la carte.</div>
   <div id="map"></div>
 
   <div class="tabs">
@@ -159,15 +150,16 @@
   // ---------- Config ----------
   const OVERPASS = [
     "https://overpass-api.de/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
-    "https://maps.mail.ru/osm/tools/overpass/api/interpreter"
+    "https://overpass.kumi.systems/api/interpreter"
   ];
   const NOMINATIM = "https://nominatim.openstreetmap.org/search";
   const SPEED_KMH = 3.5;
   const DUR = { any:[0,Infinity], short:[0,30], mid:[30,60], long:[60,120], xl:[120,Infinity] };
 
   const state = {
-    center: null, label: "", radius: 5000, dur: "any", offleash: false,
+    center: null, user: null, queried: null, areaEls: [], routeEls: [], dur: "any", offleash: false,
     items: [], pois: [], selected: null, tab: "results", raw: null
   };
 
@@ -178,7 +170,7 @@
   };
   let favs = store.get("balades-favs", {});
   const prefs = store.get("balades-prefs", null);
-  if (prefs){ state.radius = prefs.radius || 5000; state.dur = prefs.dur || "any"; state.offleash = !!prefs.offleash; }
+  if (prefs){ state.dur = prefs.dur || "any"; state.offleash = !!prefs.offleash; }
 
   // ---------- Map ----------
   const map = L.map("map", { zoomControl:true, attributionControl:true }).setView([46.6, 2.4], 5);
@@ -186,7 +178,7 @@
     maxZoom: 19, subdomains:"abc",
     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
-  const layers = { you: L.layerGroup().addTo(map), items: L.layerGroup().addTo(map), routes: L.layerGroup().addTo(map), pois: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), circle: L.layerGroup().addTo(map) };
+  const layers = { you: L.layerGroup().addTo(map), items: L.layerGroup().addTo(map), routes: L.layerGroup().addTo(map), pois: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map) };
 
   // ---------- Helpers ----------
   const $ = s => document.querySelector(s);
@@ -205,7 +197,7 @@
     return m === 60 ? `${h+1} h` : (m ? `${h} h ${String(m).padStart(2,"0")}` : `${h} h`);
   }
   function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
-  function savePrefs(){ store.set("balades-prefs", { radius: state.radius, dur: state.dur, offleash: state.offleash }); }
+  function savePrefs(){ store.set("balades-prefs", { dur: state.dur, offleash: state.offleash }); }
 
   function parseDistanceTag(v){
     if (!v) return null;
@@ -225,47 +217,68 @@
   function lineLength(pts){ let s=0; for (let i=1;i<pts.length;i++) s += dist(pts[i-1], pts[i]); return s; }
 
   // ---------- Overpass ----------
-  async function overpass(q){
-    let lastErr;
-    for (const url of OVERPASS){
-      try{
-        const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 45000);
-        const r = await fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" }, signal: ctrl.signal });
-        clearTimeout(t);
-        if (!r.ok) throw new Error("HTTP "+r.status);
-        return await r.json();
-      }catch(e){ lastErr = e; }
-    }
-    throw lastErr || new Error("Overpass indisponible");
+  // Les serveurs publics sont parfois saturés : on lance le 1er, puis on
+  // ajoute un serveur de secours toutes les 4 s. Le premier qui répond gagne.
+  function overpass(q, outerSignal){
+    return new Promise((resolve, reject) => {
+      const ctrls = [];
+      let done = false, failed = 0, started = 0;
+      const timers = [];
+      const finish = (fn, v) => { if (done) return; done = true; timers.forEach(clearTimeout); ctrls.forEach(c => c.abort()); fn(v); };
+      if (outerSignal){
+        if (outerSignal.aborted) return reject(new DOMException("aborted", "AbortError"));
+        outerSignal.addEventListener("abort", () => finish(reject, new DOMException("aborted", "AbortError")));
+      }
+      const launch = (url) => {
+        if (done) return;
+        started++;
+        const c = new AbortController(); ctrls.push(c);
+        const t = setTimeout(() => c.abort(), 40000); timers.push(t);
+        fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" }, signal:c.signal })
+          .then(r => { if (!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+          .then(j => { if (!j || !Array.isArray(j.elements)) throw new Error("réponse invalide"); finish(resolve, j); })
+          .catch(e => {
+            failed++;
+            // serveur en échec : on passe tout de suite au suivant
+            const next = OVERPASS[started]; if (next) launch(next);
+            if (failed >= OVERPASS.length) finish(reject, e);
+          });
+      };
+      launch(OVERPASS[0]);
+      for (let i = 1; i < OVERPASS.length; i++){
+        timers.push(setTimeout(() => { if (!done && started <= i) launch(OVERPASS[i]); }, i*4000));
+      }
+    });
   }
 
-  function buildQuery(c, r){
-    const A = `(around:${r},${c.lat.toFixed(6)},${c.lon.toFixed(6)})`;
-    // bbox englobant pour découper la géométrie des grands itinéraires
-    const dLat = r/111320, dLon = r/(111320*Math.cos(c.lat*Math.PI/180));
-    const bb = `${(c.lat-dLat).toFixed(5)},${(c.lon-dLon).toFixed(5)},${(c.lat+dLat).toFixed(5)},${(c.lon+dLon).toFixed(5)}`;
-    return `[out:json][timeout:40];
-relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
-.routes out geom(${bb});
+  function bboxStr(b){ return `${b.s.toFixed(5)},${b.w.toFixed(5)},${b.n.toFixed(5)},${b.e.toFixed(5)}`; }
+
+  function buildQueries(b){
+    const bb = bboxStr(b);
+    const areas = `[out:json][timeout:25][bbox:${bb}];
 (
-  nwr["leisure"="dog_park"]${A};
-  nwr["leisure"="park"]["name"]${A};
-  nwr["landuse"="forest"]["name"]${A};
-  nwr["natural"="wood"]["name"]${A};
-  nwr["leisure"="nature_reserve"]["name"]${A};
-  nwr["natural"="beach"]["dog"~"^(yes|leashed|unleashed|designated)$"]${A};
-  nwr["leisure"="common"]["name"]${A};
-  nwr["landuse"="meadow"]["name"]["access"!~"^(private|no)$"]${A};
-)->.areas;
-.areas out tags bb;
+  nwr["leisure"="dog_park"];
+  nwr["leisure"="park"]["name"];
+  nwr["landuse"="forest"]["name"];
+  nwr["natural"="wood"]["name"];
+  nwr["leisure"="nature_reserve"]["name"];
+  nwr["natural"="beach"]["dog"~"^(yes|leashed|unleashed|designated)$"];
+  nwr["leisure"="common"]["name"];
+  nwr["landuse"="meadow"]["name"]["access"!~"^(private|no)$"];
+);
+out tags bb;
 (
-  node["amenity"="drinking_water"]${A};
-  node["vending"="excrement_bags"]${A};
-  node["amenity"="dog_toilet"]${A};
-  node["amenity"="watering_place"]${A};
-  nwr["natural"="water"]["name"]${A};
-)->.pois;
-.pois out tags center;`;
+  node["amenity"="drinking_water"];
+  node["vending"="excrement_bags"];
+  node["amenity"="dog_toilet"];
+  node["amenity"="watering_place"];
+  nwr["natural"="water"]["name"];
+);
+out tags center;`;
+    const routes = `[out:json][timeout:25][bbox:${bb}];
+relation["type"="route"]["route"~"^(hiking|foot|walking)$"];
+out geom(${bb});`;
+    return { areas, routes };
   }
 
   // ---------- Transformation des données ----------
@@ -402,7 +415,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
     if (it.hasLake) s += 0.5;
     if (it.tags.description || it.tags.website || it.tags.wikipedia || it.tags.wikidata) s += 0.3;
     // proximité : pénalité douce
-    s -= Math.min(it.dist/1000, 30) * (state.radius <= 5000 ? 0.45 : 0.18);
+    s -= Math.min(it.dist/1000, 30) * 0.35;
     // adéquation à la durée voulue
     if (state.dur !== "any"){
       const [lo, hi] = DUR[state.dur];
@@ -513,7 +526,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
       return;
     }
     if (!state.items.length){
-      list.innerHTML = state.center ? `<div class="empty">Rien trouvé dans ce rayon. Essayez d'élargir la zone.</div>` : "";
+      list.innerHTML = state.center ? `<div class="empty">Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.</div>` : `<div class="empty">Touchez « Trouver des balades près de moi », tapez une ville, ou zoomez sur la carte.</div>`;
       drawMarkers([]);
       return;
     }
@@ -576,7 +589,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
     document.querySelectorAll(".card").forEach(c => c.classList.toggle("sel", c.dataset.id === id));
   }
 
-  function select(it, fromList){
+  function select(it, fromList, quiet){
     if (!it) return;
     state.selected = it.id;
     highlightCard(it.id);
@@ -587,7 +600,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
         const ll = sg.map(p => [p.lat, p.lon]); all.push(...ll);
         L.polyline(ll, { color:"#d9792b", weight:6, opacity:.9 }).addTo(layers.sel);
       }
-      if (fromList) map.fitBounds(L.latLngBounds(all).extend(state.center ? [state.center.lat, state.center.lon] : all[0]), { padding:[30,30], maxZoom:16 });
+      if (fromList) map.fitBounds(L.latLngBounds(all).extend(state.user ? [state.user.lat, state.user.lon] : all[0]), { padding:[30,30], maxZoom:16 });
     } else if (it.bbox && it.bbox.s !== it.bbox.n){
       const b = [[it.bbox.s, it.bbox.w], [it.bbox.n, it.bbox.e]];
       L.rectangle(b, { color:"#d9792b", weight:2, fill:true, fillOpacity:.08, dashArray:"6 6" }).addTo(layers.sel);
@@ -596,6 +609,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
       map.setView([it.access.lat, it.access.lon], 16);
     }
     L.circleMarker([it.access.lat, it.access.lon], { radius:8, color:"#d9792b", weight:3, fillColor:"#fff", fillOpacity:1 }).addTo(layers.sel);
+    if (quiet) return;
     if (!fromList){
       const el = document.querySelector(`.card[data-id="${CSS.escape(it.id)}"]`);
       if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
@@ -604,48 +618,107 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
     }
   }
 
-  // ---------- Recherche ----------
-  let reqId = 0;
-  async function search(center, label, auto){
-    state.center = center; state.label = label ?? state.label;
-    const my = ++reqId;
-    layers.you.clearLayers(); layers.circle.clearLayers();
-    L.marker([center.lat, center.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[16,16], iconAnchor:[8,8] }) }).addTo(layers.you);
-    const circ = L.circle([center.lat, center.lon], { radius: state.radius, color:"#2f5d3a", weight:1, fillOpacity:.04, dashArray:"4 6" }).addTo(layers.circle);
-    map.fitBounds(circ.getBounds(), { padding:[10,10] });
-    setStatus(`<span class="spinner"></span>Je cherche des balades ${state.label ? "autour de " + esc(state.label) : "autour de vous"}…`);
-    $("#list").innerHTML = "";
-    try{
-      const data = await overpass(buildQuery(center, state.radius));
-      if (my !== reqId) return;
-      const { items, pois } = transform(data, center);
-      // peu de résultats : on élargit automatiquement une fois
-      if (items.length < 5 && state.radius < 20000 && !auto){
-        state.radius = state.radius < 5000 ? 5000 : state.radius < 10000 ? 10000 : 20000;
-        document.querySelectorAll("#radiusSeg button").forEach(b => b.classList.toggle("on", +b.dataset.v === state.radius));
-        return search(center, state.label, true);
-      }
-      state.items = items; state.pois = pois; state.selected = null;
-      const nRoutes = items.filter(i => i.kind === "route").length;
-      const nDog = items.filter(i => i.kind === "dogpark").length;
-      setStatus(items.length
-        ? `<b>${items.length}</b> lieux trouvés${state.label ? " autour de " + esc(state.label) : ""} : ${nRoutes} sentier${nRoutes>1?"s":""} balisé${nRoutes>1?"s":""}, ${nDog} parc${nDog>1?"s":""} à chiens, et des espaces verts. Touchez une carte pour le détail.`
-        : `Aucun lieu trouvé dans ce rayon.`);
-      if (state.tab !== "results") switchTab("results"); else render();
-    }catch(e){
-      if (my !== reqId) return;
-      setStatus(`Impossible de joindre OpenStreetMap pour l'instant (${esc(e.message)}). Réessayez dans un instant ou réduisez le rayon.`, true);
+  // ---------- Recherche (suit la carte) ----------
+  let ctrl = null, moveTimer = null;
+  const MAX_SPAN = 0.3; // ≈ 33 km : au-delà on demande de zoomer
+
+  function viewBox(pad){
+    const b = map.getBounds().pad(pad || 0);
+    return { s:b.getSouth(), w:b.getWest(), n:b.getNorth(), e:b.getEast() };
+  }
+  const contains = (o, i) => i.s >= o.s && i.n <= o.n && i.w >= o.w && i.e <= o.e;
+
+  function refPoint(){
+    const u = state.user;
+    if (u && inBox(u, viewBox(0.1), 0)) return u;
+    const c = map.getCenter(); return { lat:c.lat, lon:c.lng };
+  }
+
+  function recompute(){
+    const ref = refPoint();
+    state.center = ref;
+    const els = [...(state.areaEls || []), ...(state.routeEls || [])];
+    const { items, pois } = transform({ elements: els }, ref);
+    const vb = viewBox(0.15);
+    state.items = items.filter(it => it.kind === "route"
+      ? it.segs.some(sg => sg.some(p => inBox(p, vb, 0)))
+      : inBox(it.access, vb, 0));
+    state.pois = pois;
+    render();
+    if (state.selected){
+      const it = state.items.find(i => i.id === state.selected);
+      if (it) select(it, false, true); else state.selected = null;
     }
   }
 
+  function countText(){
+    const items = state.items;
+    if (!items.length) return "Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.";
+    const nR = items.filter(i => i.kind === "route").length, nD = items.filter(i => i.kind === "dogpark").length;
+    const bits = [];
+    if (nR) bits.push(`${nR} sentier${nR>1?"s":""} balisé${nR>1?"s":""}`);
+    if (nD) bits.push(`${nD} parc${nD>1?"s":""} à chiens`);
+    bits.push("des espaces verts");
+    return `<b>${items.length}</b> idées de balade dans cette zone : ${bits.join(", ")}. Déplacez la carte pour explorer ailleurs.`;
+  }
+
+  async function refresh(force){
+    const vb = viewBox();
+    if (vb.n - vb.s > MAX_SPAN){
+      if (ctrl) ctrl.abort();
+      setStatus("Zoomez sur la carte (ou touchez « Trouver des balades près de moi ») pour voir les balades.");
+      return;
+    }
+    if (!force && state.queried && contains(state.queried, vb)){ recompute(); setStatus(countText()); return; }
+
+    if (ctrl) ctrl.abort();
+    ctrl = new AbortController();
+    const sig = ctrl.signal;
+    const qb = viewBox(0.3);
+    const { areas, routes } = buildQueries(qb);
+    setStatus(`<span class="spinner"></span>Recherche des balades dans cette zone…`);
+    if (!state.items.length) $("#list").innerHTML = `<div class="empty"><span class="spinner"></span>Chargement… les serveurs OpenStreetMap peuvent mettre jusqu'à 20 secondes.</div>`;
+
+    let okA = false, okR = false;
+    const pA = overpass(areas, sig).then(j => { if (sig.aborted) return; state.areaEls = j.elements; okA = true; recompute(); });
+    const pR = overpass(routes, sig).then(j => { if (sig.aborted) return; state.routeEls = j.elements; okR = true; recompute(); });
+    await Promise.allSettled([pA, pR]);
+    if (sig.aborted) return;
+    if (!okA && !okR){
+      setStatus(`Les serveurs OpenStreetMap sont saturés en ce moment. <a href="#" id="retry">Réessayer</a>`, true);
+      const r = document.getElementById("retry"); if (r) r.onclick = e => { e.preventDefault(); refresh(true); };
+      if (!state.items.length) $("#list").innerHTML = "";
+      return;
+    }
+    if (okA && okR) state.queried = qb;
+    setStatus(countText() + (!okR ? " <i>(sentiers balisés indisponibles pour l'instant)</i>" : !okA ? " <i>(parcs et forêts indisponibles pour l'instant)</i>" : ""));
+  }
+
+  map.on("moveend", () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => refresh(false), 600); });
+
+  function showUser(p){
+    state.user = p;
+    layers.you.clearLayers();
+    L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[16,16], iconAnchor:[8,8] }), keyboard:false }).addTo(layers.you);
+  }
+
+  function goTo(p, zoom){
+    state.queried = null; state.areaEls = []; state.routeEls = []; state.items = []; state.selected = null;
+    const z = zoom || 14;
+    const c = map.getCenter();
+    if (map.getZoom() === z && Math.abs(c.lat - p.lat) < 1e-6 && Math.abs(c.lng - p.lon) < 1e-6) refresh(true);
+    else map.setView([p.lat, p.lon], z);
+    if (state.tab !== "results") switchTab("results");
+  }
+
   function locate(){
-    if (!navigator.geolocation){ setStatus("La géolocalisation n'est pas disponible ici : tapez une adresse.", true); return; }
+    if (!navigator.geolocation){ setStatus("La géolocalisation n'est pas disponible ici : tapez une ville.", true); return; }
     setStatus(`<span class="spinner"></span>Localisation en cours…`);
     navigator.geolocation.getCurrentPosition(
-      pos => search({ lat: pos.coords.latitude, lon: pos.coords.longitude }, ""),
+      pos => { const p = { lat: pos.coords.latitude, lon: pos.coords.longitude }; showUser(p); goTo(p, 14); },
       err => setStatus(err.code === 1
-        ? "Accès à la position refusé. Autorisez-le dans les réglages du navigateur, ou tapez une adresse."
-        : "Position introuvable pour le moment. Tapez une adresse ou réessayez.", true),
+        ? "Accès à la position refusé. Sur iPhone : Réglages › Confidentialité › Service de localisation › Safari. Ou tapez une ville."
+        : "Position introuvable pour le moment. Tapez une ville ou réessayez.", true),
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
     );
   }
@@ -656,8 +729,8 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
       const r = await fetch(`${NOMINATIM}?format=jsonv2&limit=1&accept-language=fr&q=${encodeURIComponent(q)}`, { headers:{ "Accept":"application/json" } });
       const j = await r.json();
       if (!j.length){ setStatus(`Je ne trouve pas « ${esc(q)} ».`, true); return; }
-      const name = (j[0].name || j[0].display_name.split(",")[0]);
-      search({ lat: +j[0].lat, lon: +j[0].lon }, name);
+      $("#q").blur();
+      goTo({ lat: +j[0].lat, lon: +j[0].lon }, 14);
     }catch(e){ setStatus("Recherche d'adresse indisponible pour le moment.", true); }
   }
 
@@ -674,12 +747,11 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
       b.classList.toggle("on", String(state[key]) === b.dataset.v);
       b.addEventListener("click", () => {
         el.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-        state[key] = key === "radius" ? +b.dataset.v : b.dataset.v;
+        state[key] = b.dataset.v;
         savePrefs(); cb();
       });
     });
   }
-  seg("#radiusSeg", "radius", () => { if (state.center) search(state.center, state.label); });
   seg("#durSeg", "dur", () => render());
   $("#offleash").checked = state.offleash;
   $("#offleash").addEventListener("change", e => { state.offleash = e.target.checked; savePrefs(); render(); });
@@ -694,7 +766,7 @@ relation["type"="route"]["route"~"^(hiking|foot|walking)$"]${A}->.routes;
   render();
 
   // export pour tests
-  window.__balades = { transform, score, state, buildQuery, fmtMin, fmtKm };
+  window.__balades = { transform, score, state, buildQueries, overpass, fmtMin, fmtKm };
 })();
 </script>
 </body>
