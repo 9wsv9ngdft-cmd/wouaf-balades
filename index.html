@@ -332,8 +332,26 @@ out tags center;`;
     return out;
   }
 
+  // Les chemins arrivent voie par voie : on les raccorde en lignes continues
+  function chainSegments(segs){
+    const out = [];
+    const close = (a, b) => dist(a, b) < 15;
+    let single = false; // la chaîne courante n'a qu'une voie : on peut encore la retourner
+    for (const sg of segs){
+      const cur = out[out.length-1];
+      if (cur){
+        if (close(cur[cur.length-1], sg[0])){ cur.push(...sg.slice(1)); single = false; continue; }
+        if (close(cur[cur.length-1], sg[sg.length-1])){ cur.push(...sg.slice(0, -1).reverse()); single = false; continue; }
+        if (single && close(cur[0], sg[0])){ cur.reverse(); cur.push(...sg.slice(1)); single = false; continue; }
+        if (single && close(cur[0], sg[sg.length-1])){ cur.reverse(); cur.push(...sg.slice(0, -1).reverse()); single = false; continue; }
+      }
+      out.push(sg.slice()); single = true;
+    }
+    return out;
+  }
+
   function wmtItem(d, center){
-    const segs = d._segs || (d._segs = wmtSegments(d.route, []).filter(s => s.length > 1));
+    const segs = d._segs || (d._segs = chainSegments(wmtSegments(d.route, []).filter(s => s.length > 1)));
     if (!segs.length) return null;
     const t = Object.assign({}, d.tags || {});
     if (d.description && !t.description) t.description = d.description;
