@@ -490,7 +490,7 @@ out tags center;`;
     for (const sg of segs) for (const p of sg){ const d = dist(center, p); if (d < bd){ bd = d; best = p; } }
     const a = segs[0][0], z = segs[0][segs[0].length-1];
     return { id:r.id, osmType:null, kind:"route", dog:"unknown", tags:{}, name:r.name, segs, length,
-      lengthApprox:false, partial:false, long: length > 25000, round: segs.length === 1 && dist(a, z) < 150,
+      lengthApprox:false, partial:false, long: length > 25000, round: dist(a, z) < 300,
       access:best, dist:bd, group:"IDF", kindLabel:r.kindLabel, src:r.src, srcUrl:r.srcUrl };
   }
 
@@ -620,8 +620,8 @@ out tags center;`;
     if (it.kind === "dogpark") return { mode:"play", min:null };
     if (it.kind === "route"){
       if (!target) return it.round ? { mode:"loop", min:full, m:it.length } : { mode:"oneway", min:full, m:it.length };
-      if (it.round && full <= target*1.25) return { mode:"loop", min:full, m:it.length };
-      if (!it.round && full*2 <= target*1.25) return { mode:"ar", min:full*2, m:it.length*2 };
+      if (it.round && full <= target*1.5) return { mode:"loop", min:full, m:it.length };
+      if (!it.round && full*2 <= target*1.5) return { mode:"ar", min:full*2, m:it.length*2 };
       return { mode:"section", min:target, m:target*M_PER_MIN };
     }
     if (full == null) return { mode:"free", min:target };
@@ -767,6 +767,9 @@ out tags center;`;
   function filtered(){
     const target = DURMAX[state.dur];
     let sections = 0;
+    const pre = state.items.filter(it => state.layers[layerOf(it)]).map(it => planOf(it));
+    const others = pre.filter(p => p.mode !== "section").length;
+    const maxSections = others >= 6 ? 4 : 12;
     return state.items
       .filter(it => state.layers[layerOf(it)])
       .map(it => { it.plan = planOf(it); return it; })
@@ -774,7 +777,7 @@ out tags center;`;
       .filter(it => !target || !it.plan.min || it.plan.mode === "free" || it.plan.min >= Math.min(12, target*0.3) || it.kind !== "park")
       .map(it => ({ it, s: score(it) }))
       .sort((a, b) => b.s - a.s)
-      .filter(x => x.it.plan.mode !== "section" || ++sections <= 4)
+      .filter(x => x.it.plan.mode !== "section" || ++sections <= maxSections)
       .slice(0, 40)
       .map(x => x.it);
   }
