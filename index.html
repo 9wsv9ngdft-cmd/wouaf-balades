@@ -133,6 +133,7 @@
   <div class="panel">
     <div class="who"><span id="whoText"></span><button class="linkish" id="editWho">Modifier</button></div>
     <button id="locate" class="big">📍 Me localiser</button>
+    <button id="freeWalk" class="big ghost" style="margin-top:8px">🚶 Balade libre <span style="font-weight:500;font-size:14px">(sans parcours)</span></button>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
       <button data-v="15" aria-label="15 minutes, balade express">⚡ 15</button>
@@ -449,6 +450,7 @@
     return txt.charAt(0).toUpperCase() + txt.slice(1) + (p.type === "ar" ? " · aller puis retour" : " · retour au départ");
   }
   function iconOf(p){
+    if (p._icon) return p._icon;
     if (p.type === "discover") return "🏘️";
     const best = p.via.slice().sort((a, b) => quality(b) - quality(a))[0];
     return best ? KINDS[best.kind].icon : "🐾";
@@ -691,27 +693,28 @@
   }
 
   // ---------- Profil (sur ce téléphone) ----------
-  let profile = store.get("wouaf-profil", { walker:"", dog:"" });
+  const DOG = "Roxy";
+  let profile = store.get("wouaf-profil", { walker:"" });
+  profile.dog = DOG;
   function renderWho(){
-    $("#whoText").textContent = profile.walker ? `👤 ${profile.walker} · 🐕 ${profile.dog || "?"}` : "👤 Qui promène le chien ?";
-    $("#editWho").textContent = profile.walker ? "Modifier" : "Renseigner";
+    $("#whoText").textContent = profile.walker ? `👤 ${profile.walker} · 🐕 ${DOG}` : `🐕 ${DOG} · Qui la promène ?`;
+    $("#editWho").textContent = profile.walker ? "Changer" : "Renseigner";
   }
   function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
   function closeSheet(){ $("#modal").classList.remove("open"); }
-  $("#modal").addEventListener("click", e => { if (e.target.id === "modal" && !state.recapLocked) closeSheet(); });
+  $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
-    openSheet(`<h2>Qui promène ?</h2><p>Une seule fois sur ce téléphone : ces noms apparaîtront dans le récapitulatif envoyé au superviseur.</p>
+    openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
-      <label for="wDog">Le nom du chien</label><input id="wDog" value="${esc(profile.dog)}" required>
       <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div></form>`);
     $("#whoCancel").onclick = closeSheet;
     $("#whoForm").onsubmit = e => {
       e.preventDefault();
-      profile = { walker: $("#wName").value.trim(), dog: $("#wDog").value.trim() };
-      store.set("wouaf-profil", profile); renderWho(); closeSheet();
+      profile = { walker: $("#wName").value.trim(), dog: DOG };
+      store.set("wouaf-profil", { walker: profile.walker }); renderWho(); closeSheet();
       if (then) then();
     };
-    setTimeout(() => { const i = profile.walker ? $("#wDog") : $("#wName"); if (i) i.focus(); }, 50);
+    setTimeout(() => { const i = $("#wName"); if (i) i.focus(); }, 50);
   }
   $("#editWho").addEventListener("click", () => askProfile());
   renderWho();
@@ -723,11 +726,17 @@
 
   async function startWalk(p){
     if (!p) return;
-    if (!profile.walker || !profile.dog){ askProfile(() => startWalk(p)); return; }
+    if (!profile.walker){ askProfile(() => startWalk(p)); return; }
     state.walk = p;
-    drawSelected(p, "#d9792b");
+    const free = !p.line.length;
+    if (free){ layers.sel.clearLayers(); layers.routes.clearLayers(); }
+    else drawSelected(p, "#d9792b");
     document.body.classList.add("walking");
-    setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
+    setTimeout(() => {
+      map.invalidateSize();
+      if (!free) map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] });
+      else if (state.start) map.setView([state.start.lat, state.start.lon], 16);
+    }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
     t0 = Date.now(); walked = 0; followMap = true; track = []; photos = []; hiddenAt = null; pausedMs = 0;
     $("#photoBtn").textContent = "📷";
@@ -744,6 +753,7 @@
   function onFix(pos){
     if (!state.walk) return;
     const q = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: Date.now(), a: pos.coords.accuracy || 0 };
+    if (!youMarker){ showStart(q); map.setView([q.lat, q.lon], 16); }
     if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
     if (followMap) map.panTo([q.lat, q.lon], { animate:true });
     // on garde les points assez précis, tous les 8 m ou toutes les 30 s
@@ -781,8 +791,16 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade`;
+    if (!p.line.length){
+      let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
+      const home = track.length && (state.start || track[0]);
+      const back = home && track.length > 1 ? dist(home, track[track.length-1]) : null;
+      $("#walkstats").innerHTML = `${chrono}<br>📏 ${fmtKm(m)} parcourus${back != null && m > 300 ? ` · 🏠 à ${fmtKm(back)}` : ""}`;
+      return;
+    }
     const left = Math.max(0, p.m - walked);
-    $("#walkstats").innerHTML = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
+    $("#walkstats").innerHTML = `${chrono}<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
   }
 
   // Photo du chien pendant la balade
@@ -847,15 +865,17 @@
     let walkedM = 0; for (let i = 1; i < pts.length; i++) walkedM += dist(pts[i-1], pts[i]);
     if (walkedM < 50) walkedM = walked;
     // part du parcours prévu réellement suivie
-    let cov = null;
-    if (pts.length > 2){
+    let cov = null, home = null;
+    const free = !p.line.length;
+    if (free && pts.length > 1) home = dist(pts[0], pts[pts.length-1]) < 150 ? 1 : 0;
+    if (!free && pts.length > 2){
       const plan = p.line.filter((_, i) => i % Math.max(1, Math.floor(p.line.length / 80)) === 0);
       cov = Math.round(100 * plan.filter(q => pts.some(t => dist(q, t) < 60)).length / plan.length);
     }
     return {
       v:1, w: profile.walker, d: profile.dog, t: titleOf(p),
       s: Math.round(t0/1000), e: Math.round(endTs/1000),
-      m: Math.round(walkedM), pm: Math.round(p.m), gm: Math.round(gapMs/60000), cov,
+      m: Math.round(walkedM), pm: Math.round(p.m), gm: Math.round(gapMs/60000), cov, f: free ? 1 : 0, h: home,
       tk: encPoly(thin(pts, 400)), pl: encPoly(thin(p.line, 200))
     };
   }
@@ -865,10 +885,11 @@
     const dur = (r.e - r.s) / 60;
     const day = s.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
     const lines = [
-      `🐾 Balade de ${r.d} par ${r.w}`,
+      `🐾 ${r.f ? "Balade libre" : "Balade"} de ${r.d} par ${r.w}`,
       `📅 ${day}, ${fmtHour(s)} → ${fmtHour(e)}`,
       `⏱ ${fmtMin(dur)} · 📏 ${fmtKm(r.m)}`,
-      r.cov != null ? `✅ Parcours prévu suivi à ${r.cov} %` : `⚠️ Pas de position GPS enregistrée`,
+      r.f ? (r.h == null ? `⚠️ Pas de position GPS enregistrée` : r.h ? `🏠 Retour au point de départ : oui ✓` : `🏠 Retour au point de départ : non`)
+          : (r.cov != null ? `✅ Parcours prévu suivi à ${r.cov} %` : `⚠️ Pas de position GPS enregistrée`),
       r.gm > 1 ? `📡 Suivi GPS : ${fmtMin(Math.max(0, dur - r.gm))} sur ${fmtMin(dur)}` : `📡 Suivi GPS complet`
     ];
     return lines.join("\n");
@@ -895,7 +916,7 @@
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
         <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
-        <div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours suivi</span></div>
+        ${r.f ? `<div><b>${r.h == null ? "—" : r.h ? "✓ Oui" : "Non"}</b><span>retour au départ</span></div>` : `<div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours suivi</span></div>`}
         <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
       </div>
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
@@ -917,6 +938,7 @@
     setTimeout(() => map.invalidateSize(), 50);
     if (!p) return;
     const r = buildRecap(p, endTs);
+    if (!p.line.length){ p.routeM = r.m; }
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r);
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
@@ -938,16 +960,16 @@
     document.body.classList.add("recap");
     const s = new Date(r.s*1000), e = new Date(r.e*1000), dur = (r.e - r.s)/60;
     $("#recapbox").innerHTML = `<div class="card">
-        <h2>🐾 Balade de ${esc(r.d)}</h2>
+        <h2>🐾 ${r.f ? "Balade libre" : "Balade"} de ${esc(r.d)}</h2>
         <p style="margin:2px 0 8px;color:var(--muted)">par <b>${esc(r.w)}</b> · ${s.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}, ${fmtHour(s)} → ${fmtHour(e)}</p>
         <div class="rgrid">
           <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
           <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
-          <div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours prévu suivi</span></div>
+          ${r.f ? `<div><b>${r.h == null ? "—" : r.h ? "✓ Oui" : "Non"}</b><span>retour au point de départ</span></div>` : `<div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours prévu suivi</span></div>`}
           <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
         </div>
         ${r.gm > 1 ? `<div class="warnline">📡 GPS en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé) : le trajet peut avoir des trous.</div>` : ""}
-        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${esc(r.t)} · <span style="color:#2a7de1">━ trajet réel</span> · <span style="color:#999">┅ parcours prévu</span></p>
+        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : esc(r.t)} · <span style="color:#2a7de1">━ trajet réel</span>${r.f ? "" : ` · <span style="color:#999">┅ parcours prévu</span>`}</p>
         <button class="ghost" id="backApp" style="margin-top:12px;width:100%">🐾 Ouvrir Wouaf Balades</button>
       </div>`;
     $("#backApp").onclick = () => { history.replaceState(null, "", location.pathname); showRecapPage(); layers.sel.clearLayers(); if (state.start) showStart(state.start); };
@@ -972,11 +994,10 @@
   const getLog = () => store.get(LOG_KEY, []);
   function saveToLog(p, elapsed, meters, recap){
     const log = getLog();
-    const step = Math.max(1, Math.floor(p.line.length / 300));
     log.unshift({
       id: Date.now(), date: new Date().toISOString(), title: titleOf(p), cat: p.cat, icon: iconOf(p),
-      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(meters), routeM: Math.round(p.m), walker: profile.walker, recap,
-      line: p.line.filter((_, i) => i % step === 0 || i === p.line.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
+      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(meters), routeM: Math.round(p.routeM || p.m), walker: profile.walker, recap,
+      line: (p.line.length ? p.line : track).filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 300)) === 0 || i === a.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
     });
     while (log.length > 100) log.pop();
     while (!store.set(LOG_KEY, log) && log.length > 10) log.pop();
@@ -997,7 +1018,7 @@
         <div class="entry${logSel === e.id ? " sel" : ""}" tabindex="0" data-id="${e.id}">
           <div><h4>${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${e.walker ? esc(e.walker) + " · " : ""}${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
           <div class="dur">${fmtMin(e.min)}<div class="when">${fmtKm(e.m)}</div></div>
-          <div class="acts"><button data-redo="${e.id}">🐾 Refaire</button>${e.recap ? `<button class="ghost" data-send="${e.id}">📩 Renvoyer</button>` : ""}<button class="ghost" data-del="${e.id}">Supprimer</button></div>
+          <div class="acts">${e.line && e.line.length > 1 ? `<button data-redo="${e.id}">🐾 ${e.cat === "free" ? "Refaire ce trajet" : "Refaire"}</button>` : ""}${e.recap ? `<button class="ghost" data-send="${e.id}">📩 Renvoyer</button>` : ""}<button class="ghost" data-del="${e.id}">Supprimer</button></div>
         </div>`).join("")}</div>`;
     el.querySelectorAll(".entry").forEach(n => n.addEventListener("click", ev => {
       const id = +n.dataset.id, e = getLog().find(x => x.id === id); if (!e) return;
@@ -1005,7 +1026,7 @@
       const redo = ev.target.closest("[data-redo]"), del = ev.target.closest("[data-del]");
       if (del){ store.set(LOG_KEY, getLog().filter(x => x.id !== id)); logSel = null; renderLog(); return; }
       if (ev.target.closest("[data-send]") && e.recap){ shareRecap(e.recap, []); return; }
-      const p = { line, m: e.routeM || e.m, min: e.plannedMin, cat: e.cat, type: "log", via: [], _title: e.title, _icon: e.icon };
+      const p = { line, m: e.routeM || e.m, min: e.plannedMin || e.min, cat: e.cat === "free" ? "discover" : e.cat, type: "log", via: [], _title: e.cat === "free" ? "Mon trajet du " + new Date(e.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long" }) : e.title, _icon: e.icon };
       if (redo){ startWalk(p); return; }
       logSel = id; renderLog(); drawSelected(p, "#d9792b");
     }));
@@ -1082,6 +1103,9 @@
     });
   });
   $("#locate").addEventListener("click", locate);
+  $("#freeWalk").addEventListener("click", () => {
+    startWalk({ type:"free", line:[], m:0, min:0, cat:"free", via:[], _title:"Balade libre", _icon:"🚶" });
+  });
 
   showRecapPage().then(isRecap => {
     if (isRecap) return;
