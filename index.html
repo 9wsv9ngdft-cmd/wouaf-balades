@@ -93,7 +93,10 @@
   .who{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);margin-bottom:10px}
   .linkish{background:none;color:var(--green);padding:4px 0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
   #walkbar .tip{font-size:12px;opacity:.85}
-  #walkbar .wbtns{display:flex;gap:8px}
+  #walkbar .wbtns{display:flex;gap:6px}
+  #walkbar .photo{padding:11px 10px}
+  #walkbar #sosBtn{background:#c0392b}
+  #walkbar .in{gap:8px}
   #walkbar .photo{background:rgba(255,255,255,.18);color:#fff}
   .modal{position:fixed;inset:0;background:rgba(20,30,22,.45);display:none;align-items:flex-end;justify-content:center;z-index:2000}
   .modal.open{display:flex}
@@ -190,6 +193,7 @@
   <div class="in">
     <div class="wstats"><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div></div>
     <div class="wbtns">
+      <button class="photo" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
       <button class="photo" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
       <button id="stop">Terminer</button>
     </div>
@@ -701,9 +705,6 @@
 
   // ---------- Profil (sur ce téléphone) ----------
   const DOG = "Roxy";
-  const CODE_KEY = "wouaf-code";
-  const getFamilyCode = () => { try{ return localStorage.getItem(CODE_KEY) || ""; }catch(e){ return ""; } };
-  const setFamilyCode = c => { try{ c ? localStorage.setItem(CODE_KEY, c) : localStorage.removeItem(CODE_KEY); }catch(e){} };
   let profile = store.get("wouaf-profil", { walker:"" });
   profile.dog = DOG;
   function renderWho(){
@@ -716,15 +717,11 @@
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
-      <label for="wCode">Code de famille <span style="font-weight:400">(le même pour tous les promeneurs et le superviseur)</span></label>
-      <input id="wCode" type="password" autocomplete="off" value="${esc(getFamilyCode())}" placeholder="ex. un mot ou des chiffres">
-      <p style="margin:6px 0 0;font-size:12px">Avec un code, le trajet envoyé au superviseur ne s'ouvre qu'avec ce code : un lien transféré par erreur ne montre rien.</p>
       <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div></form>`);
     $("#whoCancel").onclick = closeSheet;
     $("#whoForm").onsubmit = e => {
       e.preventDefault();
       profile = { walker: $("#wName").value.trim(), dog: DOG };
-      setFamilyCode($("#wCode").value.trim());
       store.set("wouaf-profil", { walker: profile.walker }); renderWho(); closeSheet();
       if (then) then();
     };
@@ -826,14 +823,52 @@
     $("#photoBtn").textContent = `📷 ${photos.length}`;
   });
 
+  // ---------- Alerte : envoyer sa position ----------
+  const SOS = [
+    { k:"lost",  label:"🐕 Roxy s'est échappée", msg: d => `🆘 ${d} s'est échappée !` },
+    { k:"hurt",  label:"🩹 Roxy est blessée",    msg: d => `🆘 ${d} est blessée !` },
+    { k:"help",  label:"🙋 J'ai un souci",        msg: () => `🆘 J'ai un souci pendant la balade` }
+  ];
+  function lastPosition(){
+    const t = track[track.length-1];
+    if (t && Date.now() - t.t < 120000) return t;
+    if (youMarker && state.walk){ const ll = youMarker.getLatLng(); return { lat: ll.lat, lon: ll.lng }; }
+    return null;
+  }
+  async function sendSos(item, pos){
+    const text = `${item.msg(DOG)} ${profile.walker || ""} · ${hm(new Date())}\n📍 https://maps.apple.com/?q=${pos.lat.toFixed(5)},${pos.lon.toFixed(5)}`;
+    try{ if (navigator.share){ await navigator.share({ text }); return; } }catch(e){ if (e && e.name === "AbortError") return; }
+    location.href = "sms:&body=" + encodeURIComponent(text);
+  }
+  $("#sosBtn").addEventListener("click", () => {
+    openSheet(`<h2>🆘 Alerte</h2><p>Ta position sera envoyée avec le message (SMS, WhatsApp…). La balade continue.</p>
+      <div class="btns">${SOS.map(o => `<button data-sos="${o.k}" style="padding:16px;font-size:16px">${o.label.replace("Roxy", esc(DOG))}</button>`).join("")}
+      <button class="ghost" id="sosCancel">Annuler</button></div><p id="sosMsg"></p>`);
+    $("#sosCancel").onclick = closeSheet;
+    document.querySelectorAll("[data-sos]").forEach(b => b.onclick = () => {
+      const item = SOS.find(o => o.k === b.dataset.sos);
+      const pos = lastPosition();
+      if (pos){ sendSos(item, pos); return; }
+      // pas encore de position : on la cherche, puis un bouton « Envoyer » (l'iPhone exige un appui pour partager)
+      $("#sosMsg").innerHTML = `<span class="spinner"></span>Recherche de ta position…`;
+      navigator.geolocation.getCurrentPosition(
+        p => { const q = { lat:p.coords.latitude, lon:p.coords.longitude }; $("#sosMsg").innerHTML = `<button id="sosGo" style="width:100%">📩 Envoyer l'alerte</button>`; $("#sosGo").onclick = () => sendSos(item, q); },
+        () => { $("#sosMsg").textContent = "Position introuvable. Appelle directement si c'est urgent."; },
+        { enableHighAccuracy:true, timeout:10000, maximumAge:60000 });
+    });
+  });
+
   // ---------- Récapitulatif ----------
-  function encPoly(pts){
+  // Tracé encodé (algorithme « polyline »), précision réglable : 4 décimales ≈ 10 m
+  function encPoly(pts, prec){
+    const f = Math.pow(10, prec || 5);
     let out = "", pl = 0, pn = 0;
     const enc = v => { v = v < 0 ? ~(v << 1) : (v << 1); let s = ""; while (v >= 0x20){ s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); };
-    for (const p of pts){ const la = Math.round(p.lat*1e5), lo = Math.round(p.lon*1e5); out += enc(la - pl) + enc(lo - pn); pl = la; pn = lo; }
+    for (const p of pts){ const la = Math.round(p.lat*f), lo = Math.round(p.lon*f); if (out && la === pl && lo === pn) continue; out += enc(la - pl) + enc(lo - pn); pl = la; pn = lo; }
     return out;
   }
-  function decPoly(str){
+  function decPoly(str, prec){
+    const f = Math.pow(10, prec || 5);
     const out = []; let i = 0, la = 0, lo = 0;
     while (i < str.length){
       for (const k of [0, 1]){
@@ -842,45 +877,31 @@
         const d = (r & 1) ? ~(r >> 1) : (r >> 1);
         if (k === 0) la += d; else lo += d;
       }
-      out.push({ lat: la/1e5, lon: lo/1e5 });
+      out.push({ lat: la/f, lon: lo/f });
     }
+    return out;
+  }
+  // garde un point tous les ~25 m au moins (les virages restent, les lignes droites s'allègent)
+  function simplify(pts, minM){
+    if (pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) if (dist(out[out.length-1], pts[i]) >= minM) out.push(pts[i]);
+    out.push(pts[pts.length-1]);
     return out;
   }
   const thin = (pts, max) => { if (pts.length <= max) return pts; const st = pts.length / max; const o = []; for (let i = 0; i < max; i++) o.push(pts[Math.floor(i*st)]); o.push(pts[pts.length-1]); return o; };
   const b64u = bytes => { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
   const unb64u = str => { const s = atob(str.replace(/-/g, "+").replace(/_/g, "/")); const a = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i); return a; };
-  // Liens chiffrés (AES-GCM, clé tirée du code de famille) : préfixe « e »
-  const SALT = new TextEncoder().encode("wouaf-balades-roxy-v1");
-  async function familyKey(code){
-    const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(code), "PBKDF2", false, ["deriveKey"]);
-    return crypto.subtle.deriveKey({ name:"PBKDF2", salt:SALT, iterations:150000, hash:"SHA-256" }, base, { name:"AES-GCM", length:256 }, false, ["encrypt", "decrypt"]);
-  }
-  async function sealRecap(r){
-    const inner = await packRecap(r);
-    const code = getFamilyCode();
-    if (!code || !(window.crypto && crypto.subtle)) return inner;
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const ct = new Uint8Array(await crypto.subtle.encrypt({ name:"AES-GCM", iv }, await familyKey(code), new TextEncoder().encode(inner)));
-    const all = new Uint8Array(iv.length + ct.length); all.set(iv); all.set(ct, iv.length);
-    return "e" + b64u(all);
-  }
-  async function openRecap(str, code){
-    if (str[0] !== "e") return unpackRecap(str);
-    if (!code) throw new Error("code");
-    const all = unb64u(str.slice(1));
-    const pt = await crypto.subtle.decrypt({ name:"AES-GCM", iv: all.slice(0, 12) }, await familyKey(code), all.slice(12));
-    return unpackRecap(new TextDecoder().decode(pt));
-  }
-
   async function packRecap(r){
     const raw = new TextEncoder().encode(JSON.stringify(r));
+    let best = "j" + b64u(raw);
     if (window.CompressionStream){
       try{
-        const z = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
-        return "z" + b64u(z);
+        const z = "z" + b64u(new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer()));
+        if (z.length < best.length) best = z;
       }catch(e){}
     }
-    return "j" + b64u(raw);
+    return best;
   }
   async function unpackRecap(str){
     const bytes = unb64u(str.slice(1));
@@ -910,31 +931,31 @@
       cov = Math.round(100 * plan.filter(q => pts.some(t => dist(q, t) < 60)).length / plan.length);
     }
     return {
-      v:1, w: profile.walker, d: profile.dog, t: titleOf(p),
+      v:2, w: profile.walker, d: profile.dog,
       s: Math.round(t0/1000), e: Math.round(endTs/1000),
-      m: Math.round(walkedM), pm: Math.round(p.m), gm: Math.round(gapMs/60000), cov, f: free ? 1 : 0, h: home,
-      tk: encPoly(thin(pts, 400)), pl: encPoly(thin(p.line, 200))
+      m: Math.round(walkedM), gm: Math.round(gapMs/60000), cov, f: free ? 1 : 0, h: home,
+      p: 4, tk: encPoly(thin(simplify(pts, 25), 120), 4)
     };
   }
 
+  const hm = d => `${d.getHours()}h${String(d.getMinutes()).padStart(2, "0")}`;
+  // ✅ = balade bien faite ; sinon on dit ce qui cloche, en peu de mots
   function recapText(r){
     const s = new Date(r.s*1000), e = new Date(r.e*1000);
     const dur = (r.e - r.s) / 60;
-    const day = s.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
-    const lines = [
-      `🐾 ${r.f ? "Balade libre" : "Balade"} de ${r.d} par ${r.w}`,
-      `📅 ${day}, ${fmtHour(s)} → ${fmtHour(e)}`,
-      `⏱ ${fmtMin(dur)} · 📏 ${fmtKm(r.m)}`,
-      r.f ? (r.h == null ? `⚠️ Pas de position GPS enregistrée` : r.h ? `🏠 Retour au point de départ : oui ✓` : `🏠 Retour au point de départ : non`)
-          : (r.cov != null ? `✅ Parcours prévu suivi à ${r.cov} %` : `⚠️ Pas de position GPS enregistrée`),
-      r.gm > 1 ? `📡 Suivi GPS : ${fmtMin(Math.max(0, dur - r.gm))} sur ${fmtMin(dur)}` : `📡 Suivi GPS complet`
-    ];
-    return lines.join("\n");
+    const notes = [];
+    if (!r.tk) notes.push("📡 pas de GPS");
+    else {
+      if (r.f && r.h === 0) notes.push("🏠 fin loin du départ");
+      if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
+      if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
+    }
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}`;
   }
 
   async function shareRecap(r, files){
-    const url = location.origin + location.pathname + "#r=" + await sealRecap(r);
-    const text = recapText(r) + "\n\nVoir le trajet : " + url;
+    const url = location.origin + location.pathname + "#r=" + await packRecap(r);
+    const text = recapText(r) + "\n" + url;
     const title = `Balade de ${r.d}`;
     try{
       if (files && files.length && navigator.canShare && navigator.canShare({ files })) { await navigator.share({ title, text, files }); return true; }
@@ -946,10 +967,10 @@
     return true;
   }
 
-  function showRecapSheet(r, files){
+  function showRecapSheet(r, files, title){
     const dur = (r.e - r.s) / 60;
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
-    openSheet(`<h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(r.t)}</p>
+    openSheet(`<h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")}</p>
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
         <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
@@ -979,7 +1000,7 @@
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r);
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
-    showRecapSheet(r, photos.slice());
+    showRecapSheet(r, photos.slice(), titleOf(p));
   }
   $("#stop").addEventListener("click", stopWalk);
 
@@ -988,25 +1009,7 @@
     const h = location.hash;
     if (!h.startsWith("#r=")){ document.body.classList.remove("recap"); return false; }
     let r;
-    const data = h.slice(3);
-    if (data[0] === "e"){
-      try{ r = await openRecap(data, getFamilyCode()); }
-      catch(e){
-        document.body.classList.add("recap");
-        const tried = !!getFamilyCode();
-        $("#recapbox").innerHTML = `<div class="card"><h2>🔒 Récapitulatif protégé</h2>
-          <p style="color:var(--muted)">${tried ? "Le code enregistré sur ce téléphone ne correspond pas." : "Ce récapitulatif de balade est protégé par le code de famille."} Saisis le code pour l'ouvrir (il sera retenu sur ce téléphone).</p>
-          <form id="codeForm" class="sheet" style="padding:0;background:none"><input id="codeIn" type="password" autocomplete="off" required placeholder="Code de famille">
-          <div class="btns"><button type="submit">Ouvrir</button></div></form><p id="codeErr" style="color:var(--warn)"></p></div>`;
-        $("#codeForm").onsubmit = async ev => {
-          ev.preventDefault();
-          const c = $("#codeIn").value.trim();
-          try{ await openRecap(data, c); setFamilyCode(c); showRecapPage(); }
-          catch(err){ $("#codeErr").textContent = "Code incorrect, réessaie."; }
-        };
-        return true;
-      }
-    } else try{ r = await unpackRecap(data); }catch(e){
+    try{ r = await unpackRecap(h.slice(3)); }catch(e){
       document.body.classList.add("recap");
       $("#recapbox").innerHTML = `<div class="card"><h2>Lien abîmé</h2><p>Ce récapitulatif n'a pas pu être lu. Demandez au promeneur de le renvoyer.</p><button class="ghost" id="backApp">Ouvrir Wouaf Balades</button></div>`;
       $("#backApp").onclick = () => { history.replaceState(null, "", location.pathname); showRecapPage(); };
@@ -1024,12 +1027,12 @@
           <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
         </div>
         ${r.gm > 1 ? `<div class="warnline">📡 GPS en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé) : le trajet peut avoir des trous.</div>` : ""}
-        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : esc(r.t)} · <span style="color:#2a7de1">━ trajet réel</span>${r.f ? "" : ` · <span style="color:#999">┅ parcours prévu</span>`}</p>
+        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : (r.t ? esc(r.t) : "Parcours guidé")} · <span style="color:#2a7de1">━ trajet réel</span>${r.pl ? ` · <span style="color:#999">┅ parcours prévu</span>` : ""}</p>
         <button class="ghost" id="backApp" style="margin-top:12px;width:100%">🐾 Ouvrir Wouaf Balades</button>
       </div>`;
     $("#backApp").onclick = () => { history.replaceState(null, "", location.pathname); showRecapPage(); layers.sel.clearLayers(); if (state.start) showStart(state.start); };
     layers.routes.clearLayers(); layers.sel.clearLayers(); layers.me.clearLayers();
-    const plan = decPoly(r.pl || ""), tk = decPoly(r.tk || "");
+    const plan = decPoly(r.pl || "", r.p), tk = decPoly(r.tk || "", r.p);
     const all = [];
     if (plan.length){ const ll = plan.map(q => [q.lat, q.lon]); all.push(...ll); L.polyline(ll, { color:"#888", weight:4, opacity:.7, dashArray:"6 8" }).addTo(layers.sel); }
     if (tk.length){
@@ -1061,7 +1064,7 @@
   // Restes des anciennes versions de l'app
   function cleanLeftovers(){
     try{
-      const old = ["balades-cache", "balades-favs", "balades-prefs"];
+      const old = ["balades-cache", "balades-favs", "balades-prefs", "wouaf-code"];
       for (let i = localStorage.length - 1; i >= 0; i--){
         const k = localStorage.key(i);
         if (k && (old.includes(k) || k.startsWith("idf:"))) localStorage.removeItem(k);
@@ -1288,7 +1291,7 @@
     }
   });
 
-  window.__wouaf = { renderLog, exportCsv, backupLog, sealRecap, openRecap, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
+  window.__wouaf = { renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
 </script>
 </body>
