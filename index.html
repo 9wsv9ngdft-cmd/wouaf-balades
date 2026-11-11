@@ -339,7 +339,7 @@
 
     const [parks, trails] = await Promise.all([
       photonPlaces(start, reach).catch(() => []),
-      trailPlaces(start, reach).catch(() => [])
+      Promise.race([trailPlaces(start, reach), new Promise(r => setTimeout(() => r([]), 6000))]).catch(() => [])
     ]);
     if (my !== genId) return;
     const cands = uniq([...parks, ...trails].sort((a, b) => quality(b) - quality(a))).slice(0, 25);
@@ -358,7 +358,7 @@
         const r = await route([start, ...p.via.map(v => v.pt), start]);
         observed.push(r.m / (p.est / p.detour));
         const ratio = r.m / D;
-        if (ratio < 0.65 || ratio > 1.4) return null;
+        if (ratio < 0.7 || ratio > 1.25) return null;
         return Object.assign({}, p, r, { min: r.m / M_PER_MIN });
       }catch(e){ return null; }
     };
