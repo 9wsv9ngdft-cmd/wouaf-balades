@@ -207,14 +207,14 @@
         if (inside){
           // on est dedans : on vise un point vers le cœur du parc
           const dc = dist(start, c);
-          pt = dc > 60 ? dest(start, bearing(start, c), Math.min(dc, reach)) : dest(start, 0, reach*0.6);
+          pt = dc > 60 ? dest(start, bearing(start, c), Math.min(dc, reach*0.6)) : dest(start, 0, reach*0.5);
         } else {
           // l'entrée la plus proche ≈ bord de l'emprise, un peu vers l'intérieur
           const edge = { lat: Math.min(Math.max(start.lat, s), n), lon: Math.min(Math.max(start.lon, w), e) };
           pt = { lat: edge.lat + (c.lat - edge.lat)*0.15, lon: edge.lon + (c.lon - edge.lon)*0.15 };
         }
       }
-      if (area && area < 3000 && kind === "park") continue;   // tout petit square
+      if (kind !== "dog" && area < 3000 && (area || kind === "forest")) continue;   // tout petit square, arbre isolé
       out.push({ name: p.name, kind, pt, area, inside, d: dist(start, pt) });
     }
     return out;
@@ -276,7 +276,7 @@
     return out;
   }
 
-  function plans(start, cands, D){
+  function plans(start, cands, D, DETOUR){
     const list = [];
     // Allers-retours : distance à vol d'oiseau idéale ≈ D / (2 × détour)
     const ideal = D / (2*DETOUR);
@@ -284,7 +284,7 @@
       if (c.d < 80) continue;
       const fit = Math.abs(c.d - ideal) / ideal;
       if (fit > 0.6) continue;
-      list.push({ type:"ar", via:[c], est: 2*DETOUR*c.d, rank: quality(c) - fit*4 });
+      list.push({ type:"ar", via:[c], est: 2*DETOUR*c.d, rank: quality(c) - fit*4 + (c.inside ? 0.8 : 0) });
     }
     // Boucles par deux lieux
     for (let i = 0; i < cands.length; i++) for (let j = i+1; j < cands.length; j++){
@@ -301,9 +301,9 @@
     return list.sort((x, y) => y.rank - x.rank);
   }
 
-  function neighbourhoodLoop(start, D, angle){
+  function neighbourhoodLoop(start, D, angle, DETOUR){
     const s = D / (3*DETOUR);
-    return { type:"quartier", via:[
+    return { type:"quartier", detour: DETOUR, via:[
       { name:"", kind:"walk", pt: dest(start, angle, s) },
       { name:"", kind:"walk", pt: dest(start, angle + 60, s) }
     ], est: D, rank: -10 };
@@ -345,32 +345,49 @@
     const cands = uniq([...parks, ...trails].sort((a, b) => quality(b) - quality(a))).slice(0, 25);
     setStatus(`<span class="spinner"></span>Calcul des itinéraires…`);
 
-    // On calcule les meilleures idées, en gardant des balades variées
-    const ideas = plans(start, cands, D);
+    // On calcule les meilleures idées ; si les chemins font plus de détours que prévu
+    // (relief, voies ferrées, domaines fermés…), on mesure le détour réel et on recommence.
     const results = [];
     const used = new Set();
+    const observed = [];
+    let detour = DETOUR, tries = 0;
+    const tried = new Set();
+    const keyOf = p => p.type + ":" + p.via.map(v => v.name).join("|");
     const tryPlan = async p => {
       try{
         const r = await route([start, ...p.via.map(v => v.pt), start]);
+        observed.push(r.m / (p.est / p.detour));
         const ratio = r.m / D;
-        if (ratio < 0.65 || ratio > 1.45) return null;
+        if (ratio < 0.65 || ratio > 1.4) return null;
         return Object.assign({}, p, r, { min: r.m / M_PER_MIN });
       }catch(e){ return null; }
     };
-    let tries = 0;
-    for (const p of ideas){
-      if (results.length >= 3 || tries >= 8) break;
-      const key = p.via.map(v => v.name).join("|");
-      if (p.via.some(v => used.has(v.name))) continue;
-      tries++;
-      const r = await tryPlan(p);
+    for (let round = 0; round < 3 && results.length < 3 && tries < 14; round++){
+      const ideas = plans(start, cands, D, detour).filter(p => !p.via.some(v => used.has(v.name)) && !tried.has(keyOf(p)));
+      const batch = [];
+      for (const p of ideas){
+        if (batch.length >= 4) break;
+        if (batch.some(q => q.via.some(v => p.via.includes(v)))) continue;
+        p.detour = detour; batch.push(p); tried.add(keyOf(p));
+      }
+      if (!batch.length) break;
+      tries += batch.length;
+      const got = await Promise.all(batch.map(tryPlan));
       if (my !== genId) return;
-      if (r){ results.push(r); p.via.forEach(v => used.add(v.name)); }
+      for (const r of got){
+        if (!r || results.length >= 3 || r.via.some(v => used.has(v.name))) continue;
+        results.push(r); r.via.forEach(v => used.add(v.name));
+      }
+      if (observed.length){
+        const sorted = observed.slice().sort((x, y) => x - y);
+        detour = Math.min(2.6, Math.max(1.1, sorted[Math.floor(sorted.length/2)]));
+      }
     }
     // Toujours au moins deux idées : on complète avec des boucles de quartier
     let ang = 30;
     while (results.length < 2 && ang < 360){
-      const r = await tryPlan(neighbourhoodLoop(start, D, ang));
+      const q = neighbourhoodLoop(start, D, ang, detour); q.detour = detour;
+      const r = await tryPlan(q);
       if (my !== genId) return;
       if (r) results.push(r);
       ang += 150;
