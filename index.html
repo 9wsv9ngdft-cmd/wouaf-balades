@@ -149,7 +149,7 @@
 
   <footer>
     Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL), via l'API Overpass et Nominatim.
-    Tracés GPX via <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>.
+    Sentiers balisés via <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>. Balades d'Île-de-France : <a href="https://data.iledefrance.fr">data.iledefrance.fr</a> (Île-de-France Nature, Département des Hauts-de-Seine).
     Les durées sont des estimations (≈ 3,5 km/h, rythme « chien qui renifle »). Vérifiez toujours la signalisation sur place :
     réserves naturelles, période de nidification (15 avril – 30 juin en forêt) et arrêtés municipaux peuvent imposer la laisse ou interdire les chiens.
   </footer>
@@ -379,6 +379,121 @@ out tags center;`;
     return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Wouaf Balades" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>${e(it.name)}</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata><trk><name>${e(it.name)}</name>${segs}</trk></gpx>`;
   }
 
+  // ---------- Île-de-France : balades publiées en open data (data.iledefrance.fr) ----------
+  const IDF_API = "https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets";
+  const IDF_BOX = { s:48.1, w:1.4, n:49.25, e:3.6 };
+  const HDS_BOX = { s:48.72, w:2.14, n:48.96, e:2.34 }; // Hauts-de-Seine
+  const idf = { base:null, hds:null, loadingBase:null, loadingHds:null };
+  const boxHit = (a, b) => a.s <= b.n && a.n >= b.s && a.w <= b.e && a.e >= b.w;
+
+  function geoLines(g){
+    if (!g) return [];
+    if (g.type === "Feature") g = g.geometry;
+    if (!g) return [];
+    const conv = cs => cs.map(([lon, lat]) => ({ lat, lon }));
+    if (g.type === "LineString") return [conv(g.coordinates)];
+    if (g.type === "MultiLineString") return g.coordinates.map(conv);
+    return [];
+  }
+
+  // Raccorde des tronçons dans le désordre (graphe simple, extrémités à < 15 m)
+  function mergeAll(segs){
+    let pool = segs.filter(s => s.length > 1).map(s => s.slice());
+    let merged = true;
+    const close = (a, b) => dist(a, b) < 15;
+    while (merged && pool.length > 1){
+      merged = false;
+      outer: for (let i = 0; i < pool.length; i++){
+        for (let j = 0; j < pool.length; j++){
+          if (i === j) continue;
+          const A = pool[i], B = pool[j];
+          let joined = null;
+          if (close(A[A.length-1], B[0])) joined = A.concat(B.slice(1));
+          else if (close(A[A.length-1], B[B.length-1])) joined = A.concat(B.slice(0, -1).reverse());
+          else if (close(A[0], B[B.length-1])) joined = B.concat(A.slice(1));
+          else if (close(A[0], B[0])) joined = A.slice().reverse().concat(B.slice(1));
+          if (joined){ pool[i] = joined; pool.splice(j, 1); merged = true; break outer; }
+        }
+      }
+    }
+    return pool.sort((a, b) => lineLength(b) - lineLength(a));
+  }
+
+  async function idfExport(id){
+    const key = "idf:" + id;
+    const c = store.get(key, null);
+    if (c && Date.now() - c.t < 7*86400000) return c.d;
+    const r = await fetch(`${IDF_API}/${id}/exports/geojson`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const d = j.features || [];
+    if (JSON.stringify(d).length < 400000) store.set(key, { t: Date.now(), d });
+    return d;
+  }
+
+  const first = v => Array.isArray(v) ? v[0] : v;
+
+  async function loadIdfBase(){
+    const [forets, promenades] = await Promise.all([
+      idfExport("itineraire_balade").catch(() => []),
+      idfExport("itineraire-promenade-projet-balade-2014").catch(() => [])
+    ]);
+    const raws = [];
+    // 1) Balades en forêts régionales (une ligne par balade)
+    const byName = {};
+    for (const f of forets){
+      const p = f.properties || {};
+      const k = p.id_promena || p.nom_b; if (!k) continue;
+      (byName[k] = byName[k] || { name: first(p.nom_b) || "Balade en forêt", segs: [] }).segs.push(...geoLines(f.geometry));
+    }
+    for (const [k, v] of Object.entries(byName)) raws.push({ id:"idf-foret-" + k, name:v.name, segs:mergeAll(v.segs),
+      kindLabel:"Balade en forêt régionale", src:"Île-de-France Nature", srcUrl:"https://data.iledefrance.fr/explore/dataset/itineraire_balade/" });
+    // 2) Promenades forestières découpées en étapes
+    const byProm = {};
+    for (const f of promenades){
+      const p = f.properties || {};
+      const k = p.id_promena; if (k == null) continue;
+      (byProm[k] = byProm[k] || { name: first(p.nom_b) || "Promenade en forêt", segs: [] }).segs.push(...geoLines(f.geometry));
+    }
+    for (const [k, v] of Object.entries(byProm)) raws.push({ id:"idf-prom-" + k, name:v.name, segs:mergeAll(v.segs),
+      kindLabel:"Promenade en forêt", src:"Agence des espaces verts d'Île-de-France", srcUrl:"https://data.iledefrance.fr/explore/dataset/itineraire-promenade-projet-balade-2014/" });
+    return raws.filter(r => r.segs.length);
+  }
+
+  async function loadIdfHds(){
+    const feats = await idfExport("plan-departemental-des-itineraires-de-promenade-et-de-randonnee");
+    const byPR = {};
+    for (const f of feats){
+      const p = f.properties || {};
+      if (p.pdipr_pieton === "Non") continue;
+      for (let n = 1; n <= 11; n++){
+        if (p["pr" + n] === "Oui") (byPR[n] = byPR[n] || []).push(...geoLines(f.geometry));
+      }
+    }
+    return Object.entries(byPR).map(([n, segs]) => ({ id:"idf-hds-pr" + n, name:`Promenade PR${n} des Hauts-de-Seine`, segs:mergeAll(segs),
+      kindLabel:"Promenade balisée (PR)", src:"Département des Hauts-de-Seine", srcUrl:"https://data.iledefrance.fr/explore/dataset/plan-departemental-des-itineraires-de-promenade-et-de-randonnee/" }));
+  }
+
+  function ensureIdf(vb){
+    const jobs = [];
+    if (boxHit(vb, IDF_BOX) && !idf.base && !idf.loadingBase)
+      jobs.push(idf.loadingBase = loadIdfBase().then(r => { idf.base = r; }).catch(() => { idf.base = []; }));
+    if (boxHit(vb, HDS_BOX) && !idf.hds && !idf.loadingHds)
+      jobs.push(idf.loadingHds = loadIdfHds().then(r => { idf.hds = r; }).catch(() => { idf.hds = []; }));
+    return jobs.length ? Promise.all(jobs) : null;
+  }
+
+  function rawItem(r, center){
+    const segs = r.segs;
+    const length = segs.reduce((s, sg) => s + lineLength(sg), 0);
+    let best = null, bd = Infinity;
+    for (const sg of segs) for (const p of sg){ const d = dist(center, p); if (d < bd){ bd = d; best = p; } }
+    const a = segs[0][0], z = segs[0][segs[0].length-1];
+    return { id:r.id, osmType:null, kind:"route", dog:"unknown", tags:{}, name:r.name, segs, length,
+      lengthApprox:false, partial:false, long: length > 25000, round: segs.length === 1 && dist(a, z) < 150,
+      access:best, dist:bd, group:"IDF", kindLabel:r.kindLabel, src:r.src, srcUrl:r.srcUrl };
+  }
+
   // ---------- Transformation des données ----------
   const DOG_OK = /^(yes|designated|unleashed|permissive)$/;
   function dogInfo(t){
@@ -518,7 +633,7 @@ out tags center;`;
     let s = KIND[it.kind].base;
     const plan = it.plan || planOf(it);
     if (it.kind === "route"){
-      if ((it.tags.network || "") === "lwn" || it.group === "LOC") s += 0.8;
+      if ((it.tags.network || "") === "lwn" || it.group === "LOC" || it.group === "IDF") s += 0.8;
       if (it.round) s += 0.6;
     }
     if (it.dog === "free") s += 2.5; else if (it.dog === "yes") s += 1.5; else if (it.dog === "leash") s += 0.2;
@@ -580,6 +695,7 @@ out tags center;`;
       if (t.operator) parts.push(`Balisage : ${esc(t.operator)}.`);
       if (t._symbol) parts.push(`Balisage : ${esc(t._symbol)}.`);
       parts.push(`Point d'accès le plus proche à ${fmtKm(it.dist)} de vous.`);
+      if (it.src) parts.push(`Itinéraire publié par ${esc(it.src)}.`);
     } else if (it.kind === "dogpark"){
       parts.push("Espace dédié où votre chien peut se dépenser sans laisse.");
     }
@@ -622,11 +738,11 @@ out tags center;`;
     const k = KIND[it.kind];
     const d = dirLinks(it);
     const fav = !!favs[it.id];
-    const gpx = it.kind === "route" ? `<button class="ghost" data-gpx="${esc(it.id)}">⬇️ GPX</button>
-      <a class="btn ghost" href="https://hiking.waymarkedtrails.org/#route?id=${it.osmId}" target="_blank" rel="noopener">🗺️ Tracé complet</a>` : "";
+    const gpx = it.kind === "route" ? `<button class="ghost" data-gpx="${esc(it.id)}">⬇️ GPX</button>` +
+      (it.osmType ? `<a class="btn ghost" href="https://hiking.waymarkedtrails.org/#route?id=${it.osmId}" target="_blank" rel="noopener">🗺️ Tracé complet</a>` : "") : "";
     return `<div class="card" tabindex="0" data-id="${esc(it.id)}">
       <div class="top">
-        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${k.label}${(it.group || it.tags.network) ? " · " + ({LOC:"promenade locale",REG:"itinéraire régional",lwn:"promenade locale",rwn:"itinéraire régional",nwn:"national",iwn:"international"}[it.group || it.tags.network]||"") : ""}</div></div>
+        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${it.kindLabel ? esc(it.kindLabel) : k.label}${(!it.kindLabel && (it.group || it.tags.network)) ? " · " + ({LOC:"promenade locale",REG:"itinéraire régional",lwn:"promenade locale",rwn:"itinéraire régional",nwn:"national",iwn:"international"}[it.group || it.tags.network]||"") : ""}</div></div>
         ${rank != null ? `<div class="score">#${rank+1}</div>` : ""}
       </div>
       <div class="meta">
@@ -641,7 +757,7 @@ out tags center;`;
         <a class="btn ghost" href="${d.a}" target="_blank" rel="noopener"> Plans</a>
         ${gpx}
         <button class="ghost" data-fav="${esc(it.id)}">${fav ? "★ Retirer" : "☆ Garder"}</button>
-        <a class="btn ghost" href="https://www.openstreetmap.org/${it.osmType}/${it.osmId}" target="_blank" rel="noopener">OSM</a>
+        ${it.osmType ? `<a class="btn ghost" href="https://www.openstreetmap.org/${it.osmType}/${it.osmId}" target="_blank" rel="noopener">OSM</a>` : `<a class="btn ghost" href="${esc(it.srcUrl)}" target="_blank" rel="noopener">Source</a>`}
       </div>
     </div>`;
   }
@@ -804,7 +920,8 @@ out tags center;`;
     const ref = refPoint();
     state.center = ref;
     const { items: areaItems, pois } = transform({ elements: state.areaEls || [] }, ref);
-    const routeItems = (state.wmt || []).map(d => wmtItem(d, ref)).filter(Boolean);
+    const routeItems = (state.wmt || []).map(d => wmtItem(d, ref)).filter(Boolean)
+      .concat([...(idf.base || []), ...(idf.hds || [])].map(r => rawItem(r, ref)));
     addProximity(routeItems, pois);
     const vb = viewBox(0.15);
     state.items = [...routeItems, ...areaItems].filter(it => it.kind === "route"
@@ -866,6 +983,9 @@ out tags center;`;
     state.queried = qb;
     const key = bboxStr(qb);
     if (!state.items.length) $("#list").innerHTML = `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>`;
+
+    // 0) balades open data d'Île-de-France
+    const pI = ensureIdf(qb); if (pI) pI.then(() => { if (!sig.aborted) recompute(); });
 
     // 1) sentiers balisés : rapide
     state.loadingRoutes = true;
