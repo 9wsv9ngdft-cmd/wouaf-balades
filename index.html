@@ -358,9 +358,9 @@
     return q;
   }
 
-  function nearestPlaceName(cands, p, maxM){
+  function nearestPlaceName(cands, p, maxM, not){
     let best = null, bd = maxM;
-    for (const c of cands) if (c.kind === "place"){ const d = dist(c.pt, p); if (d < bd){ bd = d; best = c.name; } }
+    for (const c of cands) if (c.kind === "place" && c.name !== not){ const d = dist(c.pt, p); if (d < bd){ bd = d; best = c.name; } }
     return best;
   }
   const DIRS = ["le nord", "le nord-est", "l'est", "le sud-est", "le sud", "le sud-ouest", "l'ouest", "le nord-ouest"];
@@ -389,11 +389,12 @@
     }
     // boucles « découverte » dans 8 directions, nommées d'après le quartier ou la ville vers lesquels elles vont
     const s = D / (3*detour);
+    const here = nearestPlaceName(cands, start, 1500);   // la ville où l'on est déjà ne compte pas
     for (let k = 0; k < 8; k++){
       const brg = (k*45 + round*22.5) % 360;
       const p1 = dest(start, brg - 30, s), p2 = dest(start, brg + 30, s);
       const far = dest(start, brg, s*0.9);
-      const town = nearestPlaceName(cands, far, s*0.9);
+      const town = nearestPlaceName(cands, far, s*0.9, here);
       list.push({ type:"discover", cat:"discover", via:[{ name:"", kind:"walk", pt:p1 }, { name:"", kind:"walk", pt:p2 }],
         town, dir: dirName(brg), key:"dir" + brg + ":" + (town || ""), rank: (town ? 1.2 : 0.6) - k*0.01 });
     }
@@ -502,6 +503,7 @@
         if (!r || countCat() >= goal) continue;
         if (r.via.some(v => v.name && used.has(v.name))) continue;
         if (overlaps(r.line, state.results)) continue;
+        if (state.results.some(o => titleOf(o) === titleOf(r))) continue;
         state.results.push(r); r.via.forEach(v => v.name && used.add(v.name));
       }
       if (observed.length){
