@@ -394,7 +394,7 @@
       const brg = (k*45 + round*22.5) % 360;
       const p1 = dest(start, brg - 30, s), p2 = dest(start, brg + 30, s);
       const far = dest(start, brg, s*0.9);
-      const town = nearestPlaceName(cands, far, s*0.9, here);
+      const town = nearestPlaceName(cands, dest(start, brg, s*1.2), s*1.4, here);
       list.push({ type:"discover", cat:"discover", via:[{ name:"", kind:"walk", pt:p1 }, { name:"", kind:"walk", pt:p2 }],
         town, dir: dirName(brg), key:"dir" + brg + ":" + (town || ""), rank: (town ? 1.2 : 0.6) - k*0.01 });
     }
@@ -659,7 +659,7 @@
     if (state.start && youMarker) youMarker.setLatLng([state.start.lat, state.start.lon]);
     setTimeout(() => map.invalidateSize(), 50);
     const saved = p && elapsed >= 2;
-    if (saved) saveToLog(p, elapsed);
+    if (saved) saveToLog(p, elapsed, walked > 50 ? walked : Math.min(p.m, elapsed * M_PER_MIN));
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${saved ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
   }
@@ -668,12 +668,12 @@
   // ---------- Carnet (gardé sur le téléphone) ----------
   const LOG_KEY = "wouaf-carnet";
   const getLog = () => store.get(LOG_KEY, []);
-  function saveToLog(p, elapsed){
+  function saveToLog(p, elapsed, meters){
     const log = getLog();
     const step = Math.max(1, Math.floor(p.line.length / 300));
     log.unshift({
       id: Date.now(), date: new Date().toISOString(), title: titleOf(p), cat: p.cat, icon: iconOf(p),
-      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(p.m),
+      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(meters), routeM: Math.round(p.m),
       line: p.line.filter((_, i) => i % step === 0 || i === p.line.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
     });
     while (log.length > 100) log.pop();
@@ -702,7 +702,7 @@
       const line = e.line.map(([lat, lon]) => ({ lat, lon }));
       const redo = ev.target.closest("[data-redo]"), del = ev.target.closest("[data-del]");
       if (del){ store.set(LOG_KEY, getLog().filter(x => x.id !== id)); logSel = null; renderLog(); return; }
-      const p = { line, m: e.m, min: e.plannedMin, cat: e.cat, type: "log", via: [], _title: e.title, _icon: e.icon };
+      const p = { line, m: e.routeM || e.m, min: e.plannedMin, cat: e.cat, type: "log", via: [], _title: e.title, _icon: e.icon };
       if (redo){ startWalk(p); return; }
       logSel = id; renderLog(); drawSelected(p, "#d9792b");
     }));
