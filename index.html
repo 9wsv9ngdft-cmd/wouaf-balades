@@ -145,7 +145,7 @@
 
   <footer>
     Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL).
-    Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS / OSRM</a> · Lieux : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a> · Météo : <a href="https://open-meteo.com">Open-Meteo</a> (Météo-France).
+    Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS (OSRM, Valhalla)</a>, <a href="https://brouter.de">BRouter</a> · Lieux : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a> · Météo : <a href="https://open-meteo.com">Open-Meteo</a> (Météo-France).
     Durées estimées à 3,5 km/h, rythme « chien qui renifle ». Vérifiez la signalisation sur place (laisse obligatoire, accès interdits aux chiens).
   </footer>
 </main>
@@ -420,12 +420,58 @@
     return best ? KINDS[best.kind].icon : "🐾";
   }
 
+  // Itinéraires piétons : trois services gratuits ; si l'un refuse (trop de demandes), on passe au suivant
+  const VALHALLA = "https://valhalla1.openstreetmap.de/route";
+  const BROUTER = "https://brouter.de/brouter";
+  const routerDown = {};   // service → heure jusqu'à laquelle on l'évite
+  function decode6(str){
+    const out = []; let i = 0, lat = 0, lon = 0;
+    while (i < str.length){
+      for (const k of [0, 1]){
+        let b, shift = 0, res = 0;
+        do { b = str.charCodeAt(i++) - 63; res |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+        const d = (res & 1) ? ~(res >> 1) : (res >> 1);
+        if (k === 0) lat += d; else lon += d;
+      }
+      out.push({ lat: lat / 1e6, lon: lon / 1e6 });
+    }
+    return out;
+  }
+  const ROUTERS = {
+    osrm: async pts => {
+      const coords = pts.map(p => `${p.lon.toFixed(6)},${p.lat.toFixed(6)}`).join(";");
+      const j = await getJSON(`${OSRM}/${coords}?overview=full&geometries=geojson&continue_straight=false`, 10000);
+      if (j.code !== "Ok" || !j.routes || !j.routes[0]) throw new Error("no-route");
+      return { line: j.routes[0].geometry.coordinates.map(([lon, lat]) => ({ lat, lon })), m: j.routes[0].distance };
+    },
+    valhalla: async pts => {
+      const body = { locations: pts.map(p => ({ lat: +p.lat.toFixed(6), lon: +p.lon.toFixed(6), type:"break" })), costing:"pedestrian",
+        costing_options:{ pedestrian:{ walkway_factor:0.9, use_hills:0.5 } }, directions_type:"none", units:"kilometers" };
+      const j = await getJSON(`${VALHALLA}?json=${encodeURIComponent(JSON.stringify(body))}`, 10000);
+      if (!j.trip || !j.trip.legs) throw new Error("no-route");
+      const line = [];
+      j.trip.legs.forEach(l => { const pts2 = decode6(l.shape); line.push(...(line.length ? pts2.slice(1) : pts2)); });
+      return { line, m: j.trip.summary.length * 1000 };
+    },
+    brouter: async pts => {
+      const ll = pts.map(p => `${p.lon.toFixed(6)},${p.lat.toFixed(6)}`).join("|");
+      const j = await getJSON(`${BROUTER}?lonlats=${ll}&profile=hiking-mountain&alternativeidx=0&format=geojson`, 12000);
+      const f = j.features && j.features[0]; if (!f) throw new Error("no-route");
+      return { line: f.geometry.coordinates.map(c => ({ lat: c[1], lon: c[0] })), m: +f.properties["track-length"] };
+    }
+  };
   async function route(points){
-    const coords = points.map(p => `${p.lon.toFixed(6)},${p.lat.toFixed(6)}`).join(";");
-    const j = await getJSON(`${OSRM}/${coords}?overview=full&geometries=geojson&continue_straight=false`, 12000);
-    if (j.code !== "Ok" || !j.routes || !j.routes[0]) throw new Error("pas d'itinéraire");
-    const r = j.routes[0];
-    return { line: r.geometry.coordinates.map(([lon, lat]) => ({ lat, lon })), m: r.distance };
+    let lastErr;
+    for (const name of ["osrm", "valhalla", "brouter"]){
+      if (routerDown[name] && routerDown[name] > Date.now()) continue;
+      try{ return await ROUTERS[name](points); }
+      catch(e){
+        lastErr = e;
+        if (e.message === "no-route") throw e;            // le service répond, mais pas de chemin : inutile d'insister
+        routerDown[name] = Date.now() + 5*60000;          // service saturé ou bloqué : on l'évite 5 min
+      }
+    }
+    throw lastErr || new Error("aucun service");
   }
 
   // Deux balades qui suivent presque le même chemin : on n'en garde qu'une
@@ -479,7 +525,7 @@
     };
 
     const order = onlyCat ? [onlyCat] : ["nature", "water", "heritage", "dog", "discover"];
-    for (let round = 0; round < 5 && countCat() < goal && tries < 24; round++){
+    for (let round = 0; round < 4 && countCat() < goal && tries < 18; round++){
       const ideas = ideasFor(start, cands, D, detour, state.round)
         .filter(p => !tried.has(keyOf(p)) && !p.via.some(v => v.name && used.has(v.name)))
         .filter(p => order.includes(p.cat))
@@ -488,10 +534,10 @@
       // un lot varié : on prend à tour de rôle la meilleure idée de chaque type
       const queues = order.map(c => ideas.filter(p => p.cat === c));
       const batch = [];
-      for (let k = 0; batch.length < 6 && k < 6; k++){
+      for (let k = 0; batch.length < 5 && k < 5; k++){
         for (const q of queues){
           const p = q.find(x => !batch.includes(x) && !batch.some(b => b.via.some(v => v.name && x.via.some(w => w.name === v.name))));
-          if (p && batch.length < 6) batch.push(p);
+          if (p && batch.length < 5) batch.push(p);
         }
       }
       if (!batch.length) break;
