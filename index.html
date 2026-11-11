@@ -490,9 +490,14 @@ out tags center;`;
     for (let i = 0; i < items.length; i++){
       const it = items[i];
       const pts = it.segs.flat();
+      it._bb = pts.reduce((bb, p) => ({ s:Math.min(bb.s, p.lat), n:Math.max(bb.n, p.lat), w:Math.min(bb.w, p.lon), e:Math.max(bb.e, p.lon) }), { s:90, n:-90, w:180, e:-180 });
       const sample = pts.filter((_, k) => k % Math.max(1, Math.floor(pts.length/8)) === 0);
       const dup = kept.some(o => {
         if (Math.abs(o.length - it.length) / Math.max(o.length, it.length) > 0.2) return false;
+        const A = o._bb, B = it._bb;
+        const iw = Math.min(A.e, B.e) - Math.max(A.w, B.w), ih = Math.min(A.n, B.n) - Math.max(A.s, B.s);
+        if (iw <= 0 || ih <= 0) return false;
+        if (iw*ih < 0.5 * Math.min((A.e-A.w)*(A.n-A.s), (B.e-B.w)*(B.n-B.s))) return false;
         const op = o._pts || (o._pts = o.segs.flat().filter((_, k) => k % 2 === 0));
         return sample.filter(p => op.some(q => dist(p, q) < 80)).length >= sample.length*0.7;
       });
