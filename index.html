@@ -798,6 +798,7 @@ out tags center;`;
     await pR;
   }
 
+  window.addEventListener("resize", () => map.invalidateSize());
   map.on("moveend", () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => refresh(false), 600); });
 
   function showUser(p){
