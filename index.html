@@ -74,6 +74,12 @@
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
   .leaflet-container{font:inherit}
+  .layers{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .layers::-webkit-scrollbar{display:none}
+  .layers button{flex:none;font-size:13px;font-weight:500;padding:7px 11px;border-radius:999px;background:#fff;color:var(--muted);border:1px solid var(--line)}
+  .layers button.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .layers button:not(.on){text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+  .tip{font-size:13px;color:#3f463e;background:#f4efe3;border-radius:10px;padding:7px 10px;margin-top:8px}
   button.big{width:100%;justify-content:center;font-size:17px;padding:16px;border-radius:14px}
   details summary{cursor:pointer;color:var(--green);font-weight:600;font-size:14px;padding:4px 0;list-style:none}
   details summary::-webkit-details-marker{display:none}
@@ -107,13 +113,13 @@
     </form>
     <div class="filters">
       <div>
-        <div class="flabel" id="durLabel">Combien de temps ?</div>
+        <div class="flabel" id="durLabel">Combien de temps de balade ?</div>
         <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
-          <button data-v="any" class="on">Peu importe</button>
-          <button data-v="short">&lt; 30 min</button>
-          <button data-v="mid">30 min – 1 h</button>
-          <button data-v="long">1 h – 2 h</button>
-          <button data-v="xl">2 h +</button>
+          <button data-v="d30">30 min</button>
+          <button data-v="d45" class="on">45 min</button>
+          <button data-v="d60">1 h</button>
+          <button data-v="d90">1 h 30</button>
+          <button data-v="any">Peu importe</button>
         </div>
       </div>
       <details>
@@ -126,6 +132,13 @@
   </div>
 
   <div id="status" aria-live="polite">Localisez-vous, tapez une ville, ou zoomez sur la carte.</div>
+  <div class="layers" id="layers" role="group" aria-label="Ce que la carte affiche">
+    <button data-l="routes">🥾 Sentiers</button>
+    <button data-l="dogparks">🐕 Parcs à chiens</button>
+    <button data-l="green">🌳 Parcs et bois</button>
+    <button data-l="water">💧 Points d'eau</button>
+    <button data-l="bags">🛍️ Sacs</button>
+  </div>
   <div id="map"></div>
 
   <div class="tabs">
@@ -158,10 +171,11 @@
   ];
   const NOMINATIM = "https://nominatim.openstreetmap.org/search";
   const SPEED_KMH = 3.5;
-  const DUR = { any:[0,Infinity], short:[0,30], mid:[30,60], long:[60,120], xl:[120,Infinity] };
+  const DURMAX = { d30:30, d45:45, d60:60, d90:90, any:null };
+  const M_PER_MIN = SPEED_KMH*1000/60;
 
   const state = {
-    center: null, user: null, queried: null, areaEls: [], wmt: [], dur: "any", offleash: false,
+    center: null, user: null, queried: null, areaEls: [], wmt: [], dur: "d45", offleash: false, layers: { routes:true, dogparks:true, green:true, water:false, bags:false },
     items: [], pois: [], selected: null, tab: "results", raw: null
   };
 
@@ -172,7 +186,7 @@
   };
   let favs = store.get("balades-favs", {});
   const prefs = store.get("balades-prefs", null);
-  if (prefs){ state.dur = prefs.dur || "any"; state.offleash = !!prefs.offleash; }
+  if (prefs){ state.dur = (prefs.dur in DURMAX) ? prefs.dur : "d45"; state.offleash = !!prefs.offleash; if (prefs.layers) Object.assign(state.layers, prefs.layers); }
 
   // ---------- Map ----------
   const map = L.map("map", { zoomControl:true, attributionControl:true }).setView([46.6, 2.4], 5);
@@ -199,7 +213,7 @@
     return m === 60 ? `${h+1} h` : (m ? `${h} h ${String(m).padStart(2,"0")}` : `${h} h`);
   }
   function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
-  function savePrefs(){ store.set("balades-prefs", { dur: state.dur, offleash: state.offleash }); }
+  function savePrefs(){ store.set("balades-prefs", { dur: state.dur, offleash: state.offleash, layers: state.layers }); }
 
   function parseDistanceTag(v){
     if (!v) return null;
@@ -297,7 +311,8 @@ out tags center;`;
     const a = toMerc(b.w, b.s), z = toMerc(b.e, b.n);
     const list = await wmtFetch(`${WMT}/list/by_area?bbox=${a[0]},${a[1]},${z[0]},${z[1]}&limit=100`, signal);
     // promenades locales et régionales d'abord ; les très grands itinéraires (GR, E…) sont trop lourds à charger
-    const keep = (list.results || []).filter(r => r.type === "relation" && (r.group === "LOC" || r.group === "REG")).slice(0, 30);
+    const rank = { LOC:0, REG:1 };
+    const keep = (list.results || []).filter(r => r.type === "relation" && (r.group in rank)).sort((x, y) => rank[x.group] - rank[y.group]).slice(0, 35);
     const out = await Promise.all(keep.map(async r => {
       if (wmtCache.has(r.id)) return wmtCache.get(r.id);
       try{ const d = await wmtFetch(`${WMT}/details/relation/${r.id}`, signal); d.group = r.group; wmtCache.set(r.id, d); return d; }
@@ -465,11 +480,27 @@ out tags center;`;
 
   function minutesOf(it){ return it.length ? (it.length/1000)/SPEED_KMH*60 : null; }
 
+  // Ce qu'on propose concrètement pour la durée choisie
+  function planOf(it){
+    const target = DURMAX[state.dur];
+    const full = minutesOf(it);
+    if (it.kind === "dogpark") return { mode:"play", min:null };
+    if (it.kind === "route"){
+      if (!target) return it.round ? { mode:"loop", min:full, m:it.length } : { mode:"oneway", min:full, m:it.length };
+      if (it.round && full <= target*1.25) return { mode:"loop", min:full, m:it.length };
+      if (!it.round && full*2 <= target*1.25) return { mode:"ar", min:full*2, m:it.length*2 };
+      return { mode:"section", min:target, m:target*M_PER_MIN };
+    }
+    if (full == null) return { mode:"free", min:target };
+    if (target && full > target*1.25) return { mode:"free", min:target, m:target*M_PER_MIN };
+    return { mode:"tour", min:full, m:it.length };
+  }
+
   function score(it){
     let s = KIND[it.kind].base;
+    const plan = it.plan || planOf(it);
     if (it.kind === "route"){
-      const net = it.tags.network || "";
-      if (net === "lwn" || it.group === "LOC") s += 0.8;
+      if ((it.tags.network || "") === "lwn" || it.group === "LOC") s += 0.8;
       if (it.round) s += 0.6;
     }
     if (it.dog === "free") s += 2.5; else if (it.dog === "yes") s += 1.5; else if (it.dog === "leash") s += 0.2;
@@ -482,20 +513,29 @@ out tags center;`;
     if (it.hasBags) s += 0.4;
     if (it.hasLake) s += 0.5;
     if (it.tags.description || it.tags.website || it.tags.wikipedia || it.tags.wikidata) s += 0.3;
-    // proximité : pénalité douce
     s -= Math.min(it.dist/1000, 30) * 0.35;
-    // adéquation à la durée voulue
-    if (state.dur !== "any"){
-      const [lo, hi] = DUR[state.dur];
-      const min = minutesOf(it);
-      if (it.kind === "dogpark") s += state.dur === "short" ? 1 : -0.5;
-      else if (it.long) s += lo >= 60 ? 1 : 0.2; // on peut toujours faire un tronçon
-      else if (min != null){
-        if (min >= lo*0.8 && min <= hi*1.2) s += 1.5;
-        else s -= Math.min(3, Math.abs(Math.log((min+1)/((lo+Math.min(hi,240))/2+1))) * 1.5);
+    const target = DURMAX[state.dur];
+    if (target){
+      if (plan.mode === "play") s += target <= 30 ? 0.8 : -0.6;
+      else if (plan.min){
+        const diff = Math.abs(plan.min - target) / target;
+        s += 1.6 - Math.min(4, diff*3.5);
       }
-    }
+      if (plan.mode === "section") s -= 1.4;   // un vrai circuit vaut mieux qu'un bout de grand sentier
+      if (plan.mode === "free") s -= 0.3;
+    } else if (it.kind === "route" && it.length > 25000) s -= 1.5;
     return s;
+  }
+
+  // Tronçon à faire en aller-retour depuis le point d'accès
+  function sectionOf(it, meters){
+    let bestSeg = null, bestI = 0, bd = Infinity;
+    for (const sg of it.segs) sg.forEach((p, i) => { const d = dist(p, it.access); if (d < bd){ bd = d; bestSeg = sg; bestI = i; } });
+    if (!bestSeg) return [];
+    const walk = dir => { const out = [bestSeg[bestI]]; let acc = 0; for (let i = bestI+dir; i >= 0 && i < bestSeg.length; i += dir){ acc += dist(bestSeg[i-dir], bestSeg[i]); out.push(bestSeg[i]); if (acc >= meters) break; } return { out, acc }; };
+    const f = walk(1), b = walk(-1);
+    if (f.acc >= meters || f.acc >= b.acc) return f.out;
+    return b.out;
   }
 
   // ---------- Rendu ----------
@@ -509,7 +549,6 @@ out tags center;`;
     if (it.hasLake) b.push(["","💦 Plan d'eau proche"]);
     if (it.hasBags) b.push(["","🛍️ Sacs à crottes"]);
     if (it.kind === "route" && it.round) b.push(["","🔁 Boucle"]);
-    if (it.long) b.push(["","✂️ Faites-en un tronçon"]);
     if (it.kind === "reserve") b.push(["warn","⚠️ Règles strictes possibles"]);
     if (it.kind === "forest" || it.kind === "reserve") b.push(["warn","🐣 Laisse 15/4 – 30/6"]);
     return b;
@@ -533,13 +572,25 @@ out tags center;`;
   }
 
   function lengthText(it){
-    if (it.kind === "dogpark") return "";
-    if (!it.length) return "";
-    if (it.kind === "route"){
-      const pre = it.partial ? "Tronçon proche ≈ " : it.lengthApprox ? "≈ " : "";
-      return `<span>🚶 <b>${pre}${fmtKm(it.length)}</b> · ${fmtMin(minutesOf(it))}${it.round ? "" : " (aller)"}</span>`;
+    const p = it.plan || planOf(it);
+    switch (p.mode){
+      case "play":   return `<span>🎾 Pour se dépenser en liberté</span>`;
+      case "loop":   return `<span>🔁 Boucle · <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
+      case "ar":     return `<span>↔️ Aller-retour · <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
+      case "section":return `<span>↔️ Aller-retour sur le sentier · <b>${fmtMin(p.min)}</b></span>`;
+      case "oneway": return `<span>🚶 Sentier de <b>${fmtKm(p.m)}</b> · ${fmtMin(p.min)} (aller)</span>`;
+      case "tour":   return `<span>🚶 Tour ≈ <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
+      case "free":   return `<span>🌲 Balade libre · <b>${fmtMin(p.min)}</b></span>`;
     }
-    return `<span>🚶 Tour ≈ <b>${fmtKm(it.length)}</b> · ${fmtMin(minutesOf(it))}</span>`;
+    return "";
+  }
+
+  function tipOf(it){
+    const p = it.plan || planOf(it);
+    if (p.mode === "section") return `Ce sentier fait ${fmtKm(it.length)} : depuis le point d'accès, suivez le balisage environ ${fmtMin(p.min/2)}, puis faites demi-tour. Le tronçon est en orange sur la carte.`;
+    if (p.mode === "free") return `Grand espace (tour complet ≈ ${fmtMin(minutesOf(it))}) : promenez-vous ${fmtMin(p.min)} à votre rythme.`;
+    if (p.mode === "ar") return `Sentier à faire jusqu'au bout puis retour par le même chemin.`;
+    return "";
   }
 
   function dirLinks(it){
@@ -565,6 +616,7 @@ out tags center;`;
         ${lengthText(it)}
       </div>
       <div class="badges">${badgesOf(it).map(([c, t]) => `<span class="badge ${c}">${t}</span>`).join("")}</div>
+      ${tipOf(it) ? `<div class="tip">${tipOf(it)}</div>` : ""}
       <div class="desc">${descOf(it)}</div>
       <div class="actions">
         <a class="btn" href="${d.g}" target="_blank" rel="noopener">🧭 Y aller</a>
@@ -576,10 +628,19 @@ out tags center;`;
     </div>`;
   }
 
+  function layerOf(it){ return it.kind === "route" ? "routes" : it.kind === "dogpark" ? "dogparks" : "green"; }
+
   function filtered(){
+    const target = DURMAX[state.dur];
+    let sections = 0;
     return state.items
+      .filter(it => state.layers[layerOf(it)])
+      .map(it => { it.plan = planOf(it); return it; })
+      // trop court pour la durée voulue (petit square pour 1 h…) : on écarte
+      .filter(it => !target || !it.plan.min || it.plan.mode === "free" || it.plan.min >= Math.min(12, target*0.3) || it.kind !== "park")
       .map(it => ({ it, s: score(it) }))
       .sort((a, b) => b.s - a.s)
+      .filter(x => x.it.plan.mode !== "section" || ++sections <= 4)
       .slice(0, 40)
       .map(x => x.it);
   }
@@ -588,17 +649,18 @@ out tags center;`;
     const list = $("#list");
     if (state.tab === "favs"){
       const arr = Object.values(favs);
+      arr.forEach(it => { it.plan = planOf(it); });
       list.innerHTML = arr.length ? arr.map(it => cardHTML(it, null)).join("") : `<div class="empty">Aucune balade gardée pour l'instant.<br>Touchez « ☆ Garder » sur une suggestion.</div>`;
       bindCards(arr);
       drawMarkers(arr);
       return;
     }
-    if (!state.items.length){
+    const arr = filtered();
+    if (!arr.length){
       list.innerHTML = (state.loadingRoutes || state.loadingAreas) ? `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>` : state.center ? `<div class="empty">Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.</div>` : `<div class="empty">Touchez « Trouver des balades près de moi », tapez une ville, ou zoomez sur la carte.</div>`;
       drawMarkers([]);
       return;
     }
-    const arr = filtered();
     list.innerHTML = arr.map((it, i) => cardHTML(it, i)).join("");
     bindCards(arr);
     drawMarkers(arr);
@@ -654,9 +716,11 @@ out tags center;`;
       L.marker([it.access.lat, it.access.lon], { icon: pinIcon(it), title: it.name }).addTo(layers.items).on("click", () => select(it, false));
     }
     layers.pois.clearLayers();
-    if (state.tab === "results" && map.getZoom() >= 15){
+    if (state.tab === "results" && map.getZoom() >= 13){
       for (const p of state.pois){
         if (p.type === "lake") continue;
+        if (p.type === "water" && !state.layers.water) continue;
+        if (p.type === "bags" && !state.layers.bags) continue;
         L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:`<div class="poi">${p.type === "water" ? "💧" : "🛍️"}</div>`, iconSize:[16,16], iconAnchor:[8,8] }), interactive:false }).addTo(layers.pois);
       }
     }
@@ -673,9 +737,16 @@ out tags center;`;
     layers.sel.clearLayers();
     if (it.segs){
       const all = [];
+      const plan = it.plan || planOf(it);
+      const sec = plan.mode === "section" ? sectionOf(it, plan.m/2) : null;
       for (const sg of it.segs){
-        const ll = sg.map(p => [p.lat, p.lon]); all.push(...ll);
-        L.polyline(ll, { color:"#d9792b", weight:6, opacity:.9 }).addTo(layers.sel);
+        const ll = sg.map(p => [p.lat, p.lon]);
+        if (!sec) all.push(...ll);
+        L.polyline(ll, sec ? { color:"#d9792b", weight:3, opacity:.5, dashArray:"6 8" } : { color:"#d9792b", weight:6, opacity:.9 }).addTo(layers.sel);
+      }
+      if (sec && sec.length > 1){
+        const ll = sec.map(p => [p.lat, p.lon]); all.push(...ll);
+        L.polyline(ll, { color:"#d9792b", weight:7, opacity:.95 }).addTo(layers.sel);
       }
       if (fromList) map.fitBounds(L.latLngBounds(all).extend(state.user ? [state.user.lat, state.user.lon] : all[0]), { padding:[30,30], maxZoom:16 });
     } else if (it.bbox && it.bbox.s !== it.bbox.n){
@@ -858,6 +929,15 @@ out tags center;`;
     });
   }
   seg("#durSeg", "dur", () => render());
+  document.querySelectorAll("#layers button").forEach(b => {
+    b.classList.toggle("on", !!state.layers[b.dataset.l]);
+    b.setAttribute("aria-pressed", String(!!state.layers[b.dataset.l]));
+    b.addEventListener("click", () => {
+      const k = b.dataset.l; state.layers[k] = !state.layers[k];
+      b.classList.toggle("on", state.layers[k]); b.setAttribute("aria-pressed", String(state.layers[k]));
+      savePrefs(); render();
+    });
+  });
   $("#offleash").checked = state.offleash;
   $("#offleash").addEventListener("change", e => { state.offleash = e.target.checked; savePrefs(); render(); });
   $("#locate").addEventListener("click", locate);
@@ -871,7 +951,7 @@ out tags center;`;
   render();
 
   // export pour tests
-  window.__balades = { map, transform, score, state, buildQueries, overpass, wmtRoutes, wmtItem, refresh, fmtMin, fmtKm };
+  window.__balades = { map, planOf, filtered, transform, score, state, buildQueries, overpass, wmtRoutes, wmtItem, refresh, fmtMin, fmtKm };
 })();
 </script>
 </body>
