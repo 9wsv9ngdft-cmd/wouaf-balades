@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wouaf Balades">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="description" content="Trouvez des balades à faire avec votre chien autour de vous : sentiers balisés, parcs à chiens, forêts, points d'eau.">
+<meta name="description" content="Une balade avec votre chien qui part de là où vous êtes et y revient : 30 min, 45 min ou 1 h.">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -19,140 +19,93 @@
   :root{
     --bg:#f6f2ea; --card:#fffdf8; --ink:#1f2a22; --muted:#6b7366; --line:#e5dfd2;
     --green:#2f5d3a; --green-2:#4c8a5a; --sand:#e9dcc3; --accent:#d9792b; --warn:#b4452f;
-    --radius:16px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,sans-serif}
-  header{
-    padding:calc(env(safe-area-inset-top) + 18px) 18px 14px;
-    background:var(--green);color:#fff;
-  }
+  header{padding:calc(env(safe-area-inset-top) + 16px) 0 12px;background:var(--green);color:#fff}
   header h1{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:26px;margin:0 0 2px;letter-spacing:-.3px}
   header p{margin:0;opacity:.85;font-size:14px}
-  .wrap{max-width:900px;margin:0 auto;padding:0 14px calc(env(safe-area-inset-bottom) + 30px)}
-  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:-6px;position:relative;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  button,.btn{
-    font:inherit;font-weight:600;border:0;border-radius:12px;padding:11px 14px;cursor:pointer;
-    background:var(--green);color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
-  }
-  button.ghost,.btn.ghost{background:#eef3ec;color:var(--green)}
-  button:disabled{opacity:.5}
-  input[type=search]{flex:1;min-width:160px;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
-  .filters{margin-top:12px;display:grid;gap:10px}
-  .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px;overflow-x:auto}
-  .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:8px 10px;border-radius:10px;white-space:nowrap;font-size:14px}
-  .seg button.on{background:#fff;color:var(--green);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-  .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
-  .check{display:flex;align-items:center;gap:8px;font-size:14px}
-  .check input{width:18px;height:18px;accent-color:var(--green)}
+  .wrap{max-width:720px;margin:0 auto;padding:0 14px}
+  main.wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 110px)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:-4px;position:relative;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
+  button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:11px 14px;cursor:pointer;background:var(--green);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  button.ghost{background:#eef3ec;color:var(--green)}
+  button.big{width:100%;font-size:17px;padding:16px;border-radius:14px}
+  button:disabled{opacity:.55}
+  button:focus-visible,.prop:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+  .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px}
+  .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:10px 6px;border-radius:10px;font-size:15px}
+  .seg button.on{background:#fff;color:var(--green);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
   #status{margin:14px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
   #status.err{color:var(--warn)}
-  #map{height:42vh;min-height:260px;border-radius:var(--radius);border:1px solid var(--line);margin-top:6px;z-index:0}
-  .tabs{display:flex;gap:6px;margin:16px 0 8px}
-  .tabs button{background:transparent;color:var(--muted);padding:8px 12px}
-  .tabs button.on{background:var(--sand);color:var(--ink)}
-  .list{display:grid;gap:10px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;cursor:pointer;transition:border-color .15s}
-  .card.sel{border-color:var(--green-2);box-shadow:0 0 0 2px rgba(76,138,90,.25)}
-  .card .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-  .card h3{margin:0;font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:600;line-height:1.25}
-  .kind{font-size:12px;color:var(--muted);margin-top:2px}
-  .score{flex:none;font-weight:700;color:var(--green);background:#eef3ec;border-radius:10px;padding:4px 8px;font-size:13px}
-  .meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-size:14px}
-  .meta b{font-weight:600}
-  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-  .badge{font-size:12px;padding:3px 8px;border-radius:999px;background:#f1ece1;color:#4a4a3f}
-  .badge.good{background:#e3f0e3;color:#25502f}
-  .badge.warn{background:#fbe6df;color:#8a3220}
-  .actions{display:none;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .card.sel .actions{display:flex}
-  .actions .btn{padding:9px 12px;font-size:14px}
-  .desc{font-size:14px;color:#3f463e;margin-top:8px;display:none}
-  .card.sel .desc{display:block}
-  .empty{color:var(--muted);text-align:center;padding:24px 10px}
+  .linkish{background:none;color:var(--green);padding:0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
+  #map{height:46vh;min-height:280px;border-radius:16px;border:1px solid var(--line);z-index:0}
+  #map.picking{outline:3px dashed var(--accent);outline-offset:2px}
+  .props{display:grid;gap:10px;margin-top:14px}
+  .prop{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+  .prop.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(217,121,43,.25)}
+  .prop .ico{width:42px;height:42px;border-radius:12px;background:#eef3ec;display:flex;align-items:center;justify-content:center;font-size:22px}
+  .prop h3{margin:0;font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:600;line-height:1.25}
+  .prop .sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .prop .time{font-weight:700;color:var(--green);font-size:16px;text-align:right;white-space:nowrap}
+  .prop .time small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+  .go{grid-column:1/-1;display:none}
+  .prop.sel .go{display:flex}
+  .empty{color:var(--muted);text-align:center;padding:18px 10px}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .you{width:18px;height:18px;border-radius:50%;background:#2a7de1;border:3px solid #fff;box-shadow:0 0 0 3px rgba(42,125,225,.3)}
+  .home{font-size:20px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+  .wp{background:#fff;border:2px solid var(--accent);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  #walkbar{position:fixed;left:0;right:0;bottom:0;background:var(--green);color:#fff;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);display:none;z-index:1000;box-shadow:0 -6px 20px -8px rgba(0,0,0,.35)}
+  #walkbar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  #walkbar .stats{flex:1;font-size:14px;line-height:1.35}
+  #walkbar .stats b{font-size:20px;font-family:Fraunces,Georgia,serif}
+  #walkbar button{background:#fff;color:var(--green)}
+  body.walking .panel,body.walking .props,body.walking #status{display:none}
+  body.walking #walkbar{display:block}
+  body.walking #map{height:calc(100vh - 210px)}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
   .leaflet-container{font:inherit}
-  .layers{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .layers::-webkit-scrollbar{display:none}
-  .layers button{flex:none;font-size:13px;font-weight:500;padding:7px 11px;border-radius:999px;background:#fff;color:var(--muted);border:1px solid var(--line)}
-  .layers button.on{background:var(--green);color:#fff;border-color:var(--green)}
-  .layers button:not(.on){text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
-  .tip{font-size:13px;color:#3f463e;background:#f4efe3;border-radius:10px;padding:7px 10px;margin-top:8px}
-  button.big{width:100%;justify-content:center;font-size:17px;padding:16px;border-radius:14px}
-  details summary{cursor:pointer;color:var(--green);font-weight:600;font-size:14px;padding:4px 0;list-style:none}
-  details summary::-webkit-details-marker{display:none}
-  details summary::before{content:"⚙️ "}
-  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  button:focus-visible,a:focus-visible,input:focus-visible,.card:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  input[type=search]{font-size:16px} /* évite le zoom auto sur iPhone */
-  .you{width:16px;height:16px;border-radius:50%;background:#2a7de1;border:3px solid #fff;box-shadow:0 0 0 2px rgba(42,125,225,.35)}
-  .pin{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--green);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-  .pin span{transform:rotate(45deg);font-size:14px}
-  .poi{font-size:15px;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
-  .spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}
-  @keyframes sp{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap" style="padding-bottom:10px">
+  <div class="wrap">
     <h1>🐾 Wouaf Balades</h1>
-    <p>Sentiers balisés, parcs à chiens, forêts et espaces verts autour de vous.</p>
+    <p>Une balade qui part de là où vous êtes, et y revient.</p>
   </div>
 </header>
 
-<div class="wrap">
+<main class="wrap">
   <div class="panel">
-    <button id="locate" class="big">📍 Trouver des balades près de moi</button>
-    <form id="searchForm" class="row" style="margin-top:10px" role="search">
-      <label for="q" class="sr">Adresse ou ville</label>
-      <input id="q" type="search" placeholder="Ou tapez une ville, une adresse…" autocomplete="off" enterkeyhint="search">
-      <button class="ghost" type="submit">OK</button>
-    </form>
-    <div class="filters">
-      <div>
-        <div class="flabel" id="durLabel">Combien de temps de balade ?</div>
-        <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
-          <button data-v="d30">30 min</button>
-          <button data-v="d45" class="on">45 min</button>
-          <button data-v="d60">1 h</button>
-          <button data-v="d90">1 h 30</button>
-          <button data-v="any">Peu importe</button>
-        </div>
-      </div>
-      <details>
-        <summary>Plus d'options</summary>
-        <div style="display:grid;gap:12px;margin-top:10px">
-          <label class="check"><input type="checkbox" id="offleash"> Mettre en avant les lieux où il peut courir sans laisse</label>
-        </div>
-      </details>
+    <button id="locate" class="big">📍 Me localiser</button>
+    <div class="flabel" id="durLabel">Combien de temps ?</div>
+    <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
+      <button data-v="30">30 min</button>
+      <button data-v="45">45 min</button>
+      <button data-v="60">1 h</button>
     </div>
   </div>
 
-  <div id="status" aria-live="polite">Localisez-vous, tapez une ville, ou zoomez sur la carte.</div>
-  <div class="layers" id="layers" role="group" aria-label="Ce que la carte affiche">
-    <button data-l="routes">🥾 Sentiers</button>
-    <button data-l="dogparks">🐕 Parcs à chiens</button>
-    <button data-l="green">🌳 Parcs et bois</button>
-    <button data-l="water">💧 Points d'eau</button>
-    <button data-l="bags">🛍️ Sacs</button>
-  </div>
+  <div id="status" aria-live="polite">Touchez « Me localiser » pour trouver une balade autour de vous.</div>
   <div id="map"></div>
-
-  <div class="tabs">
-    <button class="on" data-tab="results">Suggestions</button>
-    <button data-tab="favs">⭐ Mes balades</button>
-  </div>
-  <div id="list" class="list"></div>
+  <div id="props" class="props"></div>
 
   <footer>
-    Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL), via l'API Overpass et Nominatim.
-    Sentiers balisés via <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>. Balades d'Île-de-France : <a href="https://data.iledefrance.fr">data.iledefrance.fr</a> (Île-de-France Nature, Département des Hauts-de-Seine).
-    Les durées sont des estimations (≈ 3,5 km/h, rythme « chien qui renifle »). Vérifiez toujours la signalisation sur place :
-    réserves naturelles, période de nidification (15 avril – 30 juin en forêt) et arrêtés municipaux peuvent imposer la laisse ou interdire les chiens.
+    Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL).
+    Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS / OSRM</a> · Parcs : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a>.
+    Durées estimées à 3,5 km/h, rythme « chien qui renifle ». Vérifiez la signalisation sur place (laisse obligatoire, accès interdits aux chiens).
   </footer>
+</main>
+
+<div id="walkbar" role="region" aria-label="Balade en cours">
+  <div class="in">
+    <div class="stats" id="walkstats"><b>0 min</b><br>C'est parti !</div>
+    <button id="stop">Terminer</button>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -160,962 +113,414 @@
 (() => {
   "use strict";
 
-  // ---------- Config ----------
-  const OVERPASS = [
-    "https://overpass-api.de/api/interpreter",
-    "https://lz4.overpass-api.de/api/interpreter",
-    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    "https://z.overpass-api.de/api/interpreter",
-    "https://overpass.private.coffee/api/interpreter",
-    "https://overpass.kumi.systems/api/interpreter"
-  ];
-  const NOMINATIM = "https://nominatim.openstreetmap.org/search";
+  // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
-  const DURMAX = { d30:30, d45:45, d60:60, d90:90, any:null };
-  const M_PER_MIN = SPEED_KMH*1000/60;
+  const M_PER_MIN = SPEED_KMH * 1000 / 60;      // ≈ 58 m par minute
+  const DETOUR = 1.3;                            // les chemins font ~30 % de plus que la ligne droite
+  const OSRM = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
+  const PHOTON = "https://photon.komoot.io/reverse";
+  const WMT = "https://hiking.waymarkedtrails.org/api/v1";
 
-  const state = {
-    center: null, user: null, queried: null, areaEls: [], wmt: [], dur: "d45", offleash: false, layers: { routes:true, dogparks:true, green:true, water:false, bags:false },
-    items: [], pois: [], selected: null, tab: "results", raw: null
-  };
-
-  // ---------- Storage (favoris) ----------
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const store = {
     get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
     set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
   };
-  let favs = store.get("balades-favs", {});
-  const prefs = store.get("balades-prefs", null);
-  if (prefs){ state.dur = (prefs.dur in DURMAX) ? prefs.dur : "d45"; state.offleash = !!prefs.offleash; if (prefs.layers) Object.assign(state.layers, prefs.layers); }
 
-  // ---------- Map ----------
-  const map = L.map("map", { zoomControl:true, attributionControl:true }).setView([46.6, 2.4], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
-    maxZoom: 19, subdomains:"abc",
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-  const layers = { you: L.layerGroup().addTo(map), items: L.layerGroup().addTo(map), routes: L.layerGroup().addTo(map), pois: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map) };
+  const state = { start:null, dur: store.get("wouaf-dur", 45), props:[], sel:null, walking:false, picking:false };
+  if (![30, 45, 60].includes(state.dur)) state.dur = 45;
 
-  // ---------- Helpers ----------
-  const $ = s => document.querySelector(s);
-  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const R = 6371000;
+  // ---------- Géométrie ----------
+  const R = 6371000, toR = Math.PI/180;
   function dist(a, b){
-    const toR = Math.PI/180, dLat=(b.lat-a.lat)*toR, dLon=(b.lon-a.lon)*toR;
+    const dLat=(b.lat-a.lat)*toR, dLon=(b.lon-a.lon)*toR;
     const x = Math.sin(dLat/2)**2 + Math.cos(a.lat*toR)*Math.cos(b.lat*toR)*Math.sin(dLon/2)**2;
     return 2*R*Math.asin(Math.sqrt(x));
   }
-  const fmtKm = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",")} km`;
+  function bearing(a, b){
+    const y = Math.sin((b.lon-a.lon)*toR)*Math.cos(b.lat*toR);
+    const x = Math.cos(a.lat*toR)*Math.sin(b.lat*toR) - Math.sin(a.lat*toR)*Math.cos(b.lat*toR)*Math.cos((b.lon-a.lon)*toR);
+    return (Math.atan2(y, x)/toR + 360) % 360;
+  }
+  function dest(a, brg, m){
+    const d = m/R, t = brg*toR, la = a.lat*toR, lo = a.lon*toR;
+    const la2 = Math.asin(Math.sin(la)*Math.cos(d) + Math.cos(la)*Math.sin(d)*Math.cos(t));
+    const lo2 = lo + Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(la), Math.cos(d) - Math.sin(la)*Math.sin(la2));
+    return { lat: la2/toR, lon: lo2/toR };
+  }
+  const angDiff = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+  const fmtKm = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(1).replace(".", ",")} km`;
   function fmtMin(min){
-    if (!isFinite(min) || min <= 0) return "—";
-    if (min < 57.5) return `${Math.max(5, Math.round(min/5)*5)} min`;
-    if (min < 60) min = 60;
-    const h = Math.floor(min/60), m = Math.round((min%60)/15)*15;
-    return m === 60 ? `${h+1} h` : (m ? `${h} h ${String(m).padStart(2,"0")}` : `${h} h`);
+    min = Math.round(min);
+    if (min < 60) return `${Math.max(1, min)} min`;
+    const h = Math.floor(min/60), m = min % 60;
+    return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
   }
   function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
-  function savePrefs(){ store.set("balades-prefs", { dur: state.dur, offleash: state.offleash, layers: state.layers }); }
 
-  function parseDistanceTag(v){
-    if (!v) return null;
-    const m = String(v).replace(",", ".").match(/([\d.]+)\s*(km|m|mi)?/i);
-    if (!m) return null;
-    const n = parseFloat(m[1]); if (!isFinite(n) || n <= 0) return null;
-    const u = (m[2]||"km").toLowerCase();
-    return u === "m" ? n : u === "mi" ? n*1609 : n*1000;
-  }
-  function bboxOf(b){ return b ? { s:b.minlat, w:b.minlon, n:b.maxlat, e:b.maxlon } : null; }
-  function bboxCenter(b){ return { lat:(b.s+b.n)/2, lon:(b.w+b.e)/2 }; }
-  function bboxSize(b){
-    const w = dist({lat:(b.s+b.n)/2, lon:b.w}, {lat:(b.s+b.n)/2, lon:b.e});
-    const h = dist({lat:b.s, lon:b.w}, {lat:b.n, lon:b.w});
-    return { w, h };
-  }
-  function lineLength(pts){ let s=0; for (let i=1;i<pts.length;i++) s += dist(pts[i-1], pts[i]); return s; }
-
-  // ---------- Overpass ----------
-  // Les serveurs publics sont parfois saturés : on lance le 1er, puis on
-  // ajoute un serveur de secours toutes les 4 s. Le premier qui répond gagne.
-  function overpass(q, outerSignal){
-    return new Promise((resolve, reject) => {
-      const ctrls = [];
-      let done = false, failed = 0, started = 0;
-      const timers = [];
-      const finish = (fn, v) => { if (done) return; done = true; timers.forEach(clearTimeout); ctrls.forEach(c => c.abort()); fn(v); };
-      if (outerSignal){
-        if (outerSignal.aborted) return reject(new DOMException("aborted", "AbortError"));
-        outerSignal.addEventListener("abort", () => finish(reject, new DOMException("aborted", "AbortError")));
-      }
-      const launch = (url) => {
-        if (done) return;
-        started++;
-        const c = new AbortController(); ctrls.push(c);
-        const t = setTimeout(() => c.abort(), 50000); timers.push(t);
-        fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" }, signal:c.signal })
-          .then(r => { if (!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-          .then(j => { if (!j || !Array.isArray(j.elements)) throw new Error("réponse invalide"); finish(resolve, j); })
-          .catch(e => {
-            failed++;
-            // serveur en échec : on passe tout de suite au suivant
-            const next = OVERPASS[started]; if (next) launch(next);
-            if (failed >= OVERPASS.length) finish(reject, e);
-          });
-      };
-      launch(OVERPASS[0]);
-      for (let i = 1; i < OVERPASS.length; i++){
-        timers.push(setTimeout(() => { if (!done && started <= i) launch(OVERPASS[i]); }, i*5000));
-      }
-    });
-  }
-
-  function bboxStr(b){ return `${b.s.toFixed(5)},${b.w.toFixed(5)},${b.n.toFixed(5)},${b.e.toFixed(5)}`; }
-
-  function buildQueries(b){
-    const bb = bboxStr(b);
-    const areas = `[out:json][timeout:25][bbox:${bb}];
-(
-  nwr["leisure"="dog_park"];
-  nwr["leisure"="park"]["name"];
-  nwr["landuse"="forest"]["name"];
-  nwr["natural"="wood"]["name"];
-  nwr["leisure"="nature_reserve"]["name"];
-  nwr["natural"="beach"]["dog"~"^(yes|leashed|unleashed|designated)$"];
-  nwr["leisure"="common"]["name"];
-  nwr["landuse"="meadow"]["name"]["access"!~"^(private|no)$"];
-);
-out tags bb;
-(
-  node["amenity"="drinking_water"];
-  node["vending"="excrement_bags"];
-  node["amenity"="dog_toilet"];
-  node["amenity"="watering_place"];
-  nwr["natural"="water"]["name"];
-);
-out tags center;`;
-    return { areas };
-  }
-
-  // ---------- Waymarked Trails (sentiers balisés, rapide et fiable) ----------
-  const WMT = "https://hiking.waymarkedtrails.org/api/v1";
-  const wmtCache = new Map();
-  const toMerc = (lon, lat) => [lon*20037508.34/180, Math.log(Math.tan((90+lat)*Math.PI/360))*6378137];
-  const fromMerc = (x, y) => ({ lon: x/20037508.34*180, lat: (2*Math.atan(Math.exp(y/6378137)) - Math.PI/2)*180/Math.PI });
-
-  async function wmtFetch(url, signal){
-    const c = new AbortController(); const t = setTimeout(() => c.abort(), 15000);
-    if (signal) signal.addEventListener("abort", () => c.abort());
-    try{ const r = await fetch(url, { signal:c.signal }); if (!r.ok) throw new Error("HTTP "+r.status); return await r.json(); }
+  async function getJSON(url, ms){
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), ms || 12000);
+    try{ const r = await fetch(url, { signal:c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return await r.json(); }
     finally{ clearTimeout(t); }
   }
 
-  async function wmtRoutes(b, signal){
-    const a = toMerc(b.w, b.s), z = toMerc(b.e, b.n);
-    const list = await wmtFetch(`${WMT}/list/by_area?bbox=${a[0]},${a[1]},${z[0]},${z[1]}&limit=100`, signal);
-    // promenades locales et régionales d'abord ; les très grands itinéraires (GR, E…) sont trop lourds à charger
-    const rank = { LOC:0, REG:1 };
-    const keep = (list.results || []).filter(r => r.type === "relation" && (r.group in rank)).sort((x, y) => rank[x.group] - rank[y.group]).slice(0, 35);
-    const out = await Promise.all(keep.map(async r => {
-      if (wmtCache.has(r.id)) return wmtCache.get(r.id);
-      try{ const d = await wmtFetch(`${WMT}/details/relation/${r.id}`, signal); d.group = r.group; wmtCache.set(r.id, d); return d; }
-      catch(e){ return null; }
-    }));
-    return out.filter(Boolean);
+  // ---------- Carte ----------
+  const map = L.map("map", { zoomControl:true }).setView([48.8566, 2.3522], 12);
+  L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
+    maxZoom: 19, subdomains:"abc", attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+  const layers = { routes: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), me: L.layerGroup().addTo(map) };
+  window.addEventListener("resize", () => map.invalidateSize());
+  let youMarker = null;
+  function showStart(p){
+    layers.me.clearLayers();
+    L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="home">🏠</div>', iconSize:[22,22], iconAnchor:[11,11] }), keyboard:false, interactive:false }).addTo(layers.me);
+    youMarker = L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[18,18], iconAnchor:[9,9] }), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(layers.me);
   }
 
-  function wmtSegments(node, out){
-    if (!node || typeof node !== "object") return out;
-    if (node.geometry && node.geometry.type === "LineString"){
-      out.push(node.geometry.coordinates.map(([x, y]) => fromMerc(x, y)));
-    }
-    for (const k of ["main", "appendices", "ways", "forward", "backward", "routes"]){
-      if (Array.isArray(node[k])) node[k].forEach(n => wmtSegments(n, out));
-    }
-    return out;
-  }
-
-  // Les chemins arrivent voie par voie : on les raccorde en lignes continues
-  function chainSegments(segs){
-    const out = [];
-    const close = (a, b) => dist(a, b) < 15;
-    let single = false; // la chaîne courante n'a qu'une voie : on peut encore la retourner
-    for (const sg of segs){
-      const cur = out[out.length-1];
-      if (cur){
-        if (close(cur[cur.length-1], sg[0])){ cur.push(...sg.slice(1)); single = false; continue; }
-        if (close(cur[cur.length-1], sg[sg.length-1])){ cur.push(...sg.slice(0, -1).reverse()); single = false; continue; }
-        if (single && close(cur[0], sg[0])){ cur.reverse(); cur.push(...sg.slice(1)); single = false; continue; }
-        if (single && close(cur[0], sg[sg.length-1])){ cur.reverse(); cur.push(...sg.slice(0, -1).reverse()); single = false; continue; }
-      }
-      out.push(sg.slice()); single = true;
-    }
-    return out;
-  }
-
-  function wmtItem(d, center){
-    const segs = d._segs || (d._segs = chainSegments(wmtSegments(d.route, []).filter(s => s.length > 1)));
-    if (!segs.length) return null;
-    const t = Object.assign({}, d.tags || {});
-    if (d.description && !t.description) t.description = d.description;
-    if (d.operator && !t.operator) t.operator = d.operator;
-    if (d.symbol_description) t._symbol = d.symbol_description;
-    const dog = dogInfo(t);
-    if (dog === "no") return null;
-    const length = d.official_length || (d.route && d.route.length) || segs.reduce((s, sg) => s + lineLength(sg), 0);
-    let best = null, bd = Infinity;
-    for (const sg of segs) for (const p of sg){ const dd = dist(center, p); if (dd < bd){ bd = dd; best = p; } }
-    const first = segs[0][0], lastSeg = segs[segs.length-1], last = lastSeg[lastSeg.length-1];
-    return {
-      id: "relation" + d.id, osmType: "relation", osmId: d.id, kind: "route", dog, tags: t,
-      name: d.name || d.local_name || (d.ref ? `Sentier ${d.ref}` : "Sentier sans nom"),
-      segs, length, lengthApprox: false, partial: false,
-      long: length > 25000,
-      round: d.linear === "no" || t.roundtrip === "yes" || dist(first, last) < 300,
-      access: best, dist: bd, group: d.group
-    };
-  }
-
-  function gpxOf(it){
-    const e = s => String(s).replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
-    const segs = it.segs.map(sg => `<trkseg>${sg.map(p => `<trkpt lat="${p.lat.toFixed(6)}" lon="${p.lon.toFixed(6)}"/>`).join("")}</trkseg>`).join("");
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Wouaf Balades" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>${e(it.name)}</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata><trk><name>${e(it.name)}</name>${segs}</trk></gpx>`;
-  }
-
-  // ---------- Île-de-France : balades publiées en open data (data.iledefrance.fr) ----------
-  const IDF_API = "https://data.iledefrance.fr/api/explore/v2.1/catalog/datasets";
-  const IDF_BOX = { s:48.1, w:1.4, n:49.25, e:3.6 };
-  const HDS_BOX = { s:48.72, w:2.14, n:48.96, e:2.34 }; // Hauts-de-Seine
-  const idf = { base:null, hds:null, loadingBase:null, loadingHds:null };
-  const boxHit = (a, b) => a.s <= b.n && a.n >= b.s && a.w <= b.e && a.e >= b.w;
-
-  function geoLines(g){
-    if (!g) return [];
-    if (g.type === "Feature") g = g.geometry;
-    if (!g) return [];
-    const conv = cs => cs.map(([lon, lat]) => ({ lat, lon }));
-    if (g.type === "LineString") return [conv(g.coordinates)];
-    if (g.type === "MultiLineString") return g.coordinates.map(conv);
-    return [];
-  }
-
-  // Raccorde des tronçons dans le désordre (graphe simple, extrémités à < 15 m)
-  function mergeAll(segs){
-    let pool = segs.filter(s => s.length > 1).map(s => s.slice());
-    let merged = true;
-    const close = (a, b) => dist(a, b) < 15;
-    while (merged && pool.length > 1){
-      merged = false;
-      outer: for (let i = 0; i < pool.length; i++){
-        for (let j = 0; j < pool.length; j++){
-          if (i === j) continue;
-          const A = pool[i], B = pool[j];
-          let joined = null;
-          if (close(A[A.length-1], B[0])) joined = A.concat(B.slice(1));
-          else if (close(A[A.length-1], B[B.length-1])) joined = A.concat(B.slice(0, -1).reverse());
-          else if (close(A[0], B[B.length-1])) joined = B.concat(A.slice(1));
-          else if (close(A[0], B[0])) joined = A.slice().reverse().concat(B.slice(1));
-          if (joined){ pool[i] = joined; pool.splice(j, 1); merged = true; break outer; }
-        }
-      }
-    }
-    return pool.sort((a, b) => lineLength(b) - lineLength(a));
-  }
-
-  async function idfExport(id){
-    const key = "idf:" + id;
-    const c = store.get(key, null);
-    if (c && Date.now() - c.t < 7*86400000) return c.d;
-    const r = await fetch(`${IDF_API}/${id}/exports/geojson`);
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    const d = j.features || [];
-    if (JSON.stringify(d).length < 400000) store.set(key, { t: Date.now(), d });
-    return d;
-  }
-
-  const first = v => Array.isArray(v) ? v[0] : v;
-
-  async function loadIdfBase(){
-    const [forets, promenades] = await Promise.all([
-      idfExport("itineraire_balade").catch(() => []),
-      idfExport("itineraire-promenade-projet-balade-2014").catch(() => [])
-    ]);
-    const raws = [];
-    // 1) Balades en forêts régionales (une ligne par balade)
-    const byName = {};
-    for (const f of forets){
-      const p = f.properties || {};
-      const k = p.id_promena || p.nom_b; if (!k) continue;
-      (byName[k] = byName[k] || { name: first(p.nom_b) || "Balade en forêt", segs: [] }).segs.push(...geoLines(f.geometry));
-    }
-    for (const [k, v] of Object.entries(byName)) raws.push({ id:"idf-foret-" + k, name:v.name, segs:mergeAll(v.segs),
-      kindLabel:"Balade en forêt régionale", src:"Île-de-France Nature", srcUrl:"https://data.iledefrance.fr/explore/dataset/itineraire_balade/" });
-    // 2) Promenades forestières découpées en étapes
-    const byProm = {};
-    for (const f of promenades){
-      const p = f.properties || {};
-      const k = p.id_promena; if (k == null) continue;
-      (byProm[k] = byProm[k] || { name: first(p.nom_b) || "Promenade en forêt", segs: [] }).segs.push(...geoLines(f.geometry));
-    }
-    for (const [k, v] of Object.entries(byProm)) raws.push({ id:"idf-prom-" + k, name:v.name, segs:mergeAll(v.segs),
-      kindLabel:"Promenade en forêt", src:"Agence des espaces verts d'Île-de-France", srcUrl:"https://data.iledefrance.fr/explore/dataset/itineraire-promenade-projet-balade-2014/" });
-    return raws.filter(r => r.segs.length);
-  }
-
-  async function loadIdfHds(){
-    const feats = await idfExport("plan-departemental-des-itineraires-de-promenade-et-de-randonnee");
-    const byPR = {};
-    for (const f of feats){
-      const p = f.properties || {};
-      if (p.pdipr_pieton === "Non") continue;
-      for (let n = 1; n <= 11; n++){
-        if (p["pr" + n] === "Oui") (byPR[n] = byPR[n] || []).push(...geoLines(f.geometry));
-      }
-    }
-    return Object.entries(byPR).map(([n, segs]) => ({ id:"idf-hds-pr" + n, name:`Promenade PR${n} des Hauts-de-Seine`, segs:mergeAll(segs),
-      kindLabel:"Promenade balisée (PR)", src:"Département des Hauts-de-Seine", srcUrl:"https://data.iledefrance.fr/explore/dataset/plan-departemental-des-itineraires-de-promenade-et-de-randonnee/" }));
-  }
-
-  function ensureIdf(vb){
-    const jobs = [];
-    if (boxHit(vb, IDF_BOX) && !idf.base && !idf.loadingBase)
-      jobs.push(idf.loadingBase = loadIdfBase().then(r => { idf.base = r; }).catch(() => { idf.base = []; }));
-    if (boxHit(vb, HDS_BOX) && !idf.hds && !idf.loadingHds)
-      jobs.push(idf.loadingHds = loadIdfHds().then(r => { idf.hds = r; }).catch(() => { idf.hds = []; }));
-    return jobs.length ? Promise.all(jobs) : null;
-  }
-
-  // Une même balade peut venir de plusieurs sources : on n'en garde qu'une
-  function dedupeRoutes(items){
-    const kept = [];
-    for (let i = 0; i < items.length; i++){
-      const it = items[i];
-      const pts = it.segs.flat();
-      it._bb = pts.reduce((bb, p) => ({ s:Math.min(bb.s, p.lat), n:Math.max(bb.n, p.lat), w:Math.min(bb.w, p.lon), e:Math.max(bb.e, p.lon) }), { s:90, n:-90, w:180, e:-180 });
-      const sample = pts.filter((_, k) => k % Math.max(1, Math.floor(pts.length/8)) === 0);
-      const dup = kept.some(o => {
-        if (Math.abs(o.length - it.length) / Math.max(o.length, it.length) > 0.2) return false;
-        const A = o._bb, B = it._bb;
-        const iw = Math.min(A.e, B.e) - Math.max(A.w, B.w), ih = Math.min(A.n, B.n) - Math.max(A.s, B.s);
-        if (iw <= 0 || ih <= 0) return false;
-        if (iw*ih < 0.5 * Math.min((A.e-A.w)*(A.n-A.s), (B.e-B.w)*(B.n-B.s))) return false;
-        const op = o._pts || (o._pts = o.segs.flat().filter((_, k) => k % 2 === 0));
-        return sample.filter(p => op.some(q => dist(p, q) < 80)).length >= sample.length*0.7;
-      });
-      if (dup){ items.splice(i, 1); i--; } else kept.push(it);
-    }
-  }
-
-  function rawItem(r, center){
-    const segs = r.segs;
-    const length = segs.reduce((s, sg) => s + lineLength(sg), 0);
-    let best = null, bd = Infinity;
-    for (const sg of segs) for (const p of sg){ const d = dist(center, p); if (d < bd){ bd = d; best = p; } }
-    const a = segs[0][0], z = segs[0][segs[0].length-1];
-    return { id:r.id, osmType:null, kind:"route", dog:"unknown", tags:{}, name:r.name, segs, length,
-      lengthApprox:false, partial:false, long: length > 25000, round: dist(a, z) < 300,
-      access:best, dist:bd, group:"IDF", kindLabel:r.kindLabel, src:r.src, srcUrl:r.srcUrl };
-  }
-
-  // ---------- Transformation des données ----------
-  const DOG_OK = /^(yes|designated|unleashed|permissive)$/;
-  function dogInfo(t){
-    const d = (t.dog || "").toLowerCase();
-    if (d === "no") return "no";
-    if (t.access === "private" || t.access === "no") return "no";
-    if (DOG_OK.test(d)) return d === "unleashed" ? "free" : "yes";
-    if (d === "leashed") return "leash";
-    return "unknown";
-  }
-
-  function kindOf(el){
-    const t = el.tags || {};
-    if (el.type === "relation" && t.type === "route") return "route";
-    if (t.leisure === "dog_park") return "dogpark";
-    if (t.natural === "beach") return "beach";
-    if (t.leisure === "nature_reserve") return "reserve";
-    if (t.landuse === "forest" || t.natural === "wood") return "forest";
-    if (t.landuse === "meadow" || t.leisure === "common") return "meadow";
-    return "park";
-  }
-  const KIND = {
-    route:   { label:"Sentier balisé",      icon:"🥾", base:4 },
-    dogpark: { label:"Parc à chiens",       icon:"🐕", base:3 },
-    forest:  { label:"Forêt / bois",        icon:"🌲", base:3.2 },
-    beach:   { label:"Plage ouverte aux chiens", icon:"🏖️", base:3.5 },
-    meadow:  { label:"Prairie / espace ouvert",  icon:"🌾", base:2.5 },
-    reserve: { label:"Espace naturel protégé",   icon:"🦉", base:1.8 },
-    park:    { label:"Parc / jardin",       icon:"🌳", base:2.2 }
+  // ---------- Points d'intérêt autour de soi ----------
+  const KINDS = {
+    park:   { icon:"🌳", label:"parc" },
+    forest: { icon:"🌲", label:"bois" },
+    dog:    { icon:"🐕", label:"parc à chiens" },
+    nature: { icon:"🦉", label:"espace naturel" },
+    trail:  { icon:"🥾", label:"sentier balisé" }
   };
 
-  function transform(data, center){
-    const items = [], pois = [];
-    const seen = new Set();
-    for (const el of data.elements || []){
-      const t = el.tags || {};
-      // POIs
-      if (t.amenity === "drinking_water" || t.vending === "excrement_bags" || t.amenity === "dog_toilet" || t.amenity === "watering_place" || (t.natural === "water" && t.name)){
-        const p = el.type === "node" ? { lat:el.lat, lon:el.lon } : el.center ? { lat:el.center.lat, lon:el.center.lon } : null;
-        if (!p) continue;
-        p.type = t.natural === "water" ? "lake" : (t.vending === "excrement_bags" || t.amenity === "dog_toilet") ? "bags" : "water";
-        p.name = t.name || ""; pois.push(p); continue;
-      }
-      const kind = kindOf(el);
-      const dog = dogInfo(t);
-      if (dog === "no") continue;
-      const key = el.type + el.id; if (seen.has(key)) continue; seen.add(key);
-
-      const it = { id:key, osmType:el.type, osmId:el.id, kind, dog, tags:t, name: t.name || t["name:fr"] || t.ref || null };
-
-      if (kind === "route"){
-        // géométrie découpée : on assemble les segments
-        const segs = [];
-        let clipped = false;
-        for (const m of el.members || []){
-          if (m.type !== "way") continue;
-          if (!m.geometry){ clipped = true; continue; }
-          let cur = [];
-          for (const g of m.geometry){
-            if (!g){ clipped = true; if (cur.length > 1) segs.push(cur); cur = []; continue; }
-            cur.push({ lat:g.lat, lon:g.lon });
-          }
-          if (cur.length > 1) segs.push(cur);
+  async function photonPlaces(start, reach){
+    const tags = ["leisure:park", "landuse:forest", "natural:wood", "leisure:dog_park", "leisure:nature_reserve"].map(t => "&osm_tag=" + t).join("");
+    const url = `${PHOTON}?lat=${start.lat}&lon=${start.lon}&radius=${(reach*1.3/1000).toFixed(2)}&limit=50${tags}`;
+    const j = await getJSON(url, 9000);
+    const out = [];
+    for (const f of j.features || []){
+      const p = f.properties || {};
+      if (!p.name) continue;
+      const v = p.osm_value;
+      const kind = v === "dog_park" ? "dog" : (v === "forest" || v === "wood") ? "forest" : v === "nature_reserve" ? "nature" : "park";
+      const c = { lat: f.geometry.coordinates[1], lon: f.geometry.coordinates[0] };
+      let pt = c, area = 0, inside = false;
+      if (p.extent){ // [ouest, nord, est, sud]
+        const [w, n, e, s] = p.extent;
+        area = dist({lat:n, lon:w}, {lat:n, lon:e}) * dist({lat:n, lon:w}, {lat:s, lon:w});
+        inside = start.lat <= n && start.lat >= s && start.lon >= w && start.lon <= e;
+        if (inside){
+          // on est dedans : on vise un point vers le cœur du parc
+          const dc = dist(start, c);
+          pt = dc > 60 ? dest(start, bearing(start, c), Math.min(dc, reach)) : dest(start, 0, reach*0.6);
+        } else {
+          // l'entrée la plus proche ≈ bord de l'emprise, un peu vers l'intérieur
+          const edge = { lat: Math.min(Math.max(start.lat, s), n), lon: Math.min(Math.max(start.lon, w), e) };
+          pt = { lat: edge.lat + (c.lat - edge.lat)*0.15, lon: edge.lon + (c.lon - edge.lon)*0.15 };
         }
-        if (!segs.length) continue;
-        it.segs = segs;
-        const geomLen = segs.reduce((s, sg) => s + lineLength(sg), 0);
-        const tagLen = parseDistanceTag(t.distance);
-        it.length = tagLen || geomLen;
-        it.lengthApprox = !tagLen;
-        it.partial = !tagLen && clipped;
-        it.long = (it.length > 25000) || /^(nwn|iwn)$/.test(t.network || "");
-        // point d'accès le plus proche
-        let best = null, bd = Infinity;
-        for (const sg of segs) for (const p of sg){ const d = dist(center, p); if (d < bd){ bd = d; best = p; } }
-        it.access = best; it.dist = bd;
-        it.round = t.roundtrip === "yes" || (segs.length && dist(segs[0][0], segs[segs.length-1][segs[segs.length-1].length-1]) < 300);
-        if (!it.name) it.name = t.ref ? `Sentier ${t.ref}` : "Sentier sans nom";
-      } else {
-        const b = el.type === "node" ? { s:el.lat, n:el.lat, w:el.lon, e:el.lon } : bboxOf(el.bounds);
-        if (!b) continue;
-        it.bbox = b;
-        const c = bboxCenter(b);
-        it.access = c;
-        const sz = bboxSize(b);
-        it.areaSize = sz;
-        // distance approx : bord de la zone si on est dedans/à côté
-        const clamp = { lat: Math.min(Math.max(center.lat, b.s), b.n), lon: Math.min(Math.max(center.lon, b.w), b.e) };
-        it.dist = dist(center, clamp);
-        if (it.dist < 30) it.dist = 0;
-        // boucle estimée : ~ 70 % du périmètre de la boîte englobante, plafonnée
-        const perim = 2*(sz.w + sz.h);
-        it.length = kind === "dogpark" ? null : Math.min(Math.max(perim*0.7, 300), 15000);
-        it.lengthApprox = true;
-        it.long = perim > 20000;
-        if (!it.name) it.name = kind === "dogpark" ? "Parc à chiens" : KIND[kind].label;
-        // petits squares sans intérêt pour un chien : on écarte < 0,6 ha environ
-        if (kind === "park" && sz.w*sz.h < 6000) continue;
       }
-      items.push(it);
+      if (area && area < 3000 && kind === "park") continue;   // tout petit square
+      out.push({ name: p.name, kind, pt, area, inside, d: dist(start, pt) });
     }
-
-    addProximity(items, pois);
-    return { items, pois };
+    return out;
   }
-  function addProximity(items, pois){
-    // attributs de proximité (eau, sacs, plans d'eau)
-    for (const it of items){
-      const ref = it.kind === "route" ? it.segs.flat().filter((_, i) => i % 6 === 0) : [it.access];
-      const near = (type, rad) => pois.some(p => p.type === type && (it.bbox && inBox(p, it.bbox, 0.002) || ref.some(q => dist(p, q) < rad)));
-      it.hasWater = near("water", 350);
-      it.hasBags = near("bags", 350);
-      it.hasLake = near("lake", 400);
+
+  const toMerc = (lon, lat) => [lon*20037508.34/180, Math.log(Math.tan((90+lat)*Math.PI/360))*6378137];
+  const fromMerc = (x, y) => ({ lon: x/20037508.34*180, lat: (2*Math.atan(Math.exp(y/6378137)) - Math.PI/2)*180/Math.PI });
+  function wmtLines(node, out){
+    if (!node || typeof node !== "object") return out;
+    if (node.geometry && node.geometry.type === "LineString") out.push(node.geometry.coordinates.map(([x, y]) => fromMerc(x, y)));
+    for (const k of ["main", "appendices", "ways", "forward", "backward", "routes"]) if (Array.isArray(node[k])) node[k].forEach(n => wmtLines(n, out));
+    return out;
+  }
+  async function trailPlaces(start, reach){
+    const dLat = reach/111320, dLon = reach/(111320*Math.cos(start.lat*toR));
+    const a = toMerc(start.lon - dLon, start.lat - dLat), z = toMerc(start.lon + dLon, start.lat + dLat);
+    const list = await getJSON(`${WMT}/list/by_area?bbox=${a[0]},${a[1]},${z[0]},${z[1]}&limit=60`, 8000);
+    const rank = { LOC:0, REG:1 };
+    const keep = (list.results || []).filter(r => r.group in rank).sort((x, y) => rank[x.group] - rank[y.group]).slice(0, 10);
+    const out = [];
+    await Promise.all(keep.map(async r => {
+      try{
+        const d = await getJSON(`${WMT}/details/relation/${r.id}`, 8000);
+        // point du sentier à environ la moitié de la portée (ni trop près, ni trop loin)
+        let best = null, score = Infinity;
+        for (const line of wmtLines(d.route, [])) for (const p of line){
+          const dd = dist(start, p); const s = Math.abs(dd - reach*0.7);
+          if (dd <= reach*1.1 && s < score){ score = s; best = { p, dd }; }
+        }
+        if (best) out.push({ name: d.name || r.name || ("sentier " + (d.ref || "")), kind:"trail", pt: best.p, area: 0, d: best.dd });
+      }catch(e){}
+    }));
+    return out;
+  }
+
+  // ---------- Calcul des balades ----------
+  async function route(points){
+    const coords = points.map(p => `${p.lon.toFixed(6)},${p.lat.toFixed(6)}`).join(";");
+    const j = await getJSON(`${OSRM}/${coords}?overview=full&geometries=geojson&continue_straight=false`, 12000);
+    if (j.code !== "Ok" || !j.routes || !j.routes[0]) throw new Error("pas d'itinéraire");
+    const r = j.routes[0];
+    return { line: r.geometry.coordinates.map(([lon, lat]) => ({ lat, lon })), m: r.distance };
+  }
+
+  function quality(c){
+    let q = 0;
+    if (c.kind === "forest" || c.kind === "nature") q += 2;
+    if (c.kind === "dog") q += 2.5;
+    if (c.kind === "trail") q += 1.5;
+    if (c.area > 20000) q += 1; if (c.area > 150000) q += 1;
+    if (c.inside) q += 0.5;
+    return q;
+  }
+
+  // Doublons de noms (même parc renvoyé deux fois)
+  function uniq(cands){
+    const seen = new Set(); const out = [];
+    for (const c of cands){ const k = c.name.toLowerCase(); if (seen.has(k)) continue; seen.add(k); out.push(c); }
+    return out;
+  }
+
+  function plans(start, cands, D){
+    const list = [];
+    // Allers-retours : distance à vol d'oiseau idéale ≈ D / (2 × détour)
+    const ideal = D / (2*DETOUR);
+    for (const c of cands){
+      if (c.d < 80) continue;
+      const fit = Math.abs(c.d - ideal) / ideal;
+      if (fit > 0.6) continue;
+      list.push({ type:"ar", via:[c], est: 2*DETOUR*c.d, rank: quality(c) - fit*4 });
     }
-  }
-  function inBox(p, b, pad){ return p.lat >= b.s-pad && p.lat <= b.n+pad && p.lon >= b.w-pad && p.lon <= b.e+pad; }
-
-  function minutesOf(it){ return it.length ? (it.length/1000)/SPEED_KMH*60 : null; }
-
-  // Ce qu'on propose concrètement pour la durée choisie
-  function planOf(it){
-    const target = DURMAX[state.dur];
-    const full = minutesOf(it);
-    if (it.kind === "dogpark") return { mode:"play", min:null };
-    if (it.kind === "route"){
-      if (!target) return it.round ? { mode:"loop", min:full, m:it.length } : { mode:"oneway", min:full, m:it.length };
-      if (it.round && full <= target*1.5) return { mode:"loop", min:full, m:it.length };
-      if (!it.round && full*2 <= target*1.5) return { mode:"ar", min:full*2, m:it.length*2 };
-      return { mode:"section", min:target, m:target*M_PER_MIN };
+    // Boucles par deux lieux
+    for (let i = 0; i < cands.length; i++) for (let j = i+1; j < cands.length; j++){
+      const a = cands[i], b = cands[j];
+      if (a.d < 80 || b.d < 80) continue;
+      if (angDiff(bearing(start, a.pt), bearing(start, b.pt)) < 35) continue;
+      const est = DETOUR * (a.d + dist(a.pt, b.pt) + b.d);
+      const fit = Math.abs(est - D) / D;
+      if (fit > 0.45) continue;
+      // ordre : on visite d'abord le plus proche
+      const via = a.d <= b.d ? [a, b] : [b, a];
+      list.push({ type:"loop", via, est, rank: (quality(a) + quality(b))*0.75 - fit*4 + 0.6 });
     }
-    if (full == null) return { mode:"free", min:target };
-    if (target && full > target*1.25) return { mode:"free", min:target, m:target*M_PER_MIN };
-    return { mode:"tour", min:full, m:it.length };
+    return list.sort((x, y) => y.rank - x.rank);
   }
 
-  function score(it){
-    let s = KIND[it.kind].base;
-    const plan = it.plan || planOf(it);
-    if (it.kind === "route"){
-      if ((it.tags.network || "") === "lwn" || it.group === "LOC" || it.group === "IDF") s += 0.8;
-      if (it.round) s += 0.6;
+  function neighbourhoodLoop(start, D, angle){
+    const s = D / (3*DETOUR);
+    return { type:"quartier", via:[
+      { name:"", kind:"walk", pt: dest(start, angle, s) },
+      { name:"", kind:"walk", pt: dest(start, angle + 60, s) }
+    ], est: D, rank: -10 };
+  }
+
+  function titleOf(p){
+    if (p.type === "quartier") return "Boucle du quartier";
+    if (p.type === "ar") return `Aller-retour : ${p.via[0].name}`;
+    return `Boucle par ${p.via[0].name} et ${p.via[1].name}`;
+  }
+  function subOf(p){
+    if (p.type === "quartier") return "Un tour dans les rues autour de vous";
+    const lab = v => ({ park:"un parc", forest:"un bois", dog:"un parc à chiens", nature:"un espace naturel", trail:"un sentier balisé" })[v.kind] || "un lieu";
+    const txt = p.via.map(lab).join(" puis ");
+    return txt.charAt(0).toUpperCase() + txt.slice(1) + (p.type === "ar" ? " · aller puis retour" : " · retour au départ");
+  }
+  function iconOf(p){
+    if (p.type === "quartier") return "🏘️";
+    const k = p.via.find(v => v.kind === "dog") || p.via.find(v => v.kind === "forest") || p.via[0];
+    return p.type === "loop" ? "🔁" : (KINDS[k.kind] ? KINDS[k.kind].icon : "🐾");
+  }
+
+  let genId = 0;
+  async function generate(){
+    const start = state.start; if (!start) return;
+    const my = ++genId;
+    const D = state.dur * M_PER_MIN;
+    const reach = D / (2*DETOUR) * 1.35;
+    state.props = []; state.sel = null; layers.routes.clearLayers(); layers.sel.clearLayers();
+    $("#props").innerHTML = `<div class="empty"><span class="spinner"></span>Je cherche des balades de ${fmtMin(state.dur)} autour de vous…</div>`;
+    setStatus(`<span class="spinner"></span>Recherche des parcs et sentiers autour de vous…`);
+    map.setView([start.lat, start.lon], state.dur <= 30 ? 15 : 14);
+
+    const [parks, trails] = await Promise.all([
+      photonPlaces(start, reach).catch(() => []),
+      trailPlaces(start, reach).catch(() => [])
+    ]);
+    if (my !== genId) return;
+    const cands = uniq([...parks, ...trails].sort((a, b) => quality(b) - quality(a))).slice(0, 25);
+    setStatus(`<span class="spinner"></span>Calcul des itinéraires…`);
+
+    // On calcule les meilleures idées, en gardant des balades variées
+    const ideas = plans(start, cands, D);
+    const results = [];
+    const used = new Set();
+    const tryPlan = async p => {
+      try{
+        const r = await route([start, ...p.via.map(v => v.pt), start]);
+        const ratio = r.m / D;
+        if (ratio < 0.65 || ratio > 1.45) return null;
+        return Object.assign({}, p, r, { min: r.m / M_PER_MIN });
+      }catch(e){ return null; }
+    };
+    let tries = 0;
+    for (const p of ideas){
+      if (results.length >= 3 || tries >= 8) break;
+      const key = p.via.map(v => v.name).join("|");
+      if (p.via.some(v => used.has(v.name))) continue;
+      tries++;
+      const r = await tryPlan(p);
+      if (my !== genId) return;
+      if (r){ results.push(r); p.via.forEach(v => used.add(v.name)); }
     }
-    if (it.dog === "free") s += 2.5; else if (it.dog === "yes") s += 1.5; else if (it.dog === "leash") s += 0.2;
-    if (state.offleash){
-      if (it.kind === "dogpark" || it.dog === "free") s += 3;
-      else if (it.kind === "forest" || it.kind === "meadow" || it.kind === "beach") s += 0.8;
-      if (it.kind === "park") s -= 0.8;
+    // Toujours au moins deux idées : on complète avec des boucles de quartier
+    let ang = 30;
+    while (results.length < 2 && ang < 360){
+      const r = await tryPlan(neighbourhoodLoop(start, D, ang));
+      if (my !== genId) return;
+      if (r) results.push(r);
+      ang += 150;
     }
-    if (it.hasWater) s += 0.6;
-    if (it.hasBags) s += 0.4;
-    if (it.hasLake) s += 0.5;
-    if (it.tags.description || it.tags.website || it.tags.wikipedia || it.tags.wikidata) s += 0.3;
-    s -= Math.min(it.dist/1000, 30) * 0.35;
-    const target = DURMAX[state.dur];
-    if (target){
-      if (plan.mode === "play") s += target <= 30 ? 0.8 : -0.6;
-      else if (plan.min){
-        const diff = Math.abs(plan.min - target) / target;
-        s += 1.6 - Math.min(4, diff*3.5);
-      }
-      if (plan.mode === "section") s -= 4;   // un vrai circuit vaut mieux qu'un bout de grand sentier
-      if (plan.mode === "free") s -= 0.3;
-    } else if (it.kind === "route" && it.length > 25000) s -= 1.5;
-    return s;
-  }
-
-  // Tronçon à faire en aller-retour depuis le point d'accès
-  function sectionOf(it, meters){
-    let bestSeg = null, bestI = 0, bd = Infinity;
-    for (const sg of it.segs) sg.forEach((p, i) => { const d = dist(p, it.access); if (d < bd){ bd = d; bestSeg = sg; bestI = i; } });
-    if (!bestSeg) return [];
-    const walk = dir => { const out = [bestSeg[bestI]]; let acc = 0; for (let i = bestI+dir; i >= 0 && i < bestSeg.length; i += dir){ acc += dist(bestSeg[i-dir], bestSeg[i]); out.push(bestSeg[i]); if (acc >= meters) break; } return { out, acc }; };
-    const f = walk(1), b = walk(-1);
-    if (f.acc >= meters || f.acc >= b.acc) return f.out;
-    return b.out;
-  }
-
-  // ---------- Rendu ----------
-  function badgesOf(it){
-    const b = [];
-    if (it.dog === "free") b.push(["good","🐕 Liberté autorisée"]);
-    else if (it.dog === "yes") b.push(["good","🐕 Chiens bienvenus"]);
-    else if (it.dog === "leash") b.push(["","🦮 En laisse"]);
-    if (it.kind === "dogpark") b.push(["good","🎾 Espace clos"]);
-    if (it.hasWater) b.push(["good","💧 Point d'eau"]);
-    if (it.hasLake) b.push(["","💦 Plan d'eau proche"]);
-    if (it.hasBags) b.push(["","🛍️ Sacs à crottes"]);
-    if (it.kind === "route" && it.round) b.push(["","🔁 Boucle"]);
-    if (it.kind === "reserve") b.push(["warn","⚠️ Règles strictes possibles"]);
-    if (it.kind === "forest" || it.kind === "reserve") b.push(["warn","🐣 Laisse 15/4 – 30/6"]);
-    return b;
-  }
-
-  function descOf(it){
-    const t = it.tags, parts = [];
-    if (t.description) parts.push(esc(t.description));
-    if (it.kind === "route"){
-      if (t.from && t.to) parts.push(`De <b>${esc(t.from)}</b> à <b>${esc(t.to)}</b>.`);
-      if (t.operator) parts.push(`Balisage : ${esc(t.operator)}.`);
-      if (t._symbol) parts.push(`Balisage : ${esc(t._symbol)}.`);
-      parts.push(`Point d'accès le plus proche à ${fmtKm(it.dist)} de vous.`);
-      if (it.src) parts.push(`Itinéraire publié par ${esc(it.src)}.`);
-    } else if (it.kind === "dogpark"){
-      parts.push("Espace dédié où votre chien peut se dépenser sans laisse.");
+    if (my !== genId) return;
+    state.props = results;
+    render();
+    if (!results.length){
+      setStatus("Impossible de calculer un itinéraire pour le moment (service d'itinéraires indisponible). Réessayez dans un instant.", true);
+      $("#props").innerHTML = `<div class="empty"><button class="ghost" id="retry">Réessayer</button></div>`;
+      $("#retry").onclick = generate;
+      return;
     }
-    if (t.opening_hours) parts.push(`Horaires : ${esc(t.opening_hours)}.`);
-    if (t.surface) parts.push(`Sol : ${esc(t.surface)}.`);
-    if (t.website) parts.push(`<a href="${esc(t.website)}" target="_blank" rel="noopener">Site web</a>`);
-    return parts.join(" ");
+    setStatus(`${results.length} balade${results.length > 1 ? "s" : ""} de ${fmtMin(state.dur)} depuis votre position. Touchez-en une pour la voir.`);
+    select(0, true);
   }
 
-  function lengthText(it){
-    const p = it.plan || planOf(it);
-    switch (p.mode){
-      case "play":   return `<span>🎾 Pour se dépenser en liberté</span>`;
-      case "loop":   return `<span>🔁 Boucle · <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
-      case "ar":     return `<span>↔️ Aller-retour · <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
-      case "section":return `<span>↔️ Aller-retour sur le sentier · <b>${fmtMin(p.min)}</b></span>`;
-      case "oneway": return `<span>🚶 Sentier de <b>${fmtKm(p.m)}</b> · ${fmtMin(p.min)} (aller)</span>`;
-      case "tour":   return `<span>🚶 Tour ≈ <b>${fmtMin(p.min)}</b> · ${fmtKm(p.m)}</span>`;
-      case "free":   return `<span>🌲 Balade libre · <b>${fmtMin(p.min)}</b></span>`;
-    }
-    return "";
-  }
-
-  function tipOf(it){
-    const p = it.plan || planOf(it);
-    if (p.mode === "section") return `Ce sentier fait ${fmtKm(it.length)} : depuis le point d'accès, suivez le balisage environ ${fmtMin(p.min/2)}, puis faites demi-tour. Le tronçon est en orange sur la carte.`;
-    if (p.mode === "free") return `Grand espace (tour complet ≈ ${fmtMin(minutesOf(it))}) : promenez-vous ${fmtMin(p.min)} à votre rythme.`;
-    if (p.mode === "ar") return `Sentier à faire jusqu'au bout puis retour par le même chemin.`;
-    return "";
-  }
-
-  function dirLinks(it){
-    const p = it.access;
-    const g = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`;
-    const a = `https://maps.apple.com/?daddr=${p.lat},${p.lon}&dirflg=w`;
-    return { g, a };
-  }
-
-  function cardHTML(it, rank){
-    const k = KIND[it.kind];
-    const d = dirLinks(it);
-    const fav = !!favs[it.id];
-    const gpx = it.kind === "route" ? `<button class="ghost" data-gpx="${esc(it.id)}">⬇️ GPX</button>` +
-      (it.osmType ? `<a class="btn ghost" href="https://hiking.waymarkedtrails.org/#route?id=${it.osmId}" target="_blank" rel="noopener">🗺️ Tracé complet</a>` : "") : "";
-    return `<div class="card" tabindex="0" data-id="${esc(it.id)}">
-      <div class="top">
-        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${it.kindLabel ? esc(it.kindLabel) : k.label}${(!it.kindLabel && (it.group || it.tags.network)) ? " · " + ({LOC:"promenade locale",REG:"itinéraire régional",lwn:"promenade locale",rwn:"itinéraire régional",nwn:"national",iwn:"international"}[it.group || it.tags.network]||"") : ""}</div></div>
-        ${rank != null ? `<div class="score">#${rank+1}</div>` : ""}
-      </div>
-      <div class="meta">
-        ${it.dist != null ? `<span>📍 ${it.dist === 0 ? "Vous y êtes" : "à <b>" + fmtKm(it.dist) + "</b>"}</span>` : ""}
-        ${lengthText(it)}
-      </div>
-      <div class="badges">${badgesOf(it).map(([c, t]) => `<span class="badge ${c}">${t}</span>`).join("")}</div>
-      ${tipOf(it) ? `<div class="tip">${tipOf(it)}</div>` : ""}
-      <div class="desc">${descOf(it)}</div>
-      <div class="actions">
-        <a class="btn" href="${d.g}" target="_blank" rel="noopener">🧭 Y aller</a>
-        <a class="btn ghost" href="${d.a}" target="_blank" rel="noopener"> Plans</a>
-        ${gpx}
-        <button class="ghost" data-fav="${esc(it.id)}">${fav ? "★ Retirer" : "☆ Garder"}</button>
-        ${it.osmType ? `<a class="btn ghost" href="https://www.openstreetmap.org/${it.osmType}/${it.osmId}" target="_blank" rel="noopener">OSM</a>` : `<a class="btn ghost" href="${esc(it.srcUrl)}" target="_blank" rel="noopener">Source</a>`}
-      </div>
-    </div>`;
-  }
-
-  function layerOf(it){ return it.kind === "route" ? "routes" : it.kind === "dogpark" ? "dogparks" : "green"; }
-
-  function filtered(){
-    const target = DURMAX[state.dur];
-    let sections = 0;
-    const pre = state.items.filter(it => state.layers[layerOf(it)]).map(it => planOf(it));
-    const others = pre.filter(p => p.mode !== "section").length;
-    const maxSections = others >= 6 ? 4 : 12;
-    return state.items
-      .filter(it => state.layers[layerOf(it)])
-      .map(it => { it.plan = planOf(it); return it; })
-      // trop court pour la durée voulue (petit square pour 1 h…) : on écarte
-      .filter(it => !target || !it.plan.min || it.plan.mode === "free" || it.plan.min >= Math.min(12, target*0.3) || it.kind !== "park")
-      .map(it => ({ it, s: score(it) }))
-      .sort((a, b) => b.s - a.s)
-      .filter(x => x.it.plan.mode !== "section" || ++sections <= maxSections)
-      .slice(0, 40)
-      .map(x => x.it);
-  }
-
+  // ---------- Affichage ----------
+  const COLORS = ["#d9792b", "#2f7d46", "#3a6fb0"];
   function render(){
-    const list = $("#list");
-    if (state.tab === "favs"){
-      const arr = Object.values(favs);
-      arr.forEach(it => { it.plan = planOf(it); });
-      list.innerHTML = arr.length ? arr.map(it => cardHTML(it, null)).join("") : `<div class="empty">Aucune balade gardée pour l'instant.<br>Touchez « ☆ Garder » sur une suggestion.</div>`;
-      bindCards(arr);
-      drawMarkers(arr);
-      return;
-    }
-    const arr = filtered();
-    if (!arr.length){
-      list.innerHTML = (state.loadingRoutes || state.loadingAreas) ? `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>` : state.center ? `<div class="empty">Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.</div>` : `<div class="empty">Touchez « Trouver des balades près de moi », tapez une ville, ou zoomez sur la carte.</div>`;
-      drawMarkers([]);
-      return;
-    }
-    list.innerHTML = arr.map((it, i) => cardHTML(it, i)).join("");
-    bindCards(arr);
-    drawMarkers(arr);
-  }
-
-  function bindCards(arr){
-    const byId = Object.fromEntries(arr.map(it => [it.id, it]));
-    document.querySelectorAll(".card").forEach(el => {
-      el.addEventListener("click", e => {
-        if (e.target.closest("a")) return;
-        const fb = e.target.closest("[data-fav]");
-        if (fb){ e.stopPropagation(); toggleFav(byId[fb.dataset.fav]); return; }
-        const gb = e.target.closest("[data-gpx]");
-        if (gb){
-          e.stopPropagation();
-          const it = byId[gb.dataset.gpx]; if (!it || !it.segs) return;
-          const url = URL.createObjectURL(new Blob([gpxOf(it)], { type:"application/gpx+xml" }));
-          const a = document.createElement("a"); a.href = url; a.download = (it.name || "balade").replace(/[^\w\u00C0-\u017F -]+/g, "").trim().slice(0, 60) + ".gpx";
-          document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
-          return;
-        }
-        select(byId[el.dataset.id], true);
-      });
-      el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(byId[el.dataset.id], true); } });
+    layers.routes.clearLayers();
+    state.props.forEach((p, i) => {
+      L.polyline(p.line.map(q => [q.lat, q.lon]), { color: COLORS[i % 3], weight:4, opacity:.45 }).addTo(layers.routes).on("click", () => select(i));
     });
-    if (state.selected && byId[state.selected]) highlightCard(state.selected);
+    $("#props").innerHTML = state.props.map((p, i) => `
+      <div class="prop" tabindex="0" data-i="${i}" style="border-left:5px solid ${COLORS[i % 3]}">
+        <div class="ico">${iconOf(p)}</div>
+        <div><h3>${esc(titleOf(p))}</h3><div class="sub">${esc(subOf(p))}</div></div>
+        <div class="time">${fmtMin(p.min)}<small>${fmtKm(p.m)}</small></div>
+        <button class="go" data-go="${i}">🐾 C'est parti</button>
+      </div>`).join("");
+    document.querySelectorAll(".prop").forEach(el => {
+      el.addEventListener("click", e => {
+        const g = e.target.closest("[data-go]");
+        if (g){ e.stopPropagation(); startWalk(+g.dataset.go); return; }
+        select(+el.dataset.i);
+      });
+      el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(+el.dataset.i); } });
+    });
   }
 
-  function toggleFav(it){
-    if (!it) return;
-    if (favs[it.id]) delete favs[it.id];
-    else {
-      // version allégée pour le stockage
-      const { segs, ...rest } = it;
-      favs[it.id] = { ...rest, segs: it.segs ? it.segs.map(s => s.filter((_, i) => i % 3 === 0 || i === s.length-1)) : undefined, dist: null };
-    }
-    store.set("balades-favs", favs);
-    render();
-  }
-
-  function pinIcon(it){
-    return L.divIcon({ className:"", html:`<div class="pin" style="${it.kind==='dogpark'?'background:#d9792b':''}"><span>${KIND[it.kind].icon}</span></div>`, iconSize:[30,30], iconAnchor:[15,30] });
-  }
-
-  function drawMarkers(arr){
-    layers.items.clearLayers(); layers.routes.clearLayers(); layers.sel.clearLayers();
-    for (const it of arr){
-      if (it.segs){
-        for (const sg of it.segs){
-          L.polyline(sg.map(p => [p.lat, p.lon]), { color:"#2f7d46", weight:4, opacity:.75 }).addTo(layers.routes).on("click", () => select(it, false));
-        }
-      }
-      L.marker([it.access.lat, it.access.lon], { icon: pinIcon(it), title: it.name }).addTo(layers.items).on("click", () => select(it, false));
-    }
-    layers.pois.clearLayers();
-    if (state.tab === "results" && map.getZoom() >= 13){
-      for (const p of state.pois){
-        if (p.type === "lake") continue;
-        if (p.type === "water" && !state.layers.water) continue;
-        if (p.type === "bags" && !state.layers.bags) continue;
-        L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:`<div class="poi">${p.type === "water" ? "💧" : "🛍️"}</div>`, iconSize:[16,16], iconAnchor:[8,8] }), interactive:false }).addTo(layers.pois);
-      }
-    }
-  }
-
-  function highlightCard(id){
-    document.querySelectorAll(".card").forEach(c => c.classList.toggle("sel", c.dataset.id === id));
-  }
-
-  function select(it, fromList, quiet){
-    if (!it) return;
-    state.selected = it.id;
-    highlightCard(it.id);
+  function select(i, quiet){
+    const p = state.props[i]; if (!p) return;
+    state.sel = i;
+    document.querySelectorAll(".prop").forEach(el => el.classList.toggle("sel", +el.dataset.i === i));
     layers.sel.clearLayers();
-    if (it.segs){
-      const all = [];
-      const plan = it.plan || planOf(it);
-      const sec = plan.mode === "section" ? sectionOf(it, plan.m/2) : null;
-      for (const sg of it.segs){
-        const ll = sg.map(p => [p.lat, p.lon]);
-        if (!sec) all.push(...ll);
-        L.polyline(ll, sec ? { color:"#d9792b", weight:3, opacity:.5, dashArray:"6 8" } : { color:"#d9792b", weight:6, opacity:.9 }).addTo(layers.sel);
+    const ll = p.line.map(q => [q.lat, q.lon]);
+    L.polyline(ll, { color:"#fff", weight:9, opacity:.9 }).addTo(layers.sel);
+    L.polyline(ll, { color: COLORS[i % 3], weight:6, opacity:1 }).addTo(layers.sel);
+    p.via.filter(v => v.kind !== "walk").forEach(v => {
+      L.marker([v.pt.lat, v.pt.lon], { icon: L.divIcon({ className:"", html:`<div class="wp">${KINDS[v.kind] ? KINDS[v.kind].icon : "📍"}</div>`, iconSize:[26,26], iconAnchor:[13,13] }), title: v.name }).addTo(layers.sel);
+    });
+    map.fitBounds(L.latLngBounds(ll), { padding:[24,24] });
+    if (!quiet){
+      const el = document.querySelector(`.prop[data-i="${i}"]`);
+      if (el) el.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }
+  }
+
+  // ---------- Pendant la balade ----------
+  let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0;
+  async function startWalk(i){
+    select(i, true);
+    const p = state.props[i];
+    state.walking = true; document.body.classList.add("walking");
+    setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
+    cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
+    t0 = Date.now(); walked = 0;
+    try{ if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+    updateWalk(null);
+    tick = setInterval(() => updateWalk(null), 15000);
+    if (navigator.geolocation){
+      watchId = navigator.geolocation.watchPosition(pos => {
+        const q = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
+        if (followMap) map.panTo([q.lat, q.lon], { animate:true });
+        updateWalk(q);
+      }, () => {}, { enableHighAccuracy:true, maximumAge:5000, timeout:20000 });
+    }
+  }
+  let followMap = true;
+  map.on("dragstart", () => { if (state.walking) followMap = false; });
+
+  function updateWalk(q){
+    const p = state.props[state.sel]; if (!p) return;
+    const elapsed = (Date.now() - t0) / 60000;
+    if (q){
+      // avancement : point du tracé le plus proche, sans revenir en arrière de plus de 150 m
+      let best = 0, bd = Infinity;
+      for (let k = 0; k < p.line.length; k++){
+        const d = dist(q, p.line[k]);
+        if (d < bd && cum[k] >= walked - 150){ bd = d; best = k; }
       }
-      if (sec && sec.length > 1){
-        const ll = sec.map(p => [p.lat, p.lon]); all.push(...ll);
-        L.polyline(ll, { color:"#d9792b", weight:7, opacity:.95 }).addTo(layers.sel);
-      }
-      if (fromList) map.fitBounds(L.latLngBounds(all).extend(state.user ? [state.user.lat, state.user.lon] : all[0]), { padding:[30,30], maxZoom:16 });
-    } else if (it.bbox && it.bbox.s !== it.bbox.n){
-      const b = [[it.bbox.s, it.bbox.w], [it.bbox.n, it.bbox.e]];
-      L.rectangle(b, { color:"#d9792b", weight:2, fill:true, fillOpacity:.08, dashArray:"6 6" }).addTo(layers.sel);
-      if (fromList) map.fitBounds(b, { padding:[30,30], maxZoom:17 });
-    } else if (fromList){
-      map.setView([it.access.lat, it.access.lon], 16);
+      if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    L.circleMarker([it.access.lat, it.access.lon], { radius:8, color:"#d9792b", weight:3, fillColor:"#fff", fillOpacity:1 }).addTo(layers.sel);
-    if (quiet) return;
-    if (!fromList){
-      const el = document.querySelector(`.card[data-id="${CSS.escape(it.id)}"]`);
-      if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
-    } else {
-      window.scrollTo({ top: $("#map").offsetTop - 10, behavior:"smooth" });
-    }
+    const left = Math.max(0, p.m - walked);
+    $("#walkstats").innerHTML = `<b>${fmtMin(elapsed)}</b> de balade<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
   }
 
-  // ---------- Recherche (suit la carte) ----------
-  let ctrl = null, moveTimer = null;
-  const MAX_SPAN = 0.3; // ≈ 33 km : au-delà on demande de zoomer
-
-  function viewBox(pad){
-    const b = map.getBounds().pad(pad || 0);
-    return { s:b.getSouth(), w:b.getWest(), n:b.getNorth(), e:b.getEast() };
+  function stopWalk(){
+    const elapsed = (Date.now() - t0) / 60000;
+    if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
+    watchId = null; clearInterval(tick); followMap = true;
+    try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
+    state.walking = false; document.body.classList.remove("walking");
+    if (state.start && youMarker) youMarker.setLatLng([state.start.lat, state.start.lon]);
+    setTimeout(() => map.invalidateSize(), 50);
+    setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶 Touchez « Me localiser » pour en préparer une autre.`);
   }
-  const contains = (o, i) => i.s >= o.s && i.n <= o.n && i.w >= o.w && i.e <= o.e;
+  $("#stop").addEventListener("click", stopWalk);
 
-  function refPoint(){
-    const u = state.user;
-    if (u && inBox(u, viewBox(0.1), 0)) return u;
-    const c = map.getCenter(); return { lat:c.lat, lon:c.lng };
+  // ---------- Départ ----------
+  function setStart(p){
+    state.start = p; state.picking = false; $("#map").classList.remove("picking");
+    showStart(p); generate();
   }
-
-  function recompute(){
-    const ref = refPoint();
-    state.center = ref;
-    const { items: areaItems, pois } = transform({ elements: state.areaEls || [] }, ref);
-    const routeItems = (state.wmt || []).map(d => wmtItem(d, ref)).filter(Boolean)
-      .concat([...(idf.base || []), ...(idf.hds || [])].map(r => rawItem(r, ref)));
-    dedupeRoutes(routeItems);
-    addProximity(routeItems, pois);
-    const vb = viewBox(0.15);
-    state.items = [...routeItems, ...areaItems].filter(it => it.kind === "route"
-      ? it.segs.some(sg => sg.some(p => inBox(p, vb, 0)))
-      : it.bbox ? (it.bbox.s <= vb.n && it.bbox.n >= vb.s && it.bbox.w <= vb.e && it.bbox.e >= vb.w) : inBox(it.access, vb, 0));
-    state.pois = pois;
-    render();
-    if (state.selected){
-      const it = state.items.find(i => i.id === state.selected);
-      if (it) select(it, false, true); else state.selected = null;
-    }
-    setStatus(countText() + (state.loadingAreas ? ` <span class="spinner" style="margin-left:6px"></span><i>parcs et forêts en cours de chargement…</i>` : state.areasFailed ? ` <i>(parcs et forêts indisponibles pour l'instant : serveur OpenStreetMap saturé.)</i> <a href="#" data-retry>Réessayer</a>` : ""));
-    const r = document.querySelector("[data-retry]"); if (r) r.onclick = e => { e.preventDefault(); state.queried = null; refresh(true); };
-  }
-
-  function countText(){
-    const items = state.items;
-    if (!items.length) return state.loadingAreas || state.loadingRoutes ? "Recherche des balades dans cette zone…" : "Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.";
-    const nR = items.filter(i => i.kind === "route").length, nD = items.filter(i => i.kind === "dogpark").length, nA = items.length - nR - nD;
-    const bits = [];
-    if (nR) bits.push(`${nR} sentier${nR>1?"s":""} balisé${nR>1?"s":""}`);
-    if (nD) bits.push(`${nD} parc${nD>1?"s":""} à chiens`);
-    if (nA) bits.push(`${nA} parc${nA>1?"s":""}, bois ou espace${nA>1?"s":""} vert${nA>1?"s":""}`);
-    return `<b>${items.length}</b> idées de balade : ${bits.join(", ")}.`;
-  }
-
-  // cache des réponses Overpass (mémoire + téléphone) sur une grille fixe
-  const opMem = new Map();
-  function cacheGet(k){
-    if (opMem.has(k)) return opMem.get(k);
-    const all = store.get("balades-cache", {});
-    const e = all[k];
-    if (e && Date.now() - e.t < 7*86400000){ opMem.set(k, e.d); return e.d; }
-    return null;
-  }
-  function cacheSet(k, d){
-    opMem.set(k, d);
-    const all = store.get("balades-cache", {});
-    all[k] = { t: Date.now(), d };
-    const keys = Object.keys(all).sort((x, y) => all[y].t - all[x].t);
-    for (const old of keys.slice(6)) delete all[old];
-    store.set("balades-cache", all);
-  }
-  const snap = (b, g) => ({ s: Math.floor(b.s/g)*g, w: Math.floor(b.w/g)*g, n: Math.ceil(b.n/g)*g, e: Math.ceil(b.e/g)*g });
-
-  async function refresh(force){
-    const vb = viewBox();
-    if (vb.n - vb.s > MAX_SPAN){
-      if (ctrl) ctrl.abort();
-      setStatus("Zoomez sur la carte (ou touchez « Trouver des balades près de moi ») pour voir les balades.");
-      return;
-    }
-    if (!force && state.queried && contains(state.queried, vb)){ recompute(); return; }
-
-    if (ctrl) ctrl.abort();
-    ctrl = new AbortController();
-    const sig = ctrl.signal;
-    const qb = snap(viewBox(0.25), 0.02);
-    state.queried = qb;
-    const key = bboxStr(qb);
-    if (!state.items.length) $("#list").innerHTML = `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>`;
-
-    // 0) balades open data d'Île-de-France
-    const pI = ensureIdf(qb); if (pI) pI.then(() => { if (!sig.aborted) recompute(); });
-
-    // 1) sentiers balisés : rapide
-    state.loadingRoutes = true;
-    const pR = wmtRoutes(qb, sig).then(list => { if (sig.aborted) return; state.wmt = list; })
-      .catch(() => { if (!sig.aborted) state.wmt = state.wmt || []; })
-      .finally(() => { if (sig.aborted) return; state.loadingRoutes = false; recompute(); });
-
-    // 2) parcs, forêts, parcs à chiens, points d'eau : Overpass (plus lent, avec cache)
-    const cached = cacheGet(key);
-    if (cached){ state.areaEls = cached; state.loadingAreas = false; state.areasFailed = false; recompute(); }
-    else {
-      state.loadingAreas = true; state.areasFailed = false;
-      recompute();
-      overpass(buildQueries(qb).areas, sig)
-        .then(j => { if (sig.aborted) return; state.areaEls = j.elements; cacheSet(key, j.elements); })
-        .catch(() => { if (sig.aborted) return; state.areasFailed = true; state.areaEls = []; })
-        .finally(() => { if (sig.aborted) return; state.loadingAreas = false; recompute(); });
-    }
-    await pR;
-  }
-
-  window.addEventListener("resize", () => map.invalidateSize());
-  map.on("moveend", () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => refresh(false), 600); });
-
-  function showUser(p){
-    state.user = p;
-    layers.you.clearLayers();
-    L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[16,16], iconAnchor:[8,8] }), keyboard:false }).addTo(layers.you);
-  }
-
-  function goTo(p, zoom){
-    state.queried = null; state.areaEls = []; state.wmt = []; state.items = []; state.selected = null;
-    const z = zoom || 14;
-    const c = map.getCenter();
-    if (map.getZoom() === z && Math.abs(c.lat - p.lat) < 1e-6 && Math.abs(c.lng - p.lon) < 1e-6) refresh(true);
-    else map.setView([p.lat, p.lon], z);
-    if (state.tab !== "results") switchTab("results");
-  }
-
   function locate(){
-    if (!navigator.geolocation){ setStatus("La géolocalisation n'est pas disponible ici : tapez une ville.", true); return; }
+    if (!navigator.geolocation){ askPick("La localisation n'est pas disponible ici."); return; }
     setStatus(`<span class="spinner"></span>Localisation en cours…`);
     navigator.geolocation.getCurrentPosition(
-      pos => { const p = { lat: pos.coords.latitude, lon: pos.coords.longitude }; showUser(p); goTo(p, 14); },
-      err => setStatus(err.code === 1
-        ? "Accès à la position refusé. Sur iPhone : Réglages › Confidentialité › Service de localisation › Safari. Ou tapez une ville."
-        : "Position introuvable pour le moment. Tapez une ville ou réessayez.", true),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      pos => setStart({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      err => askPick(err.code === 1
+        ? "Localisation refusée (sur iPhone : Réglages › Confidentialité › Service de localisation › Safari)."
+        : "Position introuvable pour le moment."),
+      { enableHighAccuracy:true, timeout:15000, maximumAge:30000 }
     );
   }
-
-  async function geocode(q){
-    setStatus(`<span class="spinner"></span>Recherche de « ${esc(q)} »…`);
-    try{
-      const r = await fetch(`${NOMINATIM}?format=jsonv2&limit=1&accept-language=fr&q=${encodeURIComponent(q)}`, { headers:{ "Accept":"application/json" } });
-      const j = await r.json();
-      if (!j.length){ setStatus(`Je ne trouve pas « ${esc(q)} ».`, true); return; }
-      $("#q").blur();
-      goTo({ lat: +j[0].lat, lon: +j[0].lon }, 14);
-    }catch(e){ setStatus("Recherche d'adresse indisponible pour le moment.", true); }
+  function askPick(msg){
+    state.picking = true; $("#map").classList.add("picking");
+    setStatus(`${esc(msg)} Touchez la carte à l'endroit où vous êtes.`, true);
   }
+  map.on("click", e => { if (state.picking && !state.walking) setStart({ lat: e.latlng.lat, lon: e.latlng.lng }); });
 
-  function switchTab(tab){
-    state.tab = tab;
-    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
-    render();
-  }
-
-  // ---------- UI bindings ----------
-  function seg(id, key, cb){
-    const el = $(id);
-    el.querySelectorAll("button").forEach(b => {
-      b.classList.toggle("on", String(state[key]) === b.dataset.v);
-      b.addEventListener("click", () => {
-        el.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
-        state[key] = b.dataset.v;
-        savePrefs(); cb();
-      });
-    });
-  }
-  seg("#durSeg", "dur", () => render());
-  document.querySelectorAll("#layers button").forEach(b => {
-    b.classList.toggle("on", !!state.layers[b.dataset.l]);
-    b.setAttribute("aria-pressed", String(!!state.layers[b.dataset.l]));
+  // durée
+  document.querySelectorAll("#durSeg button").forEach(b => {
+    b.classList.toggle("on", +b.dataset.v === state.dur);
     b.addEventListener("click", () => {
-      const k = b.dataset.l; state.layers[k] = !state.layers[k];
-      b.classList.toggle("on", state.layers[k]); b.setAttribute("aria-pressed", String(state.layers[k]));
-      savePrefs(); render();
+      state.dur = +b.dataset.v; store.set("wouaf-dur", state.dur);
+      document.querySelectorAll("#durSeg button").forEach(x => x.classList.toggle("on", x === b));
+      if (state.start) generate();
     });
   });
-  $("#offleash").checked = state.offleash;
-  $("#offleash").addEventListener("change", e => { state.offleash = e.target.checked; savePrefs(); render(); });
   $("#locate").addEventListener("click", locate);
-  $("#searchForm").addEventListener("submit", e => { e.preventDefault(); const q = $("#q").value.trim(); if (q) geocode(q); });
-  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
 
-  // Lancement auto si la permission est déjà accordée
+  // relance auto si la localisation est déjà autorisée
   if (navigator.permissions && navigator.permissions.query){
     navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
   }
-  render();
 
-  // export pour tests
-  window.__balades = { map, planOf, filtered, transform, score, state, buildQueries, overpass, wmtRoutes, wmtItem, refresh, fmtMin, fmtKm };
+  window.__wouaf = { map, state, setStart, generate, plans, photonPlaces, trailPlaces };
 })();
 </script>
 </body>
