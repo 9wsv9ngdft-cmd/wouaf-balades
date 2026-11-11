@@ -150,7 +150,9 @@
   // ---------- Config ----------
   const OVERPASS = [
     "https://overpass-api.de/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter",
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+    "https://z.overpass-api.de/api/interpreter",
     "https://overpass.private.coffee/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter"
   ];
@@ -159,7 +161,7 @@
   const DUR = { any:[0,Infinity], short:[0,30], mid:[30,60], long:[60,120], xl:[120,Infinity] };
 
   const state = {
-    center: null, user: null, queried: null, areaEls: [], routeEls: [], dur: "any", offleash: false,
+    center: null, user: null, queried: null, areaEls: [], wmt: [], dur: "any", offleash: false,
     items: [], pois: [], selected: null, tab: "results", raw: null
   };
 
@@ -233,7 +235,7 @@
         if (done) return;
         started++;
         const c = new AbortController(); ctrls.push(c);
-        const t = setTimeout(() => c.abort(), 40000); timers.push(t);
+        const t = setTimeout(() => c.abort(), 50000); timers.push(t);
         fetch(url, { method:"POST", body:"data="+encodeURIComponent(q), headers:{ "Content-Type":"application/x-www-form-urlencoded" }, signal:c.signal })
           .then(r => { if (!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
           .then(j => { if (!j || !Array.isArray(j.elements)) throw new Error("réponse invalide"); finish(resolve, j); })
@@ -246,7 +248,7 @@
       };
       launch(OVERPASS[0]);
       for (let i = 1; i < OVERPASS.length; i++){
-        timers.push(setTimeout(() => { if (!done && started <= i) launch(OVERPASS[i]); }, i*4000));
+        timers.push(setTimeout(() => { if (!done && started <= i) launch(OVERPASS[i]); }, i*5000));
       }
     });
   }
@@ -275,10 +277,73 @@ out tags bb;
   nwr["natural"="water"]["name"];
 );
 out tags center;`;
-    const routes = `[out:json][timeout:25][bbox:${bb}];
-relation["type"="route"]["route"~"^(hiking|foot|walking)$"];
-out geom(${bb});`;
-    return { areas, routes };
+    return { areas };
+  }
+
+  // ---------- Waymarked Trails (sentiers balisés, rapide et fiable) ----------
+  const WMT = "https://hiking.waymarkedtrails.org/api/v1";
+  const wmtCache = new Map();
+  const toMerc = (lon, lat) => [lon*20037508.34/180, Math.log(Math.tan((90+lat)*Math.PI/360))*6378137];
+  const fromMerc = (x, y) => ({ lon: x/20037508.34*180, lat: (2*Math.atan(Math.exp(y/6378137)) - Math.PI/2)*180/Math.PI });
+
+  async function wmtFetch(url, signal){
+    const c = new AbortController(); const t = setTimeout(() => c.abort(), 15000);
+    if (signal) signal.addEventListener("abort", () => c.abort());
+    try{ const r = await fetch(url, { signal:c.signal }); if (!r.ok) throw new Error("HTTP "+r.status); return await r.json(); }
+    finally{ clearTimeout(t); }
+  }
+
+  async function wmtRoutes(b, signal){
+    const a = toMerc(b.w, b.s), z = toMerc(b.e, b.n);
+    const list = await wmtFetch(`${WMT}/list/by_area?bbox=${a[0]},${a[1]},${z[0]},${z[1]}&limit=100`, signal);
+    // promenades locales et régionales d'abord ; les très grands itinéraires (GR, E…) sont trop lourds à charger
+    const keep = (list.results || []).filter(r => r.type === "relation" && (r.group === "LOC" || r.group === "REG")).slice(0, 30);
+    const out = await Promise.all(keep.map(async r => {
+      if (wmtCache.has(r.id)) return wmtCache.get(r.id);
+      try{ const d = await wmtFetch(`${WMT}/details/relation/${r.id}`, signal); d.group = r.group; wmtCache.set(r.id, d); return d; }
+      catch(e){ return null; }
+    }));
+    return out.filter(Boolean);
+  }
+
+  function wmtSegments(node, out){
+    if (!node || typeof node !== "object") return out;
+    if (node.geometry && node.geometry.type === "LineString"){
+      out.push(node.geometry.coordinates.map(([x, y]) => fromMerc(x, y)));
+    }
+    for (const k of ["main", "appendices", "ways", "forward", "backward", "routes"]){
+      if (Array.isArray(node[k])) node[k].forEach(n => wmtSegments(n, out));
+    }
+    return out;
+  }
+
+  function wmtItem(d, center){
+    const segs = d._segs || (d._segs = wmtSegments(d.route, []).filter(s => s.length > 1));
+    if (!segs.length) return null;
+    const t = Object.assign({}, d.tags || {});
+    if (d.description && !t.description) t.description = d.description;
+    if (d.operator && !t.operator) t.operator = d.operator;
+    if (d.symbol_description) t._symbol = d.symbol_description;
+    const dog = dogInfo(t);
+    if (dog === "no") return null;
+    const length = d.official_length || (d.route && d.route.length) || segs.reduce((s, sg) => s + lineLength(sg), 0);
+    let best = null, bd = Infinity;
+    for (const sg of segs) for (const p of sg){ const dd = dist(center, p); if (dd < bd){ bd = dd; best = p; } }
+    const first = segs[0][0], lastSeg = segs[segs.length-1], last = lastSeg[lastSeg.length-1];
+    return {
+      id: "relation" + d.id, osmType: "relation", osmId: d.id, kind: "route", dog, tags: t,
+      name: d.name || d.local_name || (d.ref ? `Sentier ${d.ref}` : "Sentier sans nom"),
+      segs, length, lengthApprox: false, partial: false,
+      long: length > 25000,
+      round: d.linear === "no" || t.roundtrip === "yes" || dist(first, last) < 300,
+      access: best, dist: bd, group: d.group
+    };
+  }
+
+  function gpxOf(it){
+    const e = s => String(s).replace(/[<>&"]/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+    const segs = it.segs.map(sg => `<trkseg>${sg.map(p => `<trkpt lat="${p.lat.toFixed(6)}" lon="${p.lon.toFixed(6)}"/>`).join("")}</trkseg>`).join("");
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Wouaf Balades" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>${e(it.name)}</name><copyright author="OpenStreetMap contributors"><license>https://opendatacommons.org/licenses/odbl/</license></copyright></metadata><trk><name>${e(it.name)}</name>${segs}</trk></gpx>`;
   }
 
   // ---------- Transformation des données ----------
@@ -383,6 +448,10 @@ out geom(${bb});`;
       items.push(it);
     }
 
+    addProximity(items, pois);
+    return { items, pois };
+  }
+  function addProximity(items, pois){
     // attributs de proximité (eau, sacs, plans d'eau)
     for (const it of items){
       const ref = it.kind === "route" ? it.segs.flat().filter((_, i) => i % 6 === 0) : [it.access];
@@ -391,7 +460,6 @@ out geom(${bb});`;
       it.hasBags = near("bags", 350);
       it.hasLake = near("lake", 400);
     }
-    return { items, pois };
   }
   function inBox(p, b, pad){ return p.lat >= b.s-pad && p.lat <= b.n+pad && p.lon >= b.w-pad && p.lon <= b.e+pad; }
 
@@ -401,7 +469,7 @@ out geom(${bb});`;
     let s = KIND[it.kind].base;
     if (it.kind === "route"){
       const net = it.tags.network || "";
-      if (net === "lwn") s += 0.8;
+      if (net === "lwn" || it.group === "LOC") s += 0.8;
       if (it.round) s += 0.6;
     }
     if (it.dog === "free") s += 2.5; else if (it.dog === "yes") s += 1.5; else if (it.dog === "leash") s += 0.2;
@@ -453,7 +521,7 @@ out geom(${bb});`;
     if (it.kind === "route"){
       if (t.from && t.to) parts.push(`De <b>${esc(t.from)}</b> à <b>${esc(t.to)}</b>.`);
       if (t.operator) parts.push(`Balisage : ${esc(t.operator)}.`);
-      if (t.osmc_symbol || t["osmc:symbol"]) parts.push(`Suivez le balisage ${esc((t["osmc:symbol"]||t.osmc_symbol).split(":")[0])}.`);
+      if (t._symbol) parts.push(`Balisage : ${esc(t._symbol)}.`);
       parts.push(`Point d'accès le plus proche à ${fmtKm(it.dist)} de vous.`);
     } else if (it.kind === "dogpark"){
       parts.push("Espace dédié où votre chien peut se dépenser sans laisse.");
@@ -485,11 +553,11 @@ out geom(${bb});`;
     const k = KIND[it.kind];
     const d = dirLinks(it);
     const fav = !!favs[it.id];
-    const gpx = it.kind === "route" ? `<a class="btn ghost" href="https://hiking.waymarkedtrails.org/api/v1/details/relation/${it.osmId}/gpx" target="_blank" rel="noopener">⬇️ GPX</a>
+    const gpx = it.kind === "route" ? `<button class="ghost" data-gpx="${esc(it.id)}">⬇️ GPX</button>
       <a class="btn ghost" href="https://hiking.waymarkedtrails.org/#route?id=${it.osmId}" target="_blank" rel="noopener">🗺️ Tracé complet</a>` : "";
     return `<div class="card" tabindex="0" data-id="${esc(it.id)}">
       <div class="top">
-        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${k.label}${it.tags.network ? " · " + ({lwn:"local",rwn:"régional",nwn:"national",iwn:"international"}[it.tags.network]||"") : ""}</div></div>
+        <div><h3>${k.icon} ${esc(it.name)}</h3><div class="kind">${k.label}${(it.group || it.tags.network) ? " · " + ({LOC:"promenade locale",REG:"itinéraire régional",lwn:"promenade locale",rwn:"itinéraire régional",nwn:"national",iwn:"international"}[it.group || it.tags.network]||"") : ""}</div></div>
         ${rank != null ? `<div class="score">#${rank+1}</div>` : ""}
       </div>
       <div class="meta">
@@ -526,7 +594,7 @@ out geom(${bb});`;
       return;
     }
     if (!state.items.length){
-      list.innerHTML = state.center ? `<div class="empty">Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.</div>` : `<div class="empty">Touchez « Trouver des balades près de moi », tapez une ville, ou zoomez sur la carte.</div>`;
+      list.innerHTML = (state.loadingRoutes || state.loadingAreas) ? `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>` : state.center ? `<div class="empty">Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.</div>` : `<div class="empty">Touchez « Trouver des balades près de moi », tapez une ville, ou zoomez sur la carte.</div>`;
       drawMarkers([]);
       return;
     }
@@ -543,6 +611,15 @@ out geom(${bb});`;
         if (e.target.closest("a")) return;
         const fb = e.target.closest("[data-fav]");
         if (fb){ e.stopPropagation(); toggleFav(byId[fb.dataset.fav]); return; }
+        const gb = e.target.closest("[data-gpx]");
+        if (gb){
+          e.stopPropagation();
+          const it = byId[gb.dataset.gpx]; if (!it || !it.segs) return;
+          const url = URL.createObjectURL(new Blob([gpxOf(it)], { type:"application/gpx+xml" }));
+          const a = document.createElement("a"); a.href = url; a.download = (it.name || "balade").replace(/[^\w\u00C0-\u017F -]+/g, "").trim().slice(0, 60) + ".gpx";
+          document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
+          return;
+        }
         select(byId[el.dataset.id], true);
       });
       el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(byId[el.dataset.id], true); } });
@@ -637,10 +714,11 @@ out geom(${bb});`;
   function recompute(){
     const ref = refPoint();
     state.center = ref;
-    const els = [...(state.areaEls || []), ...(state.routeEls || [])];
-    const { items, pois } = transform({ elements: els }, ref);
+    const { items: areaItems, pois } = transform({ elements: state.areaEls || [] }, ref);
+    const routeItems = (state.wmt || []).map(d => wmtItem(d, ref)).filter(Boolean);
+    addProximity(routeItems, pois);
     const vb = viewBox(0.15);
-    state.items = items.filter(it => it.kind === "route"
+    state.items = [...routeItems, ...areaItems].filter(it => it.kind === "route"
       ? it.segs.some(sg => sg.some(p => inBox(p, vb, 0)))
       : inBox(it.access, vb, 0));
     state.pois = pois;
@@ -649,18 +727,39 @@ out geom(${bb});`;
       const it = state.items.find(i => i.id === state.selected);
       if (it) select(it, false, true); else state.selected = null;
     }
+    setStatus(countText() + (state.loadingAreas ? ` <span class="spinner" style="margin-left:6px"></span><i>parcs et forêts en cours de chargement…</i>` : state.areasFailed ? ` <i>(parcs et forêts indisponibles pour l'instant : serveur OpenStreetMap saturé.)</i> <a href="#" data-retry>Réessayer</a>` : ""));
+    const r = document.querySelector("[data-retry]"); if (r) r.onclick = e => { e.preventDefault(); state.queried = null; refresh(true); };
   }
 
   function countText(){
     const items = state.items;
-    if (!items.length) return "Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.";
-    const nR = items.filter(i => i.kind === "route").length, nD = items.filter(i => i.kind === "dogpark").length;
+    if (!items.length) return state.loadingAreas || state.loadingRoutes ? "Recherche des balades dans cette zone…" : "Rien trouvé dans cette zone. Déplacez ou dézoomez la carte.";
+    const nR = items.filter(i => i.kind === "route").length, nD = items.filter(i => i.kind === "dogpark").length, nA = items.length - nR - nD;
     const bits = [];
     if (nR) bits.push(`${nR} sentier${nR>1?"s":""} balisé${nR>1?"s":""}`);
     if (nD) bits.push(`${nD} parc${nD>1?"s":""} à chiens`);
-    bits.push("des espaces verts");
-    return `<b>${items.length}</b> idées de balade dans cette zone : ${bits.join(", ")}. Déplacez la carte pour explorer ailleurs.`;
+    if (nA) bits.push(`${nA} parc${nA>1?"s":""}, bois ou espace${nA>1?"s":""} vert${nA>1?"s":""}`);
+    return `<b>${items.length}</b> idées de balade : ${bits.join(", ")}.`;
   }
+
+  // cache des réponses Overpass (mémoire + téléphone) sur une grille fixe
+  const opMem = new Map();
+  function cacheGet(k){
+    if (opMem.has(k)) return opMem.get(k);
+    const all = store.get("balades-cache", {});
+    const e = all[k];
+    if (e && Date.now() - e.t < 7*86400000){ opMem.set(k, e.d); return e.d; }
+    return null;
+  }
+  function cacheSet(k, d){
+    opMem.set(k, d);
+    const all = store.get("balades-cache", {});
+    all[k] = { t: Date.now(), d };
+    const keys = Object.keys(all).sort((x, y) => all[y].t - all[x].t);
+    for (const old of keys.slice(6)) delete all[old];
+    store.set("balades-cache", all);
+  }
+  const snap = (b, g) => ({ s: Math.floor(b.s/g)*g, w: Math.floor(b.w/g)*g, n: Math.ceil(b.n/g)*g, e: Math.ceil(b.e/g)*g });
 
   async function refresh(force){
     const vb = viewBox();
@@ -669,29 +768,34 @@ out geom(${bb});`;
       setStatus("Zoomez sur la carte (ou touchez « Trouver des balades près de moi ») pour voir les balades.");
       return;
     }
-    if (!force && state.queried && contains(state.queried, vb)){ recompute(); setStatus(countText()); return; }
+    if (!force && state.queried && contains(state.queried, vb)){ recompute(); return; }
 
     if (ctrl) ctrl.abort();
     ctrl = new AbortController();
     const sig = ctrl.signal;
-    const qb = viewBox(0.3);
-    const { areas, routes } = buildQueries(qb);
-    setStatus(`<span class="spinner"></span>Recherche des balades dans cette zone…`);
-    if (!state.items.length) $("#list").innerHTML = `<div class="empty"><span class="spinner"></span>Chargement… les serveurs OpenStreetMap peuvent mettre jusqu'à 20 secondes.</div>`;
+    const qb = snap(viewBox(0.25), 0.02);
+    state.queried = qb;
+    const key = bboxStr(qb);
+    if (!state.items.length) $("#list").innerHTML = `<div class="empty"><span class="spinner"></span>Recherche des balades…</div>`;
 
-    let okA = false, okR = false;
-    const pA = overpass(areas, sig).then(j => { if (sig.aborted) return; state.areaEls = j.elements; okA = true; recompute(); });
-    const pR = overpass(routes, sig).then(j => { if (sig.aborted) return; state.routeEls = j.elements; okR = true; recompute(); });
-    await Promise.allSettled([pA, pR]);
-    if (sig.aborted) return;
-    if (!okA && !okR){
-      setStatus(`Les serveurs OpenStreetMap sont saturés en ce moment. <a href="#" id="retry">Réessayer</a>`, true);
-      const r = document.getElementById("retry"); if (r) r.onclick = e => { e.preventDefault(); refresh(true); };
-      if (!state.items.length) $("#list").innerHTML = "";
-      return;
+    // 1) sentiers balisés : rapide
+    state.loadingRoutes = true;
+    const pR = wmtRoutes(qb, sig).then(list => { if (sig.aborted) return; state.wmt = list; })
+      .catch(() => { if (!sig.aborted) state.wmt = state.wmt || []; })
+      .finally(() => { if (sig.aborted) return; state.loadingRoutes = false; recompute(); });
+
+    // 2) parcs, forêts, parcs à chiens, points d'eau : Overpass (plus lent, avec cache)
+    const cached = cacheGet(key);
+    if (cached){ state.areaEls = cached; state.loadingAreas = false; state.areasFailed = false; recompute(); }
+    else {
+      state.loadingAreas = true; state.areasFailed = false;
+      recompute();
+      overpass(buildQueries(qb).areas, sig)
+        .then(j => { if (sig.aborted) return; state.areaEls = j.elements; cacheSet(key, j.elements); })
+        .catch(() => { if (sig.aborted) return; state.areasFailed = true; state.areaEls = []; })
+        .finally(() => { if (sig.aborted) return; state.loadingAreas = false; recompute(); });
     }
-    if (okA && okR) state.queried = qb;
-    setStatus(countText() + (!okR ? " <i>(sentiers balisés indisponibles pour l'instant)</i>" : !okA ? " <i>(parcs et forêts indisponibles pour l'instant)</i>" : ""));
+    await pR;
   }
 
   map.on("moveend", () => { clearTimeout(moveTimer); moveTimer = setTimeout(() => refresh(false), 600); });
@@ -703,7 +807,7 @@ out geom(${bb});`;
   }
 
   function goTo(p, zoom){
-    state.queried = null; state.areaEls = []; state.routeEls = []; state.items = []; state.selected = null;
+    state.queried = null; state.areaEls = []; state.wmt = []; state.items = []; state.selected = null;
     const z = zoom || 14;
     const c = map.getCenter();
     if (map.getZoom() === z && Math.abs(c.lat - p.lat) < 1e-6 && Math.abs(c.lng - p.lon) < 1e-6) refresh(true);
@@ -766,7 +870,7 @@ out geom(${bb});`;
   render();
 
   // export pour tests
-  window.__balades = { transform, score, state, buildQueries, overpass, fmtMin, fmtKm };
+  window.__balades = { transform, score, state, buildQueries, overpass, wmtRoutes, wmtItem, refresh, fmtMin, fmtKm };
 })();
 </script>
 </body>
