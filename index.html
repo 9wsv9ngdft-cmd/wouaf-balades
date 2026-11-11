@@ -208,7 +208,8 @@
   const fmtKm = m => m < 1000 ? `${Math.round(m/10)*10} m` : `${(m/1000).toFixed(m < 10000 ? 1 : 0).replace(".", ",")} km`;
   function fmtMin(min){
     if (!isFinite(min) || min <= 0) return "—";
-    if (min < 60) return `${Math.max(5, Math.round(min/5)*5)} min`;
+    if (min < 57.5) return `${Math.max(5, Math.round(min/5)*5)} min`;
+    if (min < 60) min = 60;
     const h = Math.floor(min/60), m = Math.round((min%60)/15)*15;
     return m === 60 ? `${h+1} h` : (m ? `${h} h ${String(m).padStart(2,"0")}` : `${h} h`);
   }
@@ -481,6 +482,22 @@ out tags center;`;
     if (boxHit(vb, HDS_BOX) && !idf.hds && !idf.loadingHds)
       jobs.push(idf.loadingHds = loadIdfHds().then(r => { idf.hds = r; }).catch(() => { idf.hds = []; }));
     return jobs.length ? Promise.all(jobs) : null;
+  }
+
+  // Une même balade peut venir de plusieurs sources : on n'en garde qu'une
+  function dedupeRoutes(items){
+    const kept = [];
+    for (let i = 0; i < items.length; i++){
+      const it = items[i];
+      const pts = it.segs.flat();
+      const sample = pts.filter((_, k) => k % Math.max(1, Math.floor(pts.length/8)) === 0);
+      const dup = kept.some(o => {
+        if (Math.abs(o.length - it.length) / Math.max(o.length, it.length) > 0.2) return false;
+        const op = o._pts || (o._pts = o.segs.flat().filter((_, k) => k % 2 === 0));
+        return sample.filter(p => op.some(q => dist(p, q) < 80)).length >= sample.length*0.7;
+      });
+      if (dup){ items.splice(i, 1); i--; } else kept.push(it);
+    }
   }
 
   function rawItem(r, center){
@@ -925,6 +942,7 @@ out tags center;`;
     const { items: areaItems, pois } = transform({ elements: state.areaEls || [] }, ref);
     const routeItems = (state.wmt || []).map(d => wmtItem(d, ref)).filter(Boolean)
       .concat([...(idf.base || []), ...(idf.hds || [])].map(r => rawItem(r, ref)));
+    dedupeRoutes(routeItems);
     addProximity(routeItems, pois);
     const vb = viewBox(0.15);
     state.items = [...routeItems, ...areaItems].filter(it => it.kind === "route"
