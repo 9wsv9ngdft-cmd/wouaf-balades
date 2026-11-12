@@ -130,6 +130,17 @@
   #updBar span{flex:1}
   #updBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
   body.walking #updBar{display:none}
+  .wbanner{max-width:720px;margin:0 auto 10px;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;font-size:14px}
+  .wbanner .wbb{display:flex;gap:8px;margin-top:8px}
+  .wbanner .wbb button{flex:1;padding:9px 8px;font-size:14px;background:#fff;color:var(--green)}
+  .wbanner .wbb button + button{background:rgba(255,255,255,.2);color:#fff}
+  .wbanner.home{background:#fff;color:var(--green);font-weight:600}
+  .wbanner.home .wbb button{background:var(--green);color:#fff}
+  .wbanner.home .wbb button + button{background:#eef3ec;color:var(--green)}
+  #chooseBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:2500;display:none;background:var(--green);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px -8px rgba(0,0,0,.4);font-size:14px;align-items:center;gap:10px}
+  body.choosing #chooseBar{display:flex}
+  #chooseBar span{flex:1}
+  #chooseBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
   .news{padding-left:20px;margin:8px 0 0}
@@ -198,6 +209,7 @@
 </main>
 
 <div id="walkbar" role="region" aria-label="Balade en cours">
+  <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
   <div class="in">
     <div class="wstats"><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div></div>
     <div class="wbtns">
@@ -209,6 +221,7 @@
   </div>
 </div>
 
+<div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
 
@@ -216,7 +229,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-12.085333";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-12.090210";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -745,9 +758,68 @@
   let track = [], photos = [], hiddenAt = null, pausedMs = 0, trackLayer = null;
   async function keepAwake(){ try{ if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){} }
 
-  async function startWalk(p){
+  // Balade en cours gardée en mémoire : si l'iPhone ferme l'app, elle reprend à la réouverture
+  const CUR_KEY = "wouaf-encours", END_KEY = "wouaf-fin";
+  let walkHome = null, maxAway = 0, lastPersist = 0, homeTimer = null, homeSnooze = false, bannerTimer = null;
+  function persist(force){
+    const p = state.walk; if (!p) return;
+    if (!force && Date.now() - lastPersist < 15000) return;
+    lastPersist = Date.now();
+    store.set(CUR_KEY, {
+      p: { type:p.type, line:p.line.map(q => ({ lat:+q.lat.toFixed(6), lon:+q.lon.toFixed(6) })), m:p.m, min:p.min, cat:p.cat, town:p.town, dir:p.dir,
+           via:(p.via || []).map(v => ({ name:v.name, kind:v.kind })), _title: titleOf(p), _icon: iconOf(p) },
+      t0, track: track.map(q => ({ lat:q.lat, lon:q.lon, t:q.t })), pausedMs, walked, home: walkHome, maxAway, saved: Date.now()
+    });
+  }
+  const forgetWalk = () => { try{ localStorage.removeItem(CUR_KEY); }catch(e){} };
+
+  function showBanner(kind, text, a, b){
+    const el = $("#walkBanner");
+    el.className = "wbanner" + (kind === "home" ? " home" : "");
+    $("#wbText").textContent = text;
+    $("#wbA").textContent = a.label; $("#wbA").onclick = a.fn;
+    $("#wbB").textContent = b.label; $("#wbB").onclick = b.fn;
+    el.hidden = false;
+  }
+  const hideBanner = () => { $("#walkBanner").hidden = true; clearTimeout(bannerTimer); };
+
+  // Pendant une balade libre : on peut choisir un parcours, la balade continue
+  function chooseRoute(){
+    hideBanner();
+    document.body.classList.remove("walking"); document.body.classList.add("choosing");
+    followMap = false;
+    setTimeout(() => map.invalidateSize(), 50);
+    const here = track[track.length-1] || walkHome || state.start;
+    if (here) setStart({ lat: here.lat, lon: here.lon }, true);
+    else locate();
+  }
+  function backToWalk(){
+    document.body.classList.remove("choosing"); document.body.classList.add("walking");
+    followMap = true; layers.routes.clearLayers();
+    if (state.walk && !state.walk.line.length) layers.sel.clearLayers();
+    if (trackLayer){ trackLayer.addTo(layers.sel); }
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+  $("#chooseBack").addEventListener("click", backToWalk);
+
+  async function startWalk(p, resume){
     if (!p) return;
-    if (!profile.walker){ askProfile(() => startWalk(p)); return; }
+    if (!profile.walker){ askProfile(() => startWalk(p, resume)); return; }
+    // une balade libre est déjà en cours : le parcours choisi la guide, sans remettre le chrono à zéro
+    if (state.walk && !resume){
+      if (!p.line.length){ backToWalk(); return; }
+      state.walk = p;
+      cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
+      walked = 0;
+      drawSelected(p, "#d9792b");
+      trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
+      document.body.classList.remove("choosing"); document.body.classList.add("walking");
+      followMap = true; hideBanner();
+      setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
+      $("#walktip").textContent = "🗺️ Parcours choisi : la balade continue.";
+      updateWalk(null); persist(true);
+      return;
+    }
     state.walk = p;
     const free = !p.line.length;
     if (free){ layers.sel.clearLayers(); layers.routes.clearLayers(); }
@@ -760,9 +832,22 @@
     }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
     t0 = Date.now(); walked = 0; followMap = true; track = []; photos = []; hiddenAt = null; pausedMs = 0;
+    walkHome = null; maxAway = 0; homeSnooze = false; clearInterval(homeTimer); homeTimer = null; hideBanner();
+    if (resume){
+      t0 = resume.t0; track = resume.track || []; walked = resume.walked || 0; walkHome = resume.home || null; maxAway = resume.maxAway || 0;
+      // le temps où l'app était fermée compte comme une pause du suivi
+      pausedMs = (resume.pausedMs || 0) + Math.max(0, Date.now() - (resume.saved || Date.now()));
+    }
     $("#photoBtn").textContent = "📷";
-    $("#walktip").textContent = "📱 Garde l'app ouverte, ne verrouille pas l'écran";
-    trackLayer = L.polyline([], { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
+    $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
+    trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
+    if (free && !resume){
+      showBanner("start", "🐾 Balade libre lancée depuis ici.",
+        { label:"🗺️ Choisir un parcours", fn: chooseRoute },
+        { label:"✕ Pas de balade", fn: cancelWalk });
+      bannerTimer = setTimeout(hideBanner, 120000);
+    }
+    persist(true);
     await keepAwake();
     updateWalk(null);
     tick = setInterval(() => updateWalk(null), 15000);
@@ -782,13 +867,52 @@
       const last = track[track.length-1];
       if (!last || dist(last, q) >= 8 || q.t - last.t >= 30000){ track.push(q); if (trackLayer) trackLayer.addLatLng([q.lat, q.lon]); }
     }
+    if (!walkHome && q.a <= 40) walkHome = { lat:q.lat, lon:q.lon };
     updateWalk(q);
+    if (walkHome) checkHome(q);
+    persist(false);
+  }
+
+  // Fin automatique : de retour à moins de 40 m du départ, après au moins 5 min et 200 m d'éloignement
+  function checkHome(q){
+    const p = state.walk; if (!p) return;
+    const d = dist(walkHome, q);
+    maxAway = Math.max(maxAway, d);
+    if (homeSnooze && d > 100) homeSnooze = false;
+    if (homeTimer){ if (d > 60) cancelHome(); return; }
+    const elapsed = (Date.now() - t0) / 60000;
+    const enough = !p.line.length || walked >= 0.6 * p.m;
+    if (!homeSnooze && elapsed >= 5 && maxAway >= 200 && d < 40 && q.a <= 35 && enough) startHome();
+  }
+  function startHome(){
+    let left = 30;
+    const txt = () => `🏠 Bienvenue ! Fin de la balade dans ${left} s`;
+    showBanner("home", txt(), { label:"✓ Terminer", fn: () => { cancelHome(); stopWalk(); } }, { label:"Je continue", fn: () => { cancelHome(); homeSnooze = true; } });
+    homeTimer = setInterval(() => {
+      left--;
+      if (left <= 0){ cancelHome(); stopWalk(); return; }
+      $("#wbText").textContent = txt();
+    }, 1000);
+  }
+  function cancelHome(){ clearInterval(homeTimer); homeTimer = null; hideBanner(); }
+
+  // « Pas de balade » : on arrête sans récap ni carnet
+  function cancelWalk(){
+    if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
+    watchId = null; clearInterval(tick); cancelHome(); hideBanner();
+    try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
+    state.walk = null; forgetWalk(); store.set(END_KEY, Date.now());
+    document.body.classList.remove("walking", "choosing");
+    layers.sel.clearLayers();
+    setTimeout(() => map.invalidateSize(), 50);
+    setStatus("Pas de balade pour l'instant. Touchez « Me localiser » ou « Balade libre » quand vous voulez.");
+    if (window.__wouafUpdatePending && window.__wouafUpdatePending()) setTimeout(applyUpdate, 300);
   }
 
   // Quand on quitte l'app, Safari met le GPS en pause : on le note et on reprend au retour
   document.addEventListener("visibilitychange", () => {
     if (!state.walk) return;
-    if (document.hidden){ hiddenAt = Date.now(); return; }
+    if (document.hidden){ hiddenAt = Date.now(); persist(true); return; }
     if (hiddenAt){
       const gap = Date.now() - hiddenAt; pausedMs += gap; hiddenAt = null;
       if (gap > 20000) $("#walktip").textContent = `⏸️ Suivi en pause pendant ${fmtMin(gap/60000)}, il a repris. Garde l'app ouverte 🙏`;
@@ -1001,7 +1125,8 @@
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null; clearInterval(tick);
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
-    state.walk = null; document.body.classList.remove("walking");
+    state.walk = null; document.body.classList.remove("walking", "choosing");
+    cancelHome(); hideBanner(); forgetWalk(); store.set(END_KEY, Date.now());
     if (state.start && youMarker) youMarker.setLatLng([state.start.lat, state.start.lon]);
     setTimeout(() => map.invalidateSize(), 50);
     if (!p) return;
@@ -1291,15 +1416,9 @@
   });
   $("#locate").addEventListener("click", locate);
   $("#freeWalk").addEventListener("click", () => {
-    startWalk({ type:"free", line:[], m:0, min:0, cat:"free", via:[], _title:"Balade libre", _icon:"🚶" });
+    startWalk(FREE());
   });
 
-  showRecapPage().then(isRecap => {
-    if (isRecap) return;
-    if (navigator.permissions && navigator.permissions.query){
-      navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
-    }
-  });
 
   // ---------- Mise à jour automatique ----------
   // L'app relit sa propre page sur le serveur (sans cache) et compare le numéro de version.
@@ -1330,7 +1449,7 @@
     else $("#updBar").classList.add("show");
   }
   $("#updBtn").addEventListener("click", () => { if (!state.walk) applyUpdate(); });
-  checkUpdate(true);
+  const firstCheck = checkUpdate(true);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(!state.walk); });
   setInterval(() => { if (!document.hidden) checkUpdate(false); }, 5*60000);
   // une mise à jour en attente pendant la balade : appliquée dès que le récap est fermé
@@ -1338,8 +1457,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 8;
+  const APP_NUM = 9;
   const NEWS = {
+    9: [
+      "▶️ La balade démarre toute seule à l'ouverture de l'app (balade libre ; « Choisir un parcours » reste possible).",
+      "🏠 Elle se termine toute seule quand tu reviens au point de départ (30 s pour dire « Je continue »).",
+      "🔁 Si l'iPhone ferme l'app en pleine balade, elle reprend là où elle en était."
+    ],
     8: [
       "🔄 L'app se met maintenant à jour toute seule (jamais pendant une balade).",
       "📩 Le récap envoyé au superviseur tient sur une ligne, avec un lien plus court.",
@@ -1348,7 +1472,7 @@
   };
   $("#appVer").textContent = `Wouaf Balades, version ${APP_NUM}.`;
   function showNews(){
-    if (store.get("wouaf-vu", 0) >= APP_NUM || document.body.classList.contains("recap") || busy()) return;
+    if (store.get("wouaf-vu", 0) >= APP_NUM || document.body.classList.contains("recap") || $("#modal").classList.contains("open")) return;
     const l = NEWS[APP_NUM] || [];
     openSheet(`<h2>Nouveau dans la version ${APP_NUM}</h2>${l.length ? `<ul class="news">${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p>Petites corrections et améliorations.</p>"}
       <div class="btns"><button id="newsOk">OK</button></div>`);
@@ -1356,7 +1480,30 @@
   }
   setTimeout(showNews, 800);
 
-  window.__wouaf = { renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
+  // ---------- Au lancement ----------
+  // 1) lien de récap → page du superviseur ; 2) balade interrompue → reprise ;
+  // 3) sinon balade libre automatique (pas dans l'heure qui suit une balade terminée)
+  const FREE = () => ({ type:"free", line:[], m:0, min:0, cat:"free", via:[], _title:"Balade libre", _icon:"🚶" });
+  showRecapPage().then(async isRecap => {
+    if (isRecap) return;
+    await Promise.race([firstCheck, new Promise(r => setTimeout(r, 3000))]);
+    if (updWaiting) return;                       // une nouvelle version va se charger d'abord
+    const cur = store.get(CUR_KEY, null);
+    if (cur && cur.p && Date.now() - (cur.saved || 0) < 4*3600000){
+      const p = cur.p; p.line = p.line || []; p.via = p.via || [];
+      startWalk(p, cur);
+      return;
+    }
+    forgetWalk();
+    if (Date.now() - store.get(END_KEY, 0) < 3600000){
+      if (navigator.permissions && navigator.permissions.query)
+        navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
+      return;
+    }
+    startWalk(FREE());
+  });
+
+  window.__wouaf = { checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
 </script>
 </body>
