@@ -1,0 +1,8 @@
+#!/bin/sh
+# Change automatiquement APP_VERSION dans index.html à chaque commit qui le modifie,
+# pour que les téléphones détectent la nouvelle version et se mettent à jour.
+if git diff --cached --name-only | grep -qx "index.html"; then
+  v="$(date +%Y-%m-%d.%H%M%S)"
+  sed -i.bak "s/const APP_VERSION = \"[^\"]*\"/const APP_VERSION = \"$v\"/" index.html && rm -f index.html.bak
+  git add index.html
+fi

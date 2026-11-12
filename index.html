@@ -125,6 +125,11 @@
   .notice{font-size:13px;border-radius:12px;padding:9px 12px;margin-top:10px;background:#eef3ec;color:#25502f}
   .notice.warn{background:#fbebdc;color:#7a3d10}
   .notice button{margin-top:6px;padding:7px 10px;font-size:13px}
+  #updBar{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 10px);z-index:3000;display:none;background:var(--green);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px -8px rgba(0,0,0,.4);font-size:14px;align-items:center;gap:10px}
+  #updBar.show{display:flex}
+  #updBar span{flex:1}
+  #updBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
+  body.walking #updBar{display:none}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
   .leaflet-container{font:inherit}
@@ -201,12 +206,14 @@
   </div>
 </div>
 
+<div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 (() => {
   "use strict";
+  const APP_VERSION = "2026-11-12.084949";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -712,7 +719,7 @@
     $("#editWho").textContent = profile.walker ? "Changer" : "Renseigner";
   }
   function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
-  function closeSheet(){ $("#modal").classList.remove("open"); }
+  function closeSheet(){ $("#modal").classList.remove("open"); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(() => location.reload(), 300); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -1290,6 +1297,34 @@
       navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
     }
   });
+
+  // ---------- Mise à jour automatique ----------
+  // L'app relit sa propre page sur le serveur (sans cache) et compare le numéro de version.
+  // À l'ouverture ou au retour dans l'app : rechargement direct (sauf pendant une balade).
+  // En cours d'utilisation : bandeau « Mettre à jour », pour ne pas couper ce qu'on fait.
+  let updWaiting = false;
+  async function remoteVersion(){
+    try{
+      const r = await fetch(location.pathname + "?v=" + Date.now(), { cache:"no-store" });
+      const m = (await r.text()).match(/APP_VERSION = "([^"]+)"/);
+      return m ? m[1] : null;
+    }catch(e){ return null; }
+  }
+  function busy(){ return !!state.walk || $("#modal").classList.contains("open"); }
+  function applyUpdate(){ location.reload(); }
+  async function checkUpdate(atOpening){
+    const v = await remoteVersion();
+    if (!v || v === APP_VERSION) return;
+    updWaiting = true;
+    if (atOpening && !busy()) applyUpdate();
+    else $("#updBar").classList.add("show");
+  }
+  $("#updBtn").addEventListener("click", () => { if (!state.walk) applyUpdate(); });
+  checkUpdate(true);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkUpdate(!state.walk); });
+  setInterval(() => { if (!document.hidden) checkUpdate(false); }, 5*60000);
+  // une mise à jour en attente pendant la balade : appliquée dès que le récap est fermé
+  window.__wouafUpdatePending = () => updWaiting;
 
   window.__wouaf = { renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
