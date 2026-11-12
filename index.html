@@ -132,6 +132,8 @@
   body.walking #updBar{display:none}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
+  .news{padding-left:20px;margin:8px 0 0}
+  .news li{margin:6px 0}
   .leaflet-container{font:inherit}
 </style>
 </head>
@@ -190,6 +192,7 @@
   <footer>
     Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL).
     Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS (OSRM, Valhalla)</a>, <a href="https://brouter.de">BRouter</a> · Lieux : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a> · Météo : <a href="https://open-meteo.com">Open-Meteo</a> (Météo-France).
+    <span id="appVer"></span>
     Durées estimées à 3,5 km/h, rythme « chien qui renifle ». Vérifiez la signalisation sur place (laisse obligatoire, accès interdits aux chiens).
   </footer>
 </main>
@@ -213,7 +216,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-12.085002";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-12.085333";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1332,6 +1335,26 @@
   setInterval(() => { if (!document.hidden) checkUpdate(false); }, 5*60000);
   // une mise à jour en attente pendant la balade : appliquée dès que le récap est fermé
   window.__wouafUpdatePending = () => updWaiting;
+
+  // ---------- Numéro de version et nouveautés ----------
+  // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
+  const APP_NUM = 8;
+  const NEWS = {
+    8: [
+      "🔄 L'app se met maintenant à jour toute seule (jamais pendant une balade).",
+      "📩 Le récap envoyé au superviseur tient sur une ligne, avec un lien plus court.",
+      "🆘 Nouveau bouton d'alerte pendant la balade : il envoie ta position."
+    ]
+  };
+  $("#appVer").textContent = `Wouaf Balades, version ${APP_NUM}.`;
+  function showNews(){
+    if (store.get("wouaf-vu", 0) >= APP_NUM || document.body.classList.contains("recap") || busy()) return;
+    const l = NEWS[APP_NUM] || [];
+    openSheet(`<h2>Nouveau dans la version ${APP_NUM}</h2>${l.length ? `<ul class="news">${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p>Petites corrections et améliorations.</p>"}
+      <div class="btns"><button id="newsOk">OK</button></div>`);
+    $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
+  }
+  setTimeout(showNews, 800);
 
   window.__wouaf = { renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
