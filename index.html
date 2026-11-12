@@ -213,7 +213,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-12.084949";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-12.085002";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -719,7 +719,7 @@
     $("#editWho").textContent = profile.walker ? "Changer" : "Renseigner";
   }
   function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
-  function closeSheet(){ $("#modal").classList.remove("open"); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(() => location.reload(), 300); }
+  function closeSheet(){ $("#modal").classList.remove("open"); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -1311,10 +1311,17 @@
     }catch(e){ return null; }
   }
   function busy(){ return !!state.walk || $("#modal").classList.contains("open"); }
-  function applyUpdate(){ location.reload(); }
+  function applyUpdate(){
+    try{ const n = JSON.parse(sessionStorage.getItem("wouaf-reloads") || "[]"); n.push(Date.now()); sessionStorage.setItem("wouaf-reloads", JSON.stringify(n)); }catch(e){}
+    location.reload();
+  }
   async function checkUpdate(atOpening){
     const v = await remoteVersion();
-    if (!v || v === APP_VERSION) return;
+    // seulement si la version du serveur est plus récente (évite les allers-retours entre caches)
+    if (!v || v <= APP_VERSION) return;
+    // garde-fou : pas plus de 3 rechargements automatiques en 10 min
+    let n = []; try{ n = JSON.parse(sessionStorage.getItem("wouaf-reloads") || "[]").filter(t => Date.now() - t < 600000); }catch(e){}
+    if (n.length >= 3) return;
     updWaiting = true;
     if (atOpening && !busy()) applyUpdate();
     else $("#updBar").classList.add("show");
