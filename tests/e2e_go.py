@@ -9,5 +9,5 @@ with sync_playwright() as pw:
     open_app(q, 3000)
     if q.evaluate("document.querySelector('#modal').classList.contains('open')"): q.evaluate("document.querySelector('#sheetX').click()")
     q.evaluate("__wouaf.openMenu()"); q.click("#muShort"); q.wait_for_timeout(400)
-    t = q.evaluate("document.querySelector('#sheet').innerText"); print("sheet ok:", "Sortir Roxy" in t and "Copier le lien" in t)
+    t = q.evaluate("document.querySelector('#sheet').innerText"); print("sheet ok:", "Télécharger le raccourci" in t and "3 gestes" in t)
 print("errs", errs); sys.exit(1 if errs else 0)
