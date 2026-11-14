@@ -508,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.210129";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.215144";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2503,6 +2503,28 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden){ useTime(); useStart = null; sendUsage(); } else { useStart = Date.now(); useOpen(); } });
   window.addEventListener("pagehide", () => { useTime(); sendUsage(true); });
 
+  // 📲 bouton « Sortir Roxy » sur l'écran d'accueil (app Raccourcis d'Apple : un vrai widget n'est pas possible pour une web app)
+  const SHORTCUT_URL = "";   // lien iCloud du raccourci partagé par Éric (à remplir) → bouton « Télécharger le raccourci »
+  const goUrl = () => location.origin + location.pathname + "#go";
+  function sheetShortcut(){
+    openSheet(`<h2>📲 Bouton « Sortir Roxy »</h2>
+      <p>Un bouton sur l'écran d'accueil de ton iPhone : tu appuies, et la balade démarre tout de suite.</p>
+      ${SHORTCUT_URL ? `<div class="btns"><a class="btn" id="scDl" href="${SHORTCUT_URL}" style="display:block;text-align:center;padding:14px;border-radius:14px;background:var(--green,#2f5d3a);color:#fff;text-decoration:none;font-weight:700">⬇️ Télécharger le raccourci</a></div>
+        <p class="howto">Puis « Ajouter le raccourci », et suis l'étape 4 ci-dessous pour le mettre sur l'écran d'accueil.</p>` : ""}
+      <div class="flabel">${SHORTCUT_URL ? "Ou le faire toi-même" : "Le faire en 1 minute"}</div>
+      <ol style="line-height:1.7;padding-left:20px;margin:6px 0">
+        <li>Touche <b>« 📋 Copier le lien »</b> ci-dessous.</li>
+        <li>Ouvre l'app <b>Raccourcis</b> › <b>+</b> › <b>Ajouter une action</b> › cherche <b>« Ouvrir les URL »</b>, puis colle le lien.</li>
+        <li>Nomme le raccourci <b>« Sortir Roxy »</b> (touche le nom en haut) et choisis une icône 🐕.</li>
+        <li>Sur l'écran d'accueil : appui long › <b>Modifier</b> › <b>Ajouter un widget</b> › <b>Raccourcis</b> › choisis « Sortir Roxy ».</li>
+      </ol>
+      <p class="howto">⚠️ Fais un essai : si le raccourci ouvre Safari au lieu de l'app Wouaf, ta tirelire n'y sera pas. Dans ce cas, dis-le au superviseur.</p>
+      <p id="scMsg" role="status"></p>
+      <div class="btns"><button id="scCopy">📋 Copier le lien</button><a class="btn ghost" href="shortcuts://" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--line);color:var(--ink);text-decoration:none">Ouvrir l'app Raccourcis</a><button class="ghost" id="scClose">Fermer</button></div>`);
+    $("#scClose").onclick = closeSheet;
+    $("#scCopy").onclick = async () => { try{ await navigator.clipboard.writeText(goUrl()); $("#scMsg").textContent = "✅ Lien copié : " + goUrl(); }catch(e){ $("#scMsg").textContent = "Copie impossible ici. Le lien : " + goUrl(); } };
+  }
+
   // 🔑 tout ce que fait le superviseur, au même endroit
   function sheetSupMenu(){
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
@@ -2528,6 +2550,7 @@
       ${it("muLog", "📒", "Carnet", "")}
       ${it("muAlbum", "📸", "Album photo", "")}
       ${PUSH_API && !isTester() ? it("muRap", "🔔", "Mes rappels", rap.on ? "activés" : "") : ""}
+      ${it("muShort", "📲", "Bouton « Sortir Roxy »", "sur l'écran d'accueil")}
       ${it("muBonus", "🎁", "Bonus et règles", "")}
       ${it("muTuto", "📖", "Tuto", "")}
       ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
@@ -2545,6 +2568,7 @@
     go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
     go("muRap", openRappels);
     go("muBonus", sheetBonus);
+    go("muShort", sheetShortcut);
     go("muTuto", () => showTuto(0, true));
     go("muWho", () => askProfile());
     go("muPriv", sheetPrivacy);
@@ -4394,7 +4418,17 @@
     }
     forgetWalk();
     renderHome();
+    if (location.hash === "#go") goFromShortcut();
   });
+  // 🐾 lien « départ direct » (#go) : ouvert par le raccourci « Sortir Roxy » → balade libre tout de suite (durée choisie en dernier)
+  function goFromShortcut(){
+    try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){}
+    if (state.walk) return;
+    const go = () => { const p = FREE(); p.min = state.dur; startWalk(p); };
+    if (!profile.walker){ askProfile(go); return; }
+    go();
+  }
+  window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
   window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
 })();

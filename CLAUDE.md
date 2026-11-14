@@ -286,3 +286,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   (`sheetPrivacy`). Non = rien compté, chiffres effacés sur le serveur.
 - Retours du 14/11 (21 h) : gros lots visibles aussi pour Éric (testeur) ; trésor annoncé sur l'accueil même sans maison (avant la 1re balade / après la
   remise à zéro), caché seulement une fois trouvé cette semaine (`wouaf-tresor`).
+- 📲 Bouton « Sortir Roxy » (décidé le 14/11 ; un vrai widget iPhone est impossible pour une web app) : lien `#go` (`goFromShortcut`, aussi sur `hashchange`)
+  = balade libre tout de suite (durée choisie en dernier) ; ☰ › 📲 Bouton « Sortir Roxy » (`sheetShortcut`) : copier le lien + étapes Raccourcis › « Ouvrir les URL »
+  › widget Raccourcis. `SHORTCUT_URL` (lien iCloud du raccourci partagé par Éric, vide pour l'instant) → bouton « ⬇️ Télécharger le raccourci ». Test : `tests/e2e_go.py`.
+  À vérifier sur iPhone : le raccourci doit ouvrir l'app de l'écran d'accueil, pas Safari (stockages séparés).
