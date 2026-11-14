@@ -173,11 +173,12 @@ export default {
     if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [] });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
-    if (path === "/pause"){
+    if (path === "/check" || path === "/pause"){
       // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
       if (!b || !env.SUPERVISOR_CODE || String(b.code) !== String(env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
+      if (path === "/check") return json({ ok:true });   // vérifie seulement le code (ex. « payé ✓ » dans l'app)
       const ok = d => typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d);
       const pauses = (Array.isArray(b.pauses) ? b.pauses : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
       await env.WOUAF.put("pauses", JSON.stringify(pauses));

@@ -142,6 +142,10 @@
   .linkish{background:none;color:var(--green);padding:4px 0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
   #walkbar .tip{font-size:12px;opacity:.85}
   #walkbar .wbtns{display:flex;gap:6px}
+  #walkbar .in{flex-wrap:wrap}
+  #walkbar .needs{display:flex;gap:6px;width:100%;order:-1;margin-bottom:8px}
+  #walkbar .needs button{flex:1;padding:8px;font-size:14px;background:rgba(255,255,255,.18);color:#fff;border-radius:10px}
+  #walkbar .needs button.on{background:#fff;color:var(--green)}
   #walkbar .photo{padding:11px 10px}
   #walkbar #sosBtn{background:#c0392b}
   #walkbar .in{gap:8px}
@@ -327,6 +331,7 @@
   <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
   <div class="in">
     <div class="wstats"><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div></div>
+    <div class="needs"><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wbtns">
       <button class="photo" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
       <button class="photo" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
@@ -344,7 +349,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.141200";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.141627";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -958,7 +963,7 @@
     if (best) out.push({ lat:best.lat, lon:best.lon, k:"s" });
     return out;
   }
-  const newGameWalk = p => ({ items: seedItems(p), got:{ b:0, t:0, f:0, s:0 }, itemPts:0, cells:[], newCells:0, acc:0, next: 300 + Math.random()*100, treasure:false, last:null });
+  const newGameWalk = p => ({ needs:{ p:0, c:0 }, items: seedItems(p), got:{ b:0, t:0, f:0, s:0 }, itemPts:0, cells:[], newCells:0, acc:0, next: 300 + Math.random()*100, treasure:false, last:null });
   function drawItems(){
     gameLayer.clearLayers();
     if (!gw) return;
@@ -1040,7 +1045,8 @@
     const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
     for (const c of gw.cells) game.seen[c] = dayNum();
     if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
-    const chest = gw.chest, rain = gw.rain;
+    const chest = gw.chest, rain = gw.rain, needs = gw.needs, photoBonus = gw.photoBonus || 0;
+    res.needs = needs;
     gw = null; gameLayer.clearLayers();
     if (chest){
       res.chest = CHEST_EUR;
@@ -1072,7 +1078,9 @@
     if (game.defiDone !== today && df.ok({ min: elapsedMin, cells: res.cells, n: Object.values(res.got).reduce((a, b) => a + b, 0), m: meters || 0, got: res.got, home: cameHome })){
       game.defiDone = today; res.defi = df.t;
     }
-    res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak + (res.defi ? DEFI_PTS : 0);
+    if (rain) res.rainMult = 1.5;   // 🌧️ bonus courage
+    res.photo = photoBonus;
+    res.total = Math.round((res.items + res.cells) * res.mult * (res.rainMult || 1)) + res.home + res.streak + (res.defi ? DEFI_PTS : 0) + res.photo;
     res.dur = durCs || 0;   // clebsous de la durée
     game.pts += res.total; game.total += res.total + res.dur;
     const li = levelIndex(game.total);
@@ -1161,6 +1169,7 @@
         <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as pas prise depuis longtemps. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
       </div>
       ${malusBox()}
+      ${payBox()}
       ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
       <div class="wallet" style="background:#eef3ec;color:var(--ink)">
         <div style="font-weight:600">🎮 ${lv.name} · ${fmtCs(game.total / CS)} gagnés depuis le début</div>
@@ -1168,6 +1177,7 @@
         <div class="howto" style="margin-top:8px">Bonus en clebsous : 🦴 1 · 🎾 2 · 🍖 3 · ⭐ 5 · 🗺️ +1 par rue neuve, c'est-à-dire pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max par balade, objets ×2) · 🎯 défi +${DEFI_PTS} · balades longues multipliées. En vélo ou en voiture, rien ne compte 😉</div>
       </div>`;
     $("#bilNow").onclick = () => sendBilan(periodOf(Date.now()));
+    bindPay(renderShop);
   }
 
   // ---------- Progrès : coffre, saisons, trophées, niveaux, brouillard, accessoires, les autres ----------
@@ -1776,6 +1786,77 @@
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !state.walk) renderHome(); });
 
+
+  // ---------- 👋 Tutoriel (premier lancement) ----------
+  function showTuto(step){
+    step = step || 0;
+    const pages = [
+      ["🐕", `Sors ${DOG}, gagne des clebsous`, `Choisis une durée et touche « C'est parti ». Chaque balade d'au moins 15 min remplit ta tirelire de 🪙 clebsous. Plus c'est long, plus ça rapporte : 15 min = ${Math.round(walkEuros(15) * CS)}, 45 min = ${Math.round(walkEuros(45) * CS)}, 1 h = ${Math.round(walkEuros(60) * CS)}.`],
+      ["🎁", "Ramasse les bonus", `En marchant, tu trouves 🦴 🎾 🍖 et un ⭐ trésor. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours rapportent double, le défi du jour +${DEFI_PTS}, et parfois un 💰 coffre de ${Math.round(CHEST_EUR * CS)} clebsous se cache sur ton chemin !`],
+      ["💶", "Les règles du jeu", `Garde l'app ouverte pendant la balade : une balade sans l'app ne compte pas. Un jour sans balade enlève des clebsous (2 jokers par mois). Et à la fin du mois… tes clebsous deviennent de vrais sous !`]
+    ];
+    const [ic, h, t] = pages[step];
+    openSheet(`<div style="text-align:center;font-size:64px;margin:6px 0">${ic}</div><h2 style="text-align:center">${h}</h2><p style="text-align:center;line-height:1.6">${esc(t)}</p>
+      <p style="text-align:center;color:var(--muted)">${pages.map((_, i) => i === step ? "●" : "○").join(" ")}</p>
+      <div class="btns"><button id="tutoNext">${step < pages.length - 1 ? "Suivant →" : "C'est parti ! 🐾"}</button></div>`);
+    $("#tutoNext").onclick = () => {
+      if (step < pages.length - 1){ showTuto(step + 1); return; }
+      store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); closeSheet();
+      const after = () => { renderHome(); setTimeout(() => { if (!offerPayday(offerWeek)) offerWeek(); }, 400); };
+      if (!profile.walker) setTimeout(() => askProfile(after), 300); else after();
+    };
+  }
+
+  // ---------- 💶 Jour de paie (première ouverture d'un nouveau mois) ----------
+  const prevMonthKey = () => { const d = new Date(); return monthKey(new Date(d.getFullYear(), d.getMonth() - 1, 15).getTime()); };
+  const monthLabel = k => { const [y, m] = k.split("-").map(Number); return new Date(y, m - 1, 15).toLocaleDateString("fr-FR", { month:"long", year:"numeric" }); };
+  function payText(k){
+    const eur = moneyOf(k), cb = (game.bonus || {})[k] || 0;
+    return `💶 Paie de ${profile.walker || "Promeneur"} · ${monthLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}${cb ? ` (dont ${fmtEur(cb)} de coffre${cb > CHEST_EUR ? "s" : ""})` : ""}`;
+  }
+  function offerPayday(then){
+    ensureGame();
+    const k = prevMonthKey();
+    if (game.payShown === k || $("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;
+    game.payShown = k; saveGame();
+    const eur = moneyOf(k);
+    if (!eur) return false;
+    openSheet(`<div style="text-align:center;font-size:70px">💶</div><h2 style="text-align:center">Jour de paie !</h2>
+      <p style="text-align:center">En ${monthLabel(k)}, tu as gagné</p>
+      <div style="text-align:center;font-size:44px;font-weight:800;color:var(--accent)">${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</div>
+      <p style="text-align:center;margin-top:12px">🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>Ça te fait donc <b style="font-size:22px">${fmtEur(eur)}</b> ! 🎉</p>
+      <div class="btns"><button id="payShare">📩 Envoyer au superviseur</button><button class="ghost" id="payOk">Super !</button></div>`);
+    ding(); setTimeout(ding, 250); setTimeout(ding, 500);
+    $("#payShare").onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} };
+    $("#payOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 400); };
+    return true;
+  }
+  // mois précédents dans la tirelire, avec « payé ✓ » marqué par le superviseur (code)
+  function payBox(){
+    const cur = monthKey(Date.now());
+    const ks = Object.keys(game.money || {}).concat(Object.keys(game.bonus || {})).filter((k, i, a) => k < cur && a.indexOf(k) === i).sort().reverse().slice(0, 6);
+    if (!ks.length) return "";
+    game.paid = game.paid || {};
+    return `<div class="flabel">Mois précédents</div><div class="props">${ks.map(k => `<div class="entry"><div><h4>${esc(monthLabel(k))} · ${Math.round(moneyOf(k) * CS).toLocaleString("fr-FR")} 🪙</h4><div class="when">${fmtEur(moneyOf(k))} · ${game.paid[k] ? "✓ payé le " + new Date(game.paid[k]).toLocaleDateString("fr-FR") : "⏳ à payer"}</div></div>${game.paid[k] || !PUSH_API ? "" : `<button class="ghost" data-pay="${k}">Payé ✓</button>`}</div>`).join("")}</div>`;
+  }
+  function bindPay(rerender){
+    document.querySelectorAll("[data-pay]").forEach(b => b.onclick = () => {
+      const k = b.dataset.pay;
+      openSheet(`<h2>Superviseur : paie de ${esc(monthLabel(k))}</h2><p>${esc(payText(k))}</p>
+        <label for="payCode">Code superviseur</label><input id="payCode" type="password" inputmode="numeric" autocomplete="off">
+        <div class="btns"><button id="payDo">✓ Marquer comme payé</button><button class="ghost" id="payNo">Annuler</button></div><p id="payMsg" role="status"></p>`);
+      $("#payNo").onclick = closeSheet;
+      $("#payDo").onclick = async () => {
+        $("#payMsg").textContent = "Un instant…";
+        try{
+          const r = await api("/check", { code: $("#payCode").value.trim() });
+          if (!r.ok){ $("#payMsg").textContent = r.status === 403 ? "Code incorrect." : "Ça n'a pas marché, réessaie."; return; }
+          game.paid = game.paid || {}; game.paid[k] = Date.now(); saveGame(); closeSheet(); rerender();
+        }catch(e){ $("#payMsg").textContent = "Pas de connexion pour l'instant."; }
+      };
+    });
+  }
+
   // ---------- Pendant la balade ----------
   let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true;
   let track = [], photos = [], hiddenAt = null, pausedMs = 0, trackLayer = null;
@@ -1863,7 +1944,7 @@
       pausedMs = (resume.pausedMs || 0) + Math.max(0, Date.now() - (resume.saved || Date.now()));
     }
     gw = (resume && resume.gw) || newGameWalk(p);
-    drawItems();
+    drawItems(); needsUI();
     $("#photoBtn").textContent = "📷";
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
     trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
@@ -1882,6 +1963,17 @@
     }
   }
 
+  // 📸 « Montre-moi Roxy ! » : une fois par balade, entre 6 min et la moitié de la durée prévue (au moins 10 min)
+  function maybeAskPhoto(){
+    if (!gw || gw.photoAsk || homeTimer || !$("#walkBanner").hidden) return;
+    const el = (Date.now() - t0) / 60000;
+    if (gw.photoAt == null) gw.photoAt = 6 + Math.random() * Math.max(4, ((state.walk && state.walk.min) || 30) / 2 - 6);
+    if (el < gw.photoAt) return;
+    gw.photoAsk = Date.now();
+    ding();
+    showBanner("start", `📸 Montre-moi ${DOG} ! Prends-la en photo dans les 5 min : +5 🪙`, { label:"📷 Photo", fn: () => { hideBanner(); $("#photoInput").click(); } }, { label:"Plus tard", fn: hideBanner });
+    bannerTimer = setTimeout(hideBanner, 300000);
+  }
   function onFix(pos){
     if (!state.walk) return;
     const q = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: Date.now(), a: pos.coords.accuracy || 0 };
@@ -1896,6 +1988,7 @@
     if (!walkHome && q.a <= 40) walkHome = { lat:q.lat, lon:q.lon };
     updateWalk(q);
     gameFix(q, walkHome);
+    maybeAskPhoto();
     if (walkHome) checkHome(q);
     persist(false);
   }
@@ -1978,6 +2071,16 @@
     $("#walkstats").innerHTML = `${chrono}<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
   }
 
+  // 💧 💩 Roxy a fait ses besoins (affiché dans le récap)
+  function needsUI(){
+    const n = (gw && gw.needs) || { p:0, c:0 };
+    $("#needP").textContent = `💧 Pipi${n.p ? " ✓" + (n.p > 1 ? n.p : "") : ""}`; $("#needP").classList.toggle("on", !!n.p);
+    $("#needC").textContent = `💩 Caca${n.c ? " ✓" + (n.c > 1 ? n.c : "") : ""}`; $("#needC").classList.toggle("on", !!n.c);
+  }
+  [["#needP", "p", "💧 Pipi noté"], ["#needC", "c", "💩 Caca noté, pense au sac 😉"]].forEach(([id, k, msg]) => $(id).addEventListener("click", () => {
+    if (!gw) return; gw.needs = gw.needs || { p:0, c:0 }; gw.needs[k]++; needsUI(); toast(msg, 1800); persist(true);
+  }));
+
   // Photo du chien pendant la balade
   $("#photoBtn").addEventListener("click", () => $("#photoInput").click());
   $("#photoInput").addEventListener("change", e => {
@@ -1985,6 +2088,7 @@
     if (!f) return;
     photos.push(f); if (photos.length > 3) photos.shift();
     savePhoto(f).catch(() => {});
+    if (gw && gw.photoAsk && !gw.photoBonus && Date.now() - gw.photoAsk < 300000){ gw.photoBonus = 5; toast(`📸 Merci ! +5 🪙 pour la photo de ${DOG}`, 2600); ding(); persist(true); }
     $("#photoBtn").textContent = `📷 ${photos.length}`;
   });
 
@@ -2109,13 +2213,13 @@
     const s = new Date(r.s*1000), e = new Date(r.e*1000);
     const dur = (r.e - r.s) / 60;
     const notes = [];
+    const needs = (r.pp ? " · 💧" : "") + (r.cc ? " · 💩" : "");
     if (!r.tk) notes.push("📡 pas de GPS");
     else {
-      if (r.f && r.h === 0) notes.push("🏠 fin loin du départ");
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${needs}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
   async function shareRecap(r, files){
@@ -2148,7 +2252,7 @@
     if (r.eu){
       const res = r._res, full = res && Math.abs(r.eu * CS - (res.dur + res.total)) < 1;
       const got = res ? Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ") : "";
-      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
+      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.rainMult ? " · 🌧️ ×1,5" : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
       return `<div class="gamebox">🪙 <b>+${fmtCs(r.eu)}</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
     }
     if ((game.money[monthKey(Date.now())] || 0) >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
@@ -2196,6 +2300,7 @@
     if (res && res.levelUp) r.lu = res.levelUp;
     if (res && res.album) r.al = 1;
     if (res && res.defi) r.df = 1;
+    if (res && res.needs){ if (res.needs.p) r.pp = res.needs.p; if (res.needs.c) r.cc = res.needs.c; }
     if (res && res.trophies.length) r.tro = res.trophies.map(t => t.icon + " " + t.name);
     r.g = snapshot();
     // + les bonus ramassés (objets, rues neuves, défi…), tout en clebsous
@@ -2240,6 +2345,7 @@
           <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
         </div>
         ${r.gm > 1 ? `<div class="warnline">📡 GPS en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé) : le trajet peut avoir des trous.</div>` : ""}
+        <p style="margin:8px 0 0">${r.pp ? "💧 Pipi ✓" : "💧 Pipi : pas noté"} · ${r.cc ? "💩 Caca ✓" : "💩 Caca : pas noté"}</p>
         <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : (r.t ? esc(r.t) : "Parcours guidé")} · <span style="color:#2a7de1">━ trajet réel</span>${r.pl ? ` · <span style="color:#999">┅ parcours prévu</span>` : ""}</p>
         <button class="ghost" id="backApp" style="margin-top:12px;width:100%">🐾 Ouvrir Wouaf Balades</button>
       </div>`;
@@ -2539,13 +2645,16 @@
         ${row("🗺️", `Chaque rue pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max)`, "+1 🪙")}
         ${row("✖️", "Objets trouvés sur une rue neuve", "×2")}
         ${row("⏱️", "Balade longue : dès 40 min / 55 min / 1 h 25", "×1,25 / ×1,5 / ×2")}
+        ${row("🌧️", "Bonus courage : il pleut au départ", "×1,5")}
+        ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
         ${row("💰", "Coffre surprise, caché sur une rue pas faite depuis longtemps", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
       </div>
       <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 15 min ≈ ${gainEst(15)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
-      <div class="btns"><button id="bonClose">Compris !</button></div>`);
+      <div class="btns"><button id="bonClose">Compris !</button><button class="ghost" id="bonTuto">📖 Revoir le tuto</button></div>`);
     $("#bonClose").onclick = closeSheet;
+    $("#bonTuto").onclick = () => showTuto(0);
   }
   updateGo();
   $("#locate").addEventListener("click", locate);
@@ -2591,8 +2700,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 25;
+  const APP_NUM = 26;
   const NEWS = {
+    26: [
+      "💧 💩 Pendant la balade, note quand Roxy a fait ses besoins : ça apparaît dans le récap.",
+      "📸 « Montre-moi Roxy ! » : une photo demandée pendant la balade rapporte +5 🪙. Et sous la pluie, bonus courage ×1,5 🌧️.",
+      "💶 Le 1er du mois, c'est jour de paie : surprise !"
+    ],
     25: [
       "🎁 Le bouton « C'est parti » montre maintenant ce que tu peux gagner avec les bonus, et combien de fois plus en marchant plus longtemps.",
       "Touche « 🎁 Les bonus ? » pour voir tout ce qui rapporte des clebsous."
@@ -2685,11 +2799,12 @@
       <div class="btns"><button id="newsOk">OK</button></div>`);
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
-  setTimeout(showNews, 800);
+  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get("wouaf-tuto", 0)) showNews(); else showTuto(); }, 800);
   setTimeout(offerBilan, 2500);
   setTimeout(async () => {
-    if (await loadPauses()){ const n = processMalus(); renderHome(); if (n.length && showMalus(n, offerWeek)) return; }
-    offerWeek();
+    const next = () => { if (!offerPayday(offerWeek)) offerWeek(); };
+    if (await loadPauses()){ const n = processMalus(); renderHome(); if (n.length && showMalus(n, next)) return; }
+    next();
   }, 3000);
   setTimeout(() => pushState(false), 5000);
 

@@ -117,3 +117,13 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Bonus visibles (v25) : `bonusEst(min)` = estimation haute des bonus (objets ×2, trésor, rues neuves, durée longue, retour, défi),
   `gainEst` = durée + bonus. Pas de bonus « retour au départ » (retiré le 14/11 : on revient toujours à la maison). Bouton « jusqu'à N clebsous (X pour la durée + ~Y de bonus) », astuce « 💡 En 45 min : jusqu'à … soit
   N fois plus » (passe à cette durée), et « 🎁 Les bonus ? » (`sheetBonus`, tableau de ce que rapporte chaque bonus).
+
+## Version 26 (décidé le 14/11)
+- 💧 💩 Boutons « Pipi / Caca » pendant la balade (`gw.needs`, `needsUI`) → `r.pp` / `r.cc` dans le récap (« · 💧 · 💩 ») et
+  sur la page du superviseur. Plus de note « fin loin du départ » (le retour ne compte plus).
+- 👋 Tutoriel 3 écrans au premier lancement (`showTuto`, clé `wouaf-tuto`), revoir depuis « 🎁 Les bonus ? ».
+- 💶 Jour de paie : 1re ouverture d'un nouveau mois (`offerPayday`, `game.payShown`) : total du mois précédent en clebsous et
+  **révélation 100 clebsous = 1 €** (choix de l'utilisateur : secret jusqu'à la 1re paie), envoi « 💶 Paie de … = X € ».
+  Onglet Tirelire : mois précédents, « Payé ✓ » avec le code superviseur (`POST /check` du Worker, `game.paid`).
+- 📸 « Montre-moi Roxy ! » une fois par balade (`maybeAskPhoto`, entre 6 min et la moitié de la durée) : photo dans les 5 min = +5.
+- 🌧️ Bonus courage : il pleut au 1er point GPS → bonus du jeu ×1,5 (`res.rainMult`).
