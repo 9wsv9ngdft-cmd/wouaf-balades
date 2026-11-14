@@ -112,7 +112,7 @@ function pickMessage(u, slot, now){
   const gain = { title:"⏳ Pas encore de balade aujourd'hui", body:`À gagner : 15 min ${fmtEur(walkEuros(15))} · 25 min ${fmtEur(walkEuros(25))} · 45 min ${fmtEur(walkEuros(45))} · 1 h ${fmtEur(walkEuros(60))}. Ne passe pas à côté !` };
   if (slot === 1) return gain;
   const ideas = [gain];
-  if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+15 pts)` });
+  if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+10 clebsous)` });
   if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 500 clebsous peuvent se cacher sur une rue que tu n'as jamais prise. Pars à la chasse avec ${DOG} ?` });
   const g = GENERIC[(dayNo + slot) % GENERIC.length];
   ideas.push({ title:"Wouaf Balades 🐾", body: g(n) });

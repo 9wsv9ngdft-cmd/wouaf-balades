@@ -91,3 +91,11 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   sur un récap ou après « Proposer des parcours » (classe `hasmap`, retirée à la fin d'une balade).
 - 🪙 **Clebsous** : monnaie affichée aux promeneurs, 100 clebsous = 1 € (`fmtCs`), partout dans l'app et les rappels (y compris
   malus et coffre = 500 clebsous). Les données restent en euros, mais **l'équivalent en € est secret** (choix de l'utilisateur : les promeneurs le découvriront après le 1er mois) : aucun « € » à l'écran, récaps et bilans compris (le superviseur divise par 100).
+
+## Monnaie unique (version 21, décidé le 14/11, budget « 1 » ≈ 13 €/mois pour 25 min/jour)
+- Plus de « points » pour les promeneurs : tout rapporte des clebsous, versés dans la tirelire (`addMoney`, plafond secret 15 €
+  sur `game.money`) à la fin d'une balade ≥ 15 min : durée (`walkEuros`, `res.dur`) + bonus du jeu (`res.total` : objets
+  🦴1 🎾2 🍖3 ⭐5 ×2 sur rue neuve, +1 par rue neuve, × durée longue, 🏠 +2, 🔥 +1, 🎯 défi +10). Moins de 15 min : rien.
+- `game.total` = clebsous gagnés depuis le début (durée + bonus) → niveaux 0/600/2 000/5 000/10 000 et accessoires
+  400/1 200/2 400/5 000/10 000. Tirelire affichée (`moneyOf`) = gains − malus (≥ 0) + coffres du mois.
+- Accueil : phrase « tout se transforme en clebsous… à la fin du mois, de vrais sous ». Récap : « 🪙 +136 clebsous » avec le détail.
