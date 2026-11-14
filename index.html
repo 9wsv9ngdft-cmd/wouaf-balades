@@ -147,14 +147,14 @@
   .wp{background:#fff;border:2px solid var(--accent);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
   #walkbar{position:fixed;left:0;right:0;bottom:0;background:var(--green);color:#fff;padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);display:none;z-index:1000;box-shadow:0 -6px 20px -8px rgba(0,0,0,.35)}
   #walkbar .in{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px}
-  #walkbar .wstats{flex:1;font-size:14px;line-height:1.35}
+  #walkbar .wstats{flex:1;min-width:0;font-size:14px;line-height:1.35}
   #walkbar .wstats b{font-size:20px;font-family:Fraunces,Georgia,serif}
   #walkbar button{background:#fff;color:var(--green)}
   body.walking .panel,body.walking .tabs,body.walking #views,body.walking #status,body.walking #meteo{display:none !important}
   body.walking #walkbar{display:block}
   body.walking header,body.walking #home,body.walking footer{display:none !important}
-  body.walking #map,body.choosing #map{position:fixed;left:0;right:0;top:0;bottom:var(--wbh,200px);height:auto !important;border-radius:0;border:0;z-index:1}
-  body.choosing #map{bottom:0}
+  body.walking #map{position:fixed !important;left:0;right:0;top:0;bottom:var(--wbh,200px);height:auto !important;min-height:0;border-radius:0;border:0;z-index:1}
+  #walkbar .tip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   body.walking .leaflet-top{top:env(safe-area-inset-top)}
   .who{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);margin-bottom:10px}
   .linkish{background:none;color:var(--green);padding:4px 0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
@@ -416,7 +416,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.161845";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.162056";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1140,11 +1140,10 @@
     const off = (j.utc_offset_seconds || 0) * 1000, now = Date.now(), m15 = j.minutely_15 || {};
     const sl = (m15.time || []).map((t, i) => ({ t: Date.parse(t + "Z") - off, p: (m15.precipitation || [])[i] || 0 })).filter(x => x.t + 15*60000 > now);
     let msg;
-    if (raining){ const stop = sl.find(x => x.p <= 0.05); msg = `🌧️ Il pleut${stop ? `, accalmie vers ${fmtHour(new Date(stop.t))}` : ""}. Courage, ça compte pour le trophée 🌧️ !`; }
+    if (raining){ const stop = sl.find(x => x.p <= 0.05); msg = `🌧️ Il pleut${stop ? `, accalmie vers ${fmtHour(new Date(stop.t))}` : ""} · bonus courage ×1,5`; }
     else {
       const next = sl.find(x => x.p > 0.05);
-      msg = next ? `🌦️ Pas de pluie avant ${fmtHour(new Date(next.t))} : ${Math.max(0, Math.round((next.t - now) / 60000))} min devant toi.`
-                 : "☀️ Pas de pluie dans les 2 h : parfait pour une longue balade (ça rapporte plus) !";
+      msg = next ? `🌦️ Pluie vers ${fmtHour(new Date(next.t))}` : "☀️ Pas de pluie dans les 2 h";
     }
     $("#walktip").textContent = msg;
   }
@@ -2679,13 +2678,13 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · ${elapsed < MONEY_MIN ? `🎯 minimum dans ${Math.ceil(MONEY_MIN - elapsed)} min${livePts() ? ` · 🪙 ${livePts()} de bonus` : ""}` : `🪙 ${fmtCs(walkEuros(elapsed) + livePts() / CS)}`}`;
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> · 🪙 ${Math.round(walkEuros(elapsed) * CS) + livePts()}${elapsed < MONEY_MIN ? ` · minimum dans ${Math.ceil(MONEY_MIN - elapsed)} min` : ""}`;
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
       const back = home && track.length > 1 ? dist(home, track[track.length-1]) : null;
-      const goal = p.min ? (elapsed >= p.min ? ` · 🎯 ${fmtMin(p.min)} ✓` : ` · 🎯 encore ${Math.ceil(p.min - elapsed)} min`) : "";
-      $("#walkstats").innerHTML = `${chrono}<br>📏 ${fmtKm(m)} parcourus${back != null && m > 300 ? ` · 🏠 à ${fmtKm(back)}` : ""}${goal}`;
+      const goal = p.min ? (elapsed >= p.min ? ` · 🎯 ${fmtMin(p.min)} ✓` : ` · 🎯 objectif ${fmtMin(p.min)}`) : "";
+      $("#walkstats").innerHTML = `${chrono}<br>📏 ${fmtKm(m)}${goal}`;
       return;
     }
     const left = Math.max(0, p.m - walked);
