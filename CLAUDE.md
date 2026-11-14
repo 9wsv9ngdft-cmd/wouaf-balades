@@ -192,3 +192,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   ≈ 12–16 € · 45 min et plus chaque jour ≈ 20–30 € (coffres compris).
 - 🌫️ Brouillard opaque (`fogPolygon`, calque `fog` sous les tracés, ≈ 50 km, opacité .82) pendant la balade (rues faites < 15 j
   visibles) et dans Progrès (toutes les rues déjà vues).
+- Balade (v31, retours du 14/11) : carte plein écran au-dessus de la barre du bas (`--wbh` via ResizeObserver), en-tête et accueil
+  cachés ; 1er point GPS → centré zoom 17 (`firstFix`) ; bouton 📍 « recentrer » quand on a déplacé la carte ; bandeau de départ
+  court (« 🐾 C'est parti pour 45 min ! », disparaît après 8 s) ; météo dans la ligne sous le chrono (plus de pop-up).

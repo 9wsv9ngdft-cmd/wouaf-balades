@@ -51,6 +51,8 @@
   #status.err{color:var(--warn)}
   body:not(.hasmap):not(.fogview):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
+  #recenter{position:fixed;right:12px;bottom:calc(var(--wbh,200px) + 12px);z-index:900;width:48px;height:48px;border-radius:50%;background:#fff;color:#000;font-size:22px;box-shadow:0 3px 10px rgba(0,0,0,.3);padding:0}
+  body:not(.walking) #recenter{display:none}
   #pocket{position:fixed;inset:0;background:#000;z-index:5000;display:flex;align-items:center;justify-content:center;text-align:center;color:#b5b5b5;user-select:none;-webkit-user-select:none}
   #pocket[hidden]{display:none}
   #pocket .pk{display:flex;flex-direction:column;gap:10px;font-size:17px;padding:0 24px} #pocket b{font-size:22px;color:#d0d0d0} #pocket small{font-size:15px;line-height:1.5;color:#9a9a9a}
@@ -150,7 +152,10 @@
   #walkbar button{background:#fff;color:var(--green)}
   body.walking .panel,body.walking .tabs,body.walking #views,body.walking #status,body.walking #meteo{display:none !important}
   body.walking #walkbar{display:block}
-  body.walking #map{height:calc(100vh - 210px)}
+  body.walking header,body.walking #home,body.walking footer{display:none !important}
+  body.walking #map,body.choosing #map{position:fixed;left:0;right:0;top:0;bottom:var(--wbh,200px);height:auto !important;border-radius:0;border:0;z-index:1}
+  body.choosing #map{bottom:0}
+  body.walking .leaflet-top{top:env(safe-area-inset-top)}
   .who{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);margin-bottom:10px}
   .linkish{background:none;color:var(--green);padding:4px 0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
   #walkbar .tip{font-size:12px;opacity:.85}
@@ -401,6 +406,7 @@
   </div>
 </div>
 
+<button id="recenter" aria-label="Recentrer la carte sur moi" hidden>📍</button>
 <div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
 <div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
@@ -410,7 +416,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.161307";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.161845";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1140,8 +1146,7 @@
       msg = next ? `🌦️ Pas de pluie avant ${fmtHour(new Date(next.t))} : ${Math.max(0, Math.round((next.t - now) / 60000))} min devant toi.`
                  : "☀️ Pas de pluie dans les 2 h : parfait pour une longue balade (ça rapporte plus) !";
     }
-    if (!$("#walkBanner").hidden && !$("#walkBanner").classList.contains("home")) $("#wbText").textContent += "\n" + msg;
-    else toast(msg, 6000);
+    $("#walktip").textContent = msg;
   }
   let walkFog = null, walkFogAt = 0, walkFogN = -1;
   function drawWalkFog(force){
@@ -2509,6 +2514,12 @@
   }
   $("#chooseBack").addEventListener("click", backToWalk);
 
+  let firstFix = false;
+  // hauteur de la barre du bas → la carte s'arrête juste au-dessus (le point bleu reste bien au centre)
+  if (window.ResizeObserver) new ResizeObserver(() => {
+    document.documentElement.style.setProperty("--wbh", $("#walkbar").offsetHeight + "px");
+    if (state.walk) map.invalidateSize();
+  }).observe($("#walkbar"));
   async function startWalk(p, resume){
     if (!p) return;
     if (!profile.walker){ askProfile(() => startWalk(p, resume)); return; }
@@ -2536,10 +2547,11 @@
     setTimeout(() => {
       map.invalidateSize();
       if (!free) map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] });
-      else if (state.start) map.setView([state.start.lat, state.start.lon], 16);
+      else if (state.start) map.setView([state.start.lat, state.start.lon], 17);
+      else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { if (state.walk && firstFix) map.setView([pos.coords.latitude, pos.coords.longitude], 17); }, () => {}, { enableHighAccuracy:true, maximumAge:60000, timeout:8000 });
     }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
-    t0 = Date.now(); walked = 0; followMap = true; track = []; photos = []; hiddenAt = null; pausedMs = 0;
+    t0 = Date.now(); walked = 0; followMap = true; firstFix = !p.line.length; track = []; photos = []; hiddenAt = null; pausedMs = 0;
     walkHome = null; maxAway = 0; homeSnooze = false; clearInterval(homeTimer); homeTimer = null; hideBanner();
     if (resume){
       t0 = resume.t0; track = resume.track || []; walked = resume.walked || 0; walkHome = resume.home || null; maxAway = resume.maxAway || 0;
@@ -2552,10 +2564,10 @@
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
     trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
     if (free && !resume){
-      showBanner("start", ["🐾 C'est parti !"].concat(motivLines()).join("\n"),
+      showBanner("start", `🐾 C'est parti${p.min ? ` pour ${fmtMin(p.min)}` : ""} ! Bonne balade avec ${DOG}.`,
         { label:"👍 OK", fn: hideBanner },
         { label:"✕ Annuler", fn: cancelWalk });
-      bannerTimer = setTimeout(hideBanner, 120000);
+      bannerTimer = setTimeout(hideBanner, 8000);
     }
     persist(true);
     await keepAwake();
@@ -2580,7 +2592,8 @@
   function onFix(pos){
     if (!state.walk) return;
     const q = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: Date.now(), a: pos.coords.accuracy || 0 };
-    if (!youMarker){ showStart(q); map.setView([q.lat, q.lon], 16); }
+    if (!youMarker) showStart(q);
+    if (firstFix){ firstFix = false; map.setView([q.lat, q.lon], 17, { animate:false }); }
     if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
     if (followMap) map.panTo([q.lat, q.lon], { animate:true });
     // on garde les points assez précis, tous les 8 m ou toutes les 30 s
@@ -2649,7 +2662,11 @@
       watchId = navigator.geolocation.watchPosition(onFix, () => {}, { enableHighAccuracy:true, maximumAge:3000, timeout:20000 });
     }
   });
-  map.on("dragstart", () => { if (state.walk) followMap = false; });
+  map.on("dragstart", () => { if (state.walk){ followMap = false; $("#recenter").hidden = false; } });
+  $("#recenter").addEventListener("click", () => {
+    followMap = true; $("#recenter").hidden = true;
+    const t = track[track.length - 1]; if (t) map.setView([t.lat, t.lon], Math.max(map.getZoom(), 16));
+  });
 
   function updateWalk(q){
     const p = state.walk; if (!p) return;
