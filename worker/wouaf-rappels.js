@@ -169,6 +169,7 @@ const okId = id => typeof id === "string" && /^[A-Za-z0-9-]{8,64}$/.test(id);
 // aléatoire gardé dans KV « admin ». Les routes superviseur acceptent ce jeton OU le code SUPERVISOR_CODE.
 const normName = w => String(w || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const SUP_NAME = "eric";
+const CLAIM_FREE_BEFORE = Date.parse("2026-11-14T18:40:00Z");   // Éric pris avant cette heure = libéré (choix de l'utilisateur : pas de code, juste « Éric »)
 const safeEq = (a, b) => { a = String(a); b = String(b); if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
 const newToken = () => b64u(crypto.getRandomValues(new Uint8Array(24)));
 async function supOk(env, b){
@@ -325,7 +326,8 @@ export default {
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
       if (!b || normName(b.walker) !== SUP_NAME) return json({ error:"not supervisor name" }, 400);
-      const a = await env.WOUAF.get("admin", "json");
+      let a = await env.WOUAF.get("admin", "json");
+      if (a && (a.at || 0) < CLAIM_FREE_BEFORE) a = null;   // 🔓 libéré une fois (14/11) : Éric avait perdu son téléphone superviseur ; le 1er qui tape Éric le reprend
       if (!a){
         const token = newToken();
         await env.WOUAF.put("admin", JSON.stringify({ token, walker: String(b.walker).slice(0, 30), at: Date.now() }));

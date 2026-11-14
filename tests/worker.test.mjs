@@ -137,3 +137,12 @@ test("claim avec le code : un autre téléphone récupère Éric, l'ancien jeton
   assert.equal((await api.post("/dash", { token: n.j.token })).status, 200);
   assert.equal((await api.post("/dash", { token: old })).status, 403);
 });
+
+test("Éric pris avant la libération du 14/11 : le premier téléphone qui tape Éric le reprend, sans code", async () => {
+  const { api, env } = await setup();
+  await env.WOUAF.put("admin", JSON.stringify({ token: "ancien-jeton-0123456789", walker: "Éric", at: Date.parse("2026-11-14T17:00:00Z") }));
+  const r = await api.post("/claim", { walker: "Éric" });
+  assert.equal(r.status, 200); assert.ok(r.j.created);
+  assert.equal((await api.post("/claim", { walker: "Eric" })).status, 403);   // ensuite, verrouillé comme avant
+  assert.equal((await api.post("/dash", { token: "ancien-jeton-0123456789" })).status, 403);
+});
