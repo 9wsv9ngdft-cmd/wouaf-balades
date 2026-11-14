@@ -170,7 +170,7 @@ with sync_playwright() as pw:
     A.click("#rsGo2"); A.wait_for_timeout(2500)
     d = kv()
     check("serveur : tout effacé (d:, b:, a:, t:, last), admin et pauses gardés", not any(k.startswith(("d:", "b:", "a:", "t:")) for k in d) and "last" not in d and "admin" in d and "reset" in d, [k for k in d])
-    check("Éric : son téléphone repart de zéro aussi (écran 2.0)", "Wouaf Balades 2.0, tout repart de zéro" in sheet_text(A), sheet_text(A)[:120])
+    check("Éric : son téléphone repart de zéro aussi (écran « tout repart de zéro »)", "tout repart de zéro" in sheet_text(A), sheet_text(A)[:120])
     gA = game(A); fu = gA.get("firstUse", 0)
     check("Éric : jeton et prénom gardés", bool(ev(A, "__wouaf.supToken()")) and ev(A, "JSON.parse(localStorage.getItem('wouaf-profil')).walker") == "Éric")
     ev(B, "__wouaf.loadPauses().then(() => __wouaf.applyReset())"); B.wait_for_timeout(1200)

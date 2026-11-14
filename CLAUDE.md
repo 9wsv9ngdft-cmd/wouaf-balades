@@ -268,3 +268,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   devient `countered`, nouveau défi dans l'autre sens avec `counterOf` et `was`) ; celui qui a lancé peut « Retirer » ou « Changer le défi ».
   👀 **Dans son ombre** (`shadowCheck` dans `onFix`, `shadowClear` à la fin) : pendant une balade d'un duel « Guerre des rues » commencé, les rues de l'autre sont en
   violet sur la carte (`/duel-map`, rafraîchi toutes les 10 min) et un toast + petit tic préviennent quand on entre dans l'une d'elles (une fois par rue).
+- Retours du 14/11 (19 h 30) : champ prénom lisible en mode sombre (`.sheet input` dans le bloc sombre) ; prénom Éric refusé → champ code dans la fiche du
+  prénom (`#whoSup`, « C'est moi ») ; « Quoi de neuf » = **une carte à la fois** (plus de glissement horizontal, qui coinçait sur iPhone) ; messages de la fenêtre
+  Superviseur et de la remise à zéro aussi en bandeau (`toast`).

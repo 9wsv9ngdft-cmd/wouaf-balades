@@ -380,7 +380,7 @@
     :root{ --bg:#121614; --card:#1b211d; --ink:#e7ece6; --muted:#9ba69c; --line:#2d3630; --sand:#2a312c; --green:#3c7a4a; --green-2:#6fae7c }
     html,body{background:var(--bg);color:var(--ink)}
     header{background:#1d3a25}
-    input,select,textarea{background:#232a25;color:var(--ink);border-color:var(--line)}
+    input,select,textarea,.sheet input{background:#232a25;color:var(--ink);border-color:var(--line)}
     button.ghost,.subnav button{background:#25302a;color:#cfe5d3}
     button.go{background:linear-gradient(135deg,#2f5d3a,#4c8a5a)}
     .seg,.rgrid div,.dots div,.homecard .hrow button,.missions .m .ic{background:#242b26 !important;color:var(--ink)}
@@ -505,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.191712";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.194051";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1115,8 +1115,24 @@
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
-      <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div><p id="whoMsg" role="status"></p></form>`);
+      <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div><p id="whoMsg" role="status"></p>
+      <div id="whoSup" hidden><label for="wCode">Tu es le superviseur ? Code superviseur</label><input id="wCode" type="password" inputmode="numeric" autocomplete="off">
+        <div class="btns"><button type="button" id="wCodeGo">🔑 C'est moi : ce téléphone devient celui du superviseur</button></div></div></form>`);
     $("#whoCancel").onclick = closeSheet;
+    $("#wCodeGo").onclick = async () => {   // 🔑 Éric sur un nouveau téléphone (ou l'icône au lieu de Safari) : le code une fois, puis plus jamais
+      const name = $("#wName").value.trim(), code = $("#wCode").value.trim(), say = t => { const m = $("#whoMsg"); if (m) m.textContent = t; };
+      if (!code){ say("Entre d'abord le code superviseur."); return; }
+      say("Un instant…");
+      try{
+        const r = await api("/claim", { walker: name, code });
+        if (r.status === 403){ say("Code incorrect."); return; }
+        if (r.status === 429){ say("Trop d'essais aujourd'hui, réessaie demain."); return; }
+        const j = await r.json(); if (!r.ok || !j.token){ say("Ça n'a pas marché, réessaie."); return; }
+        store.set(SUP_KEY, j.token);
+      }catch(e){ say("Pas de connexion pour l'instant, réessaie."); return; }
+      profile = { walker: name, dog: DOG }; store.set("wouaf-profil", { walker: name }); renderWho(); closeSheet(); renderHome();
+      if (then) then();
+    };
     $("#whoForm").onsubmit = async e => {
       e.preventDefault();
       const name = $("#wName").value.trim(), say = t => { const m = $("#whoMsg"); if (m) m.textContent = t; };
@@ -1124,7 +1140,7 @@
         say("Un instant…");
         try{
           const r = await api("/claim", { walker: name, token: supToken() || undefined });
-          if (r.status === 403){ say("Ce prénom est déjà pris sur un autre téléphone. Choisis un autre prénom."); return; }
+          if (r.status === 403){ say("Ce prénom est déjà pris sur un autre téléphone. Choisis un autre prénom."); const sb = $("#whoSup"); if (sb) sb.hidden = false; return; }
           const j = await r.json();
           if (!r.ok || !j.token){ say("Ça n'a pas marché, réessaie."); return; }
           store.set(SUP_KEY, j.token);
@@ -2093,7 +2109,7 @@
       <div class="btns" style="flex-direction:row;gap:8px"><button id="supAdd" style="flex:1">🏖️ Pause</button><button id="supBoost" style="flex:1">🎉 Bonus ×2</button></div>
       <div class="props" id="supList" style="margin-top:10px">${list()}</div>
       <div class="btns"><button class="ghost" id="supClose">Fermer</button></div><p id="supMsg" role="status"></p>`);
-    const msg = t => { $("#supMsg").textContent = t; };
+    const msg = t => { $("#supMsg").textContent = t; if (t && t !== "Un instant…") toast(t, 4000); };   // aussi en bandeau : le message du bas peut être hors de l'écran
     if ($("#supMine")) $("#supMine").onclick = async () => {
       const c = $("#supCode").value.trim(); if (!c){ msg("Entre d'abord le code superviseur."); return; }
       msg("Un instant…");
@@ -2654,22 +2670,18 @@
     if (!cards.length) return;
     const show = () => {
       if ($("#modal").classList.contains("open") || state.walk){ setTimeout(show, 3000); return; }
+      // une carte à la fois (plus de glissement horizontal : il pouvait coincer sur iPhone)
       let i = 0;
-      openSheet(`<div class="digest" id="dg">${cards.map((c, k) => `<div class="dcard" data-k="${k}">${c.html}</div>`).join("")}</div>
-        ${cards.length > 1 ? `<p class="ddots" id="dgDots"></p>` : ""}
-        <div class="btns"><button id="dgNext"></button></div>`);
-      const dg = $("#dg");
-      cards.forEach((c, k) => { if (c.bind) c.bind(dg.children[k]); });
-      const upd = () => {
-        $("#dgNext").textContent = i < cards.length - 1 ? `Suivant → (${i + 1}/${cards.length})` : "C'est parti ! 🐾";
-        if ($("#dgDots")) $("#dgDots").textContent = cards.map((_, k) => k === i ? "●" : "○").join(" ");
-        if (cards[i].party && !cards[i].partied){ cards[i].partied = true; confetti(); ding(); }
+      const page = () => {
+        const c = cards[i], last = i === cards.length - 1;
+        openSheet(`<div class="dcard" style="width:auto">${c.html}</div>
+          ${cards.length > 1 ? `<p class="ddots">${cards.map((_, k) => k === i ? "●" : "○").join(" ")}</p>` : ""}
+          <div class="btns"><button id="dgNext">${last ? "C'est parti ! 🐾" : `Suivant → (${i + 1}/${cards.length})`}</button></div>`);
+        const el = $("#sheet .dcard"); if (c.bind && el) c.bind(el);
+        if (c.party && !c.partied){ c.partied = true; confetti(); ding(); }
+        $("#dgNext").onclick = () => { if (last) closeSheet(); else { i++; page(); } };
       };
-      // on attend la fin du défilement (doigt ou bouton) avant de recalculer la carte affichée
-      let st = null;
-      dg.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { const n = Math.round(dg.scrollLeft / dg.clientWidth); if (n !== i){ i = n; upd(); } }, 150); }, { passive:true });
-      $("#dgNext").onclick = () => { if (i < cards.length - 1){ i++; dg.scrollTo({ left: i * dg.clientWidth }); upd(); } else closeSheet(); };
-      upd();
+      page();
     };
     show();
   }
@@ -3059,12 +3071,12 @@
         $("#rsMsg").textContent = "Un instant…";
         try{
           const r = await api("/reset", auth);
-          if (r.status === 403){ $("#rsMsg").textContent = "Code incorrect."; return; }
-          if (!r.ok){ $("#rsMsg").textContent = "Ça n'a pas marché, réessaie."; return; }
+          if (r.status === 403){ $("#rsMsg").textContent = "Code incorrect."; toast("Code superviseur incorrect : remise à zéro non faite.", 4000); return; }
+          if (!r.ok){ $("#rsMsg").textContent = "Ça n'a pas marché, réessaie."; toast("La remise à zéro n'a pas marché, réessaie.", 4000); return; }
           const j = await r.json();
           store.set(RESET_SRV, j.reset);
           closeSheet(); setTimeout(applyReset, 400);   // ce téléphone aussi repart de zéro
-        }catch(err){ $("#rsMsg").textContent = "Pas de connexion pour l'instant."; }
+        }catch(err){ $("#rsMsg").textContent = "Pas de connexion pour l'instant."; toast("Pas de connexion : remise à zéro non faite.", 4000); }
       };
     };
   }
