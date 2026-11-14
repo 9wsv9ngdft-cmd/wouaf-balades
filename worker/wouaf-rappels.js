@@ -245,6 +245,14 @@ export default {
         return json({ ok:true, token, created:true });
       }
       if (typeof b.token === "string" && safeEq(a.token, b.token)) return json({ ok:true, token: a.token });
+      if (b.code != null && env.SUPERVISOR_CODE){   // 🔑 récupérer Éric avec le code (nouveau téléphone, Safari/icône, prénom volé) : l'ancien jeton ne marche plus
+        const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
+        if (fails >= 20) return json({ error:"too many" }, 429);
+        if (!safeEq(b.code, env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
+        const token = newToken();
+        await env.WOUAF.put("admin", JSON.stringify({ token, walker: String(b.walker).slice(0, 30), at: Date.now(), moved: true }));
+        return json({ ok:true, token, moved:true });
+      }
       return json({ error:"taken" }, 403);
     }
     if (path === "/alert"){   // 🚨 un promeneur prévient le superviseur (ex. balade annulée après avoir trouvé le trésor) : visible dans le tableau de bord

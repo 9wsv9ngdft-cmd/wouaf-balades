@@ -127,3 +127,13 @@ test("alerte trésor : balade annulée après la trouvaille → alerte pour Éri
   assert.equal((await api.get("/adjust?w=Tom")).j.list.length, 0);
   assert.equal((await api.post("/alert-resolve", { token: j.token, id: al[0].id })).status, 404);               // déjà traitée
 });
+
+test("claim avec le code : un autre téléphone récupère Éric, l'ancien jeton ne marche plus", async () => {
+  const { api } = await setup();
+  const old = (await api.post("/claim", { walker: "Éric" })).j.token;
+  assert.equal((await api.post("/claim", { walker: "Éric", code: "0000" })).status, 403);   // mauvais code
+  const n = await api.post("/claim", { walker: "Éric", code: "1234" });
+  assert.equal(n.status, 200); assert.notEqual(n.j.token, old);
+  assert.equal((await api.post("/dash", { token: n.j.token })).status, 200);
+  assert.equal((await api.post("/dash", { token: old })).status, 403);
+});

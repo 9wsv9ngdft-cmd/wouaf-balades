@@ -369,6 +369,7 @@
     .chips button{background:#1b211d;color:var(--ink);border-color:var(--line)} .chips button.on{background:#3c7a4a;color:#fff}
     .missions,.homecard,.panel,.entry,.sheet{background:var(--card);border-color:var(--line)}
     .missions .m.done .ic{background:#24362a !important}
+    .dash .wk{background:#242b26;color:var(--ink)} .dash .wk h4{color:var(--ink)}
     .warnline{background:#3a2a1c;color:#f3c9a0} .party{background:#2b3524;color:#e9f3d8}
     .ticket{background:linear-gradient(180deg,#2c2718,#1b211d);border-color:#7a6220} .ticket .tk-sum{color:#ffd35c}
     .gohint button{background:#2c2718;color:#ffd35c;border-color:#7a6220}
@@ -484,7 +485,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.180634";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.182651";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1041,6 +1042,19 @@
   const supToken = () => store.get(SUP_KEY, "") || "";
   const isTester = () => !!supToken() && isEricName(profile.walker);
   const supAuth = code => supToken() ? { token: supToken() } : { code };
+  // 🔑 Prénom Éric déjà choisi AVANT la 2.0 (ou téléphone sans jeton) : on réclame le jeton tout seul, sans retaper le prénom.
+  // Renvoie "ok", "taken" (pris par un autre téléphone), "off" (pas de réseau) ou "" (rien à faire).
+  async function autoClaim(code){
+    if (!PUSH_API || !isEricName(profile.walker) || (supToken() && code == null)) return "";
+    try{
+      const r = await api("/claim", { walker: profile.walker, token: supToken() || undefined, code: code == null ? undefined : code });
+      if (r.status === 403) return code == null ? "taken" : "badcode";
+      if (r.status === 429) return "toomany";
+      const j = await r.json();
+      if (!r.ok || !j.token) return "off";
+      store.set(SUP_KEY, j.token); return "ok";
+    }catch(e){ return "off"; }
+  }
   function renderWho(){
     $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
     if (profile.walker){
@@ -2035,13 +2049,15 @@
     return true;
   }
   // 🏖️ Pause décidée par le superviseur (code gardé dans le programme Cloudflare)
-  function openSuper(){
+  async function openSuper(){
+    if (!supToken() && isEricName(profile.walker)){ const st = await autoClaim(); if (st === "ok"){ openMenu(); return; } }
     const fmtD = iso => new Date(isoTime(iso)).toLocaleDateString("fr-FR");
     const list = () => (pauses.map((p, i) => `<div class="entry"><div><h4>🏖️ Pause du ${fmtD(p.from)} au ${fmtD(p.to)}</h4></div><button class="ghost" data-unp="${i}" aria-label="Enlever cette pause">✕</button></div>`)
       .concat(boosts.map((p, i) => `<div class="entry"><div><h4>🎉 Bonus ×2 du ${fmtD(p.from)} au ${fmtD(p.to)}</h4></div><button class="ghost" data-unb="${i}" aria-label="Enlever ces jours bonus">✕</button></div>`)).join("")) || `<p class="howto">Aucune pause ni jour bonus prévu.</p>`;
     const today = dIso(Date.now());
     openSheet(`<h2>Superviseur</h2>
-      ${supToken() ? `<p class="howto">🔑 Ce téléphone est celui du superviseur (Éric) : pas besoin de code.</p>` : `<label for="supCode">Code superviseur</label><input id="supCode" type="password" inputmode="numeric" autocomplete="off">`}
+      ${supToken() ? `<p class="howto">🔑 Ce téléphone est celui du superviseur (Éric) : pas besoin de code.</p>` : `<label for="supCode">Code superviseur</label><input id="supCode" type="password" inputmode="numeric" autocomplete="off">
+        ${isEricName(profile.walker) ? `<p class="howto">Le prénom Éric est enregistré sur un autre téléphone (ou dans Safari au lieu de l'icône Wouaf). Entre le code une seule fois pour que <b>ce</b> téléphone devienne celui du superviseur.</p><div class="btns" style="margin-top:6px"><button id="supMine">🔑 C'est mon téléphone : ne plus demander le code</button></div>` : ""}`}
       <div class="btns" style="margin-top:10px"><button id="supDash">📊 Tableau de bord des promeneurs</button>
         <button class="ghost" id="supAdj">✏️ Corriger une tirelire</button><button class="ghost" id="supRes">♻️ Restaurer un promeneur sur ce téléphone</button>
         <button class="ghost" id="supVoid">❌ Annuler une balade</button><button class="ghost" id="supReset" style="color:#c8452f">🧹 Tout remettre à zéro</button></div>
@@ -2055,6 +2071,13 @@
       <div class="props" id="supList" style="margin-top:10px">${list()}</div>
       <div class="btns"><button class="ghost" id="supClose">Fermer</button></div><p id="supMsg" role="status"></p>`);
     const msg = t => { $("#supMsg").textContent = t; };
+    if ($("#supMine")) $("#supMine").onclick = async () => {
+      const c = $("#supCode").value.trim(); if (!c){ msg("Entre d'abord le code superviseur."); return; }
+      msg("Un instant…");
+      const st = await autoClaim(c);
+      if (st === "ok"){ closeSheet(); openMenu(); return; }
+      msg(st === "badcode" ? "Code incorrect." : st === "toomany" ? "Trop d'essais aujourd'hui, réessaie demain." : "Pas de connexion pour l'instant, réessaie.");
+    };
     const code = () => supToken() ? "token" : ($("#supCode") ? $("#supCode").value.trim() : "");
     const auth = () => supAuth(code());
     const save = async (kind, next) => {
@@ -2488,13 +2511,13 @@
     document.querySelectorAll("[data-pay]").forEach(b => b.onclick = () => {
       const k = b.dataset.pay;
       openSheet(`<h2>Superviseur : paie de ${esc(monthLabel(k))}</h2><p>${esc(payText(k))}</p>
-        <label for="payCode">Code superviseur</label><input id="payCode" type="password" inputmode="numeric" autocomplete="off">
+        ${supToken() ? "" : `<label for="payCode">Code superviseur</label><input id="payCode" type="password" inputmode="numeric" autocomplete="off">`}
         <div class="btns"><button id="payDo">✓ Marquer comme payé</button><button class="ghost" id="payNo">Annuler</button></div><p id="payMsg" role="status"></p>`);
       $("#payNo").onclick = closeSheet;
       $("#payDo").onclick = async () => {
         $("#payMsg").textContent = "Un instant…";
         try{
-          const r = await api("/check", { code: $("#payCode").value.trim() });
+          const r = await api("/check", supAuth($("#payCode") ? $("#payCode").value.trim() : ""));
           if (!r.ok){ $("#payMsg").textContent = r.status === 403 ? "Code incorrect." : "Ça n'a pas marché, réessaie."; return; }
           game.paid = game.paid || {}; game.paid[k] = Date.now(); saveGame(); closeSheet(); rerender();
         }catch(e){ $("#payMsg").textContent = "Pas de connexion pour l'instant."; }
@@ -3951,7 +3974,7 @@
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
   setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get(WELCOME2, 0)) showWelcome2(); else if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
-  setTimeout(async () => { try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
+  setTimeout(async () => { try{ await autoClaim(); }catch(e){} try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
   // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
   let lastShared = 0;
   document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).catch(() => {}); });
@@ -3975,7 +3998,7 @@
     renderHome();
   });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, askProfile, showWelcome2, startupDigest, missions };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, showWelcome2, startupDigest, missions };
 })();
 </script>
 </body>
