@@ -361,7 +361,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.143319";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.143637";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -944,8 +944,25 @@
     document.querySelectorAll(".toast").forEach(o => o.remove());
     document.body.appendChild(t); setTimeout(() => t.remove(), ms || 2500);
   };
+  // 📳 Vibration : vraie vibration sur Android ; sur iPhone (iOS 18+), petit « tic » haptique en basculant un interrupteur caché
+  let hapLabel = null;
+  function haptic(n){
+    n = n || 1;
+    try{ if (navigator.vibrate){ navigator.vibrate(n === 1 ? 40 : Array.from({ length: n * 2 - 1 }, (_, i) => i % 2 ? 60 : 50)); return; } }catch(e){}
+    try{
+      if (!hapLabel){
+        hapLabel = document.createElement("label");
+        hapLabel.setAttribute("aria-hidden", "true");
+        hapLabel.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none";
+        const i = document.createElement("input"); i.type = "checkbox"; i.setAttribute("switch", ""); i.tabIndex = -1;
+        hapLabel.appendChild(i); document.body.appendChild(hapLabel);
+      }
+      for (let k = 0; k < n; k++) setTimeout(() => { try{ hapLabel.click(); }catch(e){} }, k * 130);
+    }catch(e){}
+  }
   let actx = null;
   function ding(){
+    haptic(1);
     try{
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       const o = actx.createOscillator(), g = actx.createGain(), n = actx.currentTime;
@@ -1961,7 +1978,7 @@
     if (best && bd < 150){
       const lvl = bd < 30 ? "🔥🔥 brûlant !" : bd < 70 ? "🔥 chaud !" : "🌤️ tiède…";
       box.textContent = `📡 ${best} ${lvl} (${Math.round(bd / 5) * 5} m)`;
-      if (bd < 30 && !radarHot){ radarHot = true; try{ navigator.vibrate && navigator.vibrate([60, 40, 60]); }catch(e){} }
+      if (bd < 30 && !radarHot){ radarHot = true; haptic(2); }
       if (bd >= 40) radarHot = false;
     } else if (!gw.items.length){
       box.textContent = `🎁 Prochain objet dans ~${Math.max(10, Math.round((gw.next - gw.acc) / 10) * 10)} m`;
@@ -2230,7 +2247,7 @@
     if (!homeSnooze && elapsed >= 5 && maxAway >= 200 && d < 40 && q.a <= 35 && enough) startHome();
   }
   function startHome(){
-    pocketOff();
+    pocketOff(); haptic(2);
     let left = 30;
     const txt = () => `🏠 Bienvenue ! Fin de la balade dans ${left} s`;
     showBanner("home", txt(), { label:"✓ Terminer", fn: () => { cancelHome(); stopWalk(); } }, { label:"Je continue", fn: () => { cancelHome(); homeSnooze = true; } });

@@ -139,6 +139,9 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🥺 Humeur de Roxy (`mood()`) selon les heures depuis sa dernière vraie balade, tous promeneurs (`last` reçu avec `/pause`).
 - 🏴‍☠️ Trésor de la semaine (`weekHunt`, `game.hunt`) : même endroit pour toute la maison (tiré avec la semaine), à 0,9–1,8 km de la
   maison, recalé sur le lieu le plus proche (Photon) ; zone de 200 m sur la carte ; +50 au premier (`POST /treasure`), +20 ensuite.
-- 📡 Radar (`radar()`) : objet ou trésor à < 150 m (tiède / chaud / brûlant, vibration Android) ; balade libre : prochain objet dans ~X m.
+- 📡 Radar (`radar()`) : objet ou trésor à < 150 m (tiède / chaud / brûlant, `haptic(2)`) ; balade libre : prochain objet dans ~X m.
 - 📱 « Mon mois avec Roxy » (`monthCard`) : image 1080×1350 (photo, balades, km, temps, clebsous, niveau) à partager, depuis la
   tuile Tirelire et le jour de paie.
+- 📳 `haptic(n)` : `navigator.vibrate` sur Android ; sur iPhone (iOS 18+) astuce de l'interrupteur caché (`<input type=checkbox switch>`
+  basculé via son label) = petit tic haptique, pas garanti hors geste de l'utilisateur. Appelé par `ding()` (objets, coffre…),
+  radar « brûlant » et retour maison.
