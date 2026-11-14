@@ -69,7 +69,7 @@ with sync_playwright() as pw:
     check("pas de jeton sur le téléphone de Léa", not ev(B, "__wouaf.supToken()") and not ev(B, "__wouaf.isTester()"))
 
     # ---------- 2. menus ----------
-    ev(A, "__wouaf.openMenu()"); tA = sheet_text(A)
+    ev(A, "__wouaf.openMenu()"); check("menu d\'Éric : une seule entrée 🔑 Superviseur", "Superviseur" in sheet_text(A) and "Tout remettre à zéro" not in sheet_text(A)); A.click("#muSupAll"); A.wait_for_timeout(300); tA = sheet_text(A)
     check("menu d'Éric : Pause, tableau de bord, corriger, restaurer, annuler, remise à zéro", all(x in tA for x in ["Pause", "Tableau de bord", "Corriger une tirelire", "Restaurer un promeneur", "Annuler une balade", "Tout remettre à zéro"]), tA)
     check("menu d'Éric : pas de rappels (testeur)", "Mes rappels" not in tA)
     close_sheet(A)

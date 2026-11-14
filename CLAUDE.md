@@ -277,3 +277,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 📈 Statistiques d'utilisation (décidé le 14/11, chiffres seulement) : `wouaf-usage` (par jour, 14 j : `o` ouvertures, `s` secondes dans l'app, `p` pages vues =
   titre `<h2>` de chaque fiche + onglets + carte + balade), envoyé par `sendUsage` (`POST /usage`, KV `use:<prénom>`, Éric ignoré) à l'ouverture et quand l'app
   passe en arrière-plan ; tableau de bord : « 📱 7 derniers jours : N ouvertures · X min dans l'app » + 5 pages les plus vues. Effacé par la remise à zéro.
+- Retours du 14/11 (20 h 10), les 6 points UX : **une seule fenêtre** à l'ouverture (nouveautés + « Quoi de neuf » empilés, `.dstack`, un bouton ;
+  `showNewsScreen` n'est plus appelé à l'ouverture) ; mode sombre relu (album, trophées, accessoires, puces du tuto, sélecteurs) ; tout message `role=status`
+  d'une fiche hors de l'écran → bandeau (MutationObserver sur `#sheet`) ; boutons « ❌ Annuler » du tableau de bord plus grands ; tuto court : « rue neuve »
+  expliquée ; menu d'Éric : une seule entrée « 🔑 Superviseur » (`sheetSupMenu`).

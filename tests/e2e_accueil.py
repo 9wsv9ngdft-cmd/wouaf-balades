@@ -14,9 +14,9 @@ with sync_playwright() as pw:
     b, c, A = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','33');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}")
     open_app(A, 3500)
     t = txt(A)
-    check("mise à jour : écran « Nouveau dans la version »", "Nouveau dans la version" in t and A.locator("#nwOk").count() == 1, t[:150])
-    check("écran seul (pas de cartes à faire défiler)", A.locator("#dg").count() == 0)
-    A.click("#nwOk"); A.wait_for_timeout(600)
+    check("mise à jour : « Nouveau dans la version » dans la fenêtre unique", "Nouveau dans la version" in t and A.locator("#dgNext").count() == 1, t[:150])
+    check("une seule fenêtre, pas de cartes à faire défiler", A.locator("#dg").count() == 0)
+    A.click("#dgNext"); A.wait_for_timeout(600)
     A.reload(); A.wait_for_timeout(3500)
     check("une seule fois par téléphone", "Nouveau dans la version" not in (txt(A) if A.evaluate("document.querySelector('#modal').classList.contains('open')") else ""))
     # téléphone neuf : tuto court

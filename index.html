@@ -92,6 +92,8 @@
   body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{flex:1;display:flex;flex-direction:column;gap:10px}
   .big.go{padding:18px 16px;font-size:19px;border-radius:18px;box-shadow:0 10px 24px -12px rgba(30,70,40,.6)}
   .lots{display:grid;gap:10px}
+  .dstack{width:auto !important;flex:none !important;border-bottom:1px solid var(--line);padding:6px 0 12px;margin-bottom:6px} .dstack:last-of-type{border-bottom:0}
+  .dstack .dc-ic{font-size:30px !important;margin:0 !important} .dstack h2{font-size:18px;margin:4px 0}
   .lot{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border-radius:18px;padding:14px 16px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:500;box-shadow:0 8px 22px -14px rgba(0,0,0,.35)}
   .lot .li{font-size:34px;line-height:1}
   .lot b{display:block;font-size:16px}
@@ -389,6 +391,7 @@
     .missions,.homecard,.panel,.entry,.sheet{background:var(--card);border-color:var(--line)}
     .missions .m.done .ic{background:#24362a !important}
     .dash .wk{background:#242b26;color:var(--ink)} .dash .wk h4{color:var(--ink)}
+    .album div,.tro div,.accs button,.tuto .chip,.keep select,.gohint button.bon{background:#242b26;color:var(--ink);border-color:var(--line)} .tro div.off{opacity:.55}
     .lot.gold{background:linear-gradient(135deg,#5a4512,#a7801f 60%,#c99a2c);color:#fff7dc;border-color:#8a6a1c} .lot.gold small{color:#fbe9b5} .dfiche{background:#242b26}
     .warnline{background:#3a2a1c;color:#f3c9a0} .party{background:#2b3524;color:#e9f3d8}
     .ticket{background:linear-gradient(180deg,#2c2718,#1b211d);border-color:#7a6220} .ticket .tk-sum{color:#ffd35c}
@@ -505,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.200826";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.201313";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1111,6 +1114,11 @@
     body.scrollTop = 0;
     $("#modal").classList.add("open"); lockBody();
   }
+  // 📣 un message d'une fiche (role=status) hors de l'écran s'affiche aussi en bandeau
+  new MutationObserver(ms => { for (const m of ms){ const el = m.target.nodeType === 3 ? m.target.parentElement : m.target; const st = el && el.closest && el.closest("#sheet [role=status]");
+    if (!st) continue; const t = st.textContent.trim(); if (!t || t === "Un instant…" || st.dataset.last === t) continue; st.dataset.last = t;
+    const r = st.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight - 70 || r.height === 0) try{ toast(t, 4000); }catch(e){} } })
+    .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
   function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
@@ -2471,6 +2479,18 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden){ useTime(); useStart = null; sendUsage(); } else { useStart = Date.now(); useOpen(); } });
   window.addEventListener("pagehide", () => { useTime(); sendUsage(true); });
 
+  // 🔑 tout ce que fait le superviseur, au même endroit
+  function sheetSupMenu(){
+    const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
+    openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
+      ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
+      ${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
+    const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
+    go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+  }
+
   // ---------- ☰ Menu ----------
   function openMenu(){
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
@@ -2487,7 +2507,7 @@
       ${it("muBonus", "🎁", "Bonus et règles", "")}
       ${it("muTuto", "📖", "Tuto", "")}
       ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
-      ${PUSH_API && supToken() ? `<div class="flabel">Superviseur 🔑</div>${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupD", "📊", "Tableau de bord", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}` : ""}
+      ${PUSH_API && supToken() ? it("muSupAll", "🔑", "Superviseur", "tableau de bord, pause, remise à zéro…") : ""}
       ${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
     </div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
@@ -2504,6 +2524,7 @@
     go("muWho", () => askProfile());
     go("muSup", openSuper);
     go("muSupP", openSuper);
+    go("muSupAll", sheetSupMenu);
     go("muSupD", () => openDash(supAuth()));
     go("muSupA", () => openAdjust(supAuth()));
     go("muSupR", () => openRestore(supAuth()));
@@ -2689,8 +2710,9 @@
     const cards = [];
     // ✨ Nouvelle version : un seul écran à part (2–3 lignes), puis le reste éventuel du « Quoi de neuf »
     if (store.get("wouaf-vu", 0) < APP_NUM){
-      if (!(NEWS[APP_NUM] || []).length) store.set("wouaf-vu", APP_NUM);
-      else if (!state.walk){ digestRunning = false; showNewsScreen(() => setTimeout(startupDigest, 400)); return; }   // en balade : on la montrera plus tard
+      const nw = NEWS[APP_NUM] || [];
+      if (nw.length) cards.push({ party: true, html: `<div class="dc-ic">✨</div><h2>Nouveau dans la version ${APP_LABEL}</h2><ul class="news">${nw.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` });
+      store.set("wouaf-vu", APP_NUM);
     }
     if (await loadPauses()){
       if (await applyReset()){ digestRunning = false; return; }
@@ -2716,18 +2738,12 @@
     if (!cards.length) return;
     const show = () => {
       if ($("#modal").classList.contains("open") || state.walk){ setTimeout(show, 3000); return; }
-      // une carte à la fois (plus de glissement horizontal : il pouvait coincer sur iPhone)
-      let i = 0;
-      const page = () => {
-        const c = cards[i], last = i === cards.length - 1;
-        openSheet(`<div class="dcard" style="width:auto">${c.html}</div>
-          ${cards.length > 1 ? `<p class="ddots">${cards.map((_, k) => k === i ? "●" : "○").join(" ")}</p>` : ""}
-          <div class="btns"><button id="dgNext">${last ? "C'est parti ! 🐾" : `Suivant → (${i + 1}/${cards.length})`}</button></div>`);
-        const el = $("#sheet .dcard"); if (c.bind && el) c.bind(el);
-        if (c.party && !c.partied){ c.partied = true; confetti(); ding(); }
-        $("#dgNext").onclick = () => { if (last) closeSheet(); else { i++; page(); } };
-      };
-      page();
+      // ✨ une seule fenêtre, courte : toutes les nouvelles les unes sous les autres, un seul bouton
+      openSheet(`${cards.length > 1 ? "<h2>✨ Quoi de neuf</h2>" : ""}${cards.map((c, k) => `<div class="dcard dstack" data-k="${k}">${c.html}</div>`).join("")}
+        <div class="btns"><button id="dgNext">C'est parti ! 🐾</button></div>`);
+      document.querySelectorAll("#sheet .dstack").forEach(el => { const c = cards[+el.dataset.k]; if (c.bind) c.bind(el); });
+      if (cards.some(c => c.party)){ confetti(); ding(); }
+      $("#dgNext").onclick = closeSheet;
     };
     show();
   }
@@ -2774,7 +2790,7 @@
     const cs = v => Math.round(v * CS), full = tutoPages();
     return [
       { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte. Elle est contente quand tu la sors, triste quand elle attend trop.` },
-      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double. À la fin du mois, tes clebsous deviennent de vrais sous 💶. Un jour sans balade : −${cs(MALUS_DAY)}.` },
+      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (une « rue neuve », c'est un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). À la fin du mois, tes clebsous deviennent de vrais sous 💶. Un jour sans balade : −${cs(MALUS_DAY)}.` },
       { pic: full[7].pic, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, rappels, le tuto complet) est dans le menu ☰ en haut à droite.` }
     ];
   }
@@ -3067,7 +3083,7 @@
         ${w.length ? `<details${voidMode ? " open" : ""} style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000);
           const txt = `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.tr ? " 🏴‍☠️" : ""}${x.ms ? " ⏱️ trop courte" : ""}`;
           return x.v ? `<div class="dwalk void"><s>${txt}</s> ❌ annulée (${esc(x.v)})</div>`
-            : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:2px 8px;font-size:12px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
+            : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:8px 12px;font-size:14px;margin-top:4px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
       </div></div>`;
     };
     const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé le trésor de la semaine puis annulé sa balade : personne n'a été payé.

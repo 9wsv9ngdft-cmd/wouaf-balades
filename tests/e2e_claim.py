@@ -13,7 +13,7 @@ errs = []
 with sync_playwright() as pw:
     bA, cA, A = new_phone(pw, errors=errs, init=INIT); open_app(A, 7000)
     check("Éric choisi avant la 2.0 : jeton récupéré tout seul à l'ouverture", bool(A.evaluate("__wouaf.supToken()")))
-    A.evaluate("__wouaf.openMenu()"); t = A.evaluate("document.querySelector('#sheet').innerText")
+    A.evaluate("__wouaf.openMenu()"); A.click("#muSupAll"); A.wait_for_timeout(300); t = A.evaluate("document.querySelector('#sheet').innerText")
     check("menu superviseur complet, sans code", "Tableau de bord" in t and "Tout remettre à zéro" in t, t[:200])
     bB, cB, B = new_phone(pw, errors=errs, init=INIT); open_app(B, 7000)
     check("2e téléphone « Éric » : pas de jeton", not B.evaluate("__wouaf.supToken()"))
@@ -22,7 +22,7 @@ with sync_playwright() as pw:
     B.fill("#supCode", "0000"); B.click("#supMine"); B.wait_for_timeout(800)
     check("mauvais code refusé", "incorrect" in B.evaluate("document.querySelector('#supMsg').textContent"))
     B.fill("#supCode", "1234"); B.click("#supMine"); B.wait_for_timeout(1200)
-    check("bon code : ce téléphone devient le superviseur", bool(B.evaluate("__wouaf.supToken()")) and "Tableau de bord" in B.evaluate("document.querySelector('#sheet').innerText"))
+    check("bon code : ce téléphone devient le superviseur", bool(B.evaluate("__wouaf.supToken()")) and "Superviseur" in B.evaluate("document.querySelector('#sheet').innerText"))
     r = local_api("POST", "/dash", json.dumps({"token": A.evaluate("__wouaf.supToken()")}).encode())
     check("l'ancien téléphone perd la main", r[0] == 403 if isinstance(r, tuple) else True, r)
     # 3e téléphone : tape « Éric » → refusé → champ code dans la même fiche
