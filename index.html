@@ -508,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.215144";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.220644";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2505,7 +2505,8 @@
 
   // 📲 bouton « Sortir Roxy » sur l'écran d'accueil (app Raccourcis d'Apple : un vrai widget n'est pas possible pour une web app)
   const SHORTCUT_URL = "";   // lien iCloud du raccourci partagé par Éric (à remplir) → bouton « Télécharger le raccourci »
-  const goUrl = () => location.origin + location.pathname + "#go";
+  // « webapp:// » (iOS 26) ouvre l'app Wouaf de l'écran d'accueil au lieu de Safari (testé par Éric le 14/11 : cette forme-là, sans https)
+  const goUrl = () => "webapp://" + location.host + location.pathname + "#go";
   function sheetShortcut(){
     openSheet(`<h2>📲 Bouton « Sortir Roxy »</h2>
       <p>Un bouton sur l'écran d'accueil de ton iPhone : tu appuies, et la balade démarre tout de suite.</p>
@@ -2515,12 +2516,13 @@
       <ol style="line-height:1.7;padding-left:20px;margin:6px 0">
         <li>Touche <b>« 📋 Copier le lien »</b> ci-dessous.</li>
         <li>Ouvre l'app <b>Raccourcis</b> › <b>+</b> › <b>Ajouter une action</b> › cherche <b>« Ouvrir les URL »</b>, puis colle le lien.</li>
-        <li>Nomme le raccourci <b>« Sortir Roxy »</b> (touche le nom en haut) et choisis une icône 🐕.</li>
-        <li>Sur l'écran d'accueil : appui long › <b>Modifier</b> › <b>Ajouter un widget</b> › <b>Raccourcis</b> › choisis « Sortir Roxy ».</li>
+        <li>Nomme le raccourci <b>« Sortir Roxy »</b> (touche le nom en haut).</li>
+        <li>Touche <b>« 🖼️ L'icône de Roxy »</b> ci-dessous, appui long sur l'image › <b>Ajouter à Photos</b>.</li>
+        <li>Dans Raccourcis : appui long sur « Sortir Roxy » › <b>Partager</b> › <b>Sur l'écran d'accueil</b> › touche la petite icône › <b>Choisir une photo</b> › l'image de Roxy › <b>Ajouter</b>.</li>
       </ol>
-      <p class="howto">⚠️ Fais un essai : si le raccourci ouvre Safari au lieu de l'app Wouaf, ta tirelire n'y sera pas. Dans ce cas, dis-le au superviseur.</p>
+      <p class="howto">L'app Wouaf doit déjà être sur ton écran d'accueil. Si le raccourci ouvre Safari au lieu de Wouaf, dis-le au superviseur.</p>
       <p id="scMsg" role="status"></p>
-      <div class="btns"><button id="scCopy">📋 Copier le lien</button><a class="btn ghost" href="shortcuts://" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--line);color:var(--ink);text-decoration:none">Ouvrir l'app Raccourcis</a><button class="ghost" id="scClose">Fermer</button></div>`);
+      <div class="btns"><button id="scCopy">📋 Copier le lien</button><a class="btn ghost" href="sortir-roxy.png" target="_blank" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--line);color:var(--ink);text-decoration:none">🖼️ L'icône de Roxy</a><a class="btn ghost" href="shortcuts://" style="display:block;text-align:center;padding:12px;border-radius:14px;border:1px solid var(--line);color:var(--ink);text-decoration:none">Ouvrir l'app Raccourcis</a><button class="ghost" id="scClose">Fermer</button></div>`);
     $("#scClose").onclick = closeSheet;
     $("#scCopy").onclick = async () => { try{ await navigator.clipboard.writeText(goUrl()); $("#scMsg").textContent = "✅ Lien copié : " + goUrl(); }catch(e){ $("#scMsg").textContent = "Copie impossible ici. Le lien : " + goUrl(); } };
   }
