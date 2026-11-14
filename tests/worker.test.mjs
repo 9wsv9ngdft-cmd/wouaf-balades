@@ -1,0 +1,110 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { loadWorker, makeEnv, client } from "./load-worker.mjs";
+
+const setup = async () => { const worker = await loadWorker(), env = makeEnv(); return { worker, env, api: client(worker, env) }; };
+const walk = (e, extra) => Object.assign({ s: e - 1800, e, min: 30, m: 2500, cs: 40 }, extra);
+
+test("claim : le 1er téléphone qui prend « Éric » (sans accents ni majuscules) devient superviseur, les autres sont refusés", async () => {
+  const { api, env } = await setup();
+  const a = await api.post("/claim", { walker: "  ÉRIC " });
+  assert.equal(a.status, 200); assert.ok(a.j.token && a.j.token.length >= 16);
+  assert.equal((await api.post("/claim", { walker: "eric" })).status, 403);            // autre téléphone : refusé
+  assert.equal((await api.post("/claim", { walker: "Éric", token: "faux" })).status, 403);
+  const again = await api.post("/claim", { walker: "Eric", token: a.j.token });         // même téléphone : ok, même jeton
+  assert.equal(again.status, 200); assert.equal(again.j.token, a.j.token);
+  assert.equal((await api.post("/claim", { walker: "Léa" })).status, 400);              // un autre prénom ne réclame rien
+  assert.ok(await env.WOUAF.get("admin"));
+});
+
+test("routes superviseur : jeton d'Éric OU code, rien d'autre ; 20 essais ratés maximum par jour", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  assert.equal((await api.post("/dash", { token: j.token })).status, 200);
+  assert.equal((await api.post("/dash", { code: "1234" })).status, 200);
+  assert.equal((await api.post("/dash", { token: "x".repeat(32) })).status, 403);
+  assert.equal((await api.post("/dash", { code: "0000" })).status, 403);
+  assert.equal((await api.post("/dash", {})).status, 403);
+  for (let i = 0; i < 25; i++) await api.post("/dash", { code: "nope" });
+  assert.equal((await api.post("/dash", { token: j.token })).status, 429);               // trop d'essais ratés aujourd'hui
+});
+
+test("sans SUPERVISOR_CODE, le code vide n'ouvre rien", async () => {
+  const worker = await loadWorker(), env = makeEnv(undefined), api = client(worker, env);
+  assert.equal((await api.post("/dash", { code: "undefined" })).status, 403);
+  assert.equal((await api.post("/reset", { code: "" })).status, 403);
+});
+
+test("trésor : un seul gagnant ; les autres reçoivent « déjà trouvé » ; Éric (testeur) ne le prend jamais", async () => {
+  const { api } = await setup();
+  await api.post("/claim", { walker: "Éric" });
+  assert.deepEqual((await api.post("/treasure", { week: "2026-11-9", walker: "Éric" })).j, { first:false, test:true });
+  const a = await api.post("/treasure", { week: "2026-11-9", walker: "Léa" });
+  assert.equal(a.j.first, true);
+  const b = await api.post("/treasure", { week: "2026-11-9", walker: "Tom" });
+  assert.equal(b.j.first, false); assert.equal(b.j.found, true); assert.equal(b.j.by, "Léa");
+  assert.equal((await api.post("/treasure", { week: "2026-11-9", walker: "Léa" })).j.first, true);   // nouvelle tentative du gagnant (réseau)
+  assert.equal((await api.post("/treasure", { week: "2026-11-16", walker: "Tom" })).j.first, true);  // autre semaine : nouveau trésor
+  const p = (await api.get("/pause")).j;
+  assert.deepEqual(p.treasure.map(t => [t.wk, t.by]).sort(), [["2026-11-16", "Tom"], ["2026-11-9", "Léa"]]);
+});
+
+test("balade annulée : motif, balade barrée, correction pour le téléphone, dernière sortie recalculée", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  await api.post("/walk", { walker: "Léa", walk: walk(1_700_000_000), sum: {} });
+  await api.post("/walk", { walker: "Tom", walk: walk(1_700_005_000), sum: {} });
+  assert.equal((await api.get("/pause")).j.last.walker, "Tom");
+  assert.equal((await api.post("/void", { token: j.token, walker: "Tom", e: 1_700_005_000, why: "en voiture" })).status, 200);
+  assert.equal((await api.post("/void", { token: j.token, walker: "Tom", e: 42, why: "?" })).status, 404);   // balade inconnue
+  assert.equal((await api.post("/void", { token: "x".repeat(30), walker: "Tom", e: 1_700_005_000 })).status, 403);
+  assert.equal((await api.get("/pause")).j.last.walker, "Léa");                          // la balade annulée ne compte plus pour l'humeur
+  const adj = (await api.get("/adjust?w=Tom")).j.list;
+  assert.deepEqual(adj.map(a => [a.type, a.e, a.why, a.id]), [["void", 1_700_005_000, "en voiture", "v1700005000"]]);
+  const recent = (await api.get("/recent")).j.walks, tom = recent.find(x => x.w === "Tom");
+  assert.equal(tom.v, 1); assert.equal(recent.find(x => x.w === "Léa").v, 0);
+  const dash = (await api.post("/dash", { token: j.token })).j.walkers.find(d => d.walker === "Tom");
+  assert.equal(dash.walks[0].v, "en voiture");
+  await api.post("/void", { token: j.token, walker: "Tom", e: 1_700_005_000, why: "motif corrigé" });   // ré-annuler : pas de doublon
+  assert.equal((await api.get("/adjust?w=Tom")).j.list.length, 1);
+});
+
+test("remise à zéro : efface chiffres, sauvegardes, corrections, trésor, dernière sortie ; garde rappels, pauses, admin", async () => {
+  const { api, env } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  for (const w of ["Léa", "Tom", "Zoé", "Max"]){
+    await api.post("/walk", { walker: w, walk: walk(1_700_000_000), sum: {} });
+    await api.post("/backup", { walker: w, data: { jeu: { total: 5 } } });
+    await api.post("/adjust", { token: j.token, walker: w, cs: 10, why: "x" });
+  }
+  await api.post("/treasure", { week: "2026-11-9", walker: "Léa" });
+  await env.WOUAF.put("u:abc12345", JSON.stringify({ walker: "Léa", sched: [] }));
+  await api.post("/pause", { token: j.token, pauses: [{ from: "2026-12-01", to: "2026-12-05" }] });
+  assert.equal((await api.post("/reset", { code: "oups" })).status, 403);               // sans le bon code : rien ne bouge
+  assert.ok(await env.WOUAF.get("d:léa") || await env.WOUAF.get("d:lea"));
+  const r = await api.post("/reset", { token: j.token });
+  assert.equal(r.status, 200); assert.ok(r.j.reset > 0); assert.ok(r.j.deleted >= 13);
+  for (const pre of ["d:", "b:", "a:", "t:"]) assert.equal((await env.WOUAF.list({ prefix: pre })).keys.length, 0, pre);
+  assert.equal(await env.WOUAF.get("last"), null);
+  assert.ok(await env.WOUAF.get("u:abc12345")); assert.ok(await env.WOUAF.get("admin"));
+  const p = (await api.get("/pause")).j;
+  assert.equal(p.reset, r.j.reset); assert.equal(p.pauses.length, 1); assert.deepEqual(p.treasure, []); assert.equal(p.last, null);
+  assert.deepEqual((await api.get("/recent")).j.walks, []);
+  // envois en retard d'avant la remise à zéro : ignorés ; nouvelles balades : acceptées
+  const old = await api.post("/walk", { walker: "Léa", walk: walk(1_700_000_000), sum: {} });
+  assert.equal(old.j.ignored, true);
+  const now = Math.floor(Date.now() / 1000) + 10;
+  assert.equal((await api.post("/walk", { walker: "Léa", walk: walk(now), sum: {} })).j.ignored, undefined);
+  assert.equal((await api.get("/recent")).j.walks.length, 1);
+});
+
+test("rappels : Éric (testeur) n'est jamais inscrit", async () => {
+  const { api, env } = await setup();
+  const sub = { endpoint: "https://web.push.apple.com/abc", keys: { p256dh: "a", auth: "b" } };
+  const before = await api.post("/register", { id: "abcdefgh1", sub, sched: [], walker: "Éric" });
+  assert.equal((await env.WOUAF.list({ prefix: "u:" })).keys.length, 1);                 // pas encore superviseur : inscrit comme les autres
+  await api.post("/claim", { walker: "Éric" });
+  await api.post("/register", { id: "abcdefgh2", sub, sched: [], walker: "éric" });
+  assert.equal((await env.WOUAF.list({ prefix: "u:" })).keys.length, 1);                 // devenu testeur : plus d'inscription
+  assert.equal(before.status, 200);
+});

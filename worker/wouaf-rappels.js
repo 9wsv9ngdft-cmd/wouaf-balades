@@ -130,10 +130,12 @@ async function run(env, now){
   const boosts = (await env.WOUAF.get("boosts", "json")) || [];
   const today = isoDay(now);
   if (pauses.some(p => today >= p.from && today <= p.to)) return;   // pause du superviseur : aucun rappel
+  const admin = await env.WOUAF.get("admin");
   const list = await env.WOUAF.list({ prefix:"u:" });
   for (const k of list.keys){
     const id = k.name.slice(2);
     const u = await env.WOUAF.get(k.name, "json"); if (!u) continue;
+    if (admin && normName(u.walker) === SUP_NAME) continue;   // Éric = testeur : pas de rappels
     const day = (u.sched || [])[l.dow] || [];
     const sent = (await env.WOUAF.get("s:" + id, "json")) || {};
     let changed = false;
@@ -163,6 +165,49 @@ function okSub(sub){
 }
 const slug = w => String(w || "").toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30);
 const okId = id => typeof id === "string" && /^[A-Za-z0-9-]{8,64}$/.test(id);
+// 🔑 Superviseur « Éric » : le premier téléphone qui prend ce prénom (sans accents ni majuscules) le réclame (POST /claim) et reçoit un jeton
+// aléatoire gardé dans KV « admin ». Les routes superviseur acceptent ce jeton OU le code SUPERVISOR_CODE.
+const normName = w => String(w || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const SUP_NAME = "eric";
+const safeEq = (a, b) => { a = String(a); b = String(b); if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+const newToken = () => b64u(crypto.getRandomValues(new Uint8Array(24)));
+async function supOk(env, b){
+  if (!b) return false;
+  if (env.SUPERVISOR_CODE && b.code != null && safeEq(b.code, env.SUPERVISOR_CODE)) return true;
+  if (typeof b.token === "string" && b.token.length >= 16){
+    const a = await env.WOUAF.get("admin", "json");
+    if (a && a.token && safeEq(a.token, b.token)) return true;
+  }
+  return false;
+}
+async function isTester(env, walker){ return normName(walker) === SUP_NAME && !!(await env.WOUAF.get("admin")); }
+// efface toutes les clés d'un préfixe : on relit la liste depuis le début tant qu'il en reste (pas de curseur à garder entre deux suppressions)
+async function wipe(env, prefix){
+  const done = new Set();
+  for (let i = 0; i < 200; i++){
+    const l = await env.WOUAF.list({ prefix });
+    const todo = l.keys.filter(k => !done.has(k.name));
+    if (!todo.length) break;
+    for (const k of todo){ await env.WOUAF.delete(k.name); done.add(k.name); }
+  }
+  return done.size;
+}
+// trésors de la semaine déjà trouvés : [{ wk, by }]
+async function treasures(env){
+  const l = await env.WOUAF.list({ prefix:"t:" }), out = [];
+  for (const k of l.keys.slice(0, 20)){ const by = await env.WOUAF.get(k.name); if (by) out.push({ wk: k.name.slice(2), by }); }
+  return out;
+}
+// dernière vraie sortie de Roxy (balades annulées exclues), recalculée à partir des chiffres de chaque promeneur
+async function recomputeLast(env){
+  const l = await env.WOUAF.list({ prefix:"d:" });
+  let best = null;
+  for (const k of l.keys){
+    const d = await env.WOUAF.get(k.name, "json"); if (!d) continue;
+    for (const w of d.walks || []) if (!w.v && (!best || w.e > best.t)) best = { walker: d.walker, t: w.e, min: w.min };
+  }
+  if (best) await env.WOUAF.put("last", JSON.stringify(best)); else await env.WOUAF.delete("last");
+}
 const cleanSched = s => Array.from({ length:7 }, (_, i) => [0, 1].map(j => { const t = s && s[i] && s[i][j]; return typeof t === "string" && /^\d\d:\d\d$/.test(t) ? t : ""; }));
 const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length < 3000) ? s : {};
 
@@ -184,18 +229,29 @@ export default {
     // 🐾 dernières sorties de Roxy, tous promeneurs : qui, quand, durée, km, pipi/caca (ni trajet, ni position, ni argent)
     if (req.method === "GET" && path === "/recent"){
       const l = await env.WOUAF.list({ prefix:"d:" }), all = [];
-      for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) for (const x of (d.walks || []).slice(0, 20)) all.push({ w: d.walker, s: x.s, e: x.e, min: x.min, m: x.m, pp: x.pp, cc: x.cc }); }
+      for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) for (const x of (d.walks || []).slice(0, 20)) all.push({ w: d.walker, s: x.s, e: x.e, min: x.min, m: x.m, pp: x.pp, cc: x.cc, v: x.v ? 1 : 0 }); }
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json") });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env) });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust"){
-      // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
+    if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
+      if (!b || normName(b.walker) !== SUP_NAME) return json({ error:"not supervisor name" }, 400);
+      const a = await env.WOUAF.get("admin", "json");
+      if (!a){
+        const token = newToken();
+        await env.WOUAF.put("admin", JSON.stringify({ token, walker: String(b.walker).slice(0, 30), at: Date.now() }));
+        return json({ ok:true, token, created:true });
+      }
+      if (typeof b.token === "string" && safeEq(a.token, b.token)) return json({ ok:true, token: a.token });
+      return json({ error:"taken" }, 403);
+    }
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void"){
+      // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
-      if (!b || !env.SUPERVISOR_CODE || String(b.code) !== String(env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
+      if (!(await supOk(env, b))){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
       if (path === "/check") return json({ ok:true });   // vérifie seulement le code (ex. « payé ✓ » dans l'app)
       if (path === "/dash"){   // 📊 tableau de bord : chiffres de chaque promeneur (jamais de position)
         const l = await env.WOUAF.list({ prefix:"d:" });
@@ -207,6 +263,28 @@ export default {
         const d = await env.WOUAF.get("b:" + slug(b.walker), "json");
         if (!b.walker) { const l = await env.WOUAF.list({ prefix:"b:" }); return json({ ok:true, names: l.keys.map(k => k.name.slice(2)) }); }
         return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
+      }
+      if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
+        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:"));
+        await env.WOUAF.delete("last");
+        const reset = Date.now();
+        await env.WOUAF.put("reset", JSON.stringify(reset));
+        return json({ ok:true, reset, deleted: n });
+      }
+      if (path === "/void"){   // ❌ annuler une balade (id = fin de la balade, en secondes) avec un motif : le téléphone retire les gains
+        const w = String(b.walker || "").slice(0, 30), e = Math.round(+b.e || 0);
+        if (!w || !e) return json({ error:"bad" }, 400);
+        const dk = "d:" + slug(w), d = await env.WOUAF.get(dk, "json");
+        const walk = d && (d.walks || []).find(x => x.e === e);
+        if (!walk) return json({ error:"walk not found" }, 404);
+        const why = String(b.why || "").slice(0, 120);
+        walk.v = why || "annulée";
+        await env.WOUAF.put(dk, JSON.stringify(d));
+        const k = "a:" + slug(w), l = ((await env.WOUAF.get(k, "json")) || []).filter(x => x.id !== "v" + e);
+        l.push({ id: "v" + e, type:"void", e, why, t: Date.now() });
+        await env.WOUAF.put(k, JSON.stringify(l.slice(-50)));
+        await recomputeLast(env);
+        return json({ ok:true });
       }
       if (path === "/adjust"){   // ✏️ ajouter / retirer des clebsous avec un motif
         const w = String(b.walker || "").slice(0, 30), cs = Math.round(+b.cs || 0);
@@ -247,15 +325,19 @@ export default {
     if (path === "/treasure"){   // 🏴‍☠️ premier à trouver le trésor de la semaine (aucune position reçue)
       const wk = String(b.week || "").slice(0, 12), w = String(b.walker || "").slice(0, 30);
       if (!wk || !w) return json({ error:"bad" }, 400);
+      if (await isTester(env, w)) return json({ first:false, test:true });   // le téléphone d'Éric (testeur) ne prend jamais le trésor
+      // un seul gagnant : le premier. Les autres reçoivent « déjà trouvé » et le trésor disparaît pour tout le monde
       const by = await env.WOUAF.get("t:" + wk);
-      if (!by){ await env.WOUAF.put("t:" + wk, w, { expirationTtl: 60*86400 }); return json({ first:true }); }
-      return json({ first: by === w, by });
+      if (!by){ await env.WOUAF.put("t:" + wk, w, { expirationTtl: 60*86400 }); return json({ first:true, by:w }); }
+      return json({ first: by === w, found:true, by });
     }
     if (path === "/walk"){   // une balade terminée : chiffres seulement (durée, distance, clebsous…), jamais le trajet
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
       if (!w || !x.e) return json({ error:"bad" }, 400);
       const num = v => Math.max(0, Math.min(1e7, Math.round(+v || 0))), ts = v => Math.max(0, Math.min(4e9, Math.round(+v || 0)));
-      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms) };
+      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms), tr: x.tr ? 1 : 0 };
+      const rs = (await env.WOUAF.get("reset", "json")) || 0;
+      if (rs && walk.e * 1000 < rs) return json({ ok:true, ignored:true });   // balade d'avant la remise à zéro (envoi en retard)
       const dk = "d:" + slug(w);
       const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
       if (!d.walks.some(y => y.e === walk.e)) d.walks.unshift(walk);
@@ -270,6 +352,7 @@ export default {
     const key = "u:" + b.id;
     if (path === "/register"){
       if (!okSub(b.sub)) return json({ error:"bad subscription" }, 400);
+      if (await isTester(env, b.walker)) return json({ ok:true, skipped:true });   // Éric = testeur : pas de rappels
       const old = await env.WOUAF.get(key, "json");
       if (!old && (await env.WOUAF.list({ prefix:"u:" })).keys.length >= MAX_USERS) return json({ error:"full" }, 403);
       await env.WOUAF.put(key, JSON.stringify({ sub: b.sub, sched: cleanSched(b.sched), walker: String(b.walker || "").slice(0, 30), state: cleanState(b.state), at: Date.now() }));

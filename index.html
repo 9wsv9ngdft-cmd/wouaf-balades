@@ -68,6 +68,7 @@
   button.big{width:100%;font-size:17px;padding:16px;border-radius:14px}
   button:disabled{opacity:.55}
   button:focus-visible,.prop:focus-visible,.entry:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .entry.void{opacity:.6} .entry.void h4{text-decoration:line-through}
   .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
   .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px}
   .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:10px 2px;border-radius:10px;font-size:14px;white-space:nowrap}
@@ -483,7 +484,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.165901";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.175809";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1032,6 +1033,14 @@
   const DOG = "Roxy";
   let profile = store.get("wouaf-profil", { walker:"" });
   profile.dog = DOG;
+  // 🔑 Superviseur « Éric » (v2.0) : le 1er téléphone qui prend le prénom Éric le réclame auprès du Worker (POST /claim) et garde un jeton.
+  // Prénom Éric + jeton = téléphone testeur : les balades marchent, mais pas de tirelire, d'amendes ni de rappels.
+  const SUP_KEY = "wouaf-sup";
+  const normName = w => String(w || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const isEricName = w => normName(w) === "eric";
+  const supToken = () => store.get(SUP_KEY, "") || "";
+  const isTester = () => !!supToken() && isEricName(profile.walker);
+  const supAuth = code => supToken() ? { token: supToken() } : { code };
   function renderWho(){
     $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
     if (profile.walker){
@@ -1067,16 +1076,27 @@
     body.scrollTop = 0;
     $("#modal").classList.add("open"); lockBody();
   }
-  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); }
+  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
-      <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div></form>`);
+      <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div><p id="whoMsg" role="status"></p></form>`);
     $("#whoCancel").onclick = closeSheet;
-    $("#whoForm").onsubmit = e => {
+    $("#whoForm").onsubmit = async e => {
       e.preventDefault();
-      profile = { walker: $("#wName").value.trim(), dog: DOG };
+      const name = $("#wName").value.trim(), say = t => { const m = $("#whoMsg"); if (m) m.textContent = t; };
+      if (isEricName(name)){   // le prénom Éric est réservé au superviseur : le 1er téléphone qui le prend le réclame, les autres sont refusés
+        say("Un instant…");
+        try{
+          const r = await api("/claim", { walker: name, token: supToken() || undefined });
+          if (r.status === 403){ say("Ce prénom est déjà pris sur un autre téléphone. Choisis un autre prénom."); return; }
+          const j = await r.json();
+          if (!r.ok || !j.token){ say("Ça n'a pas marché, réessaie."); return; }
+          store.set(SUP_KEY, j.token);
+        }catch(err){ say("Pas de connexion : ce prénom doit être vérifié sur internet. Réessaie dans un moment."); return; }
+      }
+      profile = { walker: name, dog: DOG };
       store.set("wouaf-profil", { walker: profile.walker }); renderWho(); closeSheet();
       if (then) then();
     };
@@ -1200,7 +1220,7 @@
     gameLayer.clearLayers();
     if (!gw) return;
     const h = game.hunt;
-    if (h && h.wk === weekKey(Date.now()) && !h.found)
+    if (h && h.wk === weekKey(Date.now()) && !h.found && !h.gone)
       L.circle([h.zlat, h.zlon], { radius: HUNT_ZONE, color:"#d9792b", weight:2, dashArray:"6 6", fillColor:"#ffd35c", fillOpacity:.15, interactive:false }).addTo(gameLayer);
     for (const it of gw.items) if (!it.got)
       L.marker([it.lat, it.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem">${ITEMS[it.k].icon}</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer);
@@ -1323,11 +1343,18 @@
     if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
     const chest = gw.chest, rain = gw.rain, needs = gw.needs, photoBonus = gw.photoBonus || 0, huntPts = gw.hunt || 0, duoPts = gw.duo ? DUO_PTS : 0;
     res.needs = needs;
+    const test = isTester(), gx = res.gx = { c:0, h:0 };   // gx = ce que la balade a rapporté (pour pouvoir l'annuler plus tard)
     gw = null; gameLayer.clearLayers();
     if (chest){
       res.chest = CHEST_EUR;
-      game.chests.push(new Date().toISOString());
-      const k = monthKey(Date.now()); game.bonus[k] = (game.bonus[k] || 0) + CHEST_EUR;
+      if (!test){   // 🧪 testeur : rien dans la tirelire
+        game.chests.push(new Date().toISOString());
+        const k = monthKey(Date.now()); game.bonus[k] = (game.bonus[k] || 0) + CHEST_EUR; gx.c = CHEST_EUR;
+      }
+    }
+    if (huntPts){   // 🏴‍☠️ trésor de la semaine : en plus du plafond, comme un coffre (un seul gagnant)
+      res.hunt = huntPts;
+      if (!test){ const k = monthKey(Date.now()); game.bonus[k] = Math.round(((game.bonus[k] || 0) + huntPts / CS) * 100) / 100; gx.h = huntPts; }
     }
     if (elapsedMin < MONEY_MIN){ res.short = true; res.trophies = checkTrophies(); saveGame(); return res; }
     // statistiques pour les trophées et l'album de saison
@@ -1358,10 +1385,10 @@
     if (boosted(dIso(Date.now()))) res.boostMult = 2;   // 🎉 jour boosté
     if (isBday()) res.boostMult = (res.boostMult || 1) * 3;   // 🎂 anniversaire de Roxy
     if (duoPts) res.duo = duoPts;
-    res.hunt = huntPts;
     res.photo = photoBonus;
-    res.total = Math.round((res.items + res.cells) * res.mult * (res.rainMult || 1) * (res.boostMult || 1)) + res.home + res.streak + (res.defi ? DEFI_PTS : 0) + res.photo + res.hunt + (res.duo || 0);
+    res.total = Math.round((res.items + res.cells) * res.mult * (res.rainMult || 1) * (res.boostMult || 1)) + res.home + res.streak + (res.defi ? DEFI_PTS : 0) + res.photo + (res.duo || 0);
     res.dur = durCs || 0;   // clebsous de la durée
+    Object.assign(gx, { w:1, d: res.dur, t: res.total, df: res.defi ? 1 : 0, dd: today, got: res.got, sk: sea.key, e: new Date(startTs).getHours() < 8 ? 1 : 0, r: rain ? 1 : 0, l: elapsedMin >= 60 ? 1 : 0, km: Math.round((meters || 0) / 10) / 100 });
     game.pts += res.total; game.total += res.total + res.dur;
     const li = levelIndex(game.total);
     if (li > game.levelSeen){ game.levelSeen = li; res.levelUp = LEVELS[li][1]; }
@@ -1394,7 +1421,7 @@
     return { key: `${d.getFullYear()}-${d.getMonth()+1}-${first ? 1 : 2}`, start, end, first };
   }
   const shortDate = d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
-  const walksBetween = (a, b) => getLog().filter(e => { const t = new Date(e.date).getTime(); return t >= a && t < b; });
+  const walksBetween = (a, b) => getLog().filter(e => { if (e.void) return false; const t = new Date(e.date).getTime(); return t >= a && t < b; });
   function monthPace(){
     const d = new Date();
     const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
@@ -1801,7 +1828,7 @@
   }
   let lastPush = 0;
   async function pushState(force){
-    if (!PUSH_API || !rap.on || (!force && Date.now() - lastPush < 3600000)) return;
+    if (!PUSH_API || !rap.on || isTester() || (!force && Date.now() - lastPush < 3600000)) return;
     lastPush = Date.now();
     try{
       const r = await api("/state", { id: rap.id, walker: profile.walker || "", state: pushStateData() });
@@ -1872,7 +1899,7 @@
     for (let d = nextIso(keyToIso(dayK)); d < t; d = nextIso(d)) if (!paused(d)) return false;
     return true;
   }
-  const walkedOn = iso => getLog().some(e => e.min >= MONEY_MIN && dIso(new Date(e.date).getTime()) === iso);
+  const walkedOn = iso => getLog().some(e => !e.void && e.min >= MONEY_MIN && dIso(new Date(e.date).getTime()) === iso);
   function addMalus(x){
     game.malus = game.malus || []; game.malusEur = game.malusEur || {};
     x.mk = x.d.slice(0, 7);
@@ -1880,19 +1907,51 @@
     game.malusEur[x.mk] = Math.round(((game.malusEur[x.mk] || 0) + x.eur) * 100) / 100;
     return x;
   }
+  // ---------- 🧹 Remise à zéro de tout le monde (décidée par le superviseur, POST /reset) ----------
+  // Chaque téléphone lit la date de remise à zéro avec /pause ; si elle est plus récente que wouaf-reset-vu, il efface jeu, tirelire,
+  // carnet, traces, album photo, envois en attente, etc. On garde le prénom, les rappels, la photo de Roxy (et le jeton du superviseur).
+  const RESET_SRV = "wouaf-reset-srv", RESET_VU = "wouaf-reset-vu", WELCOME2 = "wouaf-welcome2";
+  const resetPending = () => { const r = store.get(RESET_SRV, 0), vu = store.get(RESET_VU, 0); return r > vu ? r : 0; };
+  async function applyReset(){
+    const r = resetPending(); if (!r) return false;
+    if (state.walk || gw) return false;                                  // balade en cours : on attend sa fin
+    if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
+    // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
+    if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
+    // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
+    // premier jour d'utilisation = demain : les amendes repartent demain
+    game = { pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{}, money:{}, firstUse: Date.now() + DAYMS };
+    saveGame();
+    store.set(RESET_VU, r); store.set(WELCOME2, 1);
+    location.reload();
+    return true;
+  }
+  function showWelcome2(){
+    openSheet(`<div style="text-align:center;font-size:64px">🎉</div><h2 style="text-align:center">Wouaf Balades 2.0, tout repart de zéro !</h2>
+      <p style="text-align:center">Nouvelle version, nouveau départ pour tout le monde : clebsous, série, carte, carnet, photos… tout est remis à zéro. Ton prénom, tes rappels et la photo de ${DOG} sont gardés. Les amendes repartent demain.</p>
+      <div class="btns"><button id="w2Ok">C'est parti ! 🐾</button></div>`);
+    setTimeout(confetti, 200);
+    $("#w2Ok").onclick = () => { store.set(WELCOME2, 0); closeSheet(); setTimeout(() => showTuto(), 300); };
+  }
   async function loadPauses(){
     if (!PUSH_API) return true;
     try{
       const j = await (await api("/pause")).json();
       pauses = j.pauses || []; store.set("wouaf-pauses", pauses);
       boosts = j.boosts || []; store.set("wouaf-boosts", boosts);
-      if (j.last) store.set("wouaf-last", j.last);
+      store.set("wouaf-last", j.last || null);   // null = plus aucune sortie valable (remise à zéro, balade annulée)
+      if (j.reset != null) store.set(RESET_SRV, j.reset);
+      if (j.treasure) store.set("wouaf-tresor", j.treasure);
+      syncHunt();
       return true;
     }
     catch(e){ return false; }   // pas de réseau : on attend de connaître les pauses avant de compter
   }
   function processMalus(){
     ensureGame();
+    if (isTester()) return [];   // 🧪 testeur : jamais d'amende
     game.malus = game.malus || []; game.malusEur = game.malusEur || {};
     // pause ajoutée après coup : on rend ce qui avait été retiré (et les jokers)
     game.malus = game.malus.filter(x => {
@@ -1907,7 +1966,7 @@
     for (let d = game.malusDone ? nextIso(game.malusDone) : start; d < today; d = nextIso(d)){
       if (!paused(d) && !walkedOn(d)){
         const used = game.malus.filter(x => x.k === "joker" && x.d.slice(0, 7) === d.slice(0, 7)).length;
-        out.push(addMalus(used < JOKERS ? { k:"joker", d, eur:0 } : { k:"day", d, eur: MALUS_DAY }));
+        out.push(addMalus(used < JOKERS && !(game.noJoker || {})[d] ? { k:"joker", d, eur:0 } : { k:"day", d, eur: MALUS_DAY }));   // balade annulée par le superviseur : jamais de joker
       }
       game.malusDone = d;
     }
@@ -1923,6 +1982,7 @@
     return out;
   }
   function shortMalus(elapsed){
+    if (isTester()) return 0;
     const today = dIso(Date.now());
     if (today < MALUS_START || paused(today)) return 0;
     const a = weekStart(Date.now()).getTime();
@@ -1936,12 +1996,14 @@
     return x.k === "joker" ? `🃏 ${day} : pas de balade, joker utilisé (rien de retiré)`
       : x.k === "day" ? `📅 ${day} : pas de balade, −${fmtCs(x.eur)}`
       : x.k === "short" ? `⏱️ ${day} : 3e balade trop courte de la semaine, −${fmtCs(x.eur)}`
+      : x.k === "void" ? `❌ ${day} : balade annulée par le superviseur, plus aucune balade ce jour-là, −${fmtCs(x.eur)}`
       : `📉 Semaine du ${day} : ${x.n} jour${x.n > 1 ? "s" : ""} de balade sur ${x.need} demandés, −${fmtCs(x.eur)}`;
   };
   function malusIn(a, b){
     const l = (game.malus || []).filter(x => { const t = isoTime(x.d); return t >= a && t < b; });
     const eur = Math.round(l.reduce((n, x) => n + x.eur, 0) * 100) / 100;
     const c = k => l.filter(x => x.k === k).length, parts = [];
+    if (c("void")) parts.push(`${c("void")} balade${c("void") > 1 ? "s" : ""} annulée${c("void") > 1 ? "s" : ""}`);
     if (c("day") + c("joker")) parts.push(`${c("day") + c("joker")} jour${c("day") + c("joker") > 1 ? "s" : ""} sans balade${c("joker") ? `, dont ${c("joker")} joker${c("joker") > 1 ? "s" : ""}` : ""}`);
     if (c("short")) parts.push(`${c("short")} balade${c("short") > 1 ? "s" : ""} trop courte${c("short") > 1 ? "s" : ""}`);
     if (c("week")) parts.push(`${c("week")} semaine${c("week") > 1 ? "s" : ""} faible${c("week") > 1 ? "s" : ""}`);
@@ -1979,9 +2041,10 @@
       .concat(boosts.map((p, i) => `<div class="entry"><div><h4>🎉 Bonus ×2 du ${fmtD(p.from)} au ${fmtD(p.to)}</h4></div><button class="ghost" data-unb="${i}" aria-label="Enlever ces jours bonus">✕</button></div>`)).join("")) || `<p class="howto">Aucune pause ni jour bonus prévu.</p>`;
     const today = dIso(Date.now());
     openSheet(`<h2>Superviseur</h2>
-      <label for="supCode">Code superviseur</label><input id="supCode" type="password" inputmode="numeric" autocomplete="off">
+      ${supToken() ? `<p class="howto">🔑 Ce téléphone est celui du superviseur (Éric) : pas besoin de code.</p>` : `<label for="supCode">Code superviseur</label><input id="supCode" type="password" inputmode="numeric" autocomplete="off">`}
       <div class="btns" style="margin-top:10px"><button id="supDash">📊 Tableau de bord des promeneurs</button>
-        <button class="ghost" id="supAdj">✏️ Corriger une tirelire</button><button class="ghost" id="supRes">♻️ Restaurer un promeneur sur ce téléphone</button></div>
+        <button class="ghost" id="supAdj">✏️ Corriger une tirelire</button><button class="ghost" id="supRes">♻️ Restaurer un promeneur sur ce téléphone</button>
+        <button class="ghost" id="supVoid">❌ Annuler une balade</button><button class="ghost" id="supReset" style="color:#c8452f">🧹 Tout remettre à zéro</button></div>
       <div class="flabel">Pause ou jours bonus (pour tous)</div>
       <p class="howto">🏖️ Pause : pas de malus ni de rappels, la série ne se casse pas. 🎉 Bonus ×2 : tous les bonus comptent double.</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
@@ -1992,12 +2055,13 @@
       <div class="props" id="supList" style="margin-top:10px">${list()}</div>
       <div class="btns"><button class="ghost" id="supClose">Fermer</button></div><p id="supMsg" role="status"></p>`);
     const msg = t => { $("#supMsg").textContent = t; };
-    const code = () => $("#supCode").value.trim();
+    const code = () => supToken() ? "token" : ($("#supCode") ? $("#supCode").value.trim() : "");
+    const auth = () => supAuth(code());
     const save = async (kind, next) => {
       if (!code()){ msg("Entre d'abord le code superviseur."); return; }
       msg("Un instant…");
       try{
-        const r = await api(kind === "pause" ? "/pause" : "/boost", kind === "pause" ? { code: code(), pauses: next } : { code: code(), boosts: next });
+        const r = await api(kind === "pause" ? "/pause" : "/boost", Object.assign(auth(), kind === "pause" ? { pauses: next } : { boosts: next }));
         if (r.status === 403){ msg("Code incorrect."); return; }
         if (!r.ok){ msg("Ça n'a pas marché, réessaie."); return; }
         const j = await r.json();
@@ -2014,9 +2078,11 @@
     const dates = () => { const f = $("#supFrom").value, t = $("#supTo").value; if (!f || !t || t < f){ msg("Vérifie les dates."); return null; } return { from: f, to: t }; };
     $("#supAdd").onclick = () => { const d = dates(); if (d) save("pause", pauses.concat(d)); };
     $("#supBoost").onclick = () => { const d = dates(); if (d) save("boost", boosts.concat(d)); };
-    $("#supAdj").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openAdjust(code()); };
-    $("#supRes").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openRestore(code()); };
-    $("#supDash").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openDash(code()); };
+    $("#supAdj").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openAdjust(auth()); };
+    $("#supRes").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openRestore(auth()); };
+    $("#supDash").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openDash(auth()); };
+    $("#supVoid").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openDash(auth(), true); };
+    $("#supReset").onclick = () => { if (!code()){ msg("Entre d'abord le code superviseur."); return; } openReset(auth()); };
     $("#supClose").onclick = () => { closeSheet(); if (state.tab === "prog") renderProg(); };
   }
 
@@ -2049,7 +2115,8 @@
     if (EVENT) l.push({ ic: EVENT.deco, t: EVENT.title, done:false });
     if (boosted(dIso(Date.now()))) l.push({ ic:"🎉", t:"Jour bonus : tous les bonus comptent double aujourd'hui !", done:false });
     const hu = weekHunt();
-    if (hu) l.push({ ic:"🏴‍☠️", t: hu.found ? "Trésor de la semaine trouvé, bravo !" : `Trésor de la semaine : caché à ~${fmtKm(dist(game.home, hu))} ${compass(game.home, hu)} de la maison (+${HUNT_FIRST} au premier)`, done: !!hu.found });
+    if (hu) l.push(hu.gone ? { ic:"🏴‍☠️", t:`${hu.gone} a trouvé le trésor de la semaine !`, done:true }
+      : { ic:"🏴‍☠️", t: hu.found ? "Trésor de la semaine trouvé, bravo !" : `Trésor de la semaine : caché à ~${fmtKm(dist(game.home, hu))} ${compass(game.home, hu)} de la maison (+${HUNT_FIRST} clebsous pour un seul gagnant)`, done: !!hu.found });
     l.push({ ic:"🐕", t: walked ? `${DOG} est sortie aujourd'hui, bravo !` : `Sortie obligatoire : au moins 20 min. Et au-delà : 45 min = ${fmtCs(walkEuros(45))}, 1 h = ${fmtCs(walkEuros(60))} + les bonus`, done: walked });
     l.push({ ic:"🎯", t: `Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} 🪙)`, done: game.defiDone === today });
     const n = game.streak.n || 0;
@@ -2089,11 +2156,12 @@
       ${it("muOuts", "🐾", "Dernières sorties", "")}
       ${it("muLog", "📒", "Carnet", "")}
       ${it("muAlbum", "📸", "Album photo", "")}
-      ${PUSH_API ? it("muRap", "🔔", "Mes rappels", rap.on ? "activés" : "") : ""}
+      ${PUSH_API && !isTester() ? it("muRap", "🔔", "Mes rappels", rap.on ? "activés" : "") : ""}
       ${it("muBonus", "🎁", "Bonus et règles", "")}
       ${it("muTuto", "📖", "Tuto", "")}
       ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
-      ${PUSH_API ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
+      ${PUSH_API && supToken() ? `<div class="flabel">Superviseur 🔑</div>${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupD", "📊", "Tableau de bord", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}` : ""}
+      ${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
     </div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muProg", () => switchTab("prog"));
@@ -2107,6 +2175,12 @@
     go("muTuto", () => showTuto(0, true));
     go("muWho", () => askProfile());
     go("muSup", openSuper);
+    go("muSupP", openSuper);
+    go("muSupD", () => openDash(supAuth()));
+    go("muSupA", () => openAdjust(supAuth()));
+    go("muSupR", () => openRestore(supAuth()));
+    go("muSupV", () => openDash(supAuth(), true));
+    go("muSupZ", () => openReset(supAuth()));
   }
   $("#menuBtn").addEventListener("click", openMenu);
   function sheetMoney(){
@@ -2181,6 +2255,7 @@
   // ---------- ✨ « Quoi de neuf » : nouveautés, malus, message du superviseur, paie, semaine… en une seule fenêtre ----------
   const digestCards = [];
   function weekCardData(){
+    if (isTester()) return null;
     const k = weekKey(Date.now());
     if (game.weekSeen === k) return null;
     if (!game.weekSeen){ game.weekSeen = k; saveGame(); return null; }
@@ -2200,6 +2275,7 @@
   }
   function paydayCardData(){
     ensureGame();
+    if (isTester()) return null;
     const k = prevMonthKey();
     if (game.payShown === k) return null;
     game.payShown = k; saveGame();
@@ -2213,15 +2289,68 @@
         q("payShare").onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} };
         q("payImg").onclick = () => monthCard(k); } };
   }
+  // ❌ Balade annulée par le superviseur (POST /void) : le téléphone retire tous les gains de la balade (durée, bonus, défi, trésor, coffre),
+  // la marque « annulée » dans le carnet et les sorties, ne la compte plus pour la série ni la semaine parfaite.
+  // Si c'était la seule balade d'au moins 20 min ce jour-là : amende −30 sans joker.
+  const round2 = v => Math.round(v * 100) / 100;
+  function applyVoid(a){
+    ensureGame();
+    const log = getLog(), ent = log.find(x => x.recap && x.recap.e === a.e && !x.void);
+    if (!ent) return { a, ent:null, lost:0, fine:false };
+    const end = new Date(ent.date).getTime(), D = dIso(end), mk = monthKey(end), g = ent.gx || {}, r = ent.recap;
+    ent.void = { why: a.why || "", at: a.t || Date.now() };
+    store.set(LOG_KEY, log);
+    let lost = 0, fine = false;
+    if (isTester()) return { a, ent, lost, fine };   // 🧪 testeur : rien à retirer
+    const less = (obj, k, v) => { obj[k] = round2(Math.max(0, (obj[k] || 0) - v)); };
+    if (r.eu){ less(game.money, mk, r.eu); lost += Math.round(r.eu * CS); }
+    if (g.c){
+      less(game.bonus, mk, g.c); lost += Math.round(g.c * CS);
+      let bi = -1, bd = Infinity; (game.chests || []).forEach((c, i) => { const d = Math.abs(new Date(c).getTime() - end); if (d < bd){ bd = d; bi = i; } });
+      if (bi >= 0 && bd < 6 * 3600000) game.chests.splice(bi, 1);
+    }
+    if (g.h){ less(game.bonus, mk, g.h / CS); lost += g.h; }
+    game.total = Math.max(0, (game.total || 0) - (g.d || 0) - (g.t || 0)); game.pts = Math.max(0, (game.pts || 0) - (g.t || 0));
+    if (g.df && game.defiDone === g.dd) game.defiDone = "";
+    if (g.w){
+      const st = game.stats; st.walks = Math.max(0, st.walks - 1); st.km = round2(Math.max(0, st.km - (g.km || 0)));
+      if (g.e) st.early = Math.max(0, st.early - 1); if (g.r) st.rain = Math.max(0, st.rain - 1); if (g.l) st.long = Math.max(0, st.long - 1);
+      const sea = game.season;
+      if (sea && g.got && sea.key === g.sk) for (const k in g.got) sea.got[k] = Math.max(0, (sea.got[k] || 0) - g.got[k]);
+    }
+    const others = log.some(x => x !== ent && !x.void && x.min >= MONEY_MIN && dIso(new Date(x.date).getTime()) === D);
+    if (ent.min >= MONEY_MIN && !others){
+      const dk = dayKey(end);   // la série ne compte plus ce jour-là
+      if (game.streak.day === dk){ game.streak.n = Math.max(0, game.streak.n - 1); game.streak.day = game.streak.n > 0 ? dayKey(end - DAYMS) : ""; }
+      const w = isoOf(weekStart(end));   // semaine parfaite : plus parfaite, on reprend les 30
+      if ((game.perfect || {})[w]){
+        let n = 0, off = 0; for (let i = 0; i < 7; i++){ const d = nextIso(w, i); if (paused(d)) off++; else if (walkedOn(d)) n++; }
+        if (n < 7 - off){ delete game.perfect[w]; less(game.money, mk, PERFECT_WEEK); lost += Math.round(PERFECT_WEEK * CS); }
+      }
+      const first = dIso(game.firstUse), start = first > MALUS_START ? first : MALUS_START;
+      if (D >= start && !paused(D)){   // plus aucune balade ce jour-là : amende, sans joker
+        fine = true;
+        if (game.malusDone && D <= game.malusDone) addMalus({ k:"void", d: D, eur: MALUS_DAY, why: a.why || "" });   // jour déjà passé en revue
+        else (game.noJoker = game.noJoker || {})[D] = 1;                                                              // pas encore : processMalus l'appliquera sans joker
+      }
+    }
+    saveGame();
+    return { a, ent, lost, fine };
+  }
   async function fetchAdjust(){
-    if (!PUSH_API || !profile.walker) return [];
+    if (!PUSH_API || !profile.walker) return { adj:[], voids:[] };
     let list = [];
-    try{ list = (await (await api("/adjust?w=" + encodeURIComponent(profile.walker))).json()).list || []; }catch(e){ return []; }
+    try{ list = (await (await api("/adjust?w=" + encodeURIComponent(profile.walker))).json()).list || []; }catch(e){ return { adj:[], voids:[] }; }
     ensureGame(); game.adj = game.adj || {}; game.adjDone = game.adjDone || [];
-    const fresh = list.filter(a => !game.adjDone.includes(a.id));
-    for (const a of fresh){ const k = monthKey(Date.now()); game.adj[k] = Math.round(((game.adj[k] || 0) + a.cs / CS) * 100) / 100; game.adjDone.push(a.id); }
+    const fresh = list.filter(a => !game.adjDone.includes(a.id)), adj = [], voids = [];
+    for (const a of fresh){
+      if (a.type === "void"){ voids.push(applyVoid(a)); }
+      else if (typeof a.cs === "number"){ const k = monthKey(Date.now()); game.adj[k] = Math.round(((game.adj[k] || 0) + a.cs / CS) * 100) / 100; adj.push(a); }
+      game.adjDone.push(a.id);
+    }
     game.adjDone = game.adjDone.slice(-200); if (fresh.length) saveGame();
-    return fresh;
+    if (voids.length){ renderHome(); try{ backupNow(true); }catch(e){} }
+    return { adj, voids };
   }
   let digestRunning = false;
   async function startupDigest(){
@@ -2230,17 +2359,25 @@
     const cards = [];
     const news = NEWS[APP_NUM] || [];
     if (store.get("wouaf-vu", 0) < APP_NUM){
-      if (news.length) cards.push({ html: `<div class="dc-ic">✨</div><h2>Nouveau dans la version ${APP_NUM}</h2><ul class="news">${news.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` });
+      if (news.length) cards.push({ html: `<div class="dc-ic">✨</div><h2>Nouveau dans la version ${APP_LABEL}</h2><ul class="news">${news.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` });
       store.set("wouaf-vu", APP_NUM);
     }
     if (await loadPauses()){
+      if (await applyReset()){ digestRunning = false; return; }
       const n = processMalus();
       if (n.length){ const eur = Math.round(n.reduce((a, x) => a + x.eur, 0) * 100) / 100;
         cards.push({ html: `<div class="dc-ic">${eur ? "⚠️" : "🃏"}</div><h2>${eur ? `Malus : −${fmtCs(eur)}` : "Joker utilisé"}</h2><p style="line-height:1.7">${n.map(x => esc(malusLabel(x))).join("<br>")}</p>
           <p>Une balade aujourd'hui pour te rattraper ? 45 min = ${fmtCs(walkEuros(45))}, 1 h = ${fmtCs(walkEuros(60))} + les bonus 🐾</p>` }); }
     }
-    const adj = await fetchAdjust();
+    const fa = await fetchAdjust(), adj = fa.adj;
     if (adj.length) cards.push({ html: `<div class="dc-ic">✏️</div><h2>Message du superviseur</h2><div class="props">${adj.map(a => `<div class="entry"><div><h4>${a.cs > 0 ? "+" : ""}${a.cs} 🪙</h4><div class="when">${esc(a.why || "")}</div></div></div>`).join("")}</div>` });
+    for (const v of fa.voids) if (v.ent) cards.push({ html: `<div class="dc-ic">❌</div><h2>Balade annulée</h2>
+      <p>Le superviseur a annulé ta balade du ${new Date(v.ent.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${hm(new Date(v.ent.date))}.</p>
+      ${v.a.why ? `<p>Motif : <b>${esc(v.a.why)}</b></p>` : ""}
+      <p>${v.lost ? `Retiré de ta tirelire : <b>${v.lost.toLocaleString("fr-FR")} 🪙</b>.` : "Rien à retirer."}${v.fine ? ` Comme c'était ta seule balade de la journée : <b>amende −${Math.round(MALUS_DAY * CS)} 🪙</b>.` : ""}</p>` });
+    syncHunt();
+    { const hu = game.hunt; if (hu && hu.gone && game.huntNote !== hu.wk){ game.huntNote = hu.wk; saveGame();
+        cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${esc(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
     const pay = paydayCardData(); if (pay) cards.push(pay);
     const wk = weekCardData(); if (wk) cards.push(wk);
     renderHome();
@@ -2367,16 +2504,17 @@
 
 
   // ---------- 🏴‍☠️ Trésor de la semaine ----------
-  // Chaque lundi, un trésor caché à 0,9–1,8 km de la maison (le même pour toute la maison : tiré au sort avec la semaine).
-  // On ne voit qu'une zone de 200 m ; le premier de la maison à l'atteindre gagne 50 clebsous (les suivants 20).
-  const HUNT_ZONE = 200, HUNT_FIRST = 50, HUNT_NEXT = 20;
+  // Chaque lundi, un trésor caché à 2–3 km de la maison (le même pour toute la maison : tiré au sort avec la semaine).
+  // On ne voit qu'une zone de 200 m ; UN SEUL gagnant : le premier de la maison à l'atteindre gagne 500 clebsous, en plus du plafond
+  // (comme les coffres), puis le trésor disparaît pour tout le monde (Worker POST /treasure : « déjà trouvé »).
+  const HUNT_ZONE = 200, HUNT_FIRST = 500;
   function weekHunt(){
     if (!game.home) return null;
     const wk = weekKey(Date.now());
     if (game.hunt && game.hunt.wk === wk) return game.hunt;
     let h = 7; for (const c of "tresor" + wk) h = (h * 31 + c.charCodeAt(0)) >>> 0;
     const rnd = () => (h = (h * 1664525 + 1013904223) >>> 0) / 4294967296;
-    const home = game.home, ang = rnd() * 2 * Math.PI, d = 900 + rnd() * 900;
+    const home = game.home, ang = rnd() * 2 * Math.PI, d = 2000 + rnd() * 1000;
     const cos = Math.cos(home.lat * Math.PI / 180);
     const lat = home.lat + d * Math.cos(ang) / 111320, lon = home.lon + d * Math.sin(ang) / (111320 * cos);
     const za = rnd() * 2 * Math.PI, zd = rnd() * 140;
@@ -2399,16 +2537,34 @@
     const dy = b.lat - a.lat, dx = (b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180);
     return ["au nord", "au nord-est", "à l'est", "au sud-est", "au sud", "au sud-ouest", "à l'ouest", "au nord-ouest"][Math.round(((Math.atan2(dx, dy) * 180 / Math.PI) + 360) % 360 / 45) % 8];
   };
+  // le trésor a déjà été trouvé par quelqu'un d'autre de la maison (le Worker nous le dit avec /pause) : il disparaît
+  function syncHunt(){
+    const hu = game.hunt; if (!hu || hu.found || hu.gone) return;
+    const t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === hu.wk);
+    if (t && t.by && t.by !== profile.walker){ hu.gone = t.by; saveGame(); }
+  }
+  let huntBusy = false, huntRetry = 0;
   async function huntCheck(q){
     const hu = game.hunt;
-    if (!gw || !hu || hu.found || hu.wk !== weekKey(Date.now()) || dist(q, hu) > 40) return;
+    if (!gw || !hu || hu.found || hu.gone || hu.wk !== weekKey(Date.now()) || huntBusy || Date.now() < huntRetry || dist(q, hu) > 40) return;
+    const test = isTester();
+    let first = true, by = null;
+    if (PUSH_API && !test){
+      huntBusy = true;
+      try{ const j = await (await api("/treasure", { week: hu.wk, walker: profile.walker || "?" })).json(); first = !!j.first; by = j.by || null; }
+      catch(e){ huntBusy = false; huntRetry = Date.now() + 30000; return; }   // pas de réseau : un seul gagnant, on ne décide pas seul, on réessaie dans 30 s
+      huntBusy = false;
+    }
+    if (!gw) return;                                                          // la balade s'est terminée pendant l'attente
+    if (!first){                                                              // quelqu'un l'a trouvé avant : il disparaît
+      hu.gone = by || "Quelqu'un"; saveGame(); drawItems(); toast(`🏴‍☠️ ${hu.gone} a trouvé le trésor juste avant toi !`, 5000);
+      return;
+    }
     hu.found = Date.now(); saveGame();
-    let pts = HUNT_FIRST, first = true;
-    if (PUSH_API){ try{ const j = await (await api("/treasure", { week: hu.wk, walker: profile.walker || "?" })).json(); first = !!j.first; if (!first) pts = HUNT_NEXT; hu.by = j.by; }catch(e){} }
-    gw.hunt = pts; persist(true); drawItems();
+    gw.hunt = test ? 0 : HUNT_FIRST; persist(true); drawItems();
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
-    el.innerHTML = `<div class="ce">🏴‍☠️</div><b>TRÉSOR DE LA SEMAINE !</b><span>+${pts} 🪙</span><p style="opacity:.8;font-size:14px;margin-top:14px">${first ? "Tu es le premier de la maison à le trouver !" : `${esc(hu.by || "Quelqu'un")} l'avait trouvé avant toi, mais bravo !`}</p>`;
+    el.innerHTML = `<div class="ce">🏴‍☠️</div><b>TRÉSOR DE LA SEMAINE !</b><span>${test ? "🧪 test : rien n'est compté" : `+${HUNT_FIRST} 🪙 en bonus dans ta tirelire`}</span><p style="opacity:.8;font-size:14px;margin-top:14px">Tu es le seul à l'avoir trouvé : il disparaît pour les autres !</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el); pocketOff(); confetti();
     ding(); setTimeout(ding, 250); setTimeout(ding, 500);
@@ -2422,7 +2578,7 @@
     let best = null, bd = Infinity;
     for (const it of gw.items) if (!it.got){ const d = dist(it, q); if (d < bd){ bd = d; best = ITEMS[it.k].icon; } }
     const hu = game.hunt;
-    if (hu && !hu.found && hu.wk === weekKey(Date.now())){ const d = dist(hu, q); if (d < 400 && d < bd){ bd = d; best = "🏴‍☠️"; } }
+    if (hu && !hu.found && !hu.gone && hu.wk === weekKey(Date.now())){ const d = dist(hu, q); if (d < 400 && d < bd){ bd = d; best = "🏴‍☠️"; } }
     if (best && bd < 150){
       const lvl = bd < 30 ? "🔥🔥 brûlant !" : bd < 70 ? "🔥 chaud !" : "🌤️ tiède…";
       box.textContent = `📡 ${best} ${lvl} (${Math.round(bd / 5) * 5} m)`;
@@ -2456,7 +2612,7 @@
 
   // ---------- 🥺 Humeur de Roxy (heures depuis sa dernière vraie balade, tous promeneurs) ----------
   function lastWalk(){
-    const mine = getLog().find(e => e.min >= MONEY_MIN);
+    const mine = getLog().find(e => !e.void && e.min >= MONEY_MIN);
     const a = mine ? { t: new Date(mine.date).getTime(), w: profile.walker } : null;
     const o = store.get("wouaf-last", null), b = o && o.t ? { t: o.t * 1000, w: o.walker } : null;
     return !a ? b : !b ? a : (a.t >= b.t ? a : b);
@@ -2484,8 +2640,10 @@
     // + mes balades pas encore envoyées (ou hors connexion)
     for (const e of getLog()){
       const end = Math.round(new Date(e.date).getTime() / 1000);
-      if (e.min >= 2 && !list.some(x => x.w === profile.walker && Math.abs(x.e - end) < 120))
-        list.push({ w: profile.walker || "Moi", e: end, min: e.min, m: e.m, pp: e.recap && e.recap.pp, cc: e.recap && e.recap.cc });
+      if (e.min < 2) continue;
+      const same = list.find(x => x.w === profile.walker && Math.abs(x.e - end) < 120);
+      if (same){ if (e.void) same.v = 1; }
+      else list.push({ w: profile.walker || "Moi", e: end, min: e.min, m: e.m, pp: e.recap && e.recap.pp, cc: e.recap && e.recap.cc, v: e.void ? 1 : 0 });
     }
     list.sort((a, b) => b.e - a.e); list = list.slice(0, 25);
     const dayLabel = t => { const d = new Date(t), k = dayKey(t), td = dayKey(Date.now()), yd = dayKey(Date.now() - DAYMS);
@@ -2495,7 +2653,7 @@
       const t = x.e * 1000, lab = dayLabel(t);
       if (lab !== last){ html += `<div class="flabel">${esc(lab)}</div>`; last = lab; }
       const start = new Date(t - x.min * 60000);
-      html += `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
+      html += `<div class="entry${x.v ? " void" : ""}"><div><h4>${x.v ? "❌ " : ""}${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.v ? " · annulée" : x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
     }
     openSheet(`<h2>🐾 Les dernières sorties de ${DOG}</h2>
       ${list.length ? `<div class="props">${html}</div>` : `<p>Pas encore de sortie enregistrée.</p>`}
@@ -2510,14 +2668,15 @@
     if (!PUSH_API || !profile.walker) return;
     const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
     const ml = malusIn(m0, Date.now() + DAYMS), w = weekStats(Date.now()), lv = levelOf(game.total);
+    const test = isTester();   // 🧪 testeur : ses balades comptent pour les dernières sorties et l'humeur de Roxy, mais aucun argent
     const item = { walker: profile.walker,
-      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: Math.round((r.ms || 0) * CS) },
-      sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min } };
+      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0 },
+      sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, test: test ? 1 : 0 } };
     const q = store.get("wouaf-envois", []); q.push(item); store.set("wouaf-envois", q.slice(-30));
     flushWalks();
   }
   async function flushWalks(){
-    if (!PUSH_API) return;
+    if (!PUSH_API || resetPending()) return;
     let q = store.get("wouaf-envois", []);
     while (q.length){
       try{ const r = await api("/walk", q[0]); if (!r.ok && r.status !== 400) break; }catch(e){ break; }
@@ -2526,30 +2685,81 @@
   }
 
   // ---------- 📊 Tableau de bord du superviseur ----------
-  async function openDash(code){
+  async function openDash(auth, voidMode){
     openSheet(`<h2>📊 Tableau de bord</h2><p>Un instant…</p>`);
     let j;
-    try{ const r = await api("/dash", { code }); if (r.status === 403){ openSheet(`<h2>📊 Tableau de bord</h2><p>Code incorrect.</p><div class="btns"><button id="dsClose">Fermer</button></div>`); $("#dsClose").onclick = closeSheet; return; } j = await r.json(); }
+    try{ const r = await api("/dash", auth); if (r.status === 403){ openSheet(`<h2>📊 Tableau de bord</h2><p>Code incorrect.</p><div class="btns"><button id="dsClose">Fermer</button></div>`); $("#dsClose").onclick = closeSheet; return; } j = await r.json(); }
     catch(e){ openSheet(`<h2>📊 Tableau de bord</h2><p>Pas de connexion pour l'instant.</p><div class="btns"><button id="dsClose">Fermer</button></div>`); $("#dsClose").onclick = closeSheet; return; }
     const ws = (j.walkers || []).sort((a, b) => (b.at || 0) - (a.at || 0));
     const wk0 = weekStart(Date.now()).getTime() / 1000;
     const card = d => {
-      const s = d.sum || {}, w = d.walks || [];
-      const week = w.filter(x => x.e >= wk0), last = w[0];
+      const s = d.sum || {}, w = d.walks || [], ok = w.filter(x => !x.v);
+      const week = ok.filter(x => x.e >= wk0), last = ok[0];
       const l = last ? new Date(last.e * 1000) : null;
-      return `<div class="wk"><h4>${esc(d.walker)} · ${esc(s.lv || "")}</h4><div class="s">
+      return `<div class="wk"><h4>${esc(d.walker)}${s.test ? " 🧪 testeur" : ""} · ${esc(s.lv || "")}</h4><div class="s">
         🪙 Tirelire du mois : <b>${(s.cs || 0).toLocaleString("fr-FR")} clebsous = ${fmtEur((s.cs || 0) / CS)}</b>${s.mal ? ` (malus −${s.mal} : ${esc(s.malt || "")})` : ""}<br>
         📅 Cette semaine : ${week.length} balade${week.length > 1 ? "s" : ""}, ${fmtMin(week.reduce((n, x) => n + x.min, 0))} · 🔥 série ${s.n || 0} j<br>
         ${l ? `🐾 Dernière : ${l.toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })} à ${hm(l)}, ${fmtMin(last.min)} · ${fmtKm(last.m)} · +${last.cs} 🪙${last.pp ? " · 💧" : ""}${last.cc ? " · 💩" : ""}` : "Pas encore de balade"}
-        ${w.length ? `<details style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000); return `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.ms ? " ⏱️ trop courte" : ""}`; }).join("<br>")}</details>` : ""}
+        ${w.length ? `<details${voidMode ? " open" : ""} style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000);
+          const txt = `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.tr ? " 🏴‍☠️" : ""}${x.ms ? " ⏱️ trop courte" : ""}`;
+          return x.v ? `<div class="dwalk void"><s>${txt}</s> ❌ annulée (${esc(x.v)})</div>`
+            : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:2px 8px;font-size:12px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
       </div></div>`;
     };
-    openSheet(`<h2>📊 Tableau de bord</h2>
+    openSheet(`<h2>${voidMode ? "❌ Annuler une balade" : "📊 Tableau de bord"}</h2>
+      ${voidMode ? `<p class="howto">Choisis la balade à annuler (bouton ❌). Le téléphone du promeneur retirera ses gains à sa prochaine ouverture.</p>` : ""}
       ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
-      <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée (version 27 ou plus).</p>`}</div>
+      <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée.</p>`}</div>
       <p class="howto">Seulement des chiffres : aucun trajet ni position n'est envoyé.</p>
       <div class="btns"><button id="dsClose">Fermer</button></div>`);
     $("#dsClose").onclick = closeSheet;
+    document.querySelectorAll("[data-void]").forEach(b => b.onclick = () => openVoidForm(auth, b.dataset.w, +b.dataset.void, b.parentElement.textContent.replace("❌ Annuler", "").trim(), voidMode));
+  }
+  // ❌ motif obligatoire, puis POST /void
+  function openVoidForm(auth, walker, e, label, voidMode){
+    openSheet(`<h2>❌ Annuler cette balade ?</h2>
+      <p><b>${esc(walker)}</b> · ${esc(label)}</p>
+      <p class="howto">Tous ses gains seront retirés (durée, bonus, défi, trésor, coffre). Si c'était sa seule balade de 20 min ou plus ce jour-là : amende de ${Math.round(MALUS_DAY * CS)} clebsous, sans joker.</p>
+      <label for="vdWhy">Motif (le promeneur le verra)</label><input id="vdWhy" placeholder="ex. balade faite en voiture" autocomplete="off">
+      <div class="btns"><button id="vdGo" style="background:#c8452f">❌ Annuler cette balade</button><button class="ghost" id="vdNo">Retour</button></div><p id="vdMsg" role="status"></p>`);
+    $("#vdNo").onclick = () => openDash(auth, voidMode);
+    $("#vdGo").onclick = async () => {
+      const why = $("#vdWhy").value.trim();
+      if (!why){ $("#vdMsg").textContent = "Écris un motif, le promeneur le verra."; return; }
+      $("#vdMsg").textContent = "Un instant…";
+      try{
+        const r = await api("/void", Object.assign({}, auth, { walker, e, why }));
+        if (r.status === 403){ $("#vdMsg").textContent = "Code incorrect."; return; }
+        if (r.status === 404){ $("#vdMsg").textContent = "Cette balade n'existe plus sur le serveur."; return; }
+        if (!r.ok){ $("#vdMsg").textContent = "Ça n'a pas marché, réessaie."; return; }
+        openSheet(`<h2>✓ Balade annulée</h2><p>${esc(walker)} la verra barrée, avec le motif, à sa prochaine ouverture de l'app.</p><div class="btns"><button id="vdBack">Retour au tableau de bord</button><button class="ghost" id="vdClose">Fermer</button></div>`);
+        $("#vdBack").onclick = () => openDash(auth, voidMode); $("#vdClose").onclick = closeSheet;
+      }catch(err){ $("#vdMsg").textContent = "Pas de connexion pour l'instant."; }
+    };
+  }
+  // 🧹 Tout remettre à zéro : double confirmation, puis POST /reset
+  function openReset(auth){
+    openSheet(`<h2>🧹 Tout remettre à zéro ?</h2>
+      <p>Pour <b>tous les promeneurs</b> (et le tien) : clebsous, tirelires, séries, niveaux, carte, carnet, photos, tableau de bord, sorties récentes, sauvegardes, corrections et trésor sont effacés. Chaque téléphone se remet à zéro à sa prochaine ouverture (après la balade en cours, s'il y en a une).</p>
+      <p class="howto">Gardés : prénoms, rappels, photo de ${DOG}, pauses et jours bonus. Les amendes repartent le lendemain.</p>
+      <div class="btns"><button id="rsGo1" style="background:#c8452f">🧹 Je veux tout remettre à zéro</button><button class="ghost" id="rsNo">Non, fermer</button></div>`);
+    $("#rsNo").onclick = closeSheet;
+    $("#rsGo1").onclick = () => {
+      openSheet(`<h2>⚠️ Dernière confirmation</h2><p><b>Cette action est définitive.</b> Tout ce que les promeneurs ont gagné disparaît, pour tout le monde.</p>
+        <div class="btns"><button id="rsGo2" style="background:#c8452f">Oui, tout effacer pour tout le monde</button><button class="ghost" id="rsNo2">Non, annuler</button></div><p id="rsMsg" role="status"></p>`);
+      $("#rsNo2").onclick = closeSheet;
+      $("#rsGo2").onclick = async () => {
+        $("#rsMsg").textContent = "Un instant…";
+        try{
+          const r = await api("/reset", auth);
+          if (r.status === 403){ $("#rsMsg").textContent = "Code incorrect."; return; }
+          if (!r.ok){ $("#rsMsg").textContent = "Ça n'a pas marché, réessaie."; return; }
+          const j = await r.json();
+          store.set(RESET_SRV, j.reset);
+          closeSheet(); setTimeout(applyReset, 400);   // ce téléphone aussi repart de zéro
+        }catch(err){ $("#rsMsg").textContent = "Pas de connexion pour l'instant."; }
+      };
+    };
   }
 
   // ---------- 📱 « Mon mois avec Roxy » : une image à partager ----------
@@ -2633,16 +2843,16 @@
   // ---------- 💾 Sauvegarde dans le programme Cloudflare (pour un nouveau téléphone) ----------
   // Jeu, tirelire et carnet (sans les tracés). Restauration par le superviseur, avec son code.
   function backupNow(force){
-    if (!PUSH_API || !profile.walker) return;
+    if (!PUSH_API || !profile.walker || resetPending()) return;
     if (!force && Date.now() - store.get("wouaf-bk", 0) < 6 * 3600000) return;
     const carnet = getLog().slice(0, 120).map(e => Object.assign({}, e, { line: undefined }));
     api("/backup", { walker: profile.walker, data: { jeu: game, carnet, profil: { walker: profile.walker }, tuto: 1 } })
       .then(r => { if (r.ok) store.set("wouaf-bk", Date.now()); }).catch(() => {});
   }
-  async function openRestore(code){
+  async function openRestore(auth){
     openSheet(`<h2>♻️ Restaurer un promeneur</h2><p>Un instant…</p>`);
     let names = [];
-    try{ const r = await api("/restore", { code }); if (r.status === 403){ openSheet(`<h2>♻️ Restaurer</h2><p>Code incorrect.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; } names = (await r.json()).names || []; }
+    try{ const r = await api("/restore", auth); if (r.status === 403){ openSheet(`<h2>♻️ Restaurer</h2><p>Code incorrect.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; } names = (await r.json()).names || []; }
     catch(e){ openSheet(`<h2>♻️ Restaurer</h2><p>Pas de connexion.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; }
     openSheet(`<h2>♻️ Restaurer un promeneur</h2><p>Sur un nouveau téléphone (ou après un effacement), récupère la tirelire, le niveau, les trophées et le carnet d'un promeneur. <b>Ça remplace ce qu'il y a sur ce téléphone.</b></p>
       <div class="btns">${names.length ? names.map(n => `<button class="ghost" data-rs="${esc(n)}">👤 ${esc(n)}</button>`).join("") : "<p>Aucune sauvegarde pour l'instant.</p>"}<button id="rsClose">Fermer</button></div><p id="rsMsg" role="status"></p>`);
@@ -2650,7 +2860,7 @@
     document.querySelectorAll("[data-rs]").forEach(b => b.onclick = async () => {
       $("#rsMsg").textContent = "Un instant…";
       try{
-        const j = await (await api("/restore", { code, walker: b.dataset.rs })).json();
+        const j = await (await api("/restore", Object.assign({}, auth, { walker: b.dataset.rs }))).json();
         const d = j.backup && j.backup.data; if (!d || !d.jeu){ $("#rsMsg").textContent = "Sauvegarde introuvable."; return; }
         const cs = Math.round((((d.jeu.money || {})[monthKey(Date.now())] || 0) + ((d.jeu.bonus || {})[monthKey(Date.now())] || 0)) * CS);
         if (!confirm(`Remplacer ce téléphone par la sauvegarde de ${j.backup.walker} (${new Date(j.backup.at).toLocaleDateString("fr-FR")}, ≈ ${cs} clebsous ce mois-ci) ?`)) { $("#rsMsg").textContent = ""; return; }
@@ -2666,7 +2876,7 @@
     let list = [];
     try{ list = (await (await api("/adjust?w=" + encodeURIComponent(profile.walker))).json()).list || []; }catch(e){ return false; }
     ensureGame(); game.adj = game.adj || {}; game.adjDone = game.adjDone || [];
-    const fresh = list.filter(a => !game.adjDone.includes(a.id));
+    const fresh = list.filter(a => !game.adjDone.includes(a.id) && a.type !== "void" && typeof a.cs === "number");
     if (!fresh.length) return false;
     for (const a of fresh){ const k = monthKey(Date.now()); game.adj[k] = Math.round(((game.adj[k] || 0) + a.cs / CS) * 100) / 100; game.adjDone.push(a.id); }
     game.adjDone = game.adjDone.slice(-200); saveGame(); renderHome();
@@ -2676,7 +2886,7 @@
     $("#adjOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 400); };
     return true;
   }
-  function openAdjust(code){
+  function openAdjust(auth){
     openSheet(`<h2>✏️ Corriger une tirelire</h2>
       <label for="ajW">Prénom du promeneur</label><input id="ajW" autocomplete="off">
       <label for="ajCs">Clebsous à ajouter (ou retirer avec un « - »)</label><input id="ajCs" type="text" inputmode="numeric" placeholder="ex. 50 ou -30">
@@ -2688,7 +2898,7 @@
       if (!w || !cs){ $("#ajMsg").textContent = "Mets un prénom et un nombre de clebsous."; return; }
       $("#ajMsg").textContent = "Un instant…";
       try{
-        const r = await api("/adjust", { code, walker: w, cs, why: $("#ajWhy").value.trim() });
+        const r = await api("/adjust", Object.assign({}, auth, { walker: w, cs, why: $("#ajWhy").value.trim() }));
         $("#ajMsg").textContent = r.ok ? `✓ Envoyé : ${w} le verra à sa prochaine ouverture de l'app.` : r.status === 403 ? "Code incorrect." : "Ça n'a pas marché.";
       }catch(e){ $("#ajMsg").textContent = "Pas de connexion pour l'instant."; }
     };
@@ -3103,7 +3313,8 @@
   function partyBox(r, res){
     if (!res) return "";
     const l = [];
-    if (res.chest) l.push(`💰 <b>Coffre trouvé : +${fmtCs(res.chest)} en bonus !</b>`);
+    if (res.chest) l.push(`💰 <b>Coffre trouvé : +${fmtCs(res.chest)} en bonus !</b>${isTester() ? " (test)" : ""}`);
+    if (res.hunt) l.push(`🏴‍☠️ <b>Trésor de la semaine trouvé : +${res.hunt} clebsous en bonus !</b> Tu es le seul à l'avoir eu.`);
     if (res.defi) l.push(`🎯 <b>Défi du jour réussi : ${esc(res.defi)}</b> (+${DEFI_PTS} clebsous)`);
     if (res.levelUp) l.push(`🎉 <b>Nouveau niveau : ${esc(res.levelUp)} !</b> 🎁 Récompense à choisir avec le superviseur.`);
     if (res.album) l.push(`📖 <b>Album ${esc(res.album)} complet !</b> 🎁 Récompense de saison à choisir avec le superviseur.`);
@@ -3112,11 +3323,12 @@
   }
 
   function moneyBox(r, moneyMin){
+    if (isTester()) return `<div class="gamebox">🧪 <b>Mode testeur</b><small>Tout marche comme pour les autres (objets, brouillard, récap), mais rien n'est compté : ni tirelire, ni amendes, ni rappels.</small></div>`;
     // le maximum mensuel n'est jamais affiché aux promeneurs (choix du superviseur : pas de « ligne d'arrivée »)
     if (r.eu){
       const res = r._res, full = res && Math.abs(r.eu * CS - (res.dur + res.total)) < 1;
       const got = res ? Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ") : "";
-      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.rainMult ? " · 🌧️ ×1,5" : ""}${res.boostMult ? ` · ${isBday() ? "🎂" : "🎉"} ×${res.boostMult}` : ""}${res.duo ? ` · 👯 +${res.duo}` : ""}${res.hunt ? ` · 🏴‍☠️ +${res.hunt}` : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
+      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.rainMult ? " · 🌧️ ×1,5" : ""}${res.boostMult ? ` · ${isBday() ? "🎂" : "🎉"} ×${res.boostMult}` : ""}${res.duo ? ` · 👯 +${res.duo}` : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
       return `<div class="gamebox">🧾 <b>Le détail</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
     }
     if ((game.money[monthKey(Date.now())] || 0) >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
@@ -3129,8 +3341,8 @@
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
     const hero = (files && files[0]) ? `<img class="tk-photo" alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(files[0])}">` : `<div class="tk-dog">${roxyHTML(game.acc || [])}</div>`;
     openSheet(`<div class="ticket">${hero}
-        <div class="tk-sum">${r.eu ? `+${Math.round(r.eu * CS)}` : "0"} 🪙</div>
-        <div class="tk-sub">${r.eu ? "clebsous dans ta tirelire" : res && res.short ? "moins de 15 min : rien cette fois" : "clebsous"}</div>
+        <div class="tk-sum">${isTester() ? "🧪 test" : `${r.eu ? `+${Math.round(r.eu * CS)}` : "0"} 🪙`}</div>
+        <div class="tk-sub">${isTester() ? "mode testeur : rien n'est compté" : r.eu ? "clebsous dans ta tirelire" : res && res.short ? "moins de 15 min : rien cette fois" : "clebsous"}</div>
         <h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")} · ${new Date(r.s * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}</p></div>
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
@@ -3175,14 +3387,14 @@
     if (res && res.trophies.length) r.tro = res.trophies.map(t => t.icon + " " + t.name);
     r.g = snapshot();
     // + les bonus ramassés (objets, rues neuves, défi…), tout en clebsous
-    const eu = addMoney(res && !res.short ? (res.dur + res.total) / CS : 0);
+    const eu = isTester() ? 0 : addMoney(res && !res.short ? (res.dur + res.total) / CS : 0);   // 🧪 testeur : pas de tirelire
     if (eu) r.eu = eu;
     if (!p.line.length){ p.routeM = r.m; }
     if (elapsed >= 2 && elapsed < MONEY_MIN){
       const ms = shortMalus(elapsed);
       if (ms){ r.ms = ms; res && (res.shortMalus = ms); }
     }
-    if (elapsed >= 2) saveToLog(p, elapsed, r.m, r);
+    if (elapsed >= 2) saveToLog(p, elapsed, r.m, r, res && res.gx);
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
     document.body.classList.remove("hasmap"); renderHome();
@@ -3268,9 +3480,9 @@
     }catch(e){}
   }
 
-  function saveToLog(p, elapsed, meters, recap){
+  function saveToLog(p, elapsed, meters, recap, gx){
     const log = getLog();
-    log.unshift({
+    log.unshift({ gx: gx || undefined,
       id: Date.now(), date: new Date().toISOString(), title: titleOf(p), cat: p.cat, icon: iconOf(p),
       min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(meters), routeM: Math.round(p.routeM || p.m), walker: profile.walker, recap,
       line: (p.line.length ? p.line : track).filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 300)) === 0 || i === a.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
@@ -3385,8 +3597,8 @@
           <div class="stat"><b>${fmtMin(sum(log))}</b><span>${days ? `sur ${days} jours` : "au total"} · ${log.length} balade${log.length > 1 ? "s" : ""} · ${fmtKm(log.reduce((s, e) => s + e.m, 0))}</span></div>
         </div>` + bar + warn + info +
         `<div class="props">${log.map(e => `
-          <div class="entry${logSel === e.id ? " sel" : ""}" tabindex="0" data-id="${e.id}">
-            <div><h4>${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${e.walker ? esc(e.walker) + " · " : ""}${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
+          <div class="entry${logSel === e.id ? " sel" : ""}${e.void ? " void" : ""}" tabindex="0" data-id="${e.id}">
+            <div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${e.void ? `annulée${e.void.why ? " : " + esc(e.void.why) : ""} · ` : ""}${e.walker ? esc(e.walker) + " · " : ""}${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
             <div class="dur">${fmtMin(e.min)}<div class="when">${fmtKm(e.m)}</div></div>
             <div class="acts">${e.line && e.line.length > 1 ? `<button data-redo="${e.id}">🐾 ${e.cat === "free" ? "Refaire ce trajet" : "Refaire"}</button>` : ""}${e.recap ? `<button class="ghost" data-send="${e.id}">📩 Renvoyer</button>` : ""}<button class="ghost" data-del="${e.id}">Supprimer</button></div>
           </div>`).join("")}</div>` + keepSel;
@@ -3530,7 +3742,7 @@
         ${row("🎉", "Jour bonus décidé par le superviseur", "×2")}
         ${row("🎂", `Anniversaire de ${DOG}`, "×3")}
         ${row("👯", "Balade à deux (les deux touchent 👯)", `+${DUO_PTS} 🪙`)}
-        ${row("🏴‍☠️", "Trésor de la semaine (le premier de la maison)", "+50 🪙")}
+        ${row("🏴‍☠️", "Trésor de la semaine, à 2–3 km (un seul gagnant dans la maison, en plus du plafond)", `+${HUNT_FIRST} 🪙`)}
         ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
@@ -3594,8 +3806,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 33;
+  const APP_NUM = 34, APP_LABEL = "2.0";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    34: [
+      "🎉 Wouaf Balades 2.0 : tout repart de zéro pour tout le monde, avec les mêmes règles pour tous !",
+      "🏴‍☠️ Le trésor de la semaine est plus loin (2 à 3 km) et il n'y a qu'un seul gagnant : 500 clebsous en bonus pour le premier qui le trouve.",
+      "❌ Une balade peut être annulée par le superviseur, avec un motif : les gains sont alors retirés."
+    ],
     33: [
       "☰ Accueil plus simple : Roxy et ta tirelire en haut, la durée et « C'est parti » au milieu. Tout le reste est dans le menu ☰ en haut à droite.",
       "🗺️ La carte est cachée sous un brouillard bien noir : il se lève comme une lampe là où tu marches, et la carte reste centrée sur toi.",
@@ -3717,16 +3934,19 @@
       "🆘 Nouveau bouton d'alerte pendant la balade : il envoie ta position."
     ]
   };
-  $("#appVer").textContent = `Wouaf Balades, version ${APP_NUM}.`;
+  $("#appVer").textContent = `Wouaf Balades, version ${APP_LABEL}.`;
   function showNews(){
     if (store.get("wouaf-vu", 0) >= APP_NUM || document.body.classList.contains("recap") || $("#modal").classList.contains("open")) return;
     const l = NEWS[APP_NUM] || [];
-    openSheet(`<h2>Nouveau dans la version ${APP_NUM}</h2>${l.length ? `<ul class="news">${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p>Petites corrections et améliorations.</p>"}
+    openSheet(`<h2>Nouveau dans la version ${APP_LABEL}</h2>${l.length ? `<ul class="news">${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "<p>Petites corrections et améliorations.</p>"}
       <div class="btns"><button id="newsOk">OK</button></div>`);
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
-  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
-  setTimeout(() => { pushState(false); flushWalks(); backupNow(false); }, 5000);
+  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get(WELCOME2, 0)) showWelcome2(); else if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
+  setTimeout(async () => { try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
+  // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
+  let lastShared = 0;
+  document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).catch(() => {}); });
   if (EVENT || isBday()) $("#evDeco").textContent = isBday() ? "🎂" : EVENT.deco;
 
   // ---------- Au lancement ----------
@@ -3747,7 +3967,7 @@
     renderHome();
   });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, askProfile, showWelcome2, startupDigest, missions };
 })();
 </script>
 </body>

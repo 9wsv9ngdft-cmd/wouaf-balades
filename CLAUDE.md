@@ -215,3 +215,28 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Balade : zoom toujours au centre quand la carte suit (`setFollow`), recentrage après zoom ; Roxy placée au 1er point GPS.
   Ligne du chrono et mode poche : « 🪙 +12 · 447 au total » (`liveMoney`).
 - 📖 Tuto 8 écrans illustrés (`tutoPages`, `showTuto(step, replay)`), à revoir depuis le menu ou « Les bonus ».
+
+## Version 2.0 (APP_NUM 34, libellé « 2.0 », décidé le 14/11 : PLAN-v2.md)
+- 🔑 **Superviseur « Éric », sans code** : le 1er téléphone qui prend le prénom Éric (accents et majuscules ignorés) le réclame
+  (`POST /claim`, jeton aléatoire dans KV `admin` et dans `wouaf-sup` sur le téléphone ; refusé sur un autre téléphone). Les routes superviseur
+  (`/check /pause /boost /dash /restore /adjust /reset /void`) acceptent le jeton (`supOk`) **ou** `SUPERVISOR_CODE` (toujours valable, 20 essais ratés/jour).
+  Le menu ☰ d'Éric montre Pause · Jours bonus, Tableau de bord, Corriger, Restaurer, Annuler une balade, Tout remettre à zéro (`supAuth()`).
+- 🧪 **Éric = testeur** (`isTester()` = jeton + prénom Éric) : balades, objets, brouillard et récap marchent, mais pas de tirelire (ni coffre ni trésor),
+  pas d'amendes (`processMalus`/`shortMalus`), pas de rappels (menu caché, Worker `isTester` ignore `/register` et le cron). Ses balades sont envoyées
+  (cs 0, `sum.test`) donc comptent pour les dernières sorties et l'humeur de Roxy.
+- 🧹 **Remise à zéro** (`POST /reset`, double confirmation dans `openReset`) : le Worker efface `d: b: a: t: duo:` et `last`, écrit KV `reset` = date (ms),
+  ignore ensuite les `/walk` plus vieux. `GET /pause` renvoie `reset`, `treasure`, `last`. Chaque téléphone (`applyReset`, appelé à l'ouverture, au retour dans
+  l'app et à la fermeture d'une fiche) compare à `wouaf-reset-vu` ; attend la fin d'une balade et la fermeture du récap ; efface jeu, carnet, traces, album photo
+  (IndexedDB), envois, sorties, tuto… **garde** prénom, rappels, `wouaf-avatar`, jeton superviseur ; `firstUse` = demain (amendes dès demain) ; écran
+  « 🎉 Wouaf Balades 2.0, tout repart de zéro ! » (`showWelcome2`, clé `wouaf-welcome2`) puis tuto. Téléphone neuf : pas d'écran, juste le tuto.
+- 🏴‍☠️ **Trésor** : à 2–3 km de la maison, **un seul gagnant** : `POST /treasure` (KV `t:<semaine>`) → `first` ou `found`+`by`. Le gagnant reçoit 500 clebsous
+  **hors plafond** (`game.bonus`, comme un coffre, `res.hunt`, `gx.h`) ; les autres voient « 🏴‍☠️ X a trouvé le trésor ! » (`hunt.gone`, `syncHunt` via `/pause`).
+  Sans réseau, pas de gain décidé tout seul (nouvel essai 30 s). ⭐ et objets inchangés.
+- ❌ **Annuler une balade** : tableau de bord › ❌ Annuler › motif → `POST /void` (KV `a:<prénom>`, `type:"void"`, id = fin de balade `e` en secondes ; la balade est
+  barrée dans le tableau de bord et `/recent`, `last` est recalculé sans elle). Le téléphone (`applyVoid`, via `fetchAdjust`) retire durée, bonus, défi, trésor,
+  coffre, stats, album, série, semaine parfaite grâce à `gx` gardé dans l'entrée du carnet (`saveToLog`), marque `e.void` (« ❌ annulée » dans carnet et sorties,
+  exclue de `walkedOn`/`walksBetween`/`lastWalk`). Seule balade ≥ 20 min du jour : amende −30 **sans joker** (`malus k:"void"` ou `game.noJoker[jour]`).
+  Fiche « Balade annulée » avec motif à l'ouverture.
+- Tests : `tests/worker.test.mjs` (Node : `node --test tests/worker.test.mjs`, KV simulée) et `tests/e2e.py` (Playwright, vraie page, **vrai code du Worker**
+  via `tests/serve-worker.mjs` sur le port 8787, `python3 -m http.server 8000` ; Leaflet remplacé par `tests/leaflet-stub.js`, donc la carte n'est pas testée).
+- À savoir : prévenir Éric de taper son prénom **avant** que les ados ouvrent l'app (sinon l'un d'eux pourrait prendre « Éric »).
