@@ -251,7 +251,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.100759";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.101523";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -791,9 +791,10 @@
     { icon:"💶", label:"5 €", cost:200, euros:5 },
     { icon:"🎬", label:"Une place de ciné", cost:300 }
   ];
-  // Euros : une balade par jour ≈ 10 € par mois ; plus de balades = plus d'euros, 15 € maximum par mois (calendaire).
-  // Le prix des 5 € = 15 balades moyennes, recalculé le 1er et le 16 d'après les 15 jours précédents.
-  const EURO_TARGET = 10, EURO_MAX = 15, WALKS_PER_5E = 15, DEFAULT_WALK_PTS = 22;
+  // Euros : 25 min de balade par jour ≈ 10 € par mois ; plus de temps de balade = plus d'euros, 15 € maximum par mois.
+  // Le prix des 5 € = les points de 375 min de balade (moitié des 750 min du mois de référence),
+  // d'après les points gagnés par minute sur les 15 jours précédents, recalculé le 1er et le 16.
+  const EURO_TARGET = 10, EURO_MAX = 15, REF_MIN_DAY = 25, MIN_PER_5E = REF_MIN_DAY * 30 / 2, DEFAULT_PTS_PER_MIN = 0.52;
   const LEVELS = [[0, "🐶 Chiot"], [100, "🐾 Fouineuse"], [300, "🧭 Pisteuse"], [700, "🗺️ Exploratrice"], [1500, "👑 Légende du quartier"]];
   let game = store.get(GAME_KEY, null) || {};
   game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, game);
@@ -923,12 +924,15 @@
   // prix des 5 € pour la quinzaine en cours
   function euroPrice(){
     const per = periodOf(Date.now());
-    if (!game.euro || game.euro.key !== per.key){
+    const key = per.key + "-min";
+    if (!game.euro || game.euro.key !== key){
       const ws = walksBetween(per.start.getTime() - 15*DAYMS, per.start.getTime()).filter(e => e.recap && e.recap.pt);
-      let price = game.euro ? game.euro.price : WALKS_PER_5E * DEFAULT_WALK_PTS;
-      if (ws.length >= 3) price = WALKS_PER_5E * ws.reduce((n, e) => n + e.recap.pt, 0) / ws.length;
-      price = Math.min(600, Math.max(100, Math.round(price / 10) * 10));
-      game.euro = { key: per.key, price, since: per.start.toISOString(), next: per.end.toISOString() };
+      const mins = ws.reduce((n, e) => n + e.min, 0), pts = ws.reduce((n, e) => n + e.recap.pt, 0);
+      // points gagnés par minute de balade (au moins 1 h de balade sur la quinzaine, sinon on garde le prix d'avant)
+      let price = game.euro && game.euro.key.endsWith("-min") ? game.euro.price : MIN_PER_5E * DEFAULT_PTS_PER_MIN;
+      if (mins >= 60) price = MIN_PER_5E * pts / mins;
+      price = Math.min(500, Math.max(60, Math.round(price / 10) * 10));
+      game.euro = { key, price, since: per.start.toISOString(), next: per.end.toISOString() };
       saveGame();
     }
     return game.euro;
@@ -947,13 +951,14 @@
     if (game.pts < cost) return { ok:false, cost, why:`encore ${cost - game.pts} pts` };
     return { ok:true, cost, why:"" };
   }
-  // rythme du mois : une balade par jour ≈ 10 €
+  // rythme du mois : 25 min de balade par jour ≈ 10 €
   function monthPace(){
     const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
-    const n = walksBetween(m0, Date.now() + 1).length;
+    const ws = walksBetween(m0, Date.now() + 1);
+    const mins = ws.reduce((n, e) => n + e.min, 0);
     const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    const pace = n / Math.max(1, d.getDate()) * days;
-    return { n, eur: Math.min(EURO_MAX, Math.round(pace * EURO_TARGET / 30)) };
+    const paceMin = mins / Math.max(1, d.getDate()) * days;
+    return { n: ws.length, perDay: Math.round(mins / Math.max(1, d.getDate())), eur: Math.min(EURO_MAX, Math.round(paceMin * EURO_TARGET / (REF_MIN_DAY * 30))) };
   }
   // bilan d'une quinzaine, à envoyer au superviseur
   function bilan(per){
@@ -994,7 +999,7 @@
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">💶 5 € = ${euroPrice().price} pts</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px">Prix ajusté le ${shortDate(new Date(euroPrice().since))} · prochain ajustement le ${shortDate(new Date(euroPrice().next))}</div>
-        <div style="font-size:14px;margin-top:8px">Ce mois-ci : <b>${monthPace().n} balade${monthPace().n > 1 ? "s" : ""}</b> · rythme ≈ <b>${monthPace().eur} €</b> sur le mois${eurosThisMonth() ? ` · ${eurosThisMonth()} € déjà pris` : ""}</div>
+        <div style="font-size:14px;margin-top:8px">Ce mois-ci : <b>${monthPace().n} balade${monthPace().n > 1 ? "s" : ""}</b> · ${monthPace().perDay} min par jour en moyenne · rythme ≈ <b>${monthPace().eur} €</b> sur le mois${eurosThisMonth() ? ` · ${eurosThisMonth()} € déjà pris` : ""}</div>
         <button class="ghost" id="bilNow" style="margin-top:10px;width:100%">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="props">${REWARDS.map((r, i) => { const st = rewardState(r); return `<div class="reward${st.ok ? "" : " locked"}">
@@ -1006,7 +1011,7 @@
         🗺️ +1 par coin jamais exploré, et les objets y comptent double<br>
         ⏱️ balade longue : ×1,25 (45 min) · ×1,5 (1 h) · ×2 (1 h 30)<br>
         🏠 +2 si tu reviens au point de départ · 🔥 +1 par jour à partir de 3 jours d'affilée<br>
-        💶 une balade par jour ≈ ${EURO_TARGET} € par mois, plus si tu promènes ${DOG} davantage (${EURO_MAX} € maximum). Le prix des 5 € s'ajuste le 1er et le 16 selon tes balades.<br>
+        💶 ${REF_MIN_DAY} min de balade par jour ≈ ${EURO_TARGET} € par mois : 15 min ≈ 6 €, 45 min ou plus = ${EURO_MAX} € (le maximum). Le prix des 5 € s'ajuste le 1er et le 16 selon tes balades.<br>
         Balade de 5 min minimum. En vélo ou en voiture, ça ne compte pas 😉</div>`;
     document.querySelectorAll("[data-rw]").forEach(b => b.onclick = () => {
       const r = REWARDS[+b.dataset.rw]; if (!r || !rewardState(r).ok) return;
@@ -1758,8 +1763,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 12;
+  const APP_NUM = 13;
   const NEWS = {
+    13: [
+      "💶 Les euros suivent maintenant le temps de balade : 25 min par jour ≈ 10 € par mois, 15 min ≈ 6 €, 45 min ou plus = 15 € (maximum).",
+      "📊 L'onglet Récompenses affiche tes minutes de balade par jour ce mois-ci."
+    ],
     12: [
       "💶 Le prix des 5 € s'ajuste tous les 15 jours : une balade par jour ≈ 10 € par mois, plus si tu promènes Roxy davantage (15 € maximum).",
       "📊 Le 1er et le 16, l'app propose d'envoyer le bilan de la quinzaine au superviseur."

@@ -26,9 +26,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Équilibre (v11, 14/11) : ~1 balade par jour et par ado ≈ 600–700 pts/mois (45 min ≈ 20–25 pts une fois le quartier exploré).
 - Récompenses réelles : tableau `REWARDS` dans index.html (à modifier sur demande de l'utilisateur) : écran 50, glace 60, repas 120,
   5 € (`euros:5`, prix variable), ciné 300.
-- Euros (v12) : objectif 1 balade/jour ≈ 10 €/mois, plus si plus de balades, 15 € max par mois calendaire (`EURO_MAX`).
-  Prix des 5 € = 15 × points moyens par balade (≥ 5 min) sur les 15 jours précédents, recalculé le 1er et le 16
-  (`game.euro`, défaut 330, borné 100–600). Rythme du mois et bilan de quinzaine (proposé au 1er/16, `game.bilanSeen`). Réclamer = points retirés
+- Euros (v13) : référence 25 min de balade par jour ≈ 10 €/mois (15 min ≈ 6 €, ≥ 45 min = 15 €), 15 € max par mois calendaire
+  (`EURO_MAX`). Prix des 5 € = 375 min × points gagnés par minute (balades ≥ 5 min, 15 jours précédents, ≥ 60 min sinon prix
+  inchangé), recalculé le 1er et le 16 (`game.euro`, clé suffixée « -min », défaut ≈ 200, borné 60–500). Rythme du mois en
+  minutes/jour, bilan de quinzaine (proposé au 1er/16, `game.bilanSeen`). Réclamer = points retirés
   + message au superviseur via le menu Partager.
 - Propositions : rang bonus pour les lieux en cases neuves, tri final par `newPct` (« 🆕 x % de nouveau »).
 
