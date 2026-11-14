@@ -59,7 +59,11 @@
   .heroTxt{flex:1;min-width:0} .hero .hi{font-family:Fraunces,Georgia,serif;font-size:21px;font-weight:700;line-height:1.15} .hero .sub{color:var(--muted);font-size:14px}
   .seg.durs button{padding:13px 2px;font-size:15px}
   button.go{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(135deg,#2f5d3a,#4c8a5a);box-shadow:0 8px 18px -8px rgba(47,93,58,.7);font-size:19px;padding:16px}
-  button.go small{font-size:13px;font-weight:500;opacity:.92}
+  button.go .gain{display:flex;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,.16);border-radius:12px;padding:6px 14px}
+  button.go .gain b{font-size:38px;line-height:1;font-weight:800;color:#ffd35c}
+  button.go .gain .csi{width:34px;height:34px}
+  button.go .gain span{font-size:13px;font-weight:500;line-height:1.2;text-align:left;opacity:.95}
+  .csi{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block;flex:none}
   #envies{display:none} body.hasmap #envies{display:block}
   .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .tiles button{border:0;border-radius:16px;padding:12px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:2px;font:inherit;min-height:96px;box-shadow:0 6px 14px -8px rgba(0,0,0,.45)}
@@ -263,7 +267,7 @@
       <button data-v="60">1 h</button>
       <button data-v="90">1 h 30</button>
     </div>
-    <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><small id="goGain"></small></button>
+    <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><span class="gain" id="goGain"></span></button>
     <button id="locate" class="ghost" style="margin-top:8px;width:100%">🗺️ Proposer des parcours</button>
     <div id="envies">
     <div class="flabel" id="catLabel">Envie de…</div>
@@ -330,7 +334,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.133354";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.140336";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1663,6 +1667,25 @@
   }
 
 
+  // ---------- Logo des Clebsous ----------
+  // Une pièce dorée avec un C barré de deux traits (comme le $). Tout « 🪙 » affiché dans la page est remplacé automatiquement.
+  const CSI_SVG = '<svg class="csi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#f5bd34" stroke="#c98a12" stroke-width="1.5"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#e0a21f" stroke-width=".8"/><path d="M15.8 8.4a5.2 5.2 0 1 0 0 7.2" fill="none" stroke="#6b3f00" stroke-width="2.3" stroke-linecap="round"/><path d="M10.6 5.2v13.6M13.4 5.2v13.6" stroke="#6b3f00" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  function coinify(root){
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeValue.includes("🪙") && !(n.parentNode && /^(SCRIPT|STYLE|TEXTAREA|TITLE)$/.test(n.parentNode.nodeName)) ? 1 : 2 });
+    const list = []; while (w.nextNode()) list.push(w.currentNode);
+    for (const n of list){
+      const f = document.createDocumentFragment();
+      n.nodeValue.split("🪙").forEach((part, i) => {
+        if (i){ const t = document.createElement("template"); t.innerHTML = CSI_SVG; f.appendChild(t.content.firstChild); }
+        if (part) f.appendChild(document.createTextNode(part));
+      });
+      n.parentNode.replaceChild(f, n);
+    }
+  }
+  coinify(document.body);
+  new MutationObserver(ms => { for (const m of ms){ if (m.type === "characterData") { if (m.target.parentNode) coinify(m.target.parentNode); } else m.addedNodes.forEach(x => { if (x.nodeType === 3 ? x.nodeValue.includes("🪙") : x.nodeType === 1) coinify(x.nodeType === 3 ? x.parentNode || document.body : x); }); } })
+    .observe(document.body, { childList:true, subtree:true, characterData:true });
+
   // ---------- Écran d'accueil : où j'en suis ----------
   function missions(){
     ensureGame();
@@ -2471,7 +2494,7 @@
   });
   function updateGo(){
     $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
-    $("#goGain").textContent = `jusqu'à ${fmtCs(walkEuros(state.dur))} 🪙 + les bonus`;
+    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${Math.round(walkEuros(state.dur) * CS)}</b>🪙<span>clebsous<br>+ les bonus</span>`;
   }
   updateGo();
   $("#locate").addEventListener("click", locate);
@@ -2517,8 +2540,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 23;
+  const APP_NUM = 24;
   const NEWS = {
+    24: [
+      "🪙 Les clebsous ont leur logo : une pièce avec un C barré.",
+      "Le bouton « C'est parti » affiche en gros combien de clebsous tu peux gagner selon la durée choisie."
+    ],
     23: [
       "🏠 Nouvel accueil : choisis d'abord ta durée, puis « C'est parti », qui te dit combien tu peux gagner.",
       "Touche ta tirelire 🪙, ta série 🔥 ou Roxy pour tout voir en détail.",
