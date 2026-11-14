@@ -143,6 +143,26 @@
   #chooseBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
   footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 14px);background:#1f2a22;color:#fff;padding:10px 16px;border-radius:999px;font-size:15px;font-weight:600;z-index:3500;max-width:92vw;box-shadow:0 6px 20px -6px rgba(0,0,0,.45);animation:pop .25s ease-out}
+  @keyframes pop{from{transform:translate(-50%,-8px) scale(.9);opacity:0}to{transform:translate(-50%,0) scale(1);opacity:1}}
+  .gitem{font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+  .tag.new{background:#e3f0e3;color:#25502f}
+  .gamebox{background:linear-gradient(135deg,#2f5d3a,#4c8a5a);color:#fff;border-radius:14px;padding:12px 14px;margin:10px 0}
+  .gamebox b{font-family:Fraunces,Georgia,serif;font-size:22px}
+  .gamebox small{display:block;opacity:.9;margin-top:4px;line-height:1.5}
+  .wallet{background:linear-gradient(135deg,#2f5d3a,#4c8a5a);color:#fff;border-radius:16px;padding:16px;margin-top:12px}
+  .wallet .big{font-family:Fraunces,Georgia,serif;font-size:40px;font-weight:700;line-height:1}
+  .wallet .lvl{margin-top:8px;font-weight:600}
+  .bar{height:8px;background:rgba(255,255,255,.25);border-radius:99px;margin-top:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:#ffd36b;border-radius:99px}
+  .wallet .row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:13px;opacity:.95}
+  .reward{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 13px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+  .reward .ri{font-size:28px}
+  .reward h4{margin:0;font-size:15px}
+  .reward .cost{font-size:13px;color:var(--muted)}
+  .reward button{padding:9px 12px;font-size:14px}
+  .reward.locked{opacity:.75}
+  .howto{font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px}
   .news{padding-left:20px;margin:8px 0 0}
   .news li{margin:6px 0}
   .leaflet-container{font:inherit}
@@ -187,7 +207,8 @@
 
   <div class="tabs" role="tablist">
     <button class="on" data-tab="walks" role="tab">🐾 Balades</button>
-    <button data-tab="log" role="tab">📒 Mon carnet</button>
+    <button data-tab="log" role="tab">📒 Carnet</button>
+    <button data-tab="shop" role="tab">🎁 Récompenses</button>
   </div>
   <div id="views">
     <div id="v-walks">
@@ -198,6 +219,7 @@
       <div id="props" class="props"></div>
     </div>
     <div id="v-log" style="display:none"></div>
+    <div id="v-shop" style="display:none"></div>
   </div>
 
   <footer>
@@ -229,7 +251,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-12.090210";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.075909";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -443,7 +465,7 @@
     for (const c of pool){
       const fit = Math.abs(c.d - ideal) / ideal;
       if (fit > 0.55) continue;
-      list.push({ type:"ar", cat:c.cat, via:[c], rank: quality(c) - fit*4 + (c.inside ? 0.6 : 0) });
+      list.push({ type:"ar", cat:c.cat, via:[c], rank: quality(c) - fit*4 + (c.inside ? 0.6 : 0) + (isNewCell(cellOf(c.pt)) ? 1.2 : 0) });
     }
     // boucles par deux lieux
     for (let i = 0; i < pool.length; i++) for (let j = i+1; j < pool.length; j++){
@@ -454,7 +476,7 @@
       if (fit > 0.4) continue;
       const via = a.d <= b.d ? [a, b] : [b, a];
       const cat = a.cat === b.cat ? a.cat : (quality(a) >= quality(b) ? a.cat : b.cat);
-      list.push({ type:"loop", cat, via, rank: (quality(a) + quality(b))*0.7 - fit*4 + 0.5 + (a.cat !== b.cat ? 0.3 : 0) });
+      list.push({ type:"loop", cat, via, rank: (quality(a) + quality(b))*0.7 - fit*4 + 0.5 + (a.cat !== b.cat ? 0.3 : 0) + 0.7*[a, b].filter(x => isNewCell(cellOf(x.pt))).length });
     }
     // boucles « découverte » dans 8 directions, nommées d'après le quartier ou la ville vers lesquels elles vont
     const s = D / (3*detour);
@@ -465,7 +487,7 @@
       const far = dest(start, brg, s*0.9);
       const town = nearestPlaceName(cands, dest(start, brg, s*1.2), s*1.4, here);
       list.push({ type:"discover", cat:"discover", via:[{ name:"", kind:"walk", pt:p1 }, { name:"", kind:"walk", pt:p2 }],
-        town, dir: dirName(brg), key:"dir" + brg + ":" + (town || ""), rank: (town ? 1.2 : 0.6) - k*0.01 });
+        town, dir: dirName(brg), key:"dir" + brg + ":" + (town || ""), rank: (town ? 1.2 : 0.6) - k*0.01 + 0.6*[p1, p2].filter(x => isNewCell(cellOf(x))).length });
     }
     return list;
   }
@@ -590,7 +612,7 @@
         observed.push(r.m / straight);
         const ratio = r.m / D;
         if (ratio < 0.7 || ratio > 1.25) return null;
-        return Object.assign({}, p, r, { min: r.m / M_PER_MIN });
+        return Object.assign({}, p, r, { min: r.m / M_PER_MIN, newPct: newShare(r.line) });
       }catch(e){ return null; }
     };
 
@@ -630,6 +652,9 @@
       renderProps(countCat() < goal);
     }
     if (my !== genId) return;
+    // les balades avec le plus de rues jamais faites passent en premier
+    state.results.sort((a, b) => (b.newPct || 0) - (a.newPct || 0));
+    state.sel = null;
     renderProps(false);
     const shown = visible();
     if (!state.results.length){
@@ -657,7 +682,7 @@
       const i = state.results.indexOf(p);
       return `<div class="prop${state.sel === i ? " sel" : ""}" tabindex="0" data-i="${i}" style="border-left:5px solid ${COLORS[i % COLORS.length]}">
         <div class="ico">${iconOf(p)}</div>
-        <div><h3>${esc(titleOf(p))}</h3><div class="sub"><span class="tag">${CATS[p.cat].icon} ${CATS[p.cat].label}</span>${esc(subOf(p))}</div></div>
+        <div><h3>${esc(titleOf(p))}</h3><div class="sub"><span class="tag">${CATS[p.cat].icon} ${CATS[p.cat].label}</span>${p.newPct >= 10 ? `<span class="tag new">🆕 ${p.newPct} % de nouveau</span>` : ""}${esc(subOf(p))}</div></div>
         <div class="time">${fmtMin(p.min)}<small>${fmtKm(p.m)}</small></div>
         <button class="go" data-go="${i}">🐾 C'est parti</button>
       </div>`;
@@ -753,6 +778,171 @@
   $("#editWho").addEventListener("click", () => askProfile());
   renderWho();
 
+  // ---------- Jeu : Points Roxy ----------
+  // Objets à ramasser, coins jamais visités (cases de ~100 m), bonus balades longues, boutique de vraies récompenses.
+  const GAME_KEY = "wouaf-jeu";
+  const ITEMS = { b:{ icon:"🦴", v:1, name:"Un os" }, t:{ icon:"🎾", v:2, name:"Une balle" }, f:{ icon:"🍖", v:3, name:"Une friandise" }, s:{ icon:"⭐", v:10, name:"Trésor trouvé !" } };
+  // Récompenses réelles : à modifier ici (prix en points)
+  const REWARDS = [
+    { icon:"🍦", label:"Une glace", cost:40 },
+    { icon:"📱", label:"30 min d'écran en plus", cost:60 },
+    { icon:"🍕", label:"Choisir le repas du soir", cost:100 },
+    { icon:"🎬", label:"Une place de ciné", cost:150 },
+    { icon:"💶", label:"10 €", cost:250 }
+  ];
+  const LEVELS = [[0, "🐶 Chiot"], [100, "🐾 Fouineuse"], [300, "🧭 Pisteuse"], [700, "🗺️ Exploratrice"], [1500, "👑 Légende du quartier"]];
+  let game = store.get(GAME_KEY, null) || {};
+  game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, game);
+  const saveGame = () => store.set(GAME_KEY, game);
+  const cellOf = p => Math.floor(p.lat / 0.0009) + ":" + Math.floor(p.lon / 0.0013);   // ≈ 100 m × 95 m
+  const isNewCell = c => !game.seen[c];
+  function levelOf(t){
+    let cur = LEVELS[0], next = null;
+    for (const x of LEVELS){ if (t >= x[0]) cur = x; else { next = x; break; } }
+    return { name: cur[1], from: cur[0], next };
+  }
+  // part d'un tracé jamais parcourue (0–100)
+  function newShare(line){
+    if (!line || !line.length) return 0;
+    const cells = [...new Set(line.map(cellOf))];
+    return Math.round(100 * cells.filter(isNewCell).length / cells.length);
+  }
+
+  const toast = (msg, ms) => {
+    const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg;
+    document.querySelectorAll(".toast").forEach(o => o.remove());
+    document.body.appendChild(t); setTimeout(() => t.remove(), ms || 2500);
+  };
+  let actx = null;
+  function ding(){
+    try{
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), n = actx.currentTime;
+      o.type = "sine"; o.frequency.setValueAtTime(880, n); o.frequency.exponentialRampToValueAtTime(1320, n + .12);
+      g.gain.setValueAtTime(.15, n); g.gain.exponentialRampToValueAtTime(.001, n + .25);
+      o.connect(g); g.connect(actx.destination); o.start(); o.stop(n + .26);
+    }catch(e){}
+  }
+  // l'iPhone n'autorise le son qu'après un premier toucher
+  document.addEventListener("touchstart", () => { try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); }catch(e){} }, { once:true, passive:true });
+
+  let gw = null;   // jeu de la balade en cours
+  const gameLayer = L.layerGroup().addTo(map);
+  const pickKind = () => { const r = Math.random(); return r < .5 ? "b" : r < .8 ? "t" : "f"; };
+  // objets semés le long d'un parcours choisi (tous les 120–190 m) + un trésor
+  function seedItems(p){
+    const out = [];
+    if (!p.line || p.line.length < 2) return out;
+    let acc = 0, next = 120 + Math.random()*60;
+    const total = p.m || 0;
+    for (let i = 1; i < p.line.length; i++){
+      acc += dist(p.line[i-1], p.line[i]);
+      if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 120 + Math.random()*70; }
+    }
+    let best = null;
+    const v = (p.via || []).find(x => x.pt && x.kind && x.kind !== "walk");
+    if (v) best = v.pt;
+    else { let bd = -1; for (const q of p.line){ const d = dist(p.line[0], q); if (d > bd){ bd = d; best = q; } } }
+    if (best) out.push({ lat:best.lat, lon:best.lon, k:"s" });
+    return out;
+  }
+  const newGameWalk = p => ({ items: seedItems(p), got:{ b:0, t:0, f:0, s:0 }, itemPts:0, cells:[], newCells:0, acc:0, next: 110 + Math.random()*80, treasure:false, last:null });
+  function drawItems(){
+    gameLayer.clearLayers();
+    if (!gw) return;
+    for (const it of gw.items) if (!it.got)
+      L.marker([it.lat, it.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem">${ITEMS[it.k].icon}</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer);
+  }
+  function collect(k, onNew){
+    const v = ITEMS[k].v * (onNew ? 2 : 1);
+    gw.itemPts += v; gw.got[k]++;
+    toast(`+${v} ${ITEMS[k].icon} ${ITEMS[k].name}${onNew ? " · coin neuf ×2" : ""}`, 2600);
+    ding();
+  }
+  function gameFix(q, home){
+    if (!gw || q.a > 35) return;
+    const last = gw.last;
+    if (last){
+      const dt = (q.t - last.t) / 1000, d = dist(last, q);
+      if (dt > 0 && d / dt > 4.2){ gw.last = { lat:q.lat, lon:q.lon, t:q.t }; return; }   // > 15 km/h : vélo, voiture… on ne compte pas
+      gw.acc += d;
+    }
+    gw.last = { lat:q.lat, lon:q.lon, t:q.t };
+    const c = cellOf(q), onNew = isNewCell(c);
+    if (!gw.cells.includes(c)){
+      gw.cells.push(c);
+      if (onNew && gw.cells.length > 1){ gw.newCells++; toast("+1 🗺️ Nouveau coin découvert", 1800); }
+    }
+    let hit = false;
+    for (const it of gw.items) if (!it.got && dist(it, q) < 25){ it.got = true; collect(it.k, onNew); hit = true; }
+    if (hit) drawItems();
+    if (!gw.items.length){   // balade libre : objets trouvés en chemin
+      if (gw.acc >= gw.next){ gw.next = gw.acc + 110 + Math.random()*80; collect(pickKind(), onNew); }
+      if (!gw.treasure && home && dist(home, q) >= 400){ gw.treasure = true; collect("s", onNew); }
+    }
+  }
+  const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
+  const dayKey = t => { const x = new Date(t - 4*3600000); return x.getFullYear() + "-" + (x.getMonth()+1) + "-" + x.getDate(); };   // la journée commence à 4 h
+  function finishGame(elapsedMin, cameHome){
+    if (!gw) return null;
+    const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false };
+    for (const c of gw.cells) game.seen[c] = 1;
+    gw = null; gameLayer.clearLayers();
+    if (elapsedMin < 5){ res.short = true; saveGame(); return res; }
+    res.mult = elapsedMin >= 85 ? 2 : elapsedMin >= 55 ? 1.5 : elapsedMin >= 40 ? 1.25 : 1;
+    if (cameHome) res.home = 5;
+    const today = dayKey(Date.now()), yest = dayKey(Date.now() - 86400000);
+    if (game.streak.day !== today){
+      game.streak.n = game.streak.day === yest ? game.streak.n + 1 : 1;
+      game.streak.day = today;
+      if (game.streak.n >= 3) res.streak = 3;
+    }
+    res.streakN = game.streak.n;
+    res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak;
+    game.pts += res.total; game.total += res.total;
+    saveGame();
+    return res;
+  }
+
+  // ---------- Boutique ----------
+  function renderShop(){
+    const lv = levelOf(game.total);
+    const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
+    const coins = Object.keys(game.seen).length;
+    $("#v-shop").innerHTML = `<div class="wallet">
+        <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · points disponibles</div>
+        <div class="big">🏅 ${game.pts}</div>
+        <div class="lvl">${lv.name}${lv.next ? ` · encore ${lv.next[0] - game.total} pts pour ${lv.next[1]}` : " · niveau max !"}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="row"><span>🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""}</span><span>🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}</span><span>Σ ${game.total} pts gagnés</span></div>
+      </div>
+      <div class="props">${REWARDS.map((r, i) => `<div class="reward${game.pts < r.cost ? " locked" : ""}">
+          <div class="ri">${r.icon}</div><div><h4>${esc(r.label)}</h4><div class="cost">${r.cost} pts${game.pts < r.cost ? ` · encore ${r.cost - game.pts}` : ""}</div></div>
+          <button data-rw="${i}"${game.pts < r.cost ? " disabled" : ""}>${game.pts < r.cost ? "🔒" : "Je la prends"}</button></div>`).join("")}</div>
+      ${game.claims.length ? `<div class="flabel">Récompenses gagnées</div><div class="props">${game.claims.slice(0, 10).map(c => `<div class="entry"><div><h4>${c.icon} ${esc(c.label)}</h4><div class="when">${new Date(c.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}</div></div><div class="dur">−${c.cost}</div></div>`).join("")}</div>` : ""}
+      <div class="howto"><b>Comment gagner des points ?</b><br>
+        🦴 os 1 · 🎾 balle 2 · 🍖 friandise 3 · ⭐ trésor 10 (un par balade)<br>
+        🗺️ +1 par coin jamais exploré, et les objets y comptent double<br>
+        ⏱️ balade longue : ×1,25 (45 min) · ×1,5 (1 h) · ×2 (1 h 30)<br>
+        🏠 +5 si tu reviens au point de départ · 🔥 +3 par jour à partir de 3 jours d'affilée<br>
+        Balade de 5 min minimum. En vélo ou en voiture, ça ne compte pas 😉</div>`;
+    document.querySelectorAll("[data-rw]").forEach(b => b.onclick = () => {
+      const r = REWARDS[+b.dataset.rw]; if (!r || game.pts < r.cost) return;
+      openSheet(`<h2>${r.icon} ${esc(r.label)}</h2><p>Ça coûte ${r.cost} points. Il t'en restera ${game.pts - r.cost}. Un message part ensuite au superviseur pour qu'il te la donne.</p>
+        <div class="btns"><button id="rwOk">🎁 Je la prends</button><button class="ghost" id="rwNo">Annuler</button></div>`);
+      $("#rwNo").onclick = closeSheet;
+      $("#rwOk").onclick = async () => {
+        game.pts -= r.cost;
+        game.claims.unshift({ date: new Date().toISOString(), icon: r.icon, label: r.label, cost: r.cost });
+        saveGame();
+        const text = `🎁 ${profile.walker || "Le promeneur"} a gagné : ${r.icon} ${r.label} (${r.cost} pts) · il reste ${game.pts} pts`;
+        try{ if (navigator.share) await navigator.share({ text }); else location.href = "sms:&body=" + encodeURIComponent(text); }catch(e){}
+        closeSheet(); renderShop();
+        toast("🎉 Récompense gagnée !", 2500);
+      };
+    });
+  }
+
   // ---------- Pendant la balade ----------
   let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true;
   let track = [], photos = [], hiddenAt = null, pausedMs = 0, trackLayer = null;
@@ -768,7 +958,7 @@
     store.set(CUR_KEY, {
       p: { type:p.type, line:p.line.map(q => ({ lat:+q.lat.toFixed(6), lon:+q.lon.toFixed(6) })), m:p.m, min:p.min, cat:p.cat, town:p.town, dir:p.dir,
            via:(p.via || []).map(v => ({ name:v.name, kind:v.kind })), _title: titleOf(p), _icon: iconOf(p) },
-      t0, track: track.map(q => ({ lat:q.lat, lon:q.lon, t:q.t })), pausedMs, walked, home: walkHome, maxAway, saved: Date.now()
+      t0, track: track.map(q => ({ lat:q.lat, lon:q.lon, t:q.t })), pausedMs, walked, home: walkHome, maxAway, gw, saved: Date.now()
     });
   }
   const forgetWalk = () => { try{ localStorage.removeItem(CUR_KEY); }catch(e){} };
@@ -812,6 +1002,7 @@
       cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
       walked = 0;
       drawSelected(p, "#d9792b");
+      if (gw){ gw.items = seedItems(p); drawItems(); }
       trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
       document.body.classList.remove("choosing"); document.body.classList.add("walking");
       followMap = true; hideBanner();
@@ -838,6 +1029,8 @@
       // le temps où l'app était fermée compte comme une pause du suivi
       pausedMs = (resume.pausedMs || 0) + Math.max(0, Date.now() - (resume.saved || Date.now()));
     }
+    gw = (resume && resume.gw) || newGameWalk(p);
+    drawItems();
     $("#photoBtn").textContent = "📷";
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
     trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
@@ -869,6 +1062,7 @@
     }
     if (!walkHome && q.a <= 40) walkHome = { lat:q.lat, lon:q.lon };
     updateWalk(q);
+    gameFix(q, walkHome);
     if (walkHome) checkHome(q);
     persist(false);
   }
@@ -902,6 +1096,7 @@
     watchId = null; clearInterval(tick); cancelHome(); hideBanner();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
     state.walk = null; forgetWalk(); store.set(END_KEY, Date.now());
+    gw = null; gameLayer.clearLayers();
     document.body.classList.remove("walking", "choosing");
     layers.sel.clearLayers();
     setTimeout(() => map.invalidateSize(), 50);
@@ -936,7 +1131,7 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade`;
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · 🏅 ${livePts()}`;
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
@@ -1084,7 +1279,7 @@
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}`;
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.pt ? ` · 🏅 +${r.pt}` : ""}`;
   }
 
   async function shareRecap(r, files){
@@ -1101,7 +1296,17 @@
     return true;
   }
 
-  function showRecapSheet(r, files, title){
+  function gameBox(res){
+    if (!res) return "";
+    if (res.short) return `<div class="warnline">🏅 Balade trop courte pour gagner des points (5 min minimum).</div>`;
+    const got = Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ");
+    const lv = levelOf(game.total);
+    return `<div class="gamebox">🏅 <b>+${res.total} points</b>
+      <small>${got || "Aucun objet"} · 🗺️ ${res.cells} coin${res.cells > 1 ? "s" : ""} neuf${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +5" : ""}${res.streak ? ` · 🔥 ${res.streakN} jours +3` : ""}<br>
+      Total : ${game.pts} pts · ${lv.name}</small></div>`;
+  }
+
+  function showRecapSheet(r, files, title, res){
     const dur = (r.e - r.s) / 60;
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
     openSheet(`<h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")}</p>
@@ -1112,6 +1317,7 @@
         <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
       </div>
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
+      ${gameBox(res)}
       ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p>Pas de photo cette fois. La prochaine fois, touchez 📷 pendant la balade.</p>`}
       <div class="btns"><button id="sendRecap">📩 Envoyer au superviseur</button><button class="ghost" id="closeRecap">Fermer</button></div>`);
     $("#sendRecap").onclick = async () => { await shareRecap(r, files); };
@@ -1131,11 +1337,13 @@
     setTimeout(() => map.invalidateSize(), 50);
     if (!p) return;
     const r = buildRecap(p, endTs);
+    const res = finishGame(elapsed, r.f ? r.h === 1 : (r.cov != null && r.cov >= 70));
+    if (res && !res.short) r.pt = res.total;
     if (!p.line.length){ p.routeM = r.m; }
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r);
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
-    showRecapSheet(r, photos.slice(), titleOf(p));
+    showRecapSheet(r, photos.slice(), titleOf(p), res);
   }
   $("#stop").addEventListener("click", stopWalk);
 
@@ -1236,8 +1444,8 @@
   const slug = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "").toLowerCase();
 
   async function backupLog(){
-    const log = getLog(); if (!log.length) return;
-    const data = JSON.stringify({ app:"wouaf-balades", v:1, chien:DOG, promeneur:profile.walker, exporte:new Date().toISOString(), balades:log });
+    const log = getLog(); if (!log.length && !game.total) return;
+    const data = JSON.stringify({ app:"wouaf-balades", v:1, chien:DOG, promeneur:profile.walker, exporte:new Date().toISOString(), balades:log, jeu:game });
     const ok = await shareFile(`carnet-${slug(DOG)}-${slug(profile.walker) || "promeneur"}-${stamp()}.json`, data, "application/json");
     if (ok){ store.set(SAVED_KEY, Date.now()); renderLog(); }
   }
@@ -1249,6 +1457,12 @@
         const j = JSON.parse(rd.result);
         const incoming = Array.isArray(j) ? j : j.balades;
         if (!Array.isArray(incoming)) throw new Error("format");
+        // points et coins explorés : on garde le plus avancé, et on additionne les coins
+        if (j.jeu && typeof j.jeu === "object"){
+          const seen = Object.assign({}, j.jeu.seen || {}, game.seen);
+          if ((j.jeu.total || 0) > (game.total || 0)) game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, j.jeu);
+          game.seen = seen; saveGame();
+        }
         const log = getLog(), ids = new Set(log.map(e => e.id));
         let added = 0;
         for (const e of incoming) if (e && e.id && e.date && !ids.has(e.id)){ log.push(e); ids.add(e.id); added++; }
@@ -1350,7 +1564,9 @@
     document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
     $("#v-walks").style.display = t === "walks" ? "" : "none";
     $("#v-log").style.display = t === "log" ? "" : "none";
+    $("#v-shop").style.display = t === "shop" ? "" : "none";
     if (t === "log") renderLog();
+    else if (t === "shop") renderShop();
     else if (state.sel != null) select(state.sel, true);
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
@@ -1457,8 +1673,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 9;
+  const APP_NUM = 10;
   const NEWS = {
+    10: [
+      "🏅 Points Roxy : ramasse 🦴 🎾 🍖 et un ⭐ trésor par balade, juste en passant à côté.",
+      "🗺️ Les coins jamais explorés rapportent plus (objets ×2) et les balades longues multiplient les points.",
+      "🎁 Nouvel onglet Récompenses : échange tes points contre de vraies récompenses."
+    ],
     9: [
       "▶️ La balade démarre toute seule à l'ouverture de l'app (balade libre ; « Choisir un parcours » reste possible).",
       "🏠 Elle se termine toute seule quand tu reviens au point de départ (30 s pour dire « Je continue »).",
@@ -1503,7 +1724,7 @@
     startWalk(FREE());
   });
 
-  window.__wouaf = { checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
+  window.__wouaf = { gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
 </script>
 </body>
