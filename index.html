@@ -484,7 +484,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.175809";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.180634";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2706,13 +2706,19 @@
             : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:2px 8px;font-size:12px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
       </div></div>`;
     };
+    const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé le trésor de la semaine puis annulé sa balade : personne n'a été payé.
+        <div class="btns" style="flex-direction:row;gap:8px;margin-top:6px"><button data-al="${a.id}" data-give="1" style="flex:1">Redonner ${HUNT_FIRST}</button><button class="ghost" data-al="${a.id}" style="flex:1">Ignorer</button></div></div>`).join("");
     openSheet(`<h2>${voidMode ? "❌ Annuler une balade" : "📊 Tableau de bord"}</h2>
+      ${alerts}
       ${voidMode ? `<p class="howto">Choisis la balade à annuler (bouton ❌). Le téléphone du promeneur retirera ses gains à sa prochaine ouverture.</p>` : ""}
       ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
       <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée.</p>`}</div>
       <p class="howto">Seulement des chiffres : aucun trajet ni position n'est envoyé.</p>
       <div class="btns"><button id="dsClose">Fermer</button></div>`);
     $("#dsClose").onclick = closeSheet;
+    document.querySelectorAll("[data-al]").forEach(b => b.onclick = async () => {
+      try{ const r = await api("/alert-resolve", Object.assign({}, auth, { id: b.dataset.al, give: !!b.dataset.give })); if (r.ok) openDash(auth, voidMode); }catch(e){}
+    });
     document.querySelectorAll("[data-void]").forEach(b => b.onclick = () => openVoidForm(auth, b.dataset.w, +b.dataset.void, b.parentElement.textContent.replace("❌ Annuler", "").trim(), voidMode));
   }
   // ❌ motif obligatoire, puis POST /void
@@ -3076,6 +3082,8 @@
 
   // « Pas de balade » : on arrête sans récap ni carnet
   function cancelWalk(){
+    // 🏴‍☠️ trésor trouvé puis balade annulée : personne n'est payé, on prévient le superviseur (il peut redonner les 500 clebsous)
+    if (gw && gw.hunt && !isTester() && PUSH_API && profile.walker && game.hunt) api("/alert", { walker: profile.walker, kind: "hunt", week: game.hunt.wk }).catch(() => {});
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null; clearInterval(tick); cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;

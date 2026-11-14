@@ -108,3 +108,22 @@ test("rappels : Éric (testeur) n'est jamais inscrit", async () => {
   assert.equal((await env.WOUAF.list({ prefix: "u:" })).keys.length, 1);                 // devenu testeur : plus d'inscription
   assert.equal(before.status, 200);
 });
+
+test("alerte trésor : balade annulée après la trouvaille → alerte pour Éric, qui peut redonner 500 clebsous ou ignorer", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  await api.post("/alert", { walker: "Léa", kind: "hunt", week: "2026-11-9" });
+  await api.post("/alert", { walker: "Léa", kind: "hunt", week: "2026-11-9" });            // doublon ignoré
+  await api.post("/alert", { walker: "Tom", kind: "hunt", week: "2026-11-9" });
+  assert.equal((await api.post("/alert", { walker: "Tom", kind: "autre" })).status, 400);
+  let al = (await api.post("/dash", { token: j.token })).j.alerts;
+  assert.equal(al.length, 2);
+  assert.equal((await api.post("/alert-resolve", { token: "x".repeat(30), id: al[0].id, give: true })).status, 403);
+  assert.equal((await api.post("/alert-resolve", { token: j.token, id: al[0].id, give: true })).status, 200);   // redonner à Léa
+  assert.equal((await api.post("/alert-resolve", { token: j.token, id: al[1].id })).status, 200);               // ignorer Tom
+  assert.equal((await api.post("/dash", { token: j.token })).j.alerts.length, 0);
+  const lea = (await api.get("/adjust?w=Léa")).j.list;
+  assert.equal(lea.length, 1); assert.equal(lea[0].cs, 500);
+  assert.equal((await api.get("/adjust?w=Tom")).j.list.length, 0);
+  assert.equal((await api.post("/alert-resolve", { token: j.token, id: al[0].id })).status, 404);               // déjà traitée
+});

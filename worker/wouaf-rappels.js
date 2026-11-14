@@ -247,7 +247,15 @@ export default {
       if (typeof b.token === "string" && safeEq(a.token, b.token)) return json({ ok:true, token: a.token });
       return json({ error:"taken" }, 403);
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void"){
+    if (path === "/alert"){   // 🚨 un promeneur prévient le superviseur (ex. balade annulée après avoir trouvé le trésor) : visible dans le tableau de bord
+      const w = String(b.walker || "").slice(0, 30), wk = String(b.week || "").slice(0, 12);
+      if (!w || b.kind !== "hunt") return json({ error:"bad" }, 400);
+      const l = (await env.WOUAF.get("alerts", "json")) || [];
+      if (!l.some(a => a.walker === w && a.kind === "hunt" && a.week === wk)) l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), walker: w, kind:"hunt", week: wk, t: Date.now() });
+      await env.WOUAF.put("alerts", JSON.stringify(l.slice(-30)));
+      return json({ ok:true });
+    }
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -257,7 +265,7 @@ export default {
         const l = await env.WOUAF.list({ prefix:"d:" });
         const all = [];
         for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) all.push(d); }
-        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json") });
+        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json"), alerts: (await env.WOUAF.get("alerts", "json")) || [] });
       }
       if (path === "/restore"){   // ♻️ sauvegarde d'un promeneur, pour un nouveau téléphone
         const d = await env.WOUAF.get("b:" + slug(b.walker), "json");
@@ -266,10 +274,21 @@ export default {
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
         const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:"));
-        await env.WOUAF.delete("last");
+        await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts");
         const reset = Date.now();
         await env.WOUAF.put("reset", JSON.stringify(reset));
         return json({ ok:true, reset, deleted: n });
+      }
+      if (path === "/alert-resolve"){   // 🚨 le superviseur ignore l'alerte, ou redonne le trésor (500 clebsous, comme une correction)
+        const l = (await env.WOUAF.get("alerts", "json")) || [], a = l.find(x => x.id === b.id);
+        if (!a) return json({ error:"not found" }, 404);
+        if (b.give){
+          const k = "a:" + slug(a.walker), adj = (await env.WOUAF.get(k, "json")) || [];
+          adj.push({ id: "g" + a.id, cs: 500, why: "Trésor de la semaine redonné par le superviseur", t: Date.now() });
+          await env.WOUAF.put(k, JSON.stringify(adj.slice(-50)));
+        }
+        await env.WOUAF.put("alerts", JSON.stringify(l.filter(x => x.id !== a.id)));
+        return json({ ok:true });
       }
       if (path === "/void"){   // ❌ annuler une balade (id = fin de la balade, en secondes) avec un motif : le téléphone retire les gains
         const w = String(b.walker || "").slice(0, 30), e = Math.round(+b.e || 0);

@@ -240,3 +240,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Tests : `tests/worker.test.mjs` (Node : `node --test tests/worker.test.mjs`, KV simulée) et `tests/e2e.py` (Playwright, vraie page, **vrai code du Worker**
   via `tests/serve-worker.mjs` sur le port 8787, `python3 -m http.server 8000` ; Leaflet remplacé par `tests/leaflet-stub.js`, donc la carte n'est pas testée).
 - À savoir : prévenir Éric de taper son prénom **avant** que les ados ouvrent l'app (sinon l'un d'eux pourrait prendre « Éric »).
+- 🚨 Alerte trésor (décidé le 14/11) : si un promeneur annule sa balade (`cancelWalk`) après avoir trouvé le trésor, personne n'est payé : le téléphone envoie
+  `POST /alert` (KV `alerts`) ; le tableau de bord d'Éric l'affiche avec « Redonner 500 » (`POST /alert-resolve`, ajoute une correction `/adjust` de 500) ou « Ignorer ».
+- Reporté (décidé le 14/11) : libérer le prénom Éric volé ou perdu (`/unclaim` avec `SUPERVISOR_CODE`). Trésor : on garde l'anneau 2–3 km, même endroit pour tous.

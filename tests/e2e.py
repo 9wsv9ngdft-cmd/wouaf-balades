@@ -144,6 +144,14 @@ with sync_playwright() as pw:
     stop_walk(C); close_sheet(C); stop_walk(A); close_sheet(A)
     check("trésor : Tom n'a rien touché en bonus", not game(C).get("bonus", {}).get(mk))
 
+    # ---------- 5b. trésor trouvé puis balade annulée : alerte pour Éric ----------
+    start_walk(B, 10); ev(B, "__wouaf.getGw().hunt = 500"); ev(B, "__wouaf.cancelWalk()"); B.wait_for_timeout(900)
+    ev(A, "__wouaf.openDash({ token: __wouaf.supToken() })"); A.wait_for_timeout(900)
+    check("alerte : Éric voit « Léa a trouvé le trésor puis annulé »", "Léa" in sheet_text(A) and "annulé sa balade" in sheet_text(A), sheet_text(A)[:200])
+    A.locator("[data-al][data-give]").first.click(); A.wait_for_timeout(1200)
+    check("alerte : « Redonner 500 » envoie la correction à Léa et efface l'alerte", "annulé sa balade" not in sheet_text(A) and any(a.get("cs") == 500 for a in json.loads(kv()["a:léa"])))
+    close_sheet(A)
+
     # ---------- 6. remise à zéro ----------
     ev(B, "localStorage.setItem('wouaf-avatar','data:image/jpeg;base64,AAAA')")
     ev(B, "localStorage.setItem('wouaf-envois', JSON.stringify([{walker:'Léa'}]))")
