@@ -289,7 +289,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.120123";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.130220";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1381,7 +1381,7 @@
 
   // ---------- 🔔 Rappels (notifications envoyées par le programme Cloudflare) ----------
   // Rien sur la position n'est envoyé : seulement le prénom, les horaires et quelques compteurs du jeu.
-  const PUSH_API = "";
+  const PUSH_API = "https://wouaf-notifs.6fgbcr2vtp.workers.dev";
   const RAP_KEY = "wouaf-rappels";
   const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9-]/g, "");
   let rap = Object.assign({ id: newId(), on:false, sched: [0,1,2,3,4,5,6].map(i => i === 0 || i === 6 ? ["10:00", "18:00"] : ["07:30", "17:30"]) }, store.get(RAP_KEY, {}));
@@ -2378,8 +2378,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 18;
+  const APP_NUM = 19;
   const NEWS = {
+    19: [
+      "🔔 Rappels : Roxy peut te faire signe le matin et l'après-midi, aux heures que tu choisis pour chaque jour (onglet 🏆 Progrès › Mes rappels).",
+      "Il faut que Wouaf soit sur ton écran d'accueil (Safari › Partager › Sur l'écran d'accueil), puis ouvert depuis l'icône 🐾.",
+      "Pas de rappel du soir si tu as déjà sorti Roxy dans la journée."
+    ],
     18: [
       "⚠️ Malus dès le lundi 16 novembre : jour sans balade d'au moins 15 min avec l'app = −0,20 € (2 jokers par mois).",
       "⏱️ Dès la 3e balade de moins de 15 min dans la semaine : −0,10 € ; semaine de moins de 4 jours de balade : −0,50 €.",
