@@ -294,3 +294,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   dernière page du tuto court : astuce ☰ › 📲.
 - Correctif 14/11 (22 h 30) : intro vue deux fois après la remise à zéro (une mise à jour en attente rechargeait la page en fermant l'écran « tout repart »,
   en plein tuto) → `introRunning` (écran d'accueil + tuto non rejoué) bloque `applyUpdate` et les rechargements de `closeSheet` jusqu'à la fin du tuto.
+- ⚔️ **Arène** sur l'accueil (décidé le 14/11, 22 h 30 : « plus ludique, les enjeux, la compétition ») : `arenaHTML` (carte violette, classes `.arena`, `.atag`, `.bet`)
+  → défi reçu (VS, pulse), duel en cours (face-à-face « Toi a – b X » avec barres, phrase « Tu mènes ! » / « X mène… » / « Égalité… »), défi envoyé, ou
+  « ⚔️ Défier X » (3 adversaires max). À droite, le pari : « 🎲 ± mise 🪙 » (ou « pour la gloire »). En tête des gros lots pendant un duel ou un défi reçu.
+  Éric : arène en aperçu. La ligne importante ne montre plus le duel.

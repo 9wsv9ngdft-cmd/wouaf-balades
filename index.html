@@ -104,6 +104,16 @@
   .lot.gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);transform:translateX(-100%);animation:shine 3.2s ease-in-out infinite}
   @keyframes shine{60%,100%{transform:translateX(100%)}}
   .lot.duel{background:linear-gradient(135deg,#2c3e66,#4b2f6b);color:#fff;border-color:#3b3f6b} .lot.duel small{color:#d8dcf5}
+  .arena{border-radius:20px;padding:14px 16px;color:#fff;background:linear-gradient(135deg,#3b2a78,#6d2f86 55%,#b03a5b);box-shadow:0 10px 26px -14px rgba(60,20,90,.8);text-align:left;width:100%;border:0;display:block}
+  .arena .at{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.85;display:flex;justify-content:space-between}
+  .arena .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:8px 0 4px}
+  .arena .vs b{font-size:15px;display:block} .arena .vs .sc{font-size:34px;font-weight:900;letter-spacing:.02em}
+  .arena .bar{height:8px;border-radius:4px;background:rgba(255,255,255,.2);overflow:hidden;margin-top:4px} .arena .bar i{display:block;height:100%;border-radius:4px}
+  .arena .bet{background:#ffd25e;color:#4a3405;border-radius:999px;padding:3px 10px;font-size:14px;letter-spacing:0;text-transform:none;font-weight:800;opacity:1}
+  .arena .at{align-items:center;gap:8px}
+  .arena .atag{font-size:14px;font-weight:600;margin-top:6px;line-height:1.4}
+  .arena .chal{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px} .arena .chal button{flex:1 1 auto;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);padding:10px 12px;font-weight:700;border-radius:12px}
+  .arena.ping{animation:aping 1.6s ease-in-out infinite} @keyframes aping{50%{box-shadow:0 0 0 6px rgba(176,58,91,.35),0 10px 26px -14px rgba(60,20,90,.8)}}
   .lot.hot{border-color:#e07a3a;box-shadow:0 0 0 2px rgba(224,122,58,.25),0 8px 22px -14px rgba(0,0,0,.35)}
   .dsc{font-size:34px;font-weight:800;text-align:center;margin:6px 0}
   .dfiche{background:var(--sand,#f6f2ea);border-radius:14px;padding:12px 14px;line-height:1.6;font-size:14px}
@@ -508,7 +518,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.222841";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.223319";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2210,7 +2220,7 @@
     for (const ic of order){ pick = ms.find(m => m.ic === ic && !m.done); if (pick) break; }
     if (!pick) pick = ms.find(m => !m.done && m.ic !== "🐕") || ms.find(m => m.ic === "🐕");
     const left = ms.filter(m => !m.done).length;
-    const dl = duelLine();
+    const dl = "";   // le duel est dans l'arène, juste en dessous
     box.innerHTML = (dl ? `<button class="oneline" id="oneLine" style="font-weight:700"><span class="ic">⚔️</span><span>${esc(dl)}</span><span class="more">›</span></button>`
       : pick ? `<button class="oneline" id="oneLine"><span class="ic">${pick.done ? "✅" : pick.ic}</span><span>${esc(pick.t)}</span><span class="more">${left > 1 ? `${left} missions ›` : "›"}</span></button>` : "") + lotsHTML();
     if ($("#oneLine")) $("#oneLine").onclick = dl ? sheetDuels : sheetToday;
@@ -2237,11 +2247,34 @@
     l.push(`<button class="lot${ch > 0 ? " hot" : ""}" data-lot="chest"><span class="li">💰</span><span><b>Coffre surprise${ch > 0 ? " · 🔥 il est chaud !" : ""}</b><small>${ch > 0 ? "Prends des rues que tu n'as pas faites depuis longtemps : il peut sortir à tout moment." : "Caché dans les rues neuves. Sors Roxy souvent (4 jours sur 7) pour qu'il se réveille."}</small></span><span class="lv">${Math.round(CHEST_EUR * CS)} 🪙</span></button>`);
     const rec = store.get("wouaf-record", null);
     l.push(`<button class="lot" data-lot="rec"><span class="li">🏅</span><span><b>Record du mois${rec ? ` : ${fmtMin(rec.min)}` : ""}</b><small>${rec ? `par ${esc(rec.walker)}. Fais une balade plus longue pour le battre !` : "Personne encore : la plus longue balade du mois gagne."}</small></span><span class="lv">+${RECORD_CS} 🪙</span></button>`);
-    if (duelOK() && !(duelData.duels || []).some(d => d.status === "active" || d.status === "pending"))
-      l.push(`<button class="lot duel" data-lot="duel"><span class="li">⚔️</span><span><b>Lance un duel</b><small>Défie un autre promeneur sur 3 ou 7 jours, avec ou sans mise.</small></span><span class="lv">›</span></button>`);
-    return `<div class="lots">${l.join("")}</div>`;
+    const ar = arenaHTML(), live = duelOK() && (myDuel() || myInvite());
+    return `<div class="lots">${live ? ar + l.join("") : l.join("") + ar}</div>`;
+  }
+  // ⚔️ l'Arène : le duel en face-à-face, le défi reçu, ou « Défier X » (Éric : aperçu)
+  function arenaHTML(){
+    if (isTester()) return PUSH_API ? `<button class="arena" data-arena="prev"><div class="at"><span>⚔️ L'arène des duels</span><span>aperçu</span></div><div class="atag">Les ados se défient sur 3 ou 7 jours, avec des clebsous en jeu. Touche pour voir leur écran.</div></button>` : "";
+    if (!duelOK()) return "";
+    const inv = myInvite(), du = myDuel(), sent = mySent();
+    if (inv) return `<button class="arena ping" data-arena="duels"><div class="at"><span>⚔️ Défi reçu ! · ${inv.days} jours</span><span class="bet">${inv.stake ? `🎲 ± ${inv.stake} 🪙` : "🎲 pour la gloire"}</span></div>
+      <div class="vs"><div><b>Toi</b></div><div class="sc">VS</div><div style="text-align:right"><b>${esc(inv.from)}</b></div></div>
+      <div class="atag">${DUEL_TYPE[inv.type]} · ${inv.stake ? `🪙 ${inv.stake} en jeu` : "pour la gloire"} · tu acceptes ? 👀</div></button>`;
+    if (du){
+      const [a, b] = scoreOf(du), op = otherN(du), mx = Math.max(1, a, b), start = isoDayLocal() < du.start;
+      const tag = start ? `Ça commence demain. Prépare-toi ! 💪` : a > b ? `Tu mènes ! Ne lâche rien 🔥` : b > a ? `${esc(op)} mène : une balade et tu reviens ! 😤` : `Égalité : tout se joue maintenant ⚡`;
+      return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ ${DUEL_TYPE[du.type]} · ${leftTxt(du)}</span><span class="bet">${du.stake ? `🎲 ± ${du.stake} 🪙` : "🎲 pour la gloire"}</span></div>
+        <div class="vs"><div><b>Toi</b><div class="bar"><i style="width:${Math.round(100 * a / mx)}%;background:#ffd25e"></i></div></div><div class="sc">${a} – ${b}</div>
+        <div style="text-align:right"><b>${esc(op)}</b><div class="bar"><i style="width:${Math.round(100 * b / mx)}%;background:#c9a7ff;margin-left:auto"></i></div></div></div>
+        <div class="atag">${tag}</div></button>`;
+    }
+    if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${esc(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
+    const pl = (duelData.players || []).slice(0, 3);
+    return `<div class="arena"><div class="at"><span>⚔️ L'arène · 3 ou 7 jours</span><span class="bet">🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
+      <div class="atag">Qui sortira le plus ${DOG} ? Lance un duel, mets des clebsous en jeu, et que le meilleur gagne !</div>
+      <div class="chal">${pl.length ? pl.map(p => `<button data-defy="${esc(p.walker)}">⚔️ Défier ${esc(p.walker)}</button>`).join("") : `<button data-arena="duels">⚔️ Lancer un défi</button>`}</div></div>`;
   }
   function bindLots(){
+    document.querySelectorAll("[data-arena]").forEach(b => b.onclick = e => { e.stopPropagation(); b.dataset.arena === "prev" ? duelPreview() : sheetDuels(); });
+    document.querySelectorAll("[data-defy]").forEach(b => b.onclick = async () => { await loadDuels(); sheetDuelNew({ to: b.dataset.defy }); });
     document.querySelectorAll("[data-lot]").forEach(b => b.onclick = () => {
       const k = b.dataset.lot;
       if (k === "duel") return sheetDuels();
