@@ -131,6 +131,7 @@
   #updBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
   body.walking #updBar{display:none}
   .wbanner{max-width:720px;margin:0 auto 10px;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;font-size:14px}
+  #wbText{white-space:pre-line}
   .wbanner .wbb{display:flex;gap:8px;margin-top:8px}
   .wbanner .wbb button{flex:1;padding:9px 8px;font-size:14px;background:#fff;color:var(--green)}
   .wbanner .wbb button + button{background:rgba(255,255,255,.2);color:#fff}
@@ -171,6 +172,13 @@
   .roxy .a-hat{top:-19px;left:50%;transform:translateX(-50%);font-size:17px}
   .accs .roxy{margin:2px auto 0;border-color:var(--line);box-shadow:none}
   .accs button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;min-width:74px;padding:14px 8px 8px}
+  .phgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .phgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+  .phgrid button{padding:0;background:none;border:0}
+  .phgrid .howto{grid-column:1/-1}
+  .rap{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin:10px 0}
+  .rap input{width:100%;padding:8px;font-size:16px}
+  .rap .h{font-size:12px;color:var(--muted);text-align:center}
   .chest{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,30,22,.82);color:#fff;text-align:center;animation:pop .3s ease-out}
   .chest .ce{font-size:96px;animation:bounce 1s ease-in-out infinite}
   .chest b{font-family:Fraunces,Georgia,serif;font-size:32px;margin-top:10px}
@@ -281,7 +289,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.111305";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.112951";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -918,8 +926,8 @@
     }
     if (!gw.rainChecked){
       gw.rainChecked = true;
-      getJSON(`${METEO}?latitude=${q.lat.toFixed(3)}&longitude=${q.lon.toFixed(3)}&current=precipitation`, 8000)
-        .then(j => { if (gw) gw.rain = (j.current.precipitation || 0) > 0.05; }).catch(() => {});
+      getJSON(`${METEO}?latitude=${q.lat.toFixed(3)}&longitude=${q.lon.toFixed(3)}&current=precipitation&minutely_15=precipitation&forecast_minutely_15=8&models=meteofrance_seamless&timezone=auto`, 8000)
+        .then(j => { if (gw){ gw.rain = (j.current.precipitation || 0) > 0.05; weatherTip(j, gw.rain); } }).catch(() => {});
     }
     let hit = false;
     for (const it of gw.items) if (!it.got && dist(it, q) < 25){ it.got = true; collect(it.k, onNew); hit = true; }
@@ -929,8 +937,38 @@
       if (!gw.treasure && home && dist(home, q) >= 400){ gw.treasure = true; collect("s", onNew); }
     }
   }
+  // 🌤️ créneau météo : combien de temps sans pluie devant soi
+  function weatherTip(j, raining){
+    const off = (j.utc_offset_seconds || 0) * 1000, now = Date.now(), m15 = j.minutely_15 || {};
+    const sl = (m15.time || []).map((t, i) => ({ t: Date.parse(t + "Z") - off, p: (m15.precipitation || [])[i] || 0 })).filter(x => x.t + 15*60000 > now);
+    let msg;
+    if (raining){ const stop = sl.find(x => x.p <= 0.05); msg = `🌧️ Il pleut${stop ? `, accalmie vers ${fmtHour(new Date(stop.t))}` : ""}. Courage, ça compte pour le trophée 🌧️ !`; }
+    else {
+      const next = sl.find(x => x.p > 0.05);
+      msg = next ? `🌦️ Pas de pluie avant ${fmtHour(new Date(next.t))} : ${Math.max(0, Math.round((next.t - now) / 60000))} min devant toi.`
+                 : "☀️ Pas de pluie dans les 2 h : parfait pour une longue balade (ça rapporte plus) !";
+    }
+    if (!$("#walkBanner").hidden && !$("#walkBanner").classList.contains("home")) $("#wbText").textContent += "\n" + msg;
+    else toast(msg, 6000);
+  }
   const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
   const dayKey = t => { const x = new Date(t - 4*3600000); return x.getFullYear() + "-" + (x.getMonth()+1) + "-" + x.getDate(); };   // la journée commence à 4 h
+  // semaine du lundi au dimanche
+  const weekStart = t => { const d = new Date(t - 4*3600000); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d; };
+  const weekKey = t => dayKey(weekStart(t).getTime() + 5*3600000);
+
+  // 🎯 Défi du jour : le même pour tout le monde, il change chaque jour
+  const DEFI_PTS = 15;
+  const DEFIS = [
+    { t:"Une balade d'au moins 30 min",       ok: x => x.min >= 30 },
+    { t:"Découvre 5 coins jamais explorés",   ok: x => x.cells >= 5 },
+    { t:"Ramasse 6 objets",                   ok: x => x.n >= 6 },
+    { t:"Fais au moins 2 km",                 ok: x => x.m >= 2000 },
+    { t:"Trouve 2 balles 🎾",                 ok: x => x.got.t >= 2 },
+    { t:"Reviens à ton point de départ",      ok: x => x.home },
+    { t:"Trouve le trésor ⭐",                ok: x => x.got.s >= 1 }
+  ];
+  const defiOf = t => { const d = new Date(t - 4*3600000); const n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); return DEFIS[(n * 3) % DEFIS.length]; };
   function finishGame(elapsedMin, cameHome, meters, startTs, home){
     if (!gw) return null;
     ensureGame();
@@ -964,7 +1002,12 @@
     }
     res.streakN = game.streak.n;
     st.bestStreak = Math.max(st.bestStreak, game.streak.n);
-    res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak;
+    // 🎯 défi du jour (une fois par jour)
+    const df = defiOf(Date.now());
+    if (game.defiDone !== today && df.ok({ min: elapsedMin, cells: res.cells, n: Object.values(res.got).reduce((a, b) => a + b, 0), m: meters || 0, got: res.got, home: cameHome })){
+      game.defiDone = today; res.defi = df.t;
+    }
+    res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak + (res.defi ? DEFI_PTS : 0);
     game.pts += res.total; game.total += res.total;
     const li = levelIndex(game.total);
     if (li > game.levelSeen){ game.levelSeen = li; res.levelUp = LEVELS[li][1]; }
@@ -1069,11 +1112,24 @@
   }
   const levelIndex = t => { let i = 0; LEVELS.forEach((x, j) => { if (t >= x[0]) i = j; }); return i; };
   // chances de coffre : 0 pendant 10 jours après le dernier (le premier dès 5 jours d'utilisation), puis de plus en plus
-  function chestChance(){
+  // moment à partir duquel un coffre redevient possible (« coffre chaud »)
+  function chestFrom(){
     ensureGame();
     const last = game.chests.length ? new Date(game.chests[game.chests.length - 1]).getTime() : game.firstUse - 5*86400000;
-    const d = (Date.now() - last) / 86400000 - CHEST_GAP_DAYS;
+    return last + CHEST_GAP_DAYS * 86400000;
+  }
+  function chestChance(){
+    const d = (Date.now() - chestFrom()) / 86400000;
     return d < 0 ? 0 : Math.min(0.2, 0.05 + 0.015 * d);
+  }
+  // les petites phrases qui donnent envie : série en danger, coffre chaud, défi du jour
+  function motivLines(){
+    ensureGame();
+    const l = [], today = dayKey(Date.now());
+    if ((game.streak.n || 0) >= 2 && game.streak.day === dayKey(Date.now() - DAYMS)) l.push(`🔥 Série de ${game.streak.n} jours : 15 min aujourd'hui pour la garder !`);
+    if (chestChance() > 0) l.push("💰 Le coffre est chaud : prends une rue jamais faite !");
+    l.push(game.defiDone === today ? "🎯 Défi du jour réussi ✓" : `🎯 Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} pts)`);
+    return l;
   }
   function showChest(){
     const el = document.createElement("div");
@@ -1181,7 +1237,12 @@
     const daysLeft = Math.max(0, Math.ceil((new Date(sea.end) - Date.now()) / 86400000));
     const me = snapshot(), others = store.get(OTHERS_KEY, {});
     const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">🏅 ${g.t}</div></div>`;
-    $("#v-prog").innerHTML = `<div class="wallet">
+    $("#v-prog").innerHTML = `<div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
+        <div style="font-weight:600">Aujourd'hui</div>
+        <div style="font-size:14px;margin-top:4px;line-height:1.6">${motivLines().map(esc).join("<br>")}</div>
+        ${PUSH_API ? `<button class="ghost" id="rapBtn" style="margin-top:10px;width:100%">🔔 Mes rappels${rap.on ? " (activés)" : ""}</button>` : ""}
+      </div>
+      <div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
         <div class="big" style="font-size:30px">${lv.name}</div>
         <div class="bar"><i style="width:${lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100}%"></i></div>
@@ -1199,6 +1260,8 @@
       </div>
       <div class="flabel">🏆 Trophées · ${Object.keys(game.trophies).length} / ${TROPHIES.length}</div>
       <div class="tro">${TROPHIES.map(t => `<div class="${game.trophies[t.id] ? "" : "off"}"><b>${t.icon}</b>${esc(t.name)}${t.gift ? " 🎁" : ""}</div>`).join("")}</div>
+      <div class="flabel">📸 Album photo de ${DOG}</div>
+      <div class="phgrid" id="phGrid"><p class="howto">Touche 📷 pendant une balade : tes photos de ${DOG} se rangent ici.</p></div>
       <div class="flabel">🎨 ${DOG} sur la carte</div>
       <div class="accs">${ACCS.map(([e, n, need]) => { const on = game.acc.includes(e), locked = game.total < need; return `<button data-acc="${e}" class="${on ? "on" : ""}"${locked ? " disabled" : ""} aria-pressed="${on}" aria-label="${esc(n)}${locked ? `, se débloque à ${need} points` : on ? ", porté" : ""}">${roxyHTML([e])}<span>${locked ? `🔒 ${need} pts` : esc(n)}</span></button>`; }).join("")}</div>
       <div class="howto" style="margin-top:6px">Touche un accessoire pour le mettre ou l'enlever à ${DOG} (tu peux en porter plusieurs). Nouveaux accessoires à 200, 600, 1 200, 2 500 et 5 000 points.</div>
@@ -1206,6 +1269,8 @@
       <div class="props others">${lineOf(profile.walker || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(n, g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
       <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>`;
     $("#fogBtn").onclick = toggleFog;
+    if ($("#rapBtn")) $("#rapBtn").onclick = openRappels;
+    fillGallery();
     document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => {
       const e = b.dataset.acc;
       if (game.acc.includes(e)) game.acc = game.acc.filter(x => x !== e);
@@ -1214,6 +1279,172 @@
       if (youMarker) youMarker.setIcon(youIcon());
       renderProg();
     });
+  }
+
+
+  // ---------- 📸 Album photo de Roxy (sur ce téléphone) ----------
+  const PH_MAX = 60;
+  function phDb(){
+    return new Promise((ok, ko) => {
+      const r = indexedDB.open("wouaf-photos", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("p", { keyPath:"t" });
+      r.onsuccess = () => ok(r.result); r.onerror = () => ko(r.error);
+    });
+  }
+  async function phTx(mode, fn){
+    const db = await phDb();
+    return new Promise((ok, ko) => {
+      const tx = db.transaction("p", mode), req = fn(tx.objectStore("p"));
+      tx.oncomplete = () => ok(req && req.result); tx.onerror = () => ko(tx.error);
+    });
+  }
+  // photo réduite (~800 px) pour ne pas encombrer le téléphone
+  function shrink(file){
+    return new Promise((ok, ko) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, 800 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+        c.toBlob(b => b ? ok(b) : ko(new Error("photo")), "image/jpeg", 0.8);
+      };
+      img.onerror = () => { URL.revokeObjectURL(u); ko(new Error("photo")); };
+      img.src = u;
+    });
+  }
+  async function savePhoto(file){
+    const b = await shrink(file);
+    await phTx("readwrite", st => st.put({ t: Date.now(), w: profile.walker || "", b }));
+    const keys = await phTx("readonly", st => st.getAllKeys());
+    if (keys.length > PH_MAX) await phTx("readwrite", st => { for (const k of keys.slice(0, keys.length - PH_MAX)) st.delete(k); });
+  }
+  async function fillGallery(){
+    const box = $("#phGrid"); if (!box) return;
+    let all = [];
+    try{ all = (await phTx("readonly", st => st.getAll())) || []; }catch(e){ return; }
+    if (!all.length) return;
+    all.reverse();
+    box.innerHTML = all.map(x => `<button data-ph="${x.t}" aria-label="Photo du ${new Date(x.t).toLocaleDateString("fr-FR")}"><img alt="" src="${URL.createObjectURL(x.b)}"></button>`).join("");
+    box.querySelectorAll("[data-ph]").forEach(btn => btn.onclick = () => {
+      const x = all.find(y => y.t === +btn.dataset.ph); if (!x) return;
+      openSheet(`<img alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(x.b)}" style="width:100%;border-radius:12px">
+        <p>${new Date(x.t).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}${x.w ? " · par " + esc(x.w) : ""}</p>
+        <div class="btns"><button id="phShare">📤 Partager</button><button class="ghost" id="phDel">🗑️ Supprimer</button><button class="ghost" id="phClose">Fermer</button></div>`);
+      $("#phClose").onclick = closeSheet;
+      $("#phShare").onclick = async () => {
+        const f = new File([x.b], `${DOG}-${x.t}.jpg`, { type:"image/jpeg" });
+        try{ if (navigator.canShare && navigator.canShare({ files:[f] })) await navigator.share({ files:[f] }); }catch(e){}
+      };
+      $("#phDel").onclick = async () => { await phTx("readwrite", st => st.delete(x.t)); closeSheet(); renderProg(); };
+    });
+  }
+
+  // ---------- 🏅 Récap de la semaine (à la première ouverture d'une nouvelle semaine) ----------
+  function weekStats(t){
+    const a = weekStart(t).getTime(), ws = walksBetween(a, a + 7*DAYMS);
+    return { k: weekKey(t), n: ws.length, min: Math.round(ws.reduce((n, e) => n + e.min, 0)), m: ws.reduce((n, e) => n + e.m, 0),
+             eur: Math.round(ws.reduce((n, e) => n + ((e.recap && e.recap.eu) || 0), 0) * 100) / 100 };
+  }
+  function offerWeek(){
+    const k = weekKey(Date.now());
+    if (game.weekSeen === k) return;
+    if (!game.weekSeen){ game.weekSeen = k; saveGame(); return; }   // première utilisation : rien à résumer
+    if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return;
+    const w = weekStats(weekStart(Date.now()).getTime() - DAYMS);
+    game.weekSeen = k;
+    if (!w.n){ saveGame(); return; }
+    const best = game.bestWeek || 0, rec = w.min > best;
+    if (rec) game.bestWeek = w.min;
+    saveGame();
+    openSheet(`<h2>🏅 Ta semaine avec ${DOG}</h2>
+      <div class="rgrid">
+        <div><b>${w.n}</b><span>balade${w.n > 1 ? "s" : ""}</span></div>
+        <div><b>${fmtMin(w.min)}</b><span>de balade</span></div>
+        <div><b>${fmtKm(w.m)}</b><span>parcourus</span></div>
+        <div><b>${fmtEur(w.eur)}</b><span>dans la tirelire</span></div>
+      </div>
+      ${rec && best ? `<div class="party">🏆 <b>Record battu !</b> Ta meilleure semaine (avant : ${fmtMin(best)}).</div>` : best ? `<p>Ton record : ${fmtMin(best)} sur une semaine.</p>` : ""}
+      <p>Nouvelle semaine, nouveau défi chaque jour 🎯</p>
+      <div class="btns"><button id="weekOk">C'est parti !</button></div>`);
+    $("#weekOk").onclick = closeSheet;
+  }
+
+  // ---------- 🔔 Rappels (notifications envoyées par le programme Cloudflare) ----------
+  // Rien sur la position n'est envoyé : seulement le prénom, les horaires et quelques compteurs du jeu.
+  const PUSH_API = "";
+  const RAP_KEY = "wouaf-rappels";
+  const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9-]/g, "");
+  let rap = Object.assign({ id: newId(), on:false, sched: [0,1,2,3,4,5,6].map(i => i === 0 || i === 6 ? ["10:00", "18:00"] : ["07:30", "17:30"]) }, store.get(RAP_KEY, {}));
+  store.set(RAP_KEY, rap);
+  const isHomeScreen = () => !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
+  const b64ToBytes = s => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
+  const bytesTo64 = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  function pushStateData(){
+    ensureGame();
+    const defis = {};
+    for (let i = 0; i < 8; i++){ const t = Date.now() + i * DAYMS; defis[dayKey(t)] = defiOf(t).t; }
+    const w = weekStats(Date.now());
+    return { sn: game.streak.n || 0, sd: game.streak.day || "", hot: chestFrom(), defis, wk: { k: w.k, n: w.n, min: w.min, eur: w.eur } };
+  }
+  const api = (path, body) => fetch(PUSH_API.replace(/\/$/, "") + path, { method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined, headers: body ? { "Content-Type":"text/plain" } : {} });
+  async function subscribePush(){
+    const reg = await navigator.serviceWorker.register("sw.js");
+    await navigator.serviceWorker.ready;
+    const key = (await (await api("/key")).json()).key;
+    let sub = await reg.pushManager.getSubscription();
+    try{ if (sub && sub.options && sub.options.applicationServerKey && bytesTo64(sub.options.applicationServerKey) !== key){ await sub.unsubscribe(); sub = null; } }catch(e){}
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: b64ToBytes(key) });
+    const r = await api("/register", { id: rap.id, sub: sub.toJSON(), sched: rap.sched, walker: profile.walker || "", state: pushStateData() });
+    if (!r.ok) throw new Error("register " + r.status);
+  }
+  let lastPush = 0;
+  async function pushState(force){
+    if (!PUSH_API || !rap.on || (!force && Date.now() - lastPush < 3600000)) return;
+    lastPush = Date.now();
+    try{
+      const r = await api("/state", { id: rap.id, walker: profile.walker || "", state: pushStateData() });
+      if (r.status === 404 && Notification.permission === "granted") await subscribePush();   // le programme a oublié ce téléphone : on se réinscrit
+    }catch(e){}
+  }
+  function openRappels(){
+    const days = [1, 2, 3, 4, 5, 6, 0], names = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    let body;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !window.Notification){
+      body = isHomeScreen() ? `<p>Ce téléphone ne permet pas les rappels (il faut iOS 16.4 ou plus récent).</p>`
+        : `<p>Pour recevoir les rappels, ajoute d'abord Wouaf sur ton écran d'accueil :</p>
+           <ol class="news"><li>Dans Safari, touche le bouton <b>Partager</b> (carré avec une flèche).</li><li>Choisis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvre Wouaf depuis la nouvelle icône 🐾 et reviens ici.</li></ol>`;
+      openSheet(`<h2>🔔 Mes rappels</h2>${body}<div class="btns"><button id="rapClose">OK</button></div>`);
+      $("#rapClose").onclick = closeSheet; return;
+    }
+    openSheet(`<h2>🔔 Mes rappels</h2>
+      <p>Choisis à quelle heure ${DOG} te fait signe, le matin et l'après-midi. Laisse vide pour ne rien recevoir. Pas de rappel du soir si tu l'as déjà sortie dans la journée.</p>
+      <div class="rap"><span></span><span class="h">Matin</span><span class="h">Après-midi / soir</span>
+        ${days.map(d => `<b>${names[d]}</b><input type="time" data-d="${d}" data-s="0" value="${rap.sched[d][0]}" aria-label="${names[d]} matin"><input type="time" data-d="${d}" data-s="1" value="${rap.sched[d][1]}" aria-label="${names[d]} soir">`).join("")}
+      </div>
+      <div class="btns"><button id="rapOn">${rap.on ? "Enregistrer" : "🔔 Activer les rappels"}</button>
+        ${rap.on ? `<button class="ghost" id="rapTest">Envoyer un essai</button><button class="ghost" id="rapOff">Couper les rappels</button>` : ""}
+        <button class="ghost" id="rapClose">Fermer</button></div><p id="rapMsg" role="status"></p>`);
+    const msg = t => { $("#rapMsg").textContent = t; };
+    const read = () => document.querySelectorAll(".rap input").forEach(i => { rap.sched[+i.dataset.d][+i.dataset.s] = i.value || ""; });
+    $("#rapClose").onclick = closeSheet;
+    $("#rapOn").onclick = async () => {
+      read();
+      const perm = await Notification.requestPermission();   // doit venir directement du toucher
+      if (perm !== "granted"){ msg("Les notifications sont refusées. Réglages › Notifications › Wouaf pour les autoriser."); return; }
+      msg("Un instant…");
+      try{ await subscribePush(); rap.on = true; store.set(RAP_KEY, rap); msg("✓ C'est enregistré ! " + DOG + " te fera signe aux heures choisies."); lastPush = Date.now(); }
+      catch(e){ msg("Ça n'a pas marché, réessaie dans un moment (connexion ?)."); }
+    };
+    if ($("#rapTest")) $("#rapTest").onclick = async () => {
+      msg("Envoi…");
+      try{ const j = await (await api("/test", { id: rap.id })).json(); msg(j.ok ? "✓ Essai envoyé : la notification arrive dans quelques secondes." : "L'essai n'est pas passé. Touche « Enregistrer » puis réessaie."); }
+      catch(e){ msg("Pas de connexion pour l'instant."); }
+    };
+    if ($("#rapOff")) $("#rapOff").onclick = async () => {
+      try{ await api("/unregister", { id: rap.id }); }catch(e){}
+      try{ const reg = await navigator.serviceWorker.getRegistration(); const sub = reg && await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); }catch(e){}
+      rap.on = false; store.set(RAP_KEY, rap); closeSheet(); if (state.tab === "prog") renderProg();
+    };
   }
 
   // ---------- Pendant la balade ----------
@@ -1308,7 +1539,7 @@
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
     trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
     if (free && !resume){
-      showBanner("start", "🐾 Balade libre lancée depuis ici.",
+      showBanner("start", ["🐾 Balade libre lancée depuis ici."].concat(motivLines()).join("\n"),
         { label:"🗺️ Choisir un parcours", fn: chooseRoute },
         { label:"✕ Pas de balade", fn: cancelWalk });
       bannerTimer = setTimeout(hideBanner, 120000);
@@ -1422,6 +1653,7 @@
     const f = e.target.files && e.target.files[0]; e.target.value = "";
     if (!f) return;
     photos.push(f); if (photos.length > 3) photos.shift();
+    savePhoto(f).catch(() => {});
     $("#photoBtn").textContent = `📷 ${photos.length}`;
   });
 
@@ -1552,7 +1784,7 @@
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 💶 +${fmtEur(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${r.cb} €` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 💶 +${fmtEur(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${r.cb} €` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
   async function shareRecap(r, files){
@@ -1575,7 +1807,7 @@
     const got = Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ");
     const lv = levelOf(game.total);
     return `<div class="gamebox">🏅 <b>+${res.total} points</b>
-      <small>${got || "Aucun objet"} · 🗺️ ${res.cells} coin${res.cells > 1 ? "s" : ""} neuf${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +2" : ""}${res.streak ? ` · 🔥 ${res.streakN} jours +1` : ""}<br>
+      <small>${got || "Aucun objet"} · 🗺️ ${res.cells} coin${res.cells > 1 ? "s" : ""} neuf${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +2" : ""}${res.streak ? ` · 🔥 ${res.streakN} jours +1` : ""}${res.defi ? ` · 🎯 défi +${DEFI_PTS}` : ""}<br>
       Total : ${game.pts} pts · ${lv.name}</small></div>`;
   }
 
@@ -1583,6 +1815,7 @@
     if (!res) return "";
     const l = [];
     if (res.chest) l.push(`💰 <b>Coffre trouvé : +${res.chest} € en bonus !</b>`);
+    if (res.defi) l.push(`🎯 <b>Défi du jour réussi : ${esc(res.defi)}</b> (+${DEFI_PTS} pts)`);
     if (res.levelUp) l.push(`🎉 <b>Nouveau niveau : ${esc(res.levelUp)} !</b> 🎁 Récompense à choisir avec le superviseur.`);
     if (res.album) l.push(`📖 <b>Album ${esc(res.album)} complet !</b> 🎁 Récompense de saison à choisir avec le superviseur.`);
     for (const t of res.trophies) l.push(`🏆 <b>Trophée : ${t.icon} ${esc(t.name)}</b>${t.gift ? " · 🎁 récompense à choisir avec le superviseur" : ""}`);
@@ -1634,6 +1867,7 @@
     if (res && res.chest) r.cb = res.chest;
     if (res && res.levelUp) r.lu = res.levelUp;
     if (res && res.album) r.al = 1;
+    if (res && res.defi) r.df = 1;
     if (res && res.trophies.length) r.tro = res.trophies.map(t => t.icon + " " + t.name);
     r.g = snapshot();
     // argent : selon la durée, mais pas plus que la distance réellement marchée ne le permet (≥ 1,8 km/h en moyenne)
@@ -1645,6 +1879,7 @@
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
     showRecapSheet(r, photos.slice(), titleOf(p), res, moneyMin);
+    pushState(true);
   }
   $("#stop").addEventListener("click", stopWalk);
 
@@ -1977,8 +2212,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 16;
+  const APP_NUM = 17;
   const NEWS = {
+    17: [
+      "🎯 Un défi du jour (+15 pts) et 🔥 le coffre « chaud » : affichés au départ de la balade et dans l'onglet Progrès.",
+      "🌤️ Au départ, l'app te dit combien de temps tu as avant la pluie.",
+      "📸 Tes photos de Roxy se rangent dans un album (onglet Progrès), et chaque lundi le récap de ta semaine 🏅."
+    ],
     16: [
       "📖 L'album dure maintenant 2 mois au lieu de 3 : 🦴 80 · 🎾 45 · 🍖 30 · ⭐ 25 à trouver pour la 🎁.",
       "La saison en cours (novembre–décembre) repart avec un objectif adapté aux jours qui restent."
@@ -2031,6 +2271,8 @@
   }
   setTimeout(showNews, 800);
   setTimeout(offerBilan, 2500);
+  setTimeout(offerWeek, 3500);
+  setTimeout(() => pushState(false), 5000);
 
   // ---------- Au lancement ----------
   // 1) lien de récap → page du superviseur ; 2) balade interrompue → reprise ;
@@ -2055,7 +2297,7 @@
     startWalk(FREE());
   });
 
-  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
+  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap };
 })();
 </script>
 </body>

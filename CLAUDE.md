@@ -52,3 +52,20 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 
 ## Méthode de travail
 - On discute d'abord avec l'utilisateur, puis une seule série de modifications une fois validé. Toujours au plus simple.
+
+## Motivation (version 17)
+- 🎯 Défi du jour (`DEFIS`, `defiOf` : même défi pour tous, change chaque jour) : +15 pts une fois par jour (`game.defiDone`), balade ≥ 15 min.
+- `motivLines()` : série en danger (série ≥ 2 et dernière balade hier), 🔥 coffre chaud (`chestFrom()` passé), défi ; dans la bannière
+  de départ et en haut de l'onglet Progrès.
+- 🌤️ Créneau météo au 1er point GPS (`weatherTip`, Open-Meteo minutely_15).
+- 📸 Album photo : base IndexedDB `wouaf-photos` (photos réduites ~800 px, 60 max), galerie dans Progrès.
+- 🏅 Récap de la semaine (lundi–dimanche) à la 1re ouverture d'une nouvelle semaine (`game.weekSeen`, record `game.bestWeek`).
+
+## Rappels (notifications)
+- Programme Cloudflare : `worker/wouaf-rappels.js` (collé à la main par l'utilisateur dans son Worker « wouaf-rappels »,
+  base KV liée sous `WOUAF`, Cron `*/15 * * * *`). Clés VAPID créées par le Worker (KV `vapid`), `GET /key`,
+  `POST /register | /state | /test | /unregister` ; abonnés `u:<id>`, envois déjà faits `s:<id>`. Heure de Paris.
+- App : `PUSH_API` (URL du Worker ; vide = carte des rappels cachée), `sw.js` (push + clic seulement, pas de cache),
+  clé `wouaf-rappels` (id, on, horaires matin/soir par jour, index = getDay()). Il faut l'app sur l'écran d'accueil (iOS 16.4+).
+- **Jamais de position envoyée** : seulement prénom, horaires, série, coffre chaud, défis des 8 jours, résumé de la semaine.
+- Messages : pas de rappel si déjà sortie aujourd'hui ; soir = série en danger en priorité ; dimanche soir = résumé de la semaine.
