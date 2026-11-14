@@ -51,6 +51,30 @@
   #status.err{color:var(--warn)}
   body:not(.hasmap):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
+  .hero{display:flex;align-items:center;gap:12px}
+  .heroDog .roxy{width:58px;height:58px;font-size:34px;border-width:3px;border-color:var(--accent);animation:wag 2.4s ease-in-out infinite}
+  .heroDog .roxy .a-bow{top:-8px;left:-6px;font-size:22px} .heroDog .roxy .a-scarf{bottom:-14px;font-size:22px}
+  .heroDog .roxy .a-glasses{top:13px;left:7px;font-size:19px} .heroDog .roxy .a-hat{top:-27px;font-size:26px}
+  @keyframes wag{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  .heroTxt{flex:1;min-width:0} .hero .hi{font-family:Fraunces,Georgia,serif;font-size:21px;font-weight:700;line-height:1.15} .hero .sub{color:var(--muted);font-size:14px}
+  .seg.durs button{padding:13px 2px;font-size:15px}
+  button.go{margin-top:12px;display:flex;flex-direction:column;align-items:center;gap:2px;background:linear-gradient(135deg,#2f5d3a,#4c8a5a);box-shadow:0 8px 18px -8px rgba(47,93,58,.7);font-size:19px;padding:16px}
+  button.go small{font-size:13px;font-weight:500;opacity:.92}
+  #envies{display:none} body.hasmap #envies{display:block}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .tiles button{border:0;border-radius:16px;padding:12px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:2px;font:inherit;min-height:96px;box-shadow:0 6px 14px -8px rgba(0,0,0,.45)}
+  .tiles small{font-size:11px;opacity:.9;text-transform:uppercase;letter-spacing:.04em} .tiles b{font-size:19px;line-height:1.15} .tiles span{font-size:12px;opacity:.92}
+  .tiles .t1{background:linear-gradient(135deg,#d9792b,#e9a23b)} .tiles .t2{background:linear-gradient(135deg,#c8452f,#e0703a)} .tiles .t3{background:linear-gradient(135deg,#2f5d3a,#5b9b6a)}
+  .tbar{height:6px;border-radius:3px;background:rgba(255,255,255,.35);margin-top:auto;overflow:hidden} .tbar i{display:block;height:100%;background:#fff}
+  .missions{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 12px}
+  .missions .m{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .missions .m:last-child{border-bottom:0} .missions .m .ic{width:34px;height:34px;flex:none;border-radius:10px;background:#f3ecdf;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .missions .m.done{color:var(--muted)} .missions .m.done .ic{background:#e3efe2} .missions .m .ok{margin-left:auto;font-weight:700;color:var(--green-2)}
+  .homefoot{font-size:13px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
+  .dots{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
+  .dots div{text-align:center;font-size:20px;background:#f6f2ea;border-radius:10px;padding:6px 0} .dots small{display:block;font-size:10px;color:var(--muted)}
+  .bigdog{display:flex;justify-content:center;margin:8px 0 18px} .bigdog .roxy{width:84px;height:84px;font-size:50px;border-color:var(--accent)}
+  .bigdog .roxy .a-bow{top:-10px;left:-6px;font-size:30px} .bigdog .roxy .a-scarf{bottom:-18px;font-size:30px} .bigdog .roxy .a-glasses{top:20px;left:12px;font-size:26px} .bigdog .roxy .a-hat{top:-38px;font-size:36px}
   body.walking #home,body.recap #home,body.choosing #home{display:none}
   .homecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
   .homecard .hrow{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
@@ -226,17 +250,22 @@
 <main class="wrap">
   <div id="recapbox"></div>
   <div class="panel">
-    <div class="who"><span id="whoText"></span><button class="linkish" id="editWho">Modifier</button></div>
-    <button id="freeWalk" class="big">▶️ C'est parti avec Roxy <span style="font-weight:500;font-size:14px">(balade libre)</span></button>
-    <button id="locate" class="big ghost" style="margin-top:8px">🗺️ Proposer des parcours</button>
+    <div class="hero">
+      <div class="heroDog" id="heroDog" aria-hidden="true"></div>
+      <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div></div>
+      <button class="linkish" id="editWho">changer</button>
+    </div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
-    <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
+    <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
       <button data-v="15" aria-label="15 minutes, balade express">⚡ 15</button>
       <button data-v="30">30 min</button>
       <button data-v="45">45 min</button>
       <button data-v="60">1 h</button>
       <button data-v="90">1 h 30</button>
     </div>
+    <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><small id="goGain"></small></button>
+    <button id="locate" class="ghost" style="margin-top:8px;width:100%">🗺️ Proposer des parcours</button>
+    <div id="envies">
     <div class="flabel" id="catLabel">Envie de…</div>
     <div class="chips" id="filters" role="group" aria-labelledby="catLabel">
       <button data-c="all" class="on">Tout</button>
@@ -246,11 +275,11 @@
       <button data-c="dog">🐕 Parc à chiens</button>
       <button data-c="discover">🏘️ Découverte</button>
     </div>
+    </div>
   </div>
-
   <div id="home"></div>
   <div id="meteo" aria-live="polite"></div>
-  <div id="status" aria-live="polite">Touchez « C'est parti » pour une balade libre, ou « Proposer des parcours » pour des idées autour de vous.</div>
+  <div id="status" aria-live="polite"></div>
   <div id="map"></div>
 
   <div class="tabs" role="tablist">
@@ -301,7 +330,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.132710";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.133354";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -814,8 +843,10 @@
   let profile = store.get("wouaf-profil", { walker:"" });
   profile.dog = DOG;
   function renderWho(){
-    $("#whoText").textContent = profile.walker ? `👤 ${profile.walker} · 🐕 ${DOG}` : `🐕 ${DOG} · Qui la promène ?`;
-    $("#editWho").textContent = profile.walker ? "Changer" : "Renseigner";
+    $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
+    $("#heroSub").textContent = profile.walker ? `${DOG} t'attend !` : "Touche « renseigner » pour mettre ton prénom";
+    $("#editWho").textContent = profile.walker ? "changer" : "renseigner";
+    try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
   }
   function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
   function closeSheet(){ $("#modal").classList.remove("open"); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); }
@@ -1633,23 +1664,81 @@
 
 
   // ---------- Écran d'accueil : où j'en suis ----------
+  function missions(){
+    ensureGame();
+    const today = dayKey(Date.now()), l = [];
+    if (paused(dIso(Date.now()))) return [{ ic:"🏖️", t:"Pause décidée par le superviseur : pas de malus en ce moment (les balades rapportent toujours 🪙)", done:false }];
+    const walked = game.streak.day === today;
+    l.push({ ic:"🐕", t: walked ? `${DOG} est sortie aujourd'hui, bravo !` : `Sortir ${DOG} : 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))}`, done: walked });
+    l.push({ ic:"🎯", t: `Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} 🪙)`, done: game.defiDone === today });
+    const n = game.streak.n || 0;
+    if (n >= 1 && !walked && streakAlive(game.streak.day)) l.push({ ic:"🔥", t:`Garder ta série de ${n} jour${n > 1 ? "s" : ""}`, done:false });
+    if (chestChance() > 0) l.push({ ic:"💰", t:"Le coffre est chaud : prends des rues que tu n'as pas faites depuis longtemps", done:false });
+    return l;
+  }
   function renderHome(){
     const box = $("#home"); if (!box) return;
-    ensureGame();
+    ensureGame(); renderWho();
     const lv = levelOf(game.total), n = game.streak.n || 0;
     const alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
+    const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
     const others = Object.entries(store.get(OTHERS_KEY, {})).filter(([w]) => w !== profile.walker);
-    box.innerHTML = `<div class="homecard">
-        <div class="hrow">
-          <button data-go="shop"><small>Tirelire de ${monthName(Date.now())}</small><b>🪙 ${fmtCs(moneyThisMonth())}</b><span>ce mois-ci</span></button>
-          <button data-go="prog"><small>Série</small><b>🔥 ${alive ? n : 0} jour${alive && n > 1 ? "s" : ""}</b><span>${alive ? "continue !" : "à lancer"}</span></button>
-          <button data-go="prog"><small>Niveau</small><b>${esc(lv.name.split(" ")[0])} ${esc(lv.name.split(" ")[1] || "")}</b><span>niveau de ${DOG}</span></button>
-        </div>
-        <div class="hl">${motivLines().map(esc).join("<br>")}</div>
-        <div class="ho">🐾 Promène ${DOG}, change de rues (celles pas faites depuis ${FRESH_DAYS} jours rapportent plus), ramasse les bonus cachés sur la carte : tout se transforme en 🪙 clebsous. À la fin du mois, tes clebsous deviennent de vrais sous 💶.</div>
-        ${others.length ? `<div class="ho">👀 ${others.map(([w, g]) => `${esc(w)} : ${LEVELS[g.l] ? esc(LEVELS[g.l][1]) : ""}`).join(" · ")}</div>` : ""}
-      </div>`;
-    box.querySelectorAll("[data-go]").forEach(b => b.onclick = () => switchTab(b.dataset.go));
+    box.innerHTML = `<div class="tiles">
+        <button class="t1" id="tMoney"><small>Tirelire</small><b>🪙 ${Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR")}</b><span>clebsous en ${monthName(Date.now())}</span></button>
+        <button class="t2" id="tStreak"><small>Série</small><b>🔥 ${alive ? n : 0}</b><span>${alive ? `jour${n > 1 ? "s" : ""} d'affilée` : "à lancer aujourd'hui"}</span></button>
+        <button class="t3" id="tRoxy"><small>${DOG}</small><b>${esc(lv.name.split(" ")[0])} ${esc(lv.name.split(" ").slice(1).join(" "))}</b><div class="tbar"><i style="width:${pct}%"></i></div></button>
+      </div>
+      <div class="missions"><div class="flabel" style="margin:8px 0 2px">Aujourd'hui</div>${missions().map(m => `<div class="m${m.done ? " done" : ""}"><div class="ic">${m.ic}</div><div>${esc(m.t)}</div>${m.done ? '<span class="ok">✓</span>' : ""}</div>`).join("")}</div>
+      <div class="homefoot">${others.length ? `👀 ${others.map(([w, g]) => `${esc(w)} : ${LEVELS[g.l] ? esc(LEVELS[g.l][1]) : ""}`).join(" · ")}<br>` : ""}🐾 Change de rues, ramasse les bonus cachés sur la carte : tout se transforme en 🪙 clebsous, et à la fin du mois tes clebsous deviennent de vrais sous 💶.</div>`;
+    $("#tMoney").onclick = sheetMoney; $("#tStreak").onclick = sheetStreak; $("#tRoxy").onclick = sheetRoxy;
+  }
+  function sheetMoney(){
+    const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    const ws = walksBetween(m0, Date.now() + 1);
+    openSheet(`<h2>🪙 Tirelire de ${monthName(Date.now())}</h2>
+      <div class="rgrid"><div><b>${fmtCs(moneyThisMonth())}</b><span>ce mois-ci</span></div><div><b>${ws.length}</b><span>balade${ws.length > 1 ? "s" : ""}</span></div>
+        <div><b>${fmtCs(monthPace())}</b><span>rythme pour la fin du mois</span></div><div><b>${fmtCs(bonusThisMonth())}</b><span>de coffres 💰</span></div></div>
+      ${ws.length ? `<div class="props" style="margin-top:10px">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : `<p>Pas encore de balade ce mois-ci. La première t'attend 🐕</p>`}
+      ${malusBox()}
+      <div class="btns"><button id="smBil">📊 Envoyer le bilan au superviseur</button><button class="ghost" id="smAll">Tout le détail</button><button class="ghost" id="smClose">Fermer</button></div>`);
+    $("#smBil").onclick = () => sendBilan(periodOf(Date.now()));
+    $("#smAll").onclick = () => { closeSheet(); switchTab("shop"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
+    $("#smClose").onclick = closeSheet;
+  }
+  function sheetStreak(){
+    ensureGame();
+    const n = game.streak.n || 0, alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
+    const days = [];
+    for (let i = 13; i >= 0; i--){
+      const t = Date.now() - i * DAYMS, iso = dIso(t), dd = new Date(t - 4*3600000);
+      const ic = walkedOn(iso) ? "✅" : paused(iso) ? "🏖️" : i === 0 ? "⏳" : "⬜";
+      days.push(`<div>${ic}<small>${dd.toLocaleDateString("fr-FR", { weekday:"narrow" })} ${dd.getDate()}</small></div>`);
+    }
+    openSheet(`<h2>🔥 Ta série</h2>
+      <div class="rgrid"><div><b>${alive ? n : 0} jour${alive && n > 1 ? "s" : ""}</b><span>en cours</span></div><div><b>${game.stats.bestStreak || 0} jour${(game.stats.bestStreak || 0) > 1 ? "s" : ""}</b><span>ton record</span></div></div>
+      <div class="flabel">Les 14 derniers jours</div><div class="dots">${days.join("")}</div>
+      <p class="howto">✅ balade d'au moins 15 min · ⬜ pas de balade · 🏖️ pause · ⏳ aujourd'hui. À partir de 3 jours d'affilée, chaque balade rapporte un bonus 🔥, et 14 jours d'affilée débloquent un trophée.</p>
+      <div class="btns"><button id="ssClose">Fermer</button></div>`);
+    $("#ssClose").onclick = closeSheet;
+  }
+  function sheetRoxy(){
+    ensureGame();
+    const lv = levelOf(game.total), sea = ensureSeason();
+    const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
+    const nextAcc = ACCS.find(([, , need]) => game.total < need);
+    openSheet(`<div class="bigdog">${roxyHTML(game.acc)}</div>
+      <h2 style="text-align:center">${esc(lv.name)}</h2>
+      <div class="bar" style="background:#efe9dc"><i style="width:${pct}%;background:var(--green-2)"></i></div>
+      <p style="text-align:center">${lv.next ? `Encore <b>${fmtCs((lv.next[0] - game.total) / CS)}</b> à gagner pour devenir ${esc(lv.next[1])} 🎁` : "Niveau maximum, bravo ! 👑"}</p>
+      <div class="rgrid">
+        <div><b>${albumPct()} %</b><span>album ${esc(sea.icon)}</span></div>
+        <div><b>${Object.keys(game.trophies).length} / ${TROPHIES.length}</b><span>trophées</span></div>
+        <div><b>${game.acc.length ? game.acc.join(" ") : "—"}</b><span>accessoires portés</span></div>
+        <div><b>${nextAcc ? nextAcc[0] : "✓"}</b><span>${nextAcc ? `prochain à ${nextAcc[2].toLocaleString("fr-FR")}` : "tout débloqué"}</span></div>
+      </div>
+      <div class="btns"><button id="srAll">🏆 Voir mes progrès</button><button class="ghost" id="srClose">Fermer</button></div>`);
+    $("#srAll").onclick = () => { closeSheet(); switchTab("prog"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
+    $("#srClose").onclick = closeSheet;
   }
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !state.walk) renderHome(); });
 
@@ -1847,7 +1936,8 @@
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
       const back = home && track.length > 1 ? dist(home, track[track.length-1]) : null;
-      $("#walkstats").innerHTML = `${chrono}<br>📏 ${fmtKm(m)} parcourus${back != null && m > 300 ? ` · 🏠 à ${fmtKm(back)}` : ""}`;
+      const goal = p.min ? (elapsed >= p.min ? ` · 🎯 ${fmtMin(p.min)} ✓` : ` · 🎯 encore ${Math.ceil(p.min - elapsed)} min`) : "";
+      $("#walkstats").innerHTML = `${chrono}<br>📏 ${fmtKm(m)} parcourus${back != null && m > 300 ? ` · 🏠 à ${fmtKm(back)}` : ""}${goal}`;
       return;
     }
     const left = Math.max(0, p.m - walked);
@@ -2374,14 +2464,19 @@
   document.querySelectorAll("#durSeg button").forEach(b => {
     b.classList.toggle("on", +b.dataset.v === state.dur);
     b.addEventListener("click", () => {
-      state.dur = +b.dataset.v; store.set("wouaf-dur", state.dur);
+      state.dur = +b.dataset.v; store.set("wouaf-dur", state.dur); updateGo();
       document.querySelectorAll("#durSeg button").forEach(x => x.classList.toggle("on", x === b));
       if (state.start){ resetSearch(); meteo(state.start); generate({ cat: state.cat !== "all" ? state.cat : null }); }
     });
   });
+  function updateGo(){
+    $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
+    $("#goGain").textContent = `jusqu'à ${fmtCs(walkEuros(state.dur))} 🪙 + les bonus`;
+  }
+  updateGo();
   $("#locate").addEventListener("click", locate);
   $("#freeWalk").addEventListener("click", () => {
-    startWalk(FREE());
+    const p = FREE(); p.min = state.dur; startWalk(p);
   });
 
 
@@ -2422,8 +2517,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 22;
+  const APP_NUM = 23;
   const NEWS = {
+    23: [
+      "🏠 Nouvel accueil : choisis d'abord ta durée, puis « C'est parti », qui te dit combien tu peux gagner.",
+      "Touche ta tirelire 🪙, ta série 🔥 ou Roxy pour tout voir en détail.",
+      "🎯 Les missions du jour s'affichent sous les tuiles et se cochent quand c'est fait."
+    ],
     22: [
       "🗺️ Une rue redevient « neuve » si tu ne l'as pas prise depuis 15 jours : change de trajets pour gagner des bonus et trouver des coffres.",
       "Au maximum 10 rues neuves comptent par balade."

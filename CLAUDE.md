@@ -104,3 +104,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - `game.seen[c]` = numéro du jour (`dayNum`) de la dernière visite (anciennes valeurs 1 converties en « aujourd'hui »).
   `isNewCell` = jamais vue ou vue il y a ≥ `FRESH_DAYS` (15) jours : vaut pour +1 par rue, objets ×2, coffres, tri des parcours.
   Au plus `MAX_NEW_CELLS` (10) rues neuves comptées par balade. Le brouillard compte toutes les cases déjà vues (à vie).
+
+## Accueil v23 (décidé le 14/11)
+- Ordre : en-tête Roxy (avec accessoires) « Salut X 👋 », durée, gros bouton « ▶️ C'est parti · 45 min · jusqu'à 85 clebsous + les
+  bonus » (`updateGo` ; la balade libre garde `p.min` = durée choisie comme objectif affiché), « 🗺️ Proposer des parcours » ;
+  les envies (filtres) n'apparaissent qu'avec la carte (`body.hasmap`).
+- Trois tuiles (Tirelire / Série / Roxy) qui ouvrent `sheetMoney` / `sheetStreak` (14 derniers jours) / `sheetRoxy` ;
+  missions du jour (`missions()`), puis les autres et la phrase sur les clebsous.
