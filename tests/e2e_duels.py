@@ -17,7 +17,7 @@ with sync_playwright() as pw:
     bL, cL, L = new_phone(pw, errors=errs, init=INIT("Léa")); open_app(L, 3000)
     bT, cT, T = new_phone(pw, errors=errs, init=INIT("Tom")); open_app(T, 3000)
     home = L.evaluate("document.querySelector('#home').innerText")
-    check("accueil : gros lots (coffre, record, lancer un duel)", "Coffre surprise" in home and "Record du mois" in home and "Lance un duel" in home, home[:300])
+    check("accueil : gros lots (trésor, coffre, record, lancer un duel)", "Trésor de la semaine" in home and "Coffre surprise" in home and "Record du mois" in home and "Lance un duel" in home, home[:300])
     L.evaluate("__wouaf.openMenu()"); check("menu : ⚔️ Duels", "Duels" in txt(L)); L.click("#muDuel"); L.wait_for_timeout(1500)
     L.click("#dyNew"); L.wait_for_timeout(400)
     check("formulaire : Tom proposé, mise trop grosse grisée (tirelire 0)", "Tom" in txt(L) and L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"25\"]').disabled"))
@@ -55,6 +55,8 @@ with sync_playwright() as pw:
     # Éric : voit le duel dans le tableau de bord
     bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');")
     open_app(E, 1500); E.evaluate("__wouaf.askProfile()"); E.fill("#wName", "Éric"); E.click("#whoForm button[type=submit]"); E.wait_for_timeout(800)
+    ho = E.evaluate("document.querySelector('#home').innerText")
+    check("Éric (testeur) : voit aussi le trésor et les gros lots sur l'accueil", "Trésor de la semaine" in ho and "Coffre surprise" in ho, ho[:200])
     E.evaluate("__wouaf.openMenu()"); check("Éric : menu Duels en aperçu", "aperçu" in txt(E))
     E.click("#muDuel"); E.wait_for_timeout(1500); f = txt(E)
     check("Éric : aperçu du formulaire avec les vrais prénoms", "Aperçu superviseur" in f and "Léa" in f, f[:300])

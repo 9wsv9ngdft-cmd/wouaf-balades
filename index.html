@@ -508,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.201845";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.210129";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2225,9 +2225,11 @@
   // ---------- 💎 Les gros lots sur l'accueil (v2.1) : trésor (tant qu'il n'est pas gagné), coffre, record, duel ----------
   const RECORD_CS = 50;
   function lotsHTML(){
-    if (isTester()) return "";
     const l = [], hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
-    if (hu && !hu.found && !hu.gone)
+    const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));   // déjà trouvé cette semaine (par quelqu'un)
+    if (!game.home && !gone)   // pas encore de maison (1re balade, ou après la remise à zéro) : le trésor est quand même annoncé
+      l.push(`<button class="lot gold" data-lot="hunt"><span class="li">🏴‍☠️</span><span><b>Trésor de la semaine</b><small>Un seul gagnant ! Il apparaîtra sur ta carte, à 2 ou 3 km de la maison, dès ta première balade.</small></span><span class="lv">${HUNT_FIRST} 🪙</span></button>`);
+    else if (hu && !hu.found && !hu.gone)
       l.push(`<button class="lot gold" data-lot="hunt"><span class="li">🏴‍☠️</span><span><b>Trésor de la semaine</b><small>Un seul gagnant ! Caché à ~${game.home ? fmtKm(dist(game.home, hu)) + " " + compass(game.home, hu) : "2 à 3 km"} de la maison</small></span><span class="lv">${HUNT_FIRST} 🪙</span></button>`);
     let ch = 0; try{ ch = chestChance(); }catch(e){}
     l.push(`<button class="lot${ch > 0 ? " hot" : ""}" data-lot="chest"><span class="li">💰</span><span><b>Coffre surprise${ch > 0 ? " · 🔥 il est chaud !" : ""}</b><small>${ch > 0 ? "Prends des rues que tu n'as pas faites depuis longtemps : il peut sortir à tout moment." : "Caché dans les rues neuves. Sors Roxy souvent (4 jours sur 7) pour qu'il se réveille."}</small></span><span class="lv">${Math.round(CHEST_EUR * CS)} 🪙</span></button>`);

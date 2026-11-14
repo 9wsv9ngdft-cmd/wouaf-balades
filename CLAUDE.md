@@ -284,3 +284,5 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🔒 Statistiques **seulement avec l'accord du promeneur** (`wouaf-stats-ok`, décidé le 14/11) : carte de choix en tête de la fenêtre d'ouverture tant qu'il n'a
   pas répondu (`statsCardHTML`, « ✅ D'accord » / « Non merci »), avec le rappel de ce qui reste privé (`PRIVACY_TXT`) ; changer d'avis : ☰ › 🔒 Vie privée
   (`sheetPrivacy`). Non = rien compté, chiffres effacés sur le serveur.
+- Retours du 14/11 (21 h) : gros lots visibles aussi pour Éric (testeur) ; trésor annoncé sur l'accueil même sans maison (avant la 1re balade / après la
+  remise à zéro), caché seulement une fois trouvé cette semaine (`wouaf-tresor`).
