@@ -49,7 +49,7 @@
   #meteo.hot{background:#fbebdc;color:#7a3d10}
   #status{margin:12px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
   #status.err{color:var(--warn)}
-  body:not(.hasmap):not(.walking):not(.choosing):not(.recap) #map{display:none}
+  body:not(.hasmap):not(.fogview):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
   .hero{display:flex;align-items:center;gap:12px}
   .heroDog .roxy{width:58px;height:58px;font-size:34px;border-width:3px;border-color:var(--accent);animation:wag 2.4s ease-in-out infinite}
@@ -344,7 +344,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.141023";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.141200";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1256,7 +1256,7 @@
   }
   let fogLayer = null;
   function toggleFog(){
-    if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; renderProg(); return; }
+    if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; document.body.classList.remove("fogview"); renderProg(); return; }
     if (!game.home){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
     const h = game.home, dLat = 3000 / 111320, dLon = 3000 / (111320 * Math.cos(h.lat * Math.PI / 180));
     const outer = [[h.lat - dLat, h.lon - dLon], [h.lat - dLat, h.lon + dLon], [h.lat + dLat, h.lon + dLon], [h.lat + dLat, h.lon - dLon]];
@@ -1264,6 +1264,7 @@
     const fog = L.polygon([outer, ...holes], { stroke:false, fillColor:"#1f2a22", fillOpacity:.55, interactive:false });
     const ring = L.circle([h.lat, h.lon], { radius: FOG_R, color:"#ffd36b", weight:2, fill:false, dashArray:"6 8", interactive:false });
     fogLayer = L.featureGroup([fog, ring]).addTo(map);
+    document.body.classList.add("fogview"); map.invalidateSize();   // la carte est cachée sur l'accueil : on l'affiche pour le brouillard
     map.fitBounds(L.latLngBounds([[h.lat - FOG_R / 111320, h.lon - FOG_R / 73000], [h.lat + FOG_R / 111320, h.lon + FOG_R / 73000]]));
     $("#map").scrollIntoView({ behavior:"smooth", block:"center" });
     renderProg();
