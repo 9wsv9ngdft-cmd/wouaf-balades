@@ -251,7 +251,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.091611";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.100759";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -791,7 +791,9 @@
     { icon:"💶", label:"5 €", cost:200, euros:5 },
     { icon:"🎬", label:"Une place de ciné", cost:300 }
   ];
-  const EURO_CAP = 15, CAP_DAYS = 30;   // 15 € maximum par promeneur sur 30 jours glissants
+  // Euros : une balade par jour ≈ 10 € par mois ; plus de balades = plus d'euros, 15 € maximum par mois (calendaire).
+  // Le prix des 5 € = 15 balades moyennes, recalculé le 1er et le 16 d'après les 15 jours précédents.
+  const EURO_TARGET = 10, EURO_MAX = 15, WALKS_PER_5E = 15, DEFAULT_WALK_PTS = 22;
   const LEVELS = [[0, "🐶 Chiot"], [100, "🐾 Fouineuse"], [300, "🧭 Pisteuse"], [700, "🗺️ Exploratrice"], [1500, "👑 Légende du quartier"]];
   let game = store.get(GAME_KEY, null) || {};
   game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, game);
@@ -908,20 +910,75 @@
   }
 
   // ---------- Boutique ----------
-  // euros déjà pris sur les 30 derniers jours, et date à laquelle le plafond se libère
-  function euroWindow(){
-    const since = Date.now() - CAP_DAYS*86400000;
-    const recent = game.claims.filter(c => c.euros && new Date(c.date).getTime() >= since).sort((x, y) => new Date(x.date) - new Date(y.date));
-    const used = recent.reduce((n, c) => n + c.euros, 0);
-    return { used, freeOn: recent.length ? new Date(new Date(recent[0].date).getTime() + CAP_DAYS*86400000) : null };
+  const DAYMS = 86400000;
+  // quinzaine : du 1er au 15, ou du 16 à la fin du mois
+  function periodOf(t){
+    const d = new Date(t), first = d.getDate() <= 15;
+    const start = new Date(d.getFullYear(), d.getMonth(), first ? 1 : 16);
+    const end = first ? new Date(d.getFullYear(), d.getMonth(), 16) : new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    return { key: `${d.getFullYear()}-${d.getMonth()+1}-${first ? 1 : 2}`, start, end };
+  }
+  const shortDate = d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
+  const walksBetween = (a, b) => getLog().filter(e => { const t = new Date(e.date).getTime(); return t >= a && t < b && e.min >= 5; });
+  // prix des 5 € pour la quinzaine en cours
+  function euroPrice(){
+    const per = periodOf(Date.now());
+    if (!game.euro || game.euro.key !== per.key){
+      const ws = walksBetween(per.start.getTime() - 15*DAYMS, per.start.getTime()).filter(e => e.recap && e.recap.pt);
+      let price = game.euro ? game.euro.price : WALKS_PER_5E * DEFAULT_WALK_PTS;
+      if (ws.length >= 3) price = WALKS_PER_5E * ws.reduce((n, e) => n + e.recap.pt, 0) / ws.length;
+      price = Math.min(600, Math.max(100, Math.round(price / 10) * 10));
+      game.euro = { key: per.key, price, since: per.start.toISOString(), next: per.end.toISOString() };
+      saveGame();
+    }
+    return game.euro;
+  }
+  const costOf = r => r.euros ? euroPrice().price : r.cost;
+  function eurosThisMonth(){
+    const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    return game.claims.filter(c => c.euros && new Date(c.date).getTime() >= m0).reduce((n, c) => n + c.euros, 0);
   }
   function rewardState(r){
-    if (r.euros){
-      const w = euroWindow();
-      if (w.used + r.euros > EURO_CAP) return { ok:false, why:`Plafond de ${EURO_CAP} € atteint · de nouveau possible le ${w.freeOn.toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}` };
+    const cost = costOf(r);
+    if (r.euros && eurosThisMonth() + r.euros > EURO_MAX){
+      const d = new Date(), next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      return { ok:false, cost, why:`maximum de ${EURO_MAX} € atteint ce mois-ci · de nouveau le ${next.toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}` };
     }
-    if (game.pts < r.cost) return { ok:false, why:`encore ${r.cost - game.pts} pts` };
-    return { ok:true, why:"" };
+    if (game.pts < cost) return { ok:false, cost, why:`encore ${cost - game.pts} pts` };
+    return { ok:true, cost, why:"" };
+  }
+  // rythme du mois : une balade par jour ≈ 10 €
+  function monthPace(){
+    const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+    const n = walksBetween(m0, Date.now() + 1).length;
+    const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const pace = n / Math.max(1, d.getDate()) * days;
+    return { n, eur: Math.min(EURO_MAX, Math.round(pace * EURO_TARGET / 30)) };
+  }
+  // bilan d'une quinzaine, à envoyer au superviseur
+  function bilan(per){
+    const ws = walksBetween(per.start.getTime(), per.end.getTime());
+    const min = ws.reduce((n, e) => n + e.min, 0), m = ws.reduce((n, e) => n + e.m, 0), pts = ws.reduce((n, e) => n + ((e.recap && e.recap.pt) || 0), 0);
+    const eur = Math.round(pts / euroPrice().price * 5 * 2) / 2;
+    const last = new Date(Math.min(Date.now(), per.end.getTime() - 1));
+    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} · ${fmtMin(min)} · ${fmtKm(m)} · 🏅 ${pts} pts (≈ ${String(eur).replace(".", ",")} €)`;
+    return { n: ws.length, text };
+  }
+  async function sendBilan(per){
+    const b = bilan(per);
+    try{ if (navigator.share) await navigator.share({ text: b.text }); else location.href = "sms:&body=" + encodeURIComponent(b.text); }catch(e){}
+  }
+  // au 1er et au 16 : proposer le bilan de la quinzaine écoulée (une seule fois)
+  function offerBilan(){
+    const prev = periodOf(periodOf(Date.now()).start.getTime() - 1);
+    if (game.bilanSeen === prev.key || $("#modal").classList.contains("open") || document.body.classList.contains("recap")) return;
+    const b = bilan(prev);
+    if (!b.n){ game.bilanSeen = prev.key; saveGame(); return; }
+    openSheet(`<h2>📊 Bilan de la quinzaine</h2><p>${esc(b.text)}</p>
+      <div class="btns"><button id="bilOk">📩 Envoyer au superviseur</button><button class="ghost" id="bilNo">Plus tard</button></div>`);
+    const done = () => { game.bilanSeen = prev.key; saveGame(); closeSheet(); };
+    $("#bilOk").onclick = async () => { await sendBilan(prev); done(); };
+    $("#bilNo").onclick = done;
   }
   function renderShop(){
     const lv = levelOf(game.total);
@@ -934,8 +991,14 @@
         <div class="bar"><i style="width:${pct}%"></i></div>
         <div class="row"><span>🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""}</span><span>🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}</span><span>Σ ${game.total} pts gagnés</span></div>
       </div>
+      <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
+        <div style="font-weight:600">💶 5 € = ${euroPrice().price} pts</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">Prix ajusté le ${shortDate(new Date(euroPrice().since))} · prochain ajustement le ${shortDate(new Date(euroPrice().next))}</div>
+        <div style="font-size:14px;margin-top:8px">Ce mois-ci : <b>${monthPace().n} balade${monthPace().n > 1 ? "s" : ""}</b> · rythme ≈ <b>${monthPace().eur} €</b> sur le mois${eurosThisMonth() ? ` · ${eurosThisMonth()} € déjà pris` : ""}</div>
+        <button class="ghost" id="bilNow" style="margin-top:10px;width:100%">📊 Envoyer le bilan de la quinzaine</button>
+      </div>
       <div class="props">${REWARDS.map((r, i) => { const st = rewardState(r); return `<div class="reward${st.ok ? "" : " locked"}">
-          <div class="ri">${r.icon}</div><div><h4>${esc(r.label)}</h4><div class="cost">${r.cost} pts${st.why ? ` · ${st.why}` : ""}${r.euros && st.ok ? ` · encore ${EURO_CAP - euroWindow().used} € possibles ce mois-ci` : ""}</div></div>
+          <div class="ri">${r.icon}</div><div><h4>${esc(r.label)}</h4><div class="cost">${st.cost} pts${st.why ? ` · ${st.why}` : ""}</div></div>
           <button data-rw="${i}"${st.ok ? "" : " disabled"}>${st.ok ? "Je la prends" : "🔒"}</button></div>`; }).join("")}</div>
       ${game.claims.length ? `<div class="flabel">Récompenses gagnées</div><div class="props">${game.claims.slice(0, 10).map(c => `<div class="entry"><div><h4>${c.icon} ${esc(c.label)}</h4><div class="when">${new Date(c.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}</div></div><div class="dur">−${c.cost}</div></div>`).join("")}</div>` : ""}
       <div class="howto"><b>Comment gagner des points ?</b><br>
@@ -943,23 +1006,26 @@
         🗺️ +1 par coin jamais exploré, et les objets y comptent double<br>
         ⏱️ balade longue : ×1,25 (45 min) · ×1,5 (1 h) · ×2 (1 h 30)<br>
         🏠 +2 si tu reviens au point de départ · 🔥 +1 par jour à partir de 3 jours d'affilée<br>
-        💶 ${EURO_CAP} € maximum sur ${CAP_DAYS} jours<br>
+        💶 une balade par jour ≈ ${EURO_TARGET} € par mois, plus si tu promènes ${DOG} davantage (${EURO_MAX} € maximum). Le prix des 5 € s'ajuste le 1er et le 16 selon tes balades.<br>
         Balade de 5 min minimum. En vélo ou en voiture, ça ne compte pas 😉</div>`;
     document.querySelectorAll("[data-rw]").forEach(b => b.onclick = () => {
       const r = REWARDS[+b.dataset.rw]; if (!r || !rewardState(r).ok) return;
-      openSheet(`<h2>${r.icon} ${esc(r.label)}</h2><p>Ça coûte ${r.cost} points. Il t'en restera ${game.pts - r.cost}. Un message part ensuite au superviseur pour qu'il te la donne.</p>
+      const cost = costOf(r);
+      openSheet(`<h2>${r.icon} ${esc(r.label)}</h2><p>Ça coûte ${cost} points. Il t'en restera ${game.pts - cost}. Un message part ensuite au superviseur pour qu'il te la donne.</p>
         <div class="btns"><button id="rwOk">🎁 Je la prends</button><button class="ghost" id="rwNo">Annuler</button></div>`);
       $("#rwNo").onclick = closeSheet;
       $("#rwOk").onclick = async () => {
-        game.pts -= r.cost;
-        game.claims.unshift({ date: new Date().toISOString(), icon: r.icon, label: r.label, cost: r.cost, euros: r.euros || 0 });
+        if (!rewardState(r).ok) return closeSheet();
+        game.pts -= cost;
+        game.claims.unshift({ date: new Date().toISOString(), icon: r.icon, label: r.label, cost, euros: r.euros || 0 });
         saveGame();
-        const text = `🎁 ${profile.walker || "Le promeneur"} a gagné : ${r.icon} ${r.label} (${r.cost} pts) · il reste ${game.pts} pts`;
+        const text = `🎁 ${profile.walker || "Le promeneur"} a gagné : ${r.icon} ${r.label} (${cost} pts) · il reste ${game.pts} pts`;
         try{ if (navigator.share) await navigator.share({ text }); else location.href = "sms:&body=" + encodeURIComponent(text); }catch(e){}
         closeSheet(); renderShop();
         toast("🎉 Récompense gagnée !", 2500);
       };
     });
+    $("#bilNow").onclick = () => sendBilan(periodOf(Date.now()));
   }
 
   // ---------- Pendant la balade ----------
@@ -1692,8 +1758,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 11;
+  const APP_NUM = 12;
   const NEWS = {
+    12: [
+      "💶 Le prix des 5 € s'ajuste tous les 15 jours : une balade par jour ≈ 10 € par mois, plus si tu promènes Roxy davantage (15 € maximum).",
+      "📊 Le 1er et le 16, l'app propose d'envoyer le bilan de la quinzaine au superviseur."
+    ],
     11: [
       "⚖️ Points rééquilibrés : moins d'objets (un tous les ~400 m), trésor ⭐ à 5 points.",
       "🎁 Nouveaux prix des récompenses, et 💶 15 € maximum par mois et par promeneur."
@@ -1723,6 +1793,7 @@
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
   setTimeout(showNews, 800);
+  setTimeout(offerBilan, 2500);
 
   // ---------- Au lancement ----------
   // 1) lien de récap → page du superviseur ; 2) balade interrompue → reprise ;
