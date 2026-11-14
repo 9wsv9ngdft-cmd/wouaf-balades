@@ -9,8 +9,8 @@ const APP_URL = "https://9wsv9ngdft-cmd.github.io/wouaf-balades/";
 const TZ = "Europe/Paris";
 const DOG = "Roxy";
 const MAX_USERS = 30;
-// Code du superviseur pour mettre l'app en pause (à changer ici quand tu veux, puis « Déployer »)
-const SUPERVISOR_CODE = "731948";
+// Code du superviseur (pause de l'app) : variable secrète SUPERVISOR_CODE dans les réglages du Worker,
+// pour qu'il ne soit pas visible dans ce fichier public.
 const PUSH_HOSTS = ["push.apple.com", "googleapis.com", "push.services.mozilla.com", "notify.windows.com"];
 
 // ---------- petites aides ----------
@@ -176,7 +176,7 @@ export default {
       // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
-      if (!b || String(b.code) !== SUPERVISOR_CODE){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
+      if (!b || !env.SUPERVISOR_CODE || String(b.code) !== String(env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
       const ok = d => typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d);
       const pauses = (Array.isArray(b.pauses) ? b.pauses : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
       await env.WOUAF.put("pauses", JSON.stringify(pauses));

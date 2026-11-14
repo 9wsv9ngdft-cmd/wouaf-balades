@@ -79,6 +79,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   le récap de la semaine, le bilan de quinzaine et le récap (« ⏱️ trop courte −0,10 € »).
 - Rappels et bannières : formulation positive (« À gagner : 15 min 0,16 € · 25 min 0,35 € · 45 min 0,85 € · 1 h 1,30 € »),
   jamais de « −0,20 € » ; le négatif seulement dans Tirelire / récaps.
-- 🏖️ Pause du superviseur : lien discret « Superviseur » en bas de Progrès (si `PUSH_API`), code `SUPERVISOR_CODE` dans le
-  Worker (provisoire 731948, l'utilisateur le changera), `GET/POST /pause`, KV `pauses`. Pendant une pause : pas de malus,
+- 🏖️ Pause du superviseur : lien discret « Superviseur » en bas de Progrès (si `PUSH_API`), code = variable secrète `SUPERVISOR_CODE` du
+  Worker (pas dans le fichier : le dépôt est public), `GET/POST /pause`, KV `pauses`. Pendant une pause : pas de malus,
   pas de rappels, série conservée (`streakAlive`) ; pause ajoutée après coup = malus remboursés (sauf semaine faible).
