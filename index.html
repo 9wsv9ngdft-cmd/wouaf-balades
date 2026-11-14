@@ -505,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.190237";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.191712";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1965,7 +1965,7 @@
     return true;
   }
   function showWelcome2(){
-    openSheet(`<div style="text-align:center;font-size:64px">🎉</div><h2 style="text-align:center">Wouaf Balades 2.0, tout repart de zéro !</h2>
+    openSheet(`<div style="text-align:center;font-size:64px">🎉</div><h2 style="text-align:center">Wouaf Balades ${APP_LABEL}, tout repart de zéro !</h2>
       <p style="text-align:center">Nouvelle version, nouveau départ pour tout le monde : clebsous, série, carte, carnet, photos… tout est remis à zéro. Ton prénom, tes rappels et la photo de ${DOG} sont gardés. Les amendes repartent demain.</p>
       <div class="btns"><button id="w2Ok">C'est parti ! 🐾</button></div>`);
     setTimeout(confetti, 200);
