@@ -110,7 +110,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   bonus » (`updateGo` ; la balade libre garde `p.min` = durée choisie comme objectif affiché), « 🗺️ Proposer des parcours » ;
   les envies (filtres) n'apparaissent qu'avec la carte (`body.hasmap`).
 - Trois tuiles (Tirelire / Série / Roxy) qui ouvrent `sheetMoney` / `sheetStreak` (14 derniers jours) / `sheetRoxy` ;
-  missions du jour (`missions()`), puis les autres et la phrase sur les clebsous.
+  missions du jour (`missions()`), puis les autres et la phrase sur les clebsous. Toucher Roxy en haut : saut + « Wouaf ! » puis `sheetRoxy`.
 - Logo des Clebsous (v24) : pièce dorée SVG avec un C barré de deux traits (`CSI_SVG`) ; tout « 🪙 » affiché dans la page est
   remplacé automatiquement (`coinify` + MutationObserver). Les notifications et les messages envoyés gardent l'emoji 🪙.
   Gros gain sur le bouton « C'est parti » (`#goGain`).

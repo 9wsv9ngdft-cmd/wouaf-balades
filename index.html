@@ -55,6 +55,11 @@
   .heroDog .roxy{width:58px;height:58px;font-size:34px;border-width:3px;border-color:var(--accent);animation:wag 2.4s ease-in-out infinite}
   .heroDog .roxy .a-bow{top:-8px;left:-6px;font-size:22px} .heroDog .roxy .a-scarf{bottom:-14px;font-size:22px}
   .heroDog .roxy .a-glasses{top:13px;left:7px;font-size:19px} .heroDog .roxy .a-hat{top:-27px;font-size:26px}
+  .heroDog{background:none;border:0;padding:0;position:relative;cursor:pointer}
+  .heroDog.jump .roxy{animation:jump .5s ease-out}
+  @keyframes jump{0%{transform:translateY(0) scale(1)}40%{transform:translateY(-14px) scale(1.12)}100%{transform:translateY(0) scale(1)}}
+  .bark{position:absolute;left:50px;top:-12px;background:#fff;color:var(--green);font-weight:800;font-size:13px;padding:3px 8px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.2);white-space:nowrap;pointer-events:none;animation:barkpop .3s ease-out}
+  @keyframes barkpop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes wag{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
   .heroTxt{flex:1;min-width:0} .hero .hi{font-family:Fraunces,Georgia,serif;font-size:21px;font-weight:700;line-height:1.15} .hero .sub{color:var(--muted);font-size:14px}
   .seg.durs button{padding:13px 2px;font-size:15px}
@@ -259,7 +264,7 @@
   <div id="recapbox"></div>
   <div class="panel">
     <div class="hero">
-      <div class="heroDog" id="heroDog" aria-hidden="true"></div>
+      <button class="heroDog" id="heroDog" aria-label="Voir Roxy, son niveau et ses accessoires"></button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div></div>
       <button class="linkish" id="editWho">changer</button>
     </div>
@@ -339,7 +344,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.140855";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.141023";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2506,6 +2511,14 @@
     return Math.round(((items + cells) * mult + DEFI_PTS) / 5) * 5;
   }
   const gainEst = min => Math.round(walkEuros(min) * CS) + bonusEst(min);
+  // toucher Roxy en haut : elle saute, aboie, puis sa fiche s'ouvre
+  $("#heroDog").addEventListener("click", () => {
+    const el = $("#heroDog");
+    el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump");
+    const b = document.createElement("span"); b.className = "bark"; b.textContent = ["Wouaf ! 🐾", "On sort ? 🥺", "Wouaf wouaf !"][Math.floor(Math.random() * 3)];
+    el.appendChild(b); ding();
+    setTimeout(() => { b.remove(); sheetRoxy(); }, 650);
+  });
   function updateGo(){
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur);
     $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
