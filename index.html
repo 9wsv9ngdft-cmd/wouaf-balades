@@ -62,6 +62,10 @@
   button.go .gain{display:flex;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,.16);border-radius:12px;padding:6px 14px}
   button.go .gain b{font-size:38px;line-height:1;font-weight:800;color:#ffd35c}
   button.go .gain .csi{width:34px;height:34px}
+  button.go .gain small{display:block;font-size:12px;opacity:.85}
+  .gohint{display:flex;gap:8px;margin-top:8px}
+  .gohint button{display:block;flex:1;font:inherit;font-size:13px;padding:9px 10px;border-radius:12px;border:1px dashed #e0a21f;background:#fff8e6;color:#6b3f00;text-align:left;line-height:1.3}
+  .gohint button.bon{flex:none;border-style:solid;background:#fff;text-align:center}
   button.go .gain span{font-size:13px;font-weight:500;line-height:1.2;text-align:left;opacity:.95}
   .csi{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block;flex:none}
   #envies{display:none} body.hasmap #envies{display:block}
@@ -268,6 +272,7 @@
       <button data-v="90">1 h 30</button>
     </div>
     <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><span class="gain" id="goGain"></span></button>
+    <div class="gohint" id="goHint"></div>
     <button id="locate" class="ghost" style="margin-top:8px;width:100%">🗺️ Proposer des parcours</button>
     <div id="envies">
     <div class="flabel" id="catLabel">Envie de…</div>
@@ -334,7 +339,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.140336";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.140627";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2492,9 +2497,42 @@
       if (state.start){ resetSearch(); meteo(state.start); generate({ cat: state.cat !== "all" ? state.cat : null }); }
     });
   });
+  // estimation haute des bonus d'une balade de `min` minutes (objets, rues neuves, trésor, durée longue, retour, défi)
+  function bonusEst(min){
+    const d = min * M_PER_MIN;
+    const items = d / 400 * 1.7 * 2 + (d > 800 ? 10 : 0);            // 🦴🎾🍖 en moyenne 1,7, ×2 sur rue neuve ; ⭐ trésor ×2
+    const cells = Math.min(MAX_NEW_CELLS, Math.round(d / 150));
+    const mult = min >= 85 ? 2 : min >= 55 ? 1.5 : min >= 40 ? 1.25 : 1;
+    return Math.round(((items + cells) * mult + 2 + DEFI_PTS) / 5) * 5;
+  }
+  const gainEst = min => Math.round(walkEuros(min) * CS) + bonusEst(min);
   function updateGo(){
+    const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur);
     $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
-    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${Math.round(walkEuros(state.dur) * CS)}</b>🪙<span>clebsous<br>+ les bonus</span>`;
+    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${dur + bon}</b>🪙<span>clebsous<small>${dur} pour la durée<br>+ ~${bon} de bonus</small></span>`;
+    const next = [15, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
+    $("#goHint").innerHTML = (next ? `<button id="goUp">💡 En ${fmtMin(next)} : jusqu'à <b>${gainEst(next)}</b> 🪙, soit ${(gainEst(next) / (dur + bon)).toFixed(1).replace(".", ",").replace(",0", "")} fois plus ! Touche ici</button>` : "") +
+      `<button class="bon" id="goBon">🎁 Les bonus ?</button>`;
+    if ($("#goUp")) $("#goUp").onclick = () => { const b = document.querySelector(`#durSeg button[data-v="${next}"]`); if (b) b.click(); };
+    $("#goBon").onclick = sheetBonus;
+  }
+  function sheetBonus(){
+    const row = (ic, t, v) => `<div class="entry"><div><h4>${ic} ${t}</h4></div><div class="dur">${v}</div></div>`;
+    openSheet(`<h2>🎁 Les bonus</h2>
+      <p>En plus des clebsous de la durée, tout ça se ramasse en route et s'ajoute à ta tirelire (balade d'au moins 15 min) :</p>
+      <div class="props">
+        ${row("🦴", "Un os", "+1 🪙")}${row("🎾", "Une balle", "+2 🪙")}${row("🍖", "Une friandise", "+3 🪙")}${row("⭐", "Le trésor (1 par balade)", "+5 🪙")}
+        ${row("🗺️", `Chaque rue pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max)`, "+1 🪙")}
+        ${row("✖️", "Objets trouvés sur une rue neuve", "×2")}
+        ${row("⏱️", "Balade longue : dès 40 min / 55 min / 1 h 25", "×1,25 / ×1,5 / ×2")}
+        ${row("🏠", "Retour au point de départ", "+2 🪙")}
+        ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
+        ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
+        ${row("💰", "Coffre surprise, caché sur une rue pas faite depuis longtemps", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
+      </div>
+      <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 15 min ≈ ${gainEst(15)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
+      <div class="btns"><button id="bonClose">Compris !</button></div>`);
+    $("#bonClose").onclick = closeSheet;
   }
   updateGo();
   $("#locate").addEventListener("click", locate);
@@ -2540,8 +2578,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 24;
+  const APP_NUM = 25;
   const NEWS = {
+    25: [
+      "🎁 Le bouton « C'est parti » montre maintenant ce que tu peux gagner avec les bonus, et combien de fois plus en marchant plus longtemps.",
+      "Touche « 🎁 Les bonus ? » pour voir tout ce qui rapporte des clebsous."
+    ],
     24: [
       "🪙 Les clebsous ont leur logo : une pièce avec un C barré.",
       "Le bouton « C'est parti » affiche en gros combien de clebsous tu peux gagner selon la durée choisie."

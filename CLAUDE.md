@@ -114,3 +114,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Logo des Clebsous (v24) : pièce dorée SVG avec un C barré de deux traits (`CSI_SVG`) ; tout « 🪙 » affiché dans la page est
   remplacé automatiquement (`coinify` + MutationObserver). Les notifications et les messages envoyés gardent l'emoji 🪙.
   Gros gain sur le bouton « C'est parti » (`#goGain`).
+- Bonus visibles (v25) : `bonusEst(min)` = estimation haute des bonus (objets ×2, trésor, rues neuves, durée longue, retour, défi),
+  `gainEst` = durée + bonus. Bouton « jusqu'à N clebsous (X pour la durée + ~Y de bonus) », astuce « 💡 En 45 min : jusqu'à … soit
+  N fois plus » (passe à cette durée), et « 🎁 Les bonus ? » (`sheetBonus`, tableau de ce que rapporte chaque bonus).
