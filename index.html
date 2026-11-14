@@ -505,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.200244";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.200826";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1099,6 +1099,7 @@
     window.scrollTo(0, lockY); lockY = null;
   }
   function openSheet(html){
+    try{ const m = /<h2[^>]*>([\s\S]*?)<\/h2>/.exec(html); if (m) useTrack(m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()); }catch(e){}
     const s = $("#sheet");
     s.innerHTML = `<button class="sheetx" id="sheetX" aria-label="Fermer">✕</button><div class="sbody">${html}</div>`;
     const body = s.querySelector(".sbody"), all = body.querySelectorAll(".btns"), last = all[all.length - 1];
@@ -1637,6 +1638,7 @@
     if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => put({ lat: pos.coords.latitude, lon: pos.coords.longitude }), () => {}, { enableHighAccuracy:true, maximumAge:30000, timeout:10000 });
   }
   function openExplore(){
+    try{ useTrack("🗺️ Carte d'exploration"); }catch(e){}
     ensureGame();
     if (!game.home && !getTraces().length){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
     closeExplore(true);
@@ -2438,6 +2440,37 @@
     return cards;
   }
 
+
+  // ---------- 📈 Statistiques d'utilisation pour le superviseur (v2.1) : chiffres seulement (ouvertures, temps dans l'app, pages vues) ----------
+  const USE_KEY = "wouaf-usage";
+  let useStart = document.hidden ? null : Date.now(), useSent = 0;
+  const useOn = () => !!(PUSH_API && profile.walker && !isTester());
+  function useDayRec(){
+    const u = store.get(USE_KEY, {}), k = dIso(Date.now());
+    u[k] = u[k] || { o:0, s:0, p:{} };
+    for (const d of Object.keys(u).sort().slice(0, -14)) delete u[d];   // 14 jours au plus
+    return { u, d: u[k] };
+  }
+  function useTrack(page){
+    if (!useOn() || !page) return;
+    const { u, d } = useDayRec(); page = String(page).slice(0, 30);
+    d.p[page] = (d.p[page] || 0) + 1; store.set(USE_KEY, u);
+  }
+  function useTime(){
+    if (useStart == null) return;
+    const sec = Math.min(3600, Math.round((Date.now() - useStart) / 1000)); useStart = Date.now();
+    if (!useOn() || sec <= 0) return;
+    const { u, d } = useDayRec(); d.s += sec; store.set(USE_KEY, u);
+  }
+  function useOpen(){ if (!useOn()) return; const { u, d } = useDayRec(); d.o++; store.set(USE_KEY, u); }
+  function sendUsage(force){
+    if (!useOn() || (!force && Date.now() - useSent < 120000)) return;
+    useSent = Date.now();
+    try{ fetch(PUSH_API.replace(/\/$/, "") + "/usage", { method:"POST", keepalive:true, headers:{ "Content-Type":"text/plain" }, body: JSON.stringify({ walker: profile.walker, days: store.get(USE_KEY, {}) }) }).catch(() => {}); }catch(e){}
+  }
+  document.addEventListener("visibilitychange", () => { if (document.hidden){ useTime(); useStart = null; sendUsage(); } else { useStart = Date.now(); useOpen(); } });
+  window.addEventListener("pagehide", () => { useTime(); sendUsage(true); });
+
   // ---------- ☰ Menu ----------
   function openMenu(){
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
@@ -3023,6 +3056,11 @@
       return `<div class="wk"><h4>${esc(d.walker)}${s.test ? " 🧪 testeur" : ""} · ${esc(s.lv || "")}</h4><div class="s">
         🪙 Tirelire du mois : <b>${(s.cs || 0).toLocaleString("fr-FR")} clebsous = ${fmtEur((s.cs || 0) / CS)}</b>${s.mal ? ` (malus −${s.mal} : ${esc(s.malt || "")})` : ""}<br>
         📅 Cette semaine : ${week.length} balade${week.length > 1 ? "s" : ""}, ${fmtMin(week.reduce((n, x) => n + x.min, 0))} · 🔥 série ${s.n || 0} j${s.fog != null ? ` · 🗺️ exploration ${s.fog} %` : ""}<br>
+        ${(() => { const us = (j.usage || []).find(x => sameN(x.walker, d.walker)); if (!us) return "";
+          const ks = Object.keys(us.days || {}).sort().slice(-7); let o = 0, sec = 0; const pg = {};
+          for (const k of ks){ const x = us.days[k]; o += x.o || 0; sec += x.s || 0; for (const p in x.p || {}) pg[p] = (pg[p] || 0) + x.p[p]; }
+          const top = Object.entries(pg).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([p, n]) => `${esc(p)} ${n}`).join(" · ");
+          return `📱 7 derniers jours : ${o} ouverture${o > 1 ? "s" : ""} · ${fmtMin(Math.round(sec / 60))} dans l'app${top ? `<br><small>👀 ${top}</small>` : ""}<br>`; })()}
         ${(() => { const du = (j.duels || []).find(x => sameN(x.from, d.walker) || sameN(x.to, d.walker)); if (!du) return ""; const me = sameN(du.from, d.walker), op = me ? du.to : du.from, sc = du.score;
           return `⚔️ Duel avec ${esc(op)} : ${du.status === "pending" ? "en attente de réponse" : `${me ? sc.a : sc.b} – ${me ? sc.b : sc.a}`} (${DUEL_TYPE[du.type]})<br>`; })()}
         ${l ? `🐾 Dernière : ${l.toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })} à ${hm(l)}, ${fmtMin(last.min)} · ${fmtKm(last.m)} · +${last.cs} 🪙${last.pp ? " · 💧" : ""}${last.cc ? " · 💩" : ""}` : "Pas encore de balade"}
@@ -3295,6 +3333,7 @@
     if (state.walk) map.invalidateSize();
   }).observe($("#walkbar"));
   async function startWalk(p, resume){
+    try{ if (!resume) useTrack("▶️ Balade"); }catch(e){}
     if (!p) return;
     if (!profile.walker){ askProfile(() => startWalk(p, resume)); return; }
     // une balade libre est déjà en cours : le parcours choisi la guide, sans remettre le chrono à zéro
@@ -3967,6 +4006,7 @@
   function backBtn(){}   // le bouton « ← Accueil » est fixe en haut des pages (#backHome)
   $("#backHome").addEventListener("click", () => switchTab("walks"));
   function switchTab(t){
+    try{ useTrack({ prog:"🏆 Progrès", shop:"🪙 Tirelire", log:"📒 Carnet" }[t] || t); }catch(e){}
     const was = state.tab;
     state.tab = t;
     document.body.classList.toggle("page", t !== "walks");
@@ -4288,7 +4328,8 @@
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
   setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get(WELCOME2, 0)) showWelcome2(); else if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
-  setTimeout(async () => { try{ await autoClaim(); }catch(e){} try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
+  setTimeout(() => { try{ useOpen(); useTrack("🏠 Accueil"); }catch(e){} }, 1200);
+  setTimeout(async () => { try{ await autoClaim(); }catch(e){} try{ sendUsage(true); }catch(e){} try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
   // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
   let lastShared = 0;
   document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).then(rs => { if (!rs && !$("#modal").classList.contains("open")) startupDigest(); else renderHome(); }).catch(() => {}); });
@@ -4312,7 +4353,7 @@
     renderHome();
   });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
 })();
 </script>
 </body>

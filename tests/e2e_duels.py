@@ -49,6 +49,9 @@ with sync_playwright() as pw:
       q.push({ walker:'Léa', walk:{ s:e-72*60, e, min:72, m:6000, cs:50 }, sum:{ cs:50 } }); localStorage.setItem('wouaf-envois', JSON.stringify(q)); }""")
     L.evaluate("__wouaf.flushWalks()"); L.wait_for_timeout(2500)
     check("Léa : fiche « Nouveau record ! » et +50 hors plafond", "Nouveau record" in txt(L) and abs(L.evaluate("(()=>{const g=JSON.parse(localStorage.getItem('wouaf-jeu'));const k=Object.keys(g.bonus||{})[0];return (g.bonus||{})[k]||0})()") - 0.5) < 0.001, txt(L)[:120])
+    # 📈 statistiques : Léa ouvre des pages, puis envoie ses chiffres
+    L.evaluate("__wouaf.openMenu()"); L.wait_for_timeout(200); L.click("#muMoney"); L.wait_for_timeout(500)
+    L.evaluate("__wouaf.sendUsage(true)"); L.wait_for_timeout(800)
     # Éric : voit le duel dans le tableau de bord
     bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');")
     open_app(E, 1500); E.evaluate("__wouaf.askProfile()"); E.fill("#wName", "Éric"); E.click("#whoForm button[type=submit]"); E.wait_for_timeout(800)
@@ -60,6 +63,7 @@ with sync_playwright() as pw:
     E.evaluate("document.querySelector('#sheetX').click()"); E.wait_for_timeout(300)
     E.evaluate("__wouaf.openDash({token: __wouaf.supToken()})"); E.wait_for_timeout(1500)
     check("Éric : résumé du promeneur avec son duel", "Duel avec Léa" in txt(E) or "Duel avec Tom" in txt(E), txt(E)[:400])
+    check("Éric : statistiques d'utilisation de Léa (ouvertures, temps, pages)", "ouverture" in txt(E) and "Tirelire" in txt(E), txt(E)[:600])
     check("Éric : le duel dans le tableau de bord, avec Annuler", "Léa contre Tom" in txt(E) and E.locator("[data-dcan]").count() == 1, txt(E)[:300])
     E.click("[data-dcan]"); E.wait_for_timeout(1500)
     T.evaluate("__wouaf.loadDuels().then(() => __wouaf.renderHome())"); T.wait_for_timeout(1000)

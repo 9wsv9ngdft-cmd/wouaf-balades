@@ -363,7 +363,9 @@ export default {
         const all = [];
         for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) all.push(d); }
         const dl = (await getDuels(env, Date.now())).filter(isOpen);
-        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json"), alerts: (await env.WOUAF.get("alerts", "json")) || [], duels: await Promise.all(dl.map(du => duelView(env, du))) });
+        const ul = await env.WOUAF.list({ prefix:"use:" }), usage = [];
+        for (const k of ul.keys){ const u = await env.WOUAF.get(k.name, "json"); if (u) usage.push(u); }
+        return json({ ok:true, usage, walkers: all, last: await env.WOUAF.get("last", "json"), alerts: (await env.WOUAF.get("alerts", "json")) || [], duels: await Promise.all(dl.map(du => duelView(env, du))) });
       }
       if (path === "/duel-admin"){   // ⚔️ le superviseur annule un duel en cours : chacun garde sa mise
         const l = await getDuels(env, Date.now()), du = l.find(x => x.id === b.id);
@@ -378,7 +380,7 @@ export default {
         return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
-        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:"));
+        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:")) + (await wipe(env, "use:"));
         await env.WOUAF.delete("duels");
         await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts");
         const reset = Date.now();
@@ -523,6 +525,18 @@ export default {
         return json({ ok:true, cells: du.cells || {}, score: await duelScore(env, du) });
       }
       return json({ error:"not found" }, 404);
+    }
+    if (path === "/usage"){   // 📈 statistiques d'utilisation (ouvertures, secondes, pages vues par jour) : chiffres seulement, 14 jours
+      const w = String(b.walker || "").slice(0, 30), days = b.days, out = {};
+      if (!w || !days || typeof days !== "object" || JSON.stringify(days).length > 30000) return json({ error:"bad" }, 400);
+      if (await isTester(env, w)) return json({ ok:true, skipped:true });
+      for (const k of Object.keys(days).filter(k => /^\d{4}-\d\d-\d\d$/.test(k)).sort().slice(-14)){
+        const x = days[k] || {}, p = {};
+        for (const n of Object.keys(x.p || {}).slice(0, 40)) p[String(n).slice(0, 30)] = Math.max(0, Math.min(9999, Math.round(+x.p[n] || 0)));
+        out[k] = { o: Math.max(0, Math.min(999, Math.round(+x.o || 0))), s: Math.max(0, Math.min(86400, Math.round(+x.s || 0))), p };
+      }
+      await env.WOUAF.put("use:" + slug(w), JSON.stringify({ walker: w, days: out, at: Date.now() }));
+      return json({ ok:true });
     }
     if (path === "/walk"){   // une balade terminée : chiffres seulement (durée, distance, clebsous…), jamais le trajet
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};

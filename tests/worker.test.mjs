@@ -146,3 +146,12 @@ test("Éric pris avant la libération du 14/11 : le premier téléphone qui tape
   assert.equal((await api.post("/claim", { walker: "Eric" })).status, 403);   // ensuite, verrouillé comme avant
   assert.equal((await api.post("/dash", { token: "ancien-jeton-0123456789" })).status, 403);
 });
+
+test("statistiques d'utilisation : gardées 14 jours, visibles dans le tableau de bord, jamais pour Éric", async () => {
+  const { api } = await setup();
+  const tok = (await api.post("/claim", { walker: "Éric" })).j.token;
+  assert.equal((await api.post("/usage", { walker: "Léa", days: { "2026-11-14": { o: 3, s: 600, p: { "🪙 Tirelire": 2 } }, "pas-une-date": {} } })).status, 200);
+  assert.ok((await api.post("/usage", { walker: "Éric", days: { "2026-11-14": { o: 1, s: 10, p: {} } } })).j.skipped);
+  const u = (await api.post("/dash", { token: tok })).j.usage;
+  assert.equal(u.length, 1); assert.equal(u[0].walker, "Léa"); assert.deepEqual(Object.keys(u[0].days), ["2026-11-14"]); assert.equal(u[0].days["2026-11-14"].p["🪙 Tirelire"], 2);
+});

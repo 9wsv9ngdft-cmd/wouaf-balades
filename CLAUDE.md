@@ -274,3 +274,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Retours du 14/11 (20 h) : confettis calés sur le temps (même vitesse à 30/60/120 images/s) et jusqu'en bas de l'écran (7 s max) ; Éric voit ☰ › ⚔️ Duels
   en **aperçu** (`duelPreview`, `duelPrev` : formulaire et fiche avec les vrais prénoms de `/recent`, envoi désactivé) ; tableau de bord : % d'exploration
   (`sum.fog`, un chiffre, aucun trajet) et duel en cours de chaque promeneur.
+- 📈 Statistiques d'utilisation (décidé le 14/11, chiffres seulement) : `wouaf-usage` (par jour, 14 j : `o` ouvertures, `s` secondes dans l'app, `p` pages vues =
+  titre `<h2>` de chaque fiche + onglets + carte + balade), envoyé par `sendUsage` (`POST /usage`, KV `use:<prénom>`, Éric ignoré) à l'ouverture et quand l'app
+  passe en arrière-plan ; tableau de bord : « 📱 7 derniers jours : N ouvertures · X min dans l'app » + 5 pages les plus vues. Effacé par la remise à zéro.
