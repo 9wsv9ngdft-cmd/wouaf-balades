@@ -20,10 +20,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 
 ## Jeu « Points Roxy » (version 10)
 - Clé `wouaf-jeu` : `pts` (disponibles), `total` (gagnés, pour les niveaux), `streak`, `claims`, `seen` (cases ~100 m déjà visitées).
-- Objets : 🦴1 🎾2 🍖3 ⭐10 ; parcours choisi → semés sur le tracé, ramassés à < 25 m ; balade libre → trouvés tous les 110–190 m,
+- Objets : 🦴1 🎾2 🍖3 ⭐5 ; parcours choisi → semés tous les 350–450 m sur le tracé, ramassés à < 25 m ; balade libre → trouvés tous les 350–450 m,
   ⭐ à 400 m du départ. Objet dans une case jamais visitée ×2 ; +1 par case neuve. Ignoré au-delà de 15 km/h ou précision > 35 m.
-- Fin (≥ 5 min) : (objets + cases) × durée (1 / 1,25 dès 40 min / 1,5 dès 55 / 2 dès 85) + 5 retour au départ + 3 série ≥ 3 jours.
-- Récompenses réelles : tableau `REWARDS` dans index.html (à modifier sur demande de l'utilisateur). Réclamer = points retirés
+- Fin (≥ 5 min) : (objets + cases) × durée (1 / 1,25 dès 40 min / 1,5 dès 55 / 2 dès 85) + 2 retour au départ + 1 série ≥ 3 jours.
+- Équilibre (v11, 14/11) : ~1 balade par jour et par ado ≈ 600–700 pts/mois (45 min ≈ 20–25 pts une fois le quartier exploré).
+- Récompenses réelles : tableau `REWARDS` dans index.html (à modifier sur demande de l'utilisateur) : écran 50, glace 60, repas 120,
+  5 € 200 (`euros:5`), ciné 300. Plafond `EURO_CAP` = 15 € par promeneur sur 30 jours glissants. Réclamer = points retirés
   + message au superviseur via le menu Partager.
 - Propositions : rang bonus pour les lieux en cases neuves, tri final par `newPct` (« 🆕 x % de nouveau »).
 

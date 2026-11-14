@@ -251,7 +251,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.080100";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.091611";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -781,15 +781,17 @@
   // ---------- Jeu : Points Roxy ----------
   // Objets à ramasser, coins jamais visités (cases de ~100 m), bonus balades longues, boutique de vraies récompenses.
   const GAME_KEY = "wouaf-jeu";
-  const ITEMS = { b:{ icon:"🦴", v:1, name:"Un os" }, t:{ icon:"🎾", v:2, name:"Une balle" }, f:{ icon:"🍖", v:3, name:"Une friandise" }, s:{ icon:"⭐", v:10, name:"Trésor trouvé !" } };
+  const ITEMS = { b:{ icon:"🦴", v:1, name:"Un os" }, t:{ icon:"🎾", v:2, name:"Une balle" }, f:{ icon:"🍖", v:3, name:"Une friandise" }, s:{ icon:"⭐", v:5, name:"Trésor trouvé !" } };
   // Récompenses réelles : à modifier ici (prix en points)
+  // Équilibre visé : une balade par jour ≈ 600–700 pts par mois.
   const REWARDS = [
-    { icon:"🍦", label:"Une glace", cost:40 },
-    { icon:"📱", label:"30 min d'écran en plus", cost:60 },
-    { icon:"🍕", label:"Choisir le repas du soir", cost:100 },
-    { icon:"🎬", label:"Une place de ciné", cost:150 },
-    { icon:"💶", label:"10 €", cost:250 }
+    { icon:"📱", label:"30 min d'écran en plus", cost:50 },
+    { icon:"🍦", label:"Une glace", cost:60 },
+    { icon:"🍕", label:"Choisir le repas du soir", cost:120 },
+    { icon:"💶", label:"5 €", cost:200, euros:5 },
+    { icon:"🎬", label:"Une place de ciné", cost:300 }
   ];
+  const EURO_CAP = 15, CAP_DAYS = 30;   // 15 € maximum par promeneur sur 30 jours glissants
   const LEVELS = [[0, "🐶 Chiot"], [100, "🐾 Fouineuse"], [300, "🧭 Pisteuse"], [700, "🗺️ Exploratrice"], [1500, "👑 Légende du quartier"]];
   let game = store.get(GAME_KEY, null) || {};
   game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, game);
@@ -833,11 +835,11 @@
   function seedItems(p){
     const out = [];
     if (!p.line || p.line.length < 2) return out;
-    let acc = 0, next = 120 + Math.random()*60;
+    let acc = 0, next = 250 + Math.random()*100;
     const total = p.m || 0;
     for (let i = 1; i < p.line.length; i++){
       acc += dist(p.line[i-1], p.line[i]);
-      if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 120 + Math.random()*70; }
+      if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 350 + Math.random()*100; }
     }
     // trésor : sur le tracé, au plus près du lieu sympa du parcours (sinon au point le plus éloigné du départ)
     let best = null;
@@ -847,7 +849,7 @@
     if (best) out.push({ lat:best.lat, lon:best.lon, k:"s" });
     return out;
   }
-  const newGameWalk = p => ({ items: seedItems(p), got:{ b:0, t:0, f:0, s:0 }, itemPts:0, cells:[], newCells:0, acc:0, next: 110 + Math.random()*80, treasure:false, last:null });
+  const newGameWalk = p => ({ items: seedItems(p), got:{ b:0, t:0, f:0, s:0 }, itemPts:0, cells:[], newCells:0, acc:0, next: 300 + Math.random()*100, treasure:false, last:null });
   function drawItems(){
     gameLayer.clearLayers();
     if (!gw) return;
@@ -878,7 +880,7 @@
     for (const it of gw.items) if (!it.got && dist(it, q) < 25){ it.got = true; collect(it.k, onNew); hit = true; }
     if (hit) drawItems();
     if (!gw.items.length){   // balade libre : objets trouvés en chemin
-      if (gw.acc >= gw.next){ gw.next = gw.acc + 110 + Math.random()*80; collect(pickKind(), onNew); }
+      if (gw.acc >= gw.next){ gw.next = gw.acc + 350 + Math.random()*100; collect(pickKind(), onNew); }
       if (!gw.treasure && home && dist(home, q) >= 400){ gw.treasure = true; collect("s", onNew); }
     }
   }
@@ -891,12 +893,12 @@
     gw = null; gameLayer.clearLayers();
     if (elapsedMin < 5){ res.short = true; saveGame(); return res; }
     res.mult = elapsedMin >= 85 ? 2 : elapsedMin >= 55 ? 1.5 : elapsedMin >= 40 ? 1.25 : 1;
-    if (cameHome) res.home = 5;
+    if (cameHome) res.home = 2;
     const today = dayKey(Date.now()), yest = dayKey(Date.now() - 86400000);
     if (game.streak.day !== today){
       game.streak.n = game.streak.day === yest ? game.streak.n + 1 : 1;
       game.streak.day = today;
-      if (game.streak.n >= 3) res.streak = 3;
+      if (game.streak.n >= 3) res.streak = 1;
     }
     res.streakN = game.streak.n;
     res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak;
@@ -906,6 +908,21 @@
   }
 
   // ---------- Boutique ----------
+  // euros déjà pris sur les 30 derniers jours, et date à laquelle le plafond se libère
+  function euroWindow(){
+    const since = Date.now() - CAP_DAYS*86400000;
+    const recent = game.claims.filter(c => c.euros && new Date(c.date).getTime() >= since).sort((x, y) => new Date(x.date) - new Date(y.date));
+    const used = recent.reduce((n, c) => n + c.euros, 0);
+    return { used, freeOn: recent.length ? new Date(new Date(recent[0].date).getTime() + CAP_DAYS*86400000) : null };
+  }
+  function rewardState(r){
+    if (r.euros){
+      const w = euroWindow();
+      if (w.used + r.euros > EURO_CAP) return { ok:false, why:`Plafond de ${EURO_CAP} € atteint · de nouveau possible le ${w.freeOn.toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}` };
+    }
+    if (game.pts < r.cost) return { ok:false, why:`encore ${r.cost - game.pts} pts` };
+    return { ok:true, why:"" };
+  }
   function renderShop(){
     const lv = levelOf(game.total);
     const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
@@ -917,24 +934,25 @@
         <div class="bar"><i style="width:${pct}%"></i></div>
         <div class="row"><span>🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""}</span><span>🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}</span><span>Σ ${game.total} pts gagnés</span></div>
       </div>
-      <div class="props">${REWARDS.map((r, i) => `<div class="reward${game.pts < r.cost ? " locked" : ""}">
-          <div class="ri">${r.icon}</div><div><h4>${esc(r.label)}</h4><div class="cost">${r.cost} pts${game.pts < r.cost ? ` · encore ${r.cost - game.pts}` : ""}</div></div>
-          <button data-rw="${i}"${game.pts < r.cost ? " disabled" : ""}>${game.pts < r.cost ? "🔒" : "Je la prends"}</button></div>`).join("")}</div>
+      <div class="props">${REWARDS.map((r, i) => { const st = rewardState(r); return `<div class="reward${st.ok ? "" : " locked"}">
+          <div class="ri">${r.icon}</div><div><h4>${esc(r.label)}</h4><div class="cost">${r.cost} pts${st.why ? ` · ${st.why}` : ""}${r.euros && st.ok ? ` · encore ${EURO_CAP - euroWindow().used} € possibles ce mois-ci` : ""}</div></div>
+          <button data-rw="${i}"${st.ok ? "" : " disabled"}>${st.ok ? "Je la prends" : "🔒"}</button></div>`; }).join("")}</div>
       ${game.claims.length ? `<div class="flabel">Récompenses gagnées</div><div class="props">${game.claims.slice(0, 10).map(c => `<div class="entry"><div><h4>${c.icon} ${esc(c.label)}</h4><div class="when">${new Date(c.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long" })}</div></div><div class="dur">−${c.cost}</div></div>`).join("")}</div>` : ""}
       <div class="howto"><b>Comment gagner des points ?</b><br>
-        🦴 os 1 · 🎾 balle 2 · 🍖 friandise 3 · ⭐ trésor 10 (un par balade)<br>
+        🦴 os 1 · 🎾 balle 2 · 🍖 friandise 3 · ⭐ trésor 5 (un par balade)<br>
         🗺️ +1 par coin jamais exploré, et les objets y comptent double<br>
         ⏱️ balade longue : ×1,25 (45 min) · ×1,5 (1 h) · ×2 (1 h 30)<br>
-        🏠 +5 si tu reviens au point de départ · 🔥 +3 par jour à partir de 3 jours d'affilée<br>
+        🏠 +2 si tu reviens au point de départ · 🔥 +1 par jour à partir de 3 jours d'affilée<br>
+        💶 ${EURO_CAP} € maximum sur ${CAP_DAYS} jours<br>
         Balade de 5 min minimum. En vélo ou en voiture, ça ne compte pas 😉</div>`;
     document.querySelectorAll("[data-rw]").forEach(b => b.onclick = () => {
-      const r = REWARDS[+b.dataset.rw]; if (!r || game.pts < r.cost) return;
+      const r = REWARDS[+b.dataset.rw]; if (!r || !rewardState(r).ok) return;
       openSheet(`<h2>${r.icon} ${esc(r.label)}</h2><p>Ça coûte ${r.cost} points. Il t'en restera ${game.pts - r.cost}. Un message part ensuite au superviseur pour qu'il te la donne.</p>
         <div class="btns"><button id="rwOk">🎁 Je la prends</button><button class="ghost" id="rwNo">Annuler</button></div>`);
       $("#rwNo").onclick = closeSheet;
       $("#rwOk").onclick = async () => {
         game.pts -= r.cost;
-        game.claims.unshift({ date: new Date().toISOString(), icon: r.icon, label: r.label, cost: r.cost });
+        game.claims.unshift({ date: new Date().toISOString(), icon: r.icon, label: r.label, cost: r.cost, euros: r.euros || 0 });
         saveGame();
         const text = `🎁 ${profile.walker || "Le promeneur"} a gagné : ${r.icon} ${r.label} (${r.cost} pts) · il reste ${game.pts} pts`;
         try{ if (navigator.share) await navigator.share({ text }); else location.href = "sms:&body=" + encodeURIComponent(text); }catch(e){}
@@ -1303,7 +1321,7 @@
     const got = Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ");
     const lv = levelOf(game.total);
     return `<div class="gamebox">🏅 <b>+${res.total} points</b>
-      <small>${got || "Aucun objet"} · 🗺️ ${res.cells} coin${res.cells > 1 ? "s" : ""} neuf${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +5" : ""}${res.streak ? ` · 🔥 ${res.streakN} jours +3` : ""}<br>
+      <small>${got || "Aucun objet"} · 🗺️ ${res.cells} coin${res.cells > 1 ? "s" : ""} neuf${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +2" : ""}${res.streak ? ` · 🔥 ${res.streakN} jours +1` : ""}<br>
       Total : ${game.pts} pts · ${lv.name}</small></div>`;
   }
 
@@ -1674,8 +1692,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 10;
+  const APP_NUM = 11;
   const NEWS = {
+    11: [
+      "⚖️ Points rééquilibrés : moins d'objets (un tous les ~400 m), trésor ⭐ à 5 points.",
+      "🎁 Nouveaux prix des récompenses, et 💶 15 € maximum par mois et par promeneur."
+    ],
     10: [
       "🏅 Points Roxy : ramasse 🦴 🎾 🍖 et un ⭐ trésor par balade, juste en passant à côté.",
       "🗺️ Les coins jamais explorés rapportent plus (objets ×2) et les balades longues multiplient les points.",
