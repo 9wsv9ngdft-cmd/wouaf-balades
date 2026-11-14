@@ -160,6 +160,7 @@ function okSub(sub){
     return sub.endpoint.startsWith("https://") && PUSH_HOSTS.some(x => h === x || h.endsWith("." + x)) && sub.keys && sub.keys.p256dh && sub.keys.auth;
   }catch(e){ return false; }
 }
+const slug = w => String(w || "").toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30);
 const okId = id => typeof id === "string" && /^[A-Za-z0-9-]{8,64}$/.test(id);
 const cleanSched = s => Array.from({ length:7 }, (_, i) => [0, 1].map(j => { const t = s && s[i] && s[i][j]; return typeof t === "string" && /^\d\d:\d\d$/.test(t) ? t : ""; }));
 const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length < 3000) ? s : {};
@@ -174,10 +175,15 @@ export default {
     }
     if (req.method === "GET" && path === "/") return json({ ok:true, app:"Wouaf Balades : rappels" });
     // infos communes lues par l'app à l'ouverture : pauses, jours boostés, dernière balade de Roxy (tous promeneurs)
+    // ✏️ corrections du superviseur à appliquer sur le téléphone d'un promeneur
+    if (req.method === "GET" && path === "/adjust"){
+      const w = new URL(req.url).searchParams.get("w");
+      return json({ list: (w && await env.WOUAF.get("a:" + slug(w), "json")) || [] });
+    }
     if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust"){
       // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -189,6 +195,19 @@ export default {
         for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) all.push(d); }
         return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json") });
       }
+      if (path === "/restore"){   // ♻️ sauvegarde d'un promeneur, pour un nouveau téléphone
+        const d = await env.WOUAF.get("b:" + slug(b.walker), "json");
+        if (!b.walker) { const l = await env.WOUAF.list({ prefix:"b:" }); return json({ ok:true, names: l.keys.map(k => k.name.slice(2)) }); }
+        return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
+      }
+      if (path === "/adjust"){   // ✏️ ajouter / retirer des clebsous avec un motif
+        const w = String(b.walker || "").slice(0, 30), cs = Math.round(+b.cs || 0);
+        if (!w || !cs || Math.abs(cs) > 100000) return json({ error:"bad" }, 400);
+        const k = "a:" + slug(w), l = (await env.WOUAF.get(k, "json")) || [];
+        l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), cs, why: String(b.why || "").slice(0, 120), t: Date.now() });
+        await env.WOUAF.put(k, JSON.stringify(l.slice(-50)));
+        return json({ ok:true });
+      }
       const ok = d => typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d);
       if (path === "/boost"){   // 🎉 jours à bonus ×2
         const boosts = (Array.isArray(b.boosts) ? b.boosts : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
@@ -198,6 +217,24 @@ export default {
       const pauses = (Array.isArray(b.pauses) ? b.pauses : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
       await env.WOUAF.put("pauses", JSON.stringify(pauses));
       return json({ ok:true, pauses });
+    }
+    if (path === "/backup"){   // 💾 sauvegarde automatique du jeu et de la tirelire d'un promeneur (pas de trajets)
+      const w = String(b.walker || "").slice(0, 30), txt = JSON.stringify(b.data || null);
+      if (!w || !b.data || txt.length > 2000000) return json({ error:"bad" }, 400);
+      await env.WOUAF.put("b:" + slug(w), JSON.stringify({ walker: w, at: Date.now(), data: b.data }));
+      return json({ ok:true });
+    }
+    if (path === "/duo"){   // 👯 balade à deux : les deux promeneurs touchent « On est à deux » pendant la même balade
+      const w = String(b.walker || "").slice(0, 30), st = +b.s || 0, now = Date.now();
+      if (!w || !st) return json({ error:"bad" }, 400);
+      if (b.press) await env.WOUAF.put("duo:" + slug(w), JSON.stringify({ walker: w, s: st, t: now }), { expirationTtl: 6 * 3600 });
+      const l = await env.WOUAF.list({ prefix:"duo:" });
+      for (const k of l.keys){
+        if (k.name === "duo:" + slug(w)) continue;
+        const o = await env.WOUAF.get(k.name, "json");
+        if (o && Math.abs(o.s - st) < 45 * 60000 && now - o.t < 4 * 3600000) return json({ partner: o.walker });
+      }
+      return json({ partner: null });
     }
     if (path === "/treasure"){   // 🏴‍☠️ premier à trouver le trésor de la semaine (aucune position reçue)
       const wk = String(b.week || "").slice(0, 12), w = String(b.walker || "").slice(0, 30);
@@ -211,7 +248,7 @@ export default {
       if (!w || !x.e) return json({ error:"bad" }, 400);
       const num = v => Math.max(0, Math.min(1e7, Math.round(+v || 0))), ts = v => Math.max(0, Math.min(4e9, Math.round(+v || 0)));
       const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms) };
-      const dk = "d:" + w.toLowerCase().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_");
+      const dk = "d:" + slug(w);
       const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
       if (!d.walks.some(y => y.e === walk.e)) d.walks.unshift(walk);
       d.walks = d.walks.slice(0, 60); d.walker = w; d.sum = cleanState(b.sum); d.at = Date.now();

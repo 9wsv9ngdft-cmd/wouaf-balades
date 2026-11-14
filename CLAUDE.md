@@ -145,3 +145,14 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 📳 `haptic(n)` : `navigator.vibrate` sur Android ; sur iPhone (iOS 18+) astuce de l'interrupteur caché (`<input type=checkbox switch>`
   basculé via son label) = petit tic haptique, pas garanti hors geste de l'utilisateur. Appelé par `ding()` (objets, coffre…),
   radar « brûlant » et retour maison.
+
+## Version 28 (décidé le 14/11)
+- 💾 Sauvegarde (`backupNow`) : jeu + tirelire + carnet sans tracés → `POST /backup` (KV `b:<prénom>`), après chaque balade et
+  toutes les 6 h. Restauration : Superviseur › code › « ♻️ Restaurer un promeneur » (`POST /restore`, remplace le téléphone).
+- ✏️ Corrections : Superviseur › « ✏️ Corriger une tirelire » (prénom, ± clebsous, motif) → `POST /adjust` (KV `a:<prénom>`) ;
+  le téléphone l'applique à l'ouverture (`applyAdjust`, `game.adj[mois]`, `game.adjDone`) avec une fenêtre « Message du superviseur ».
+- 🎄 🎃 🐣 Événements (`seasonEvent`, `EVENT`) : décembre = Noël (🎁 ⛄ 🍪 🌟), 20/10–2/11 = Halloween (🍬 🦇 👻 🎃),
+  Pâques ±7 j (🥚 🐣 🍫 🐰) ; mêmes valeurs et même album, déco dans le titre et mission.
+- 👯 Balade à deux : bouton 👯 ; les deux touchent pendant la même balade (`POST /duo`, départs à < 45 min) → +15 chacun
+  (`DUO_PTS`), vérifié aussi juste après la fin.
+- 🎂 Anniversaire de Roxy : `ROXY_BDAY` (« MM-JJ », vide tant que l'utilisateur ne l'a pas donné) → bonus ×3, chapeau 🎉, mission.
