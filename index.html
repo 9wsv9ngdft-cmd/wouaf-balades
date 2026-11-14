@@ -339,7 +339,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.140627";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.140855";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1025,7 +1025,7 @@
     { t:"Ramasse 6 objets",                   ok: x => x.n >= 6 },
     { t:"Fais au moins 2 km",                 ok: x => x.m >= 2000 },
     { t:"Trouve 2 balles 🎾",                 ok: x => x.got.t >= 2 },
-    { t:"Reviens à ton point de départ",      ok: x => x.home },
+    { t:"Fais au moins 3 km",                 ok: x => x.m >= 3000 },
     { t:"Trouve le trésor ⭐",                ok: x => x.got.s >= 1 }
   ];
   const defiOf = t => { const d = new Date(t - 4*3600000); const n = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000); return DEFIS[(n * 3) % DEFIS.length]; };
@@ -1053,7 +1053,7 @@
     for (const k of Object.keys(res.got)) sea.got[k] = (sea.got[k] || 0) + res.got[k];
     if (!sea.done && Object.keys(sea.goal).every(k => sea.got[k] >= sea.goal[k])){ sea.done = true; res.album = sea.name; }
     res.mult = elapsedMin >= 85 ? 2 : elapsedMin >= 55 ? 1.5 : elapsedMin >= 40 ? 1.25 : 1;
-    if (cameHome) res.home = 2;
+    // (pas de bonus « retour au départ » : on revient toujours à la maison, seule la balade compte)
     const today = dayKey(Date.now()), yest = dayKey(Date.now() - 86400000);
     if (game.streak.day !== today){
       game.streak.n = streakAlive(game.streak.day) ? game.streak.n + 1 : 1;
@@ -2142,7 +2142,7 @@
     if (r.eu){
       const res = r._res, full = res && Math.abs(r.eu * CS - (res.dur + res.total)) < 1;
       const got = res ? Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ") : "";
-      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.home ? " · 🏠 +2" : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
+      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
       return `<div class="gamebox">🪙 <b>+${fmtCs(r.eu)}</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
     }
     if ((game.money[monthKey(Date.now())] || 0) >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
@@ -2157,7 +2157,7 @@
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
         <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
-        ${r.f ? `<div><b>${r.h == null ? "—" : r.h ? "✓ Oui" : "Non"}</b><span>retour au départ</span></div>` : `<div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours suivi</span></div>`}
+        ${r.f ? `<div><b>${res && !res.short ? res.cells : "—"}</b><span>rue${res && res.cells > 1 ? "s" : ""} neuve${res && res.cells > 1 ? "s" : ""}</span></div>` : `<div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours suivi</span></div>`}
         <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
       </div>
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
@@ -2503,7 +2503,7 @@
     const items = d / 400 * 1.7 * 2 + (d > 800 ? 10 : 0);            // 🦴🎾🍖 en moyenne 1,7, ×2 sur rue neuve ; ⭐ trésor ×2
     const cells = Math.min(MAX_NEW_CELLS, Math.round(d / 150));
     const mult = min >= 85 ? 2 : min >= 55 ? 1.5 : min >= 40 ? 1.25 : 1;
-    return Math.round(((items + cells) * mult + 2 + DEFI_PTS) / 5) * 5;
+    return Math.round(((items + cells) * mult + DEFI_PTS) / 5) * 5;
   }
   const gainEst = min => Math.round(walkEuros(min) * CS) + bonusEst(min);
   function updateGo(){
@@ -2525,7 +2525,6 @@
         ${row("🗺️", `Chaque rue pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max)`, "+1 🪙")}
         ${row("✖️", "Objets trouvés sur une rue neuve", "×2")}
         ${row("⏱️", "Balade longue : dès 40 min / 55 min / 1 h 25", "×1,25 / ×1,5 / ×2")}
-        ${row("🏠", "Retour au point de départ", "+2 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
         ${row("💰", "Coffre surprise, caché sur une rue pas faite depuis longtemps", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
