@@ -178,6 +178,23 @@
   .ticket .tk-sum{font-size:52px;font-weight:800;color:#b86a12;line-height:1.1;margin-top:6px} .ticket .tk-sum .csi{width:44px;height:44px}
   .ticket .tk-sub{color:var(--muted);font-size:14px}
   .ticket h2{margin:10px 0 2px} .ticket p{margin:0 0 6px;color:var(--muted);font-size:14px}
+  .tama-screen{position:relative;text-align:center;border-radius:22px;padding:22px 12px 14px;background:radial-gradient(circle at 50% 40%,#fff8e6,#f1e6cc);border:4px solid #e0c79a;box-shadow:inset 0 2px 8px rgba(0,0,0,.08)}
+  .tama-screen.sad{background:radial-gradient(circle at 50% 40%,#eef0f2,#d9dde2);border-color:#c3c9d1}
+  .tama-dog{display:inline-block;cursor:pointer} .tama-dog .roxy{width:130px;height:130px;font-size:80px;border-width:5px;border-color:var(--accent)}
+  .tama-dog .roxy .a-bow{top:-12px;left:-6px;font-size:40px} .tama-dog .roxy .a-scarf{bottom:-22px;font-size:40px} .tama-dog .roxy .a-glasses{top:32px;left:20px;font-size:38px} .tama-dog .roxy .a-hat{top:-50px;font-size:50px}
+  .tama-screen.happy .tama-dog{animation:tHop 1.2s ease-in-out infinite} .tama-screen.ok .tama-dog{animation:wag 2.4s ease-in-out infinite} .tama-screen.sad .tama-dog{animation:tSad 3s ease-in-out infinite;filter:saturate(.6)}
+  .tama-dog.pet{animation:jump .5s ease-out !important}
+  @keyframes tHop{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes tSad{0%,100%{transform:rotate(-3deg) translateY(4px)}50%{transform:rotate(3deg) translateY(6px)}}
+  .tama-bub{position:absolute;right:18%;top:10px;font-size:34px;background:#fff;border-radius:50%;width:54px;height:54px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+  .tama-name{margin-top:12px;font-size:18px} .tama-sub{font-size:13px;color:var(--muted)}
+  .tama-bars{margin:14px 2px 6px}
+  .tb{display:grid;grid-template-columns:120px 1fr;gap:2px 10px;align-items:center;margin:9px 0}
+  .tbl{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .tbb{height:12px;border-radius:6px;background:#efe9dc;overflow:hidden} .tbb i{display:block;height:100%;border-radius:6px}
+  .tbv{grid-column:2;font-size:12px;color:var(--muted);margin-top:-2px}
+  .tama-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+  .tama-grid div{background:#f6f2ea;border-radius:12px;padding:9px 8px;text-align:center} .tama-grid b{display:block;font-size:17px} .tama-grid span{font-size:11px;color:var(--muted)}
+  @media (prefers-color-scheme: dark){ .tama-screen{background:radial-gradient(circle at 50% 40%,#2c2718,#1b211d);border-color:#5a4a28} .tama-screen.sad{background:radial-gradient(circle at 50% 40%,#23272b,#1a1d20);border-color:#3a4048} .tbb{background:#2d3630} .tama-grid div{background:#242b26} }
   .subnav{display:flex;gap:8px;margin:4px 0 12px} .subnav button{flex:1;padding:12px 8px}
   .backp{width:100%;margin:4px 0 12px}
   footer details summary{cursor:pointer;color:var(--muted);font-size:13px}
@@ -416,7 +433,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.162458";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.163109";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1952,25 +1969,42 @@
       <div class="btns"><button id="ssClose">Fermer</button></div>`);
     $("#ssClose").onclick = closeSheet;
   }
+  // 🐕 Fiche « Tamagotchi » de Roxy : son humeur, sa forme, son niveau, la cagnotte, en un coup d'œil
   function sheetRoxy(){
     ensureGame();
-    const lv = levelOf(game.total), sea = ensureSeason();
-    const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
-    const nextAcc = ACCS.find(([, , need]) => game.total < need);
-    openSheet(`<div class="bigdog">${roxyHTML(game.acc)}</div>
-      <h2 style="text-align:center">${esc(lv.name)}</h2>
-      <div class="bar" style="background:#efe9dc"><i style="width:${pct}%;background:var(--green-2)"></i></div>
-      <p style="text-align:center">${lv.next ? `Encore <b>${fmtCs((lv.next[0] - game.total) / CS)}</b> à gagner pour devenir ${esc(lv.next[1])} 🎁` : "Niveau maximum, bravo ! 👑"}</p>
-      <div class="rgrid">
-        <div><b>${albumPct()} %</b><span>album ${esc(sea.icon)}</span></div>
-        <div><b>${Object.keys(game.trophies).length} / ${TROPHIES.length}</b><span>trophées</span></div>
-        <div><b>${game.acc.length ? game.acc.join(" ") : "—"}</b><span>accessoires portés</span></div>
-        <div><b>${nextAcc ? nextAcc[0] : "✓"}</b><span>${nextAcc ? `prochain à ${nextAcc[2].toLocaleString("fr-FR")}` : "tout débloqué"}</span></div>
-      </div>
-      <div class="btns"><button id="srAll">🏆 Voir mes progrès</button><button class="ghost" id="srClose">Fermer</button></div>`);
-    $("#srAll").onclick = () => { closeSheet(); switchTab("prog"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
-    $("#srClose").onclick = closeSheet;
+    const m = mood(), lv = levelOf(game.total), w = weekStats(Date.now());
+    const lvPct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
+    const forme = Math.min(100, Math.round(100 * w.min / (7 * 30)));
+    const fog = fogStats();
+    const n = game.streak.n || 0, alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
+    const bar = (ic, name, pct, col, txt) => `<div class="tb"><span class="tbl">${ic} ${name}</span><div class="tbb"><i style="width:${Math.max(4, pct)}%;background:${col}"></i></div><span class="tbv">${txt}</span></div>`;
+    const anim = m.p >= 75 ? "happy" : m.p >= 50 ? "ok" : "sad";
+    openSheet(`<div class="tama">
+        <div class="tama-screen ${anim}">
+          <div class="tama-bub">${m.e}</div>
+          <div class="tama-dog" id="tamaDog">${roxyHTML(game.acc)}</div>
+          <div class="tama-name">${DOG} · <b>${esc(m.s)}</b></div>
+          ${m.ago ? `<div class="tama-sub">${esc(m.ago)}</div>` : ""}
+        </div>
+        <div class="tama-bars">
+          ${bar("❤️", "Bonheur", m.p, m.c, m.p >= 75 ? "au top" : m.p >= 50 ? "ça va" : "elle veut sortir !")}
+          ${bar("⚡", "Forme", forme, "#2a7de1", `${fmtMin(w.min)} cette semaine`)}
+          ${bar(esc(lv.name.split(" ")[0]), esc(lv.name.split(" ").slice(1).join(" ")), lvPct, "#e0a21f", lv.next ? `${lvPct} %` : "max")}
+          ${game.home ? bar("🗺️", "Exploration", fog.pct, "#4c8a5a", `${fog.pct} %`) : ""}
+        </div>
+        <div class="tama-grid">
+          <div><b>🪙 ${Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR")}</b><span>cagnotte de ${monthName(Date.now())}</span></div>
+          <div><b>🔥 ${alive ? n : 0} j</b><span>série</span></div>
+          <div><b>${lv.next ? "🪙 " + Math.round(lv.next[0] - game.total).toLocaleString("fr-FR") : "✓"}</b><span>${lv.next ? `pour ${esc(lv.next[1])} 🎁` : "niveau max"}</span></div>
+        </div>
+        <div class="btns"><button id="tamaGo">▶️ Sortir ${DOG}</button><button class="ghost" id="tamaProg">🏆 Tous mes progrès</button><button class="ghost" id="tamaClose">Fermer</button></div>
+      </div>`);
+    $("#tamaDog").onclick = () => { const d = $("#tamaDog"); d.classList.remove("pet"); void d.offsetWidth; d.classList.add("pet"); ding(); };
+    $("#tamaGo").onclick = () => { closeSheet(); setTimeout(() => $("#freeWalk").click(), 300); };
+    $("#tamaProg").onclick = () => { closeSheet(); switchTab("prog"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
+    $("#tamaClose").onclick = closeSheet;
   }
+
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !state.walk) renderHome(); });
 
 
@@ -2234,15 +2268,16 @@
   }
   function mood(){
     const l = lastWalk();
-    if (!l) return { e:"🥺", t:`${DOG} attend sa première balade avec toi`, p:30, c:"#e0a21f" };
+    if (!l) return { e:"🥺", s:"Attend sa 1re balade", ago:"", t:`${DOG} attend sa première balade avec toi`, p:30, c:"#e0a21f" };
     const h = (Date.now() - l.t) / 3600000;
     const who = l.w && l.w !== profile.walker ? ` avec ${l.w}` : "";
     const ago = h < 1 ? "il y a moins d'1 h" : `il y a ${Math.round(h)} h`;
-    if (h < 4) return { e:"😍", t:`${DOG} est aux anges (sortie${who} ${ago})`, p:100, c:"#4c8a5a" };
-    if (h < 8) return { e:"😊", t:`${DOG} est contente (sortie${who} ${ago})`, p:75, c:"#4c8a5a" };
-    if (h < 14) return { e:"🙂", t:`${DOG} commence à s'impatienter (sortie${who} ${ago})`, p:50, c:"#e0a21f" };
-    if (h < 24) return { e:"🥺", t:`${DOG} s'ennuie… (dernière sortie ${ago})`, p:25, c:"#d9792b" };
-    return { e:"😢", t:`${DOG} est triste, elle attend sa balade (dernière sortie ${ago})`, p:8, c:"#c8452f" };
+    const last = `sortie${who} ${ago}`;
+    if (h < 4) return { e:"😍", s:"Aux anges", ago: last, t:`${DOG} est aux anges (${last})`, p:100, c:"#4c8a5a" };
+    if (h < 8) return { e:"😊", s:"Contente", ago: last, t:`${DOG} est contente (${last})`, p:75, c:"#4c8a5a" };
+    if (h < 14) return { e:"🙂", s:"S'impatiente", ago: last, t:`${DOG} commence à s'impatienter (${last})`, p:50, c:"#e0a21f" };
+    if (h < 24) return { e:"🥺", s:"S'ennuie", ago: last, t:`${DOG} s'ennuie… (dernière ${last})`, p:25, c:"#d9792b" };
+    return { e:"😢", s:"Triste", ago: last, t:`${DOG} est triste, elle attend sa balade (dernière ${last})`, p:8, c:"#c8452f" };
   }
 
 
@@ -3350,8 +3385,11 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 31;
+  const APP_NUM = 32;
   const NEWS = {
+    32: [
+      "🐕 Touche Roxy en haut de l'accueil : sa fiche façon Tamagotchi montre son bonheur, sa forme, son niveau et ta cagnotte. Plus elle attend, plus elle est triste !"
+    ],
     31: [
       "🐕 Sortir Roxy au moins 20 min par jour, c'est obligatoire : ça ne rapporte rien en soi, mais les bonus trouvés en route comptent ! Au-delà de 20 min, la durée rapporte aussi.",
       "🏆 Semaine parfaite (7 jours sur 7) : +30 🪙. Les coffres sont réservés à ceux qui sortent Roxy au moins 4 jours sur 7.",

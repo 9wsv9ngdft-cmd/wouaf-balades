@@ -195,3 +195,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Balade (v31, retours du 14/11) : carte plein écran au-dessus de la barre du bas (`--wbh` via ResizeObserver), en-tête et accueil
   cachés ; 1er point GPS → centré zoom 17 (`firstFix`) ; bouton 📍 « recentrer » quand on a déplacé la carte ; bandeau de départ
   court (« 🐾 C'est parti pour 45 min ! », disparaît après 8 s) ; météo dans la ligne sous le chrono (plus de pop-up).
+- 🐕 Fiche Tamagotchi (v32, `sheetRoxy`, ouverte en touchant Roxy en haut ou la tuile Roxy) : écran avec Roxy animée selon son
+  humeur (saute si contente, triste et grise si elle attend), barres ❤️ Bonheur (`mood()`), ⚡ Forme (minutes de la semaine / 3 h 30),
+  niveau, 🗺️ Exploration ; cagnotte, série, clebsous pour le prochain niveau ; bouton « ▶️ Sortir Roxy ».
