@@ -49,6 +49,17 @@
   #meteo.hot{background:#fbebdc;color:#7a3d10}
   #status{margin:12px 2px 8px;color:var(--muted);font-size:14px;min-height:20px}
   #status.err{color:var(--warn)}
+  body:not(.hasmap):not(.walking):not(.choosing):not(.recap) #map{display:none}
+  #home{margin-top:12px}
+  body.walking #home,body.recap #home,body.choosing #home{display:none}
+  .homecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
+  .homecard .hrow{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+  .homecard .hrow button{background:#f6f2ea;border:0;border-radius:12px;padding:8px 6px;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:2px;font:inherit}
+  .homecard .hrow small{font-size:11px;color:var(--muted)}
+  .homecard .hrow b{font-size:16px;line-height:1.2}
+  .homecard .hrow span{font-size:12px;color:var(--muted)}
+  .homecard .hl{font-size:14px;line-height:1.55;margin-top:10px}
+  .homecard .ho{font-size:13px;color:var(--muted);margin-top:8px}
   #map{height:44vh;min-height:270px;border-radius:16px;border:1px solid var(--line);z-index:0}
   #map.picking{outline:3px dashed var(--accent);outline-offset:2px}
   .toolbar{display:flex;gap:8px;margin-top:12px}
@@ -216,8 +227,8 @@
   <div id="recapbox"></div>
   <div class="panel">
     <div class="who"><span id="whoText"></span><button class="linkish" id="editWho">Modifier</button></div>
-    <button id="locate" class="big">📍 Me localiser</button>
-    <button id="freeWalk" class="big ghost" style="margin-top:8px">🚶 Balade libre <span style="font-weight:500;font-size:14px">(sans parcours)</span></button>
+    <button id="freeWalk" class="big">▶️ C'est parti avec Roxy <span style="font-weight:500;font-size:14px">(balade libre)</span></button>
+    <button id="locate" class="big ghost" style="margin-top:8px">🗺️ Proposer des parcours</button>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="seg" id="durSeg" role="group" aria-labelledby="durLabel">
       <button data-v="15" aria-label="15 minutes, balade express">⚡ 15</button>
@@ -237,14 +248,15 @@
     </div>
   </div>
 
+  <div id="home"></div>
   <div id="meteo" aria-live="polite"></div>
-  <div id="status" aria-live="polite">Touchez « Me localiser » pour trouver des balades autour de vous.</div>
+  <div id="status" aria-live="polite">Touchez « C'est parti » pour une balade libre, ou « Proposer des parcours » pour des idées autour de vous.</div>
   <div id="map"></div>
 
   <div class="tabs" role="tablist">
     <button class="on" data-tab="walks" role="tab">🐾 Balades</button>
     <button data-tab="log" role="tab">📒 Carnet</button>
-    <button data-tab="shop" role="tab">💶 Tirelire</button>
+    <button data-tab="shop" role="tab">🪙 Tirelire</button>
     <button data-tab="prog" role="tab">🏆 Progrès</button>
   </div>
   <div id="views">
@@ -289,7 +301,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.130220";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.131413";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -833,6 +845,9 @@
   const MONEY_MIN = 15, REF_MIN = 25, REF_EUR = 0.35, MONEY_MAX = 15, MONEY_POW = 1.5;
   const walkEuros = min => min < MONEY_MIN ? 0 : Math.round(REF_EUR * Math.pow(min / REF_MIN, MONEY_POW) * 100) / 100;
   const fmtEur = v => v.toFixed(2).replace(".", ",") + " €";
+  // 🪙 Clebsous : la monnaie affichée aux promeneurs (100 clebsous = 1 €) ; le superviseur reçoit les euros
+  const CS = 100;
+  const fmtCs = v => { const n = Math.round(v * CS); return n.toLocaleString("fr-FR") + (Math.abs(n) > 1 ? " clebsous" : " clebsou"); };
   const monthKey = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
   const monthName = t => new Date(t).toLocaleDateString("fr-FR", { month:"long" });
   // paliers longs : une balade par jour ≈ 600 pts par mois → Fouineuse en ~2 semaines, Légende en ~8 mois
@@ -1041,7 +1056,7 @@
   function monthPace(){
     const d = new Date();
     const days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    return Math.min(MONEY_MAX, Math.round(moneyThisMonth() / Math.max(1, d.getDate()) * days));
+    return Math.min(MONEY_MAX, Math.round(moneyThisMonth() / Math.max(1, d.getDate()) * days * 10) / 10);
   }
   // bilan d'une quinzaine, à envoyer au superviseur
   function bilan(per){
@@ -1083,18 +1098,18 @@
     const coins = Object.keys(game.seen).length;
     $("#v-shop").innerHTML = `<div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
-        <div class="big">💶 ${fmtEur(eur)}</div>
-        <div class="lvl">Rythme ≈ ${monthPace()} € à la fin du mois</div>
-        ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtEur(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus</div>` : ""}
+        <div class="big">🪙 ${fmtCs(eur)}</div>
+        <div class="lvl">= ${fmtEur(eur)} · rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
+        ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtCs(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus</div>` : ""}
         <button class="ghost" id="bilNow" style="margin-top:10px;width:100%;background:rgba(255,255,255,.18);color:#fff">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
-        <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtEur(walkEuros(n))}</b>`).join(" · ")}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${CHEST_EUR} € se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtEur(2 * walkEuros(15))}, 1 × 30 min = ${fmtEur(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ 10 € par mois.</div>
+        <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtCs(walkEuros(n))}</b>`).join(" · ")}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois. 100 clebsous = 1 €.</div>
       </div>
       ${malusBox()}
-      ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtEur(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
+      ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
       <div class="wallet" style="background:#eef3ec;color:var(--ink)">
         <div style="font-weight:600">🎮 Score de jeu : 🏅 ${game.total} pts · ${lv.name}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px">🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""} · 🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}${lv.next ? ` · encore ${lv.next[0] - game.total} pts pour ${lv.next[1]}` : ""}</div>
@@ -1131,7 +1146,8 @@
     ensureGame();
     const l = [], today = dayKey(Date.now());
     if (paused(dIso(Date.now()))) l.push("🏖️ Pause décidée par le superviseur : pas de malus en ce moment (les balades rapportent toujours 💶).");
-    else if (game.streak.day !== today) l.push(`⏳ Pas encore de balade aujourd'hui. À gagner : ${[15, 25, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} ${fmtEur(walkEuros(n))}`).join(" · ")}. Ne passe pas à côté !`);
+    else if (game.streak.day !== today) l.push(`⏳ Pas encore de balade aujourd'hui. À gagner : ${[15, 25, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} ${fmtCs(walkEuros(n))}`).join(" · ")}. Ne passe pas à côté !`);
+    else l.push(`✓ ${DOG} est déjà sortie aujourd'hui, bravo !`);
     if ((game.streak.n || 0) >= 2 && game.streak.day === dayKey(Date.now() - DAYMS)) l.push(`🔥 Série de ${game.streak.n} jours : 15 min aujourd'hui pour la garder !`);
     if (chestChance() > 0) l.push("💰 Le coffre est chaud : prends une rue jamais faite !");
     l.push(game.defiDone === today ? "🎯 Défi du jour réussi ✓" : `🎯 Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} pts)`);
@@ -1140,7 +1156,7 @@
   function showChest(){
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
-    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${CHEST_EUR} € en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir pris une rue que tu n'avais jamais faite 🗺️</p>`;
+    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir pris une rue que tu n'avais jamais faite 🗺️</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el);
     ding(); setTimeout(ding, 250); setTimeout(ding, 500);
@@ -1370,10 +1386,10 @@
         <div><b>${w.n}</b><span>balade${w.n > 1 ? "s" : ""}</span></div>
         <div><b>${fmtMin(w.min)}</b><span>de balade</span></div>
         <div><b>${fmtKm(w.m)}</b><span>parcourus</span></div>
-        <div><b>${fmtEur(w.eur)}</b><span>dans la tirelire</span></div>
+        <div><b>${fmtCs(w.eur)}</b><span>dans la tirelire</span></div>
       </div>
       ${rec && best ? `<div class="party">🏆 <b>Record battu !</b> Ta meilleure semaine (avant : ${fmtMin(best)}).</div>` : best ? `<p>Ton record : ${fmtMin(best)} sur une semaine.</p>` : ""}
-      ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtEur(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}
+      ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtCs(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}
       <p>Nouvelle semaine, nouveau défi chaque jour 🎯</p>
       <div class="btns"><button id="weekOk">C'est parti !</button></div>`);
     $("#weekOk").onclick = closeSheet;
@@ -1532,10 +1548,10 @@
   }
   const malusLabel = x => {
     const day = new Date(isoTime(x.d)).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric", month:"short" });
-    return x.k === "joker" ? `🃏 ${day} : pas de balade, joker utilisé (0 €)`
-      : x.k === "day" ? `📅 ${day} : pas de balade, −${fmtEur(x.eur)}`
-      : x.k === "short" ? `⏱️ ${day} : 3e balade trop courte de la semaine, −${fmtEur(x.eur)}`
-      : `📉 Semaine du ${day} : ${x.n} jour${x.n > 1 ? "s" : ""} de balade sur ${x.need} demandés, −${fmtEur(x.eur)}`;
+    return x.k === "joker" ? `🃏 ${day} : pas de balade, joker utilisé (rien de retiré)`
+      : x.k === "day" ? `📅 ${day} : pas de balade, −${fmtCs(x.eur)}`
+      : x.k === "short" ? `⏱️ ${day} : 3e balade trop courte de la semaine, −${fmtCs(x.eur)}`
+      : `📉 Semaine du ${day} : ${x.n} jour${x.n > 1 ? "s" : ""} de balade sur ${x.need} demandés, −${fmtCs(x.eur)}`;
   };
   function malusIn(a, b){
     const l = (game.malus || []).filter(x => { const t = isoTime(x.d); return t >= a && t < b; });
@@ -1551,22 +1567,22 @@
     const ml = malusIn(m0, Date.now() + DAYMS);
     const jok = ml.list.filter(x => x.k === "joker").length;
     return `<div class="wallet" style="background:#fff6ef;color:var(--ink);border:1px solid #f0d9c4">
-        <div style="font-weight:600">⚠️ Malus de ${monthName(Date.now())}${ml.eur ? ` : −${fmtEur(ml.eur)}` : " : aucun 👏"}</div>
+        <div style="font-weight:600">⚠️ Malus de ${monthName(Date.now())}${ml.eur ? ` : −${fmtCs(ml.eur)}` : " : aucun 👏"}</div>
         ${ml.list.length ? `<div style="font-size:13px;margin-top:6px;line-height:1.6">${ml.list.map(x => esc(malusLabel(x))).join("<br>")}</div>` : ""}
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 15 min avec l'app : −${fmtEur(MALUS_DAY)} · dès la 3e balade de moins de 15 min dans la semaine : −${fmtEur(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtEur(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 15 min avec l'app : −${fmtCs(MALUS_DAY)} · dès la 3e balade de moins de 15 min dans la semaine : −${fmtCs(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtCs(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
       </div>`;
   }
   // à l'ouverture : annoncer les nouveaux malus (ou jokers utilisés)
   function showMalus(list, then){
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")){
       const eur = list.reduce((n, x) => n + x.eur, 0);
-      if (eur) toast(`⚠️ Malus : −${fmtEur(eur)} dans ta tirelire (onglet 💶)`, 5000);
+      if (eur) toast(`⚠️ Malus : −${fmtCs(eur)} dans ta tirelire (onglet 🪙)`, 5000);
       return false;
     }
     const eur = Math.round(list.reduce((n, x) => n + x.eur, 0) * 100) / 100;
-    openSheet(`<h2>${eur ? `⚠️ Malus : −${fmtEur(eur)}` : "🃏 Joker utilisé"}</h2>
+    openSheet(`<h2>${eur ? `⚠️ Malus : −${fmtCs(eur)}` : "🃏 Joker utilisé"}</h2>
       <p style="line-height:1.7">${list.map(x => esc(malusLabel(x))).join("<br>")}</p>
-      <p>Tirelire de ${monthName(Date.now())} : <b>${fmtEur(moneyThisMonth())}</b>. Une balade aujourd'hui pour te rattraper ? 25 min = ${fmtEur(walkEuros(25))}, 45 min = ${fmtEur(walkEuros(45))} 🐾</p>
+      <p>Tirelire de ${monthName(Date.now())} : <b>${fmtCs(moneyThisMonth())}</b>. Une balade aujourd'hui pour te rattraper ? 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))} 🐾</p>
       <div class="btns"><button id="malOk">OK</button></div>`);
     $("#malOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 400); };
     return true;
@@ -1607,6 +1623,27 @@
     };
     $("#supClose").onclick = () => { closeSheet(); if (state.tab === "prog") renderProg(); };
   }
+
+
+  // ---------- Écran d'accueil : où j'en suis ----------
+  function renderHome(){
+    const box = $("#home"); if (!box) return;
+    ensureGame();
+    const lv = levelOf(game.total), n = game.streak.n || 0;
+    const alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
+    const others = Object.entries(store.get(OTHERS_KEY, {})).filter(([w]) => w !== profile.walker);
+    box.innerHTML = `<div class="homecard">
+        <div class="hrow">
+          <button data-go="shop"><small>Tirelire de ${monthName(Date.now())}</small><b>🪙 ${fmtCs(moneyThisMonth())}</b><span>= ${fmtEur(moneyThisMonth())}</span></button>
+          <button data-go="prog"><small>Série</small><b>🔥 ${alive ? n : 0} jour${alive && n > 1 ? "s" : ""}</b><span>${alive ? "continue !" : "à lancer"}</span></button>
+          <button data-go="prog"><small>Niveau</small><b>${esc(lv.name.split(" ")[0])} ${game.total}</b><span>${esc(lv.name.split(" ").slice(1).join(" "))}</span></button>
+        </div>
+        <div class="hl">${motivLines().map(esc).join("<br>")}</div>
+        ${others.length ? `<div class="ho">👀 ${others.map(([w, g]) => `${esc(w)} : ${LEVELS[g.l] ? esc(LEVELS[g.l][1]) : ""} · 🏅 ${g.t}`).join(" · ")}</div>` : ""}
+      </div>`;
+    box.querySelectorAll("[data-go]").forEach(b => b.onclick = () => switchTab(b.dataset.go));
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !state.walk) renderHome(); });
 
   // ---------- Pendant la balade ----------
   let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true;
@@ -1765,7 +1802,8 @@
     document.body.classList.remove("walking", "choosing");
     layers.sel.clearLayers();
     setTimeout(() => map.invalidateSize(), 50);
-    setStatus("Pas de balade pour l'instant. Touchez « Me localiser » ou « Balade libre » quand vous voulez.");
+    document.body.classList.remove("hasmap"); renderHome();
+    setStatus("Pas de balade pour l'instant. Touche « C'est parti » quand tu veux.");
     if (window.__wouafUpdatePending && window.__wouafUpdatePending()) setTimeout(applyUpdate, 300);
   }
 
@@ -1796,7 +1834,7 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · ${elapsed < MONEY_MIN ? `💶 dans ${Math.ceil(MONEY_MIN - elapsed)} min` : `💶 ${fmtEur(walkEuros(elapsed))}`} · 🏅 ${livePts()}`;
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · ${elapsed < MONEY_MIN ? `🪙 dans ${Math.ceil(MONEY_MIN - elapsed)} min` : `🪙 ${fmtCs(walkEuros(elapsed))}`} · 🏅 ${livePts()}`;
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
@@ -1975,7 +2013,7 @@
   function partyBox(r, res){
     if (!res) return "";
     const l = [];
-    if (res.chest) l.push(`💰 <b>Coffre trouvé : +${res.chest} € en bonus !</b>`);
+    if (res.chest) l.push(`💰 <b>Coffre trouvé : +${fmtCs(res.chest)} en bonus !</b>`);
     if (res.defi) l.push(`🎯 <b>Défi du jour réussi : ${esc(res.defi)}</b> (+${DEFI_PTS} pts)`);
     if (res.levelUp) l.push(`🎉 <b>Nouveau niveau : ${esc(res.levelUp)} !</b> 🎁 Récompense à choisir avec le superviseur.`);
     if (res.album) l.push(`📖 <b>Album ${esc(res.album)} complet !</b> 🎁 Récompense de saison à choisir avec le superviseur.`);
@@ -1985,10 +2023,10 @@
 
   function moneyBox(r, moneyMin){
     // le maximum mensuel n'est jamais affiché aux promeneurs (choix du superviseur : pas de « ligne d'arrivée »)
-    if (r.eu) return `<div class="gamebox">💶 <b>+${fmtEur(r.eu)}</b><small>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}</small></div>`;
-    if (moneyThisMonth() >= MONEY_MAX) return `<div class="gamebox">💶 <b>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
-    if (r.ms) return `<div class="warnline">⏱️ Moins de 15 min, et c'est déjà la 3e balade trop courte de la semaine : <b>−${fmtEur(r.ms)}</b> dans la tirelire. Vise au moins 25 min la prochaine fois 💪</div>`;
-    return `<div class="warnline">💶 Moins de 15 min de vraie balade : celle-ci ne rapporte rien. Vise au moins 15 min, et plus c'est long, plus ça rapporte.</div>`;
+    if (r.eu) return `<div class="gamebox">🪙 <b>+${fmtCs(r.eu)}</b><small>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</small></div>`;
+    if (moneyThisMonth() >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
+    if (r.ms) return `<div class="warnline">⏱️ Moins de 15 min, et c'est déjà la 3e balade trop courte de la semaine : <b>−${fmtCs(r.ms)}</b> dans la tirelire. Vise au moins 25 min la prochaine fois 💪</div>`;
+    return `<div class="warnline">🪙 Moins de 15 min de vraie balade : celle-ci ne rapporte rien. Vise au moins 15 min, et plus c'est long, plus ça rapporte.</div>`;
   }
 
   function showRecapSheet(r, files, title, res, moneyMin){
@@ -2044,6 +2082,7 @@
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r);
     setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
     if (state.tab === "log") renderLog();
+    document.body.classList.remove("hasmap"); renderHome();
     showRecapSheet(r, photos.slice(), titleOf(p), res, moneyMin);
     pushState(true);
   }
@@ -2272,7 +2311,7 @@
     if (t === "log") renderLog();
     else if (t === "shop") renderShop();
     else if (t === "prog") renderProg();
-    else if (state.sel != null) select(state.sel, true);
+    else { renderHome(); if (state.sel != null) select(state.sel, true); }
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
 
@@ -2305,6 +2344,7 @@
   function setStart(p){
     state.start = p; state.picking = false; $("#map").classList.remove("picking");
     resetSearch();
+    document.body.classList.add("hasmap"); map.invalidateSize();
     showStart(p); meteo(p);
     map.setView([p.lat, p.lon], state.dur <= 15 ? 16 : state.dur <= 45 ? 15 : 14);
     if (state.tab !== "walks") switchTab("walks");
@@ -2378,8 +2418,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 19;
+  const APP_NUM = 20;
   const NEWS = {
+    20: [
+      "🪙 Nouvelle monnaie : les Clebsous ! 100 clebsous = 1 €. Une balade de 45 min = 85 clebsous, 1 h = 130.",
+      "🏠 Nouvel écran d'accueil : ta tirelire, ta série, ton niveau et le défi du jour. Touche « ▶️ C'est parti avec Roxy » pour démarrer.",
+      "🗺️ La carte s'affiche pendant la balade ou quand tu demandes des parcours."
+    ],
     19: [
       "🔔 Rappels : Roxy peut te faire signe le matin et l'après-midi, aux heures que tu choisis pour chaque jour (onglet 🏆 Progrès › Mes rappels).",
       "Il faut que Wouaf soit sur ton écran d'accueil (Safari › Partager › Sur l'écran d'accueil), puis ouvert depuis l'icône 🐾.",
@@ -2448,7 +2493,7 @@
   setTimeout(showNews, 800);
   setTimeout(offerBilan, 2500);
   setTimeout(async () => {
-    if (await loadPauses()){ const n = processMalus(); if (n.length && showMalus(n, offerWeek)) return; }
+    if (await loadPauses()){ const n = processMalus(); renderHome(); if (n.length && showMalus(n, offerWeek)) return; }
     offerWeek();
   }, 3000);
   setTimeout(() => pushState(false), 5000);
@@ -2468,15 +2513,10 @@
       return;
     }
     forgetWalk();
-    if (Date.now() - store.get(END_KEY, 0) < 3600000){
-      if (navigator.permissions && navigator.permissions.query)
-        navigator.permissions.query({ name:"geolocation" }).then(p => { if (p.state === "granted") locate(); }).catch(() => {});
-      return;
-    }
-    startWalk(FREE());
+    renderHome();
   });
 
-  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, processMalus, malusIn, shortMalus, setPauses: p => { pauses = p; }, openSuper, streakAlive };
+  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, malusIn, shortMalus, setPauses: p => { pauses = p; }, openSuper, streakAlive };
 })();
 </script>
 </body>

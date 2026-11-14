@@ -12,9 +12,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - `APP_NUM` (entier, affiché en bas de l'app) et `NEWS[APP_NUM]` (2–3 lignes) : à augmenter / remplir à chaque nouveauté
   visible par les promeneurs. La fenêtre « Nouveau dans la version N » s'affiche une fois par téléphone (clé `wouaf-vu`).
 
-## Balade automatique (version 9)
+## Balade automatique (version 9, modifiée en v20)
 - À l'ouverture : reprise de la balade en cours (`wouaf-encours`, gardée toutes les 15 s et à la mise en arrière-plan, valable 4 h),
-  sinon balade libre lancée toute seule, sauf sur un lien de récap ou moins d'1 h après une balade terminée (`wouaf-fin`).
+  sinon **écran d'accueil** (v20, choix de l'utilisateur : plus de démarrage automatique) avec le gros bouton
+  « ▶️ C'est parti avec Roxy » (balade libre) et « 🗺️ Proposer des parcours ».
 - Fin automatique : à < 40 m du départ (1er point GPS précis), après 5 min, 200 m d'éloignement et 60 % du parcours choisi ;
   compte à rebours de 30 s avec « Je continue ».
 
@@ -83,3 +84,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🏖️ Pause du superviseur : lien discret « Superviseur » en bas de Progrès (si `PUSH_API`), code = variable secrète `SUPERVISOR_CODE` du
   Worker (pas dans le fichier : le dépôt est public), `GET/POST /pause`, KV `pauses`. Pendant une pause : pas de malus,
   pas de rappels, série conservée (`streakAlive`) ; pause ajoutée après coup = malus remboursés (sauf semaine faible).
+
+## Accueil et Clebsous (version 20, décidé le 14/11)
+- Accueil (`renderHome`, `#home`) sous les boutons : tirelire, série, niveau, `motivLines()` (à gagner aujourd'hui / déjà
+  sortie, série, coffre chaud, défi), ligne « 👀 » des autres. La carte est cachée sauf en balade, en choix de parcours,
+  sur un récap ou après « Proposer des parcours » (classe `hasmap`, retirée à la fin d'une balade).
+- 🪙 **Clebsous** : monnaie affichée aux promeneurs, 100 clebsous = 1 € (`fmtCs`), partout dans l'app et les rappels (y compris
+  malus et coffre = 500 clebsous). Les données restent en euros ; le **récap et le bilan envoyés au superviseur restent en €**.

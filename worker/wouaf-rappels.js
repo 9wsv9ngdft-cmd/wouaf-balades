@@ -34,7 +34,8 @@ const weekKey = ts => { const l = local(ts - 4*3600000); return dayKey(ts - ((l.
 const fmtMin = m => { m = Math.round(m); return m < 60 ? `${m} min` : `${Math.floor(m/60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}`; };
 const isoDay = ts => { const l = local(ts - 4*3600000); return `${l.y}-${String(l.m).padStart(2, "0")}-${String(l.d).padStart(2, "0")}`; };
 const walkEuros = min => Math.round(0.35 * Math.pow(min / 25, 1.5) * 100) / 100;
-const fmtEur = v => (v || 0).toFixed(2).replace(".", ",") + " €";
+// 🪙 Clebsous : la monnaie de l'app (100 clebsous = 1 €)
+const fmtEur = v => { const n = Math.round((v || 0) * 100); return n.toLocaleString("fr-FR") + (n > 1 ? " clebsous" : " clebsou"); };
 
 // ---------- clés VAPID (créées une seule fois, gardées dans KV) ----------
 async function vapid(env, create){
@@ -88,7 +89,7 @@ const GENERIC = [
   n => `${DOG} t'attend${n ? ", " + n : ""} ! Une petite balade ? 🐾`,
   () => `Des 🦴 et des 🎾 à ramasser aujourd'hui. Tu pars à la chasse avec ${DOG} ?`,
   () => `Et si tu prenais une rue jamais faite ? Les coins neufs rapportent double 🗺️`,
-  () => `25 min de balade ≈ 0,35 € dans ta tirelire 💶 Et plus c'est long, plus ça rapporte.`,
+  () => `25 min de balade = 35 clebsous 🪙 1 h = 130 ! Plus c'est long, plus ça rapporte.`,
   () => `${DOG} a besoin de se dégourdir les pattes. C'est le moment ? 🐕`
 ];
 function pickMessage(u, slot, now){
@@ -101,9 +102,9 @@ function pickMessage(u, slot, now){
   // dimanche soir : le résumé de la semaine
   if (slot === 1 && l.dow === 0){
     const w = s.wk && s.wk.k === weekKey(now) ? s.wk : { n:0, min:0, eur:0 };
-    if (walked) return { title:`🏅 Ta semaine avec ${DOG}`, body:`${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 💶 ${fmtEur(w.eur)}. Bravo ${n} !` };
+    if (walked) return { title:`🏅 Ta semaine avec ${DOG}`, body:`${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 🪙 ${fmtEur(w.eur)}. Bravo ${n} !` };
     return { title:`🏅 Ta semaine avec ${DOG}`, body: w.n
-      ? `${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 💶 ${fmtEur(w.eur)}. Une dernière ce soir pour finir en beauté ?`
+      ? `${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 🪙 ${fmtEur(w.eur)}. Une dernière ce soir pour finir en beauté ?`
       : `Pas encore de balade cette semaine. ${DOG} compte sur toi ce soir 🐾` };
   }
   if (walked) return null;   // déjà sortie aujourd'hui : on ne dérange pas
@@ -112,7 +113,7 @@ function pickMessage(u, slot, now){
   if (slot === 1) return gain;
   const ideas = [gain];
   if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+15 pts)` });
-  if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 5 € peuvent se cacher sur une rue que tu n'as jamais prise. Pars à la chasse avec ${DOG} ?` });
+  if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 500 clebsous peuvent se cacher sur une rue que tu n'as jamais prise. Pars à la chasse avec ${DOG} ?` });
   const g = GENERIC[(dayNo + slot) % GENERIC.length];
   ideas.push({ title:"Wouaf Balades 🐾", body: g(n) });
   return ideas[(dayNo * 2 + slot) % ideas.length];
