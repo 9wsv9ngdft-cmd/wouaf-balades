@@ -33,5 +33,20 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   de fin de mois ajoute le total de la tirelire.
 - Propositions : rang bonus pour les lieux en cases neuves, tri final par `newPct` (« 🆕 x % de nouveau »).
 
+## Progrès (version 15, décidé le 14/11)
+- 💰 Coffre : 5 € **en plus** du plafond (`game.bonus["AAAA-MM"]`, `game.chests`), seulement en entrant dans une case jamais
+  visitée après 5 min de balade ; aucune chance pendant 10 jours après le dernier (1er coffre possible après 5 jours d'usage),
+  puis 5 % par case neuve +1,5 %/jour (max 20 %). Écran plein « COFFRE TROUVÉ ! », récap « 💰 coffre +5 € ».
+- Saisons (déc–fév, mars–mai, juin–août, sept–nov) : album 🦴120 🎾70 🍖45 ⭐40 (au prorata si la saison a commencé en cours),
+  complet = 🎁 récompense à choisir avec le superviseur (`game.season`, `game.pastSeasons`).
+- Niveaux allongés : 0 / 300 / 1 000 / 2 500 / 5 000 pts ; passage de niveau = 🎁 (`game.levelSeen`).
+- Trophées permanents (`TROPHIES`, `game.trophies`, `game.stats` : walks, km, early < 8 h, rain via Open-Meteo au 1er point,
+  long ≥ 60 min, bestStreak) ; certains avec 🎁.
+- Carte du brouillard : cases vues dans 2 km autour de la maison (`game.home` = 1er départ), paliers 25/50/75 % (trophées).
+- Accessoires de Roxy (avatar sur la carte, `game.acc`) à 200/600/1 200/2 500/5 000 pts.
+- « Où en sont les autres » : `r.g` (snapshot) dans le lien du récap ; un autre promeneur qui ouvre le lien le garde
+  (`wouaf-autres`). Pas de classement (choix de l'utilisateur).
+- Récompenses réelles 🎁 : texte générique « à choisir avec le superviseur » (l'utilisateur précisera plus tard).
+
 ## Méthode de travail
 - On discute d'abord avec l'utilisateur, puis une seule série de modifications une fois validé. Toujours au plus simple.

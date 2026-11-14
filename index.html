@@ -42,7 +42,7 @@
   .chips button{flex:none;font-size:14px;font-weight:500;padding:8px 12px;border-radius:999px;background:#fff;color:var(--ink);border:1px solid var(--line)}
   .chips button.on{background:var(--green);color:#fff;border-color:var(--green)}
   .tabs{display:flex;gap:6px;margin:14px 0 4px}
-  .tabs button{background:transparent;color:var(--muted);padding:8px 12px}
+  .tabs button{background:transparent;color:var(--muted);padding:8px 9px;font-size:14px}
   .tabs button.on{background:var(--sand);color:var(--ink)}
   #meteo{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#eaf1f7;color:#21405e;font-size:14px;display:none}
   #meteo.rain{background:#e4ebf6;color:#1d3a6b}
@@ -163,6 +163,28 @@
   .reward button{padding:9px 12px;font-size:14px}
   .reward.locked{opacity:.75}
   .howto{font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px}
+  .roxy{width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid #2a7de1;display:flex;align-items:center;justify-content:center;font-size:19px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .roxy i{position:absolute;top:-12px;right:-10px;font-size:17px;font-style:normal}
+  .chest{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,30,22,.82);color:#fff;text-align:center;animation:pop .3s ease-out}
+  .chest .ce{font-size:96px;animation:bounce 1s ease-in-out infinite}
+  .chest b{font-family:Fraunces,Georgia,serif;font-size:32px;margin-top:10px}
+  .chest span{font-size:18px;margin-top:6px;color:#ffd36b;font-weight:600}
+  @keyframes bounce{50%{transform:translateY(-14px) rotate(-6deg)}}
+  .album{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+  .album div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;font-size:13px;color:var(--muted)}
+  .album div b{display:block;font-size:24px}
+  .album div.full{border-color:var(--green-2);background:#e3f0e3;color:#25502f}
+  .tro{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .tro div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;font-size:12px;line-height:1.3}
+  .tro div b{display:block;font-size:26px}
+  .tro div.off{opacity:.35;filter:grayscale(1)}
+  .accs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .accs button{background:#fff;color:var(--ink);border:1px solid var(--line);font-size:22px;padding:8px 10px}
+  .accs button.on{border-color:var(--green);box-shadow:0 0 0 2px rgba(76,138,90,.35)}
+  .accs button:disabled{opacity:.35}
+  .others .entry{grid-template-columns:1fr auto}
+  .party{background:#fff4d6;color:#6b4a00;border-radius:14px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.6}
+  .party b{font-size:16px}
   .news{padding-left:20px;margin:8px 0 0}
   .news li{margin:6px 0}
   .leaflet-container{font:inherit}
@@ -209,6 +231,7 @@
     <button class="on" data-tab="walks" role="tab">🐾 Balades</button>
     <button data-tab="log" role="tab">📒 Carnet</button>
     <button data-tab="shop" role="tab">💶 Tirelire</button>
+    <button data-tab="prog" role="tab">🏆 Progrès</button>
   </div>
   <div id="views">
     <div id="v-walks">
@@ -220,6 +243,7 @@
     </div>
     <div id="v-log" style="display:none"></div>
     <div id="v-shop" style="display:none"></div>
+    <div id="v-prog" style="display:none"></div>
   </div>
 
   <footer>
@@ -251,7 +275,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.104036";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.110030";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -316,10 +340,14 @@
   const layers = { routes: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), me: L.layerGroup().addTo(map) };
   window.addEventListener("resize", () => map.invalidateSize());
   let youMarker = null;
+  function youIcon(){
+    let a = ""; try{ a = (JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc) || ""; }catch(e){}
+    return L.divIcon({ className:"", html:`<div class="roxy"><span>🐕</span>${a ? `<i>${a}</i>` : ""}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
+  }
   function showStart(p){
     layers.me.clearLayers();
     L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="home">🏠</div>', iconSize:[22,22], iconAnchor:[11,11] }), keyboard:false, interactive:false }).addTo(layers.me);
-    youMarker = L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="you"></div>', iconSize:[18,18], iconAnchor:[9,9] }), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(layers.me);
+    youMarker = L.marker([p.lat, p.lon], { icon: youIcon(), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(layers.me);
   }
 
   // ---------- Types de lieux ----------
@@ -789,7 +817,8 @@
   const fmtEur = v => v.toFixed(2).replace(".", ",") + " €";
   const monthKey = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
   const monthName = t => new Date(t).toLocaleDateString("fr-FR", { month:"long" });
-  const LEVELS = [[0, "🐶 Chiot"], [100, "🐾 Fouineuse"], [300, "🧭 Pisteuse"], [700, "🗺️ Exploratrice"], [1500, "👑 Légende du quartier"]];
+  // paliers longs : une balade par jour ≈ 600 pts par mois → Fouineuse en ~2 semaines, Légende en ~8 mois
+  const LEVELS = [[0, "🐶 Chiot"], [300, "🐾 Fouineuse"], [1000, "🧭 Pisteuse"], [2500, "🗺️ Exploratrice"], [5000, "👑 Légende du quartier"]];
   let game = store.get(GAME_KEY, null) || {};
   game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{}, money:{} }, game);
   const saveGame = () => store.set(GAME_KEY, game);
@@ -871,7 +900,16 @@
     const c = cellOf(q), onNew = isNewCell(c);
     if (!gw.cells.includes(c)){
       gw.cells.push(c);
-      if (onNew && gw.cells.length > 1){ gw.newCells++; toast("+1 🗺️ Nouveau coin découvert", 1800); }
+      if (onNew && gw.cells.length > 1){
+        gw.newCells++; toast("+1 🗺️ Nouveau coin découvert", 1800);
+        // 💰 coffre : seulement sur une rue jamais faite, au plus un toutes les ~2 semaines
+        if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance()){ gw.chest = true; showChest(); }
+      }
+    }
+    if (!gw.rainChecked){
+      gw.rainChecked = true;
+      getJSON(`${METEO}?latitude=${q.lat.toFixed(3)}&longitude=${q.lon.toFixed(3)}&current=precipitation`, 8000)
+        .then(j => { if (gw) gw.rain = (j.current.precipitation || 0) > 0.05; }).catch(() => {});
     }
     let hit = false;
     for (const it of gw.items) if (!it.got && dist(it, q) < 25){ it.got = true; collect(it.k, onNew); hit = true; }
@@ -883,12 +921,29 @@
   }
   const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
   const dayKey = t => { const x = new Date(t - 4*3600000); return x.getFullYear() + "-" + (x.getMonth()+1) + "-" + x.getDate(); };   // la journée commence à 4 h
-  function finishGame(elapsedMin, cameHome){
+  function finishGame(elapsedMin, cameHome, meters, startTs, home){
     if (!gw) return null;
-    const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false };
+    ensureGame();
+    const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
     for (const c of gw.cells) game.seen[c] = 1;
+    if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
+    const chest = gw.chest, rain = gw.rain;
     gw = null; gameLayer.clearLayers();
-    if (elapsedMin < MONEY_MIN){ res.short = true; saveGame(); return res; }
+    if (chest){
+      res.chest = CHEST_EUR;
+      game.chests.push(new Date().toISOString());
+      const k = monthKey(Date.now()); game.bonus[k] = (game.bonus[k] || 0) + CHEST_EUR;
+    }
+    if (elapsedMin < MONEY_MIN){ res.short = true; res.trophies = checkTrophies(); saveGame(); return res; }
+    // statistiques pour les trophées et l'album de saison
+    const st = game.stats;
+    st.walks++; st.km = Math.round((st.km + (meters || 0) / 1000) * 100) / 100;
+    if (new Date(startTs).getHours() < 8) st.early++;
+    if (rain) st.rain++;
+    if (elapsedMin >= 60) st.long++;
+    const sea = ensureSeason();
+    for (const k of Object.keys(res.got)) sea.got[k] = (sea.got[k] || 0) + res.got[k];
+    if (!sea.done && Object.keys(sea.goal).every(k => sea.got[k] >= sea.goal[k])){ sea.done = true; res.album = sea.name; }
     res.mult = elapsedMin >= 85 ? 2 : elapsedMin >= 55 ? 1.5 : elapsedMin >= 40 ? 1.25 : 1;
     if (cameHome) res.home = 2;
     const today = dayKey(Date.now()), yest = dayKey(Date.now() - 86400000);
@@ -898,8 +953,12 @@
       if (game.streak.n >= 3) res.streak = 1;
     }
     res.streakN = game.streak.n;
+    st.bestStreak = Math.max(st.bestStreak, game.streak.n);
     res.total = Math.round((res.items + res.cells) * res.mult) + res.home + res.streak;
     game.pts += res.total; game.total += res.total;
+    const li = levelIndex(game.total);
+    if (li > game.levelSeen){ game.levelSeen = li; res.levelUp = LEVELS[li][1]; }
+    res.trophies = checkTrophies();
     saveGame();
     return res;
   }
@@ -938,7 +997,8 @@
     const eur = ws.reduce((n, e) => n + ((e.recap && e.recap.eu) || 0), 0);
     const last = new Date(Math.min(Date.now(), per.end.getTime() - 1));
     const tot = game.money[monthKey(per.start.getTime())] || 0;
-    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 💶 ${fmtEur(eur)}` +
+    const chests = (game.chests || []).filter(c => { const t = new Date(c).getTime(); return t >= per.start.getTime() && t < per.end.getTime(); }).length;
+    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 💶 ${fmtEur(eur)}${chests ? ` · 💰 ${chests} coffre${chests > 1 ? "s" : ""} (+${chests * CHEST_EUR} €)` : ""}` +
       (per.first ? "" : ` · tirelire de ${monthName(per.start)} : ${fmtEur(tot)}`);
     return { n: ws.length, text };
   }
@@ -970,12 +1030,13 @@
         <div class="big">💶 ${fmtEur(eur)}</div>
         <div class="bar"><i style="width:${Math.round(100 * eur / MONEY_MAX)}%"></i></div>
         <div class="lvl">Rythme ≈ ${monthPace()} € à la fin du mois · ${MONEY_MAX} € maximum</div>
+        ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtEur(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus (en plus des ${MONEY_MAX} €)</div>` : ""}
         <button class="ghost" id="bilNow" style="margin-top:10px;width:100%;background:rgba(255,255,255,.18);color:#fff">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
         <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtEur(walkEuros(n))}</b>`).join(" · ")}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtEur(2 * walkEuros(15))}, 1 × 30 min = ${fmtEur(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ 10 € par mois.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${CHEST_EUR} € se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtEur(2 * walkEuros(15))}, 1 × 30 min = ${fmtEur(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ 10 € par mois.</div>
       </div>
       ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtEur(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
       <div class="wallet" style="background:#eef3ec;color:var(--ink)">
@@ -984,6 +1045,166 @@
         <div class="howto" style="margin-top:8px">Les points sont juste pour le jeu : 🦴 1 · 🎾 2 · 🍖 3 · ⭐ 5 · 🗺️ +1 par coin jamais exploré (objets ×2) · balades longues multipliées. En vélo ou en voiture, rien ne compte 😉</div>
       </div>`;
     $("#bilNow").onclick = () => sendBilan(periodOf(Date.now()));
+  }
+
+  // ---------- Progrès : coffre, saisons, trophées, niveaux, brouillard, accessoires, les autres ----------
+  const CHEST_EUR = 5, CHEST_GAP_DAYS = 10;
+  function ensureGame(){
+    game.chests = game.chests || []; game.bonus = game.bonus || {}; game.money = game.money || {};
+    game.stats = Object.assign({ walks:0, km:0, early:0, rain:0, long:0, bestStreak:0 }, game.stats || {});
+    game.trophies = game.trophies || {};
+    if (game.levelSeen == null) game.levelSeen = levelIndex(game.total || 0);
+    if (game.acc == null) game.acc = "";
+    if (!game.firstUse) game.firstUse = Date.now();
+    return game;
+  }
+  const levelIndex = t => { let i = 0; LEVELS.forEach((x, j) => { if (t >= x[0]) i = j; }); return i; };
+  // chances de coffre : 0 pendant 10 jours après le dernier (le premier dès 5 jours d'utilisation), puis de plus en plus
+  function chestChance(){
+    ensureGame();
+    const last = game.chests.length ? new Date(game.chests[game.chests.length - 1]).getTime() : game.firstUse - 5*86400000;
+    const d = (Date.now() - last) / 86400000 - CHEST_GAP_DAYS;
+    return d < 0 ? 0 : Math.min(0.2, 0.05 + 0.015 * d);
+  }
+  function showChest(){
+    const el = document.createElement("div");
+    el.className = "chest"; el.setAttribute("role", "alert");
+    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${CHEST_EUR} € en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir pris une rue que tu n'avais jamais faite 🗺️</p>`;
+    el.onclick = () => el.remove();
+    document.body.appendChild(el);
+    ding(); setTimeout(ding, 250); setTimeout(ding, 500);
+    setTimeout(() => el.remove(), 6000);
+  }
+  const bonusThisMonth = () => (game.bonus && game.bonus[monthKey(Date.now())]) || 0;
+
+  // Saisons de 3 mois avec un album d'objets à compléter
+  const SEASON_GOAL = { b:120, t:70, f:45, s:40 };
+  function seasonOf(t){
+    const d = new Date(t), m = d.getMonth();
+    const idx = m === 11 ? 0 : Math.floor((m + 1) / 3);   // 0 hiver (déc–fév), 1 printemps, 2 été, 3 automne
+    const y = m === 11 ? d.getFullYear() + 1 : d.getFullYear();
+    const startM = [-1, 2, 5, 8][idx];
+    const start = new Date(y, startM, 1), end = new Date(y, startM + 3, 1);
+    const names = [["❄️", "Hiver"], ["🌸", "Printemps"], ["☀️", "Été"], ["🍂", "Automne"]];
+    return { key: `${y}-${idx}`, icon: names[idx][0], name: `${names[idx][0]} ${names[idx][1]} ${y}`, start, end };
+  }
+  function ensureSeason(){
+    const se = seasonOf(Date.now());
+    if (!game.season || game.season.key !== se.key){
+      // saison commencée en cours de route : objectif réduit au prorata (au moins un quart)
+      const frac = Math.max(0.25, Math.min(1, (se.end - Date.now()) / (se.end - se.start)));
+      const goal = {}; for (const k in SEASON_GOAL) goal[k] = Math.ceil(SEASON_GOAL[k] * frac);
+      if (game.season) (game.pastSeasons = game.pastSeasons || []).push({ name: game.season.name, done: game.season.done });
+      game.season = { key: se.key, name: se.name, end: se.end.toISOString(), goal, got:{ b:0, t:0, f:0, s:0 }, done:false };
+    }
+    return game.season;
+  }
+  const albumPct = () => { const s = ensureSeason(); const ks = Object.keys(s.goal); return Math.round(100 * ks.reduce((n, k) => n + Math.min(1, s.got[k] / s.goal[k]), 0) / ks.length); };
+
+  // Carte du brouillard : part du quartier (2 km autour de la maison) déjà explorée
+  const FOG_R = 2000;
+  let fogTotalCache = null;
+  function fogStats(){
+    if (!game.home) return { pct:0, seen:0, total:0 };
+    const h = game.home;
+    const ci = Math.floor(h.lat / 0.0009), cj = Math.floor(h.lon / 0.0013);
+    const ni = Math.ceil(FOG_R / 100) + 1, nj = Math.ceil(FOG_R / 95) + 1;
+    const inside = (i, j) => dist(h, { lat:(i + .5) * 0.0009, lon:(j + .5) * 0.0013 }) <= FOG_R;
+    if (!fogTotalCache || fogTotalCache.key !== ci + ":" + cj){
+      let n = 0; for (let i = ci - ni; i <= ci + ni; i++) for (let j = cj - nj; j <= cj + nj; j++) if (inside(i, j)) n++;
+      fogTotalCache = { key: ci + ":" + cj, n };
+    }
+    let seen = 0;
+    for (const c in game.seen){ const [i, j] = c.split(":").map(Number); if (inside(i, j)) seen++; }
+    return { pct: Math.round(100 * seen / fogTotalCache.n), seen, total: fogTotalCache.n };
+  }
+  let fogLayer = null;
+  function toggleFog(){
+    if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; renderProg(); return; }
+    if (!game.home){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
+    const h = game.home, dLat = 3000 / 111320, dLon = 3000 / (111320 * Math.cos(h.lat * Math.PI / 180));
+    const outer = [[h.lat - dLat, h.lon - dLon], [h.lat - dLat, h.lon + dLon], [h.lat + dLat, h.lon + dLon], [h.lat + dLat, h.lon - dLon]];
+    const holes = Object.keys(game.seen).map(c => { const [i, j] = c.split(":").map(Number); const a = i * 0.0009, b = j * 0.0013; return [[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]; });
+    const fog = L.polygon([outer, ...holes], { stroke:false, fillColor:"#1f2a22", fillOpacity:.55, interactive:false });
+    const ring = L.circle([h.lat, h.lon], { radius: FOG_R, color:"#ffd36b", weight:2, fill:false, dashArray:"6 8", interactive:false });
+    fogLayer = L.featureGroup([fog, ring]).addTo(map);
+    map.fitBounds(L.latLngBounds([[h.lat - FOG_R / 111320, h.lon - FOG_R / 73000], [h.lat + FOG_R / 111320, h.lon + FOG_R / 73000]]));
+    $("#map").scrollIntoView({ behavior:"smooth", block:"center" });
+    renderProg();
+  }
+
+  // Trophées permanents (🎁 = récompense réelle à choisir avec le superviseur)
+  const TROPHIES = [
+    { id:"km50",    icon:"🥾", name:"50 km avec Roxy",        ok: () => game.stats.km >= 50 },
+    { id:"km200",   icon:"🏔️", name:"200 km avec Roxy",       ok: () => game.stats.km >= 200, gift:true },
+    { id:"w100",    icon:"🐾", name:"100 balades",            ok: () => game.stats.walks >= 100, gift:true },
+    { id:"early",   icon:"🌅", name:"Lève-tôt : 10 balades avant 8 h", ok: () => game.stats.early >= 10 },
+    { id:"rain",    icon:"🌧️", name:"Même pas peur : 5 balades sous la pluie", ok: () => game.stats.rain >= 5 },
+    { id:"long",    icon:"⏱️", name:"Marathonien : 10 balades d'1 h", ok: () => game.stats.long >= 10 },
+    { id:"streak",  icon:"🔥", name:"Fidèle : 14 jours d'affilée", ok: () => game.stats.bestStreak >= 14 },
+    { id:"coins",   icon:"🗺️", name:"Explorateur : 200 coins découverts", ok: () => Object.keys(game.seen).length >= 200 },
+    { id:"chest3",  icon:"💰", name:"Chasseur de coffres : 3 coffres", ok: () => game.chests.length >= 3 },
+    { id:"fog25",   icon:"🌫️", name:"Quartier exploré à 25 %", ok: () => fogStats().pct >= 25 },
+    { id:"fog50",   icon:"🧭", name:"Quartier exploré à 50 %", ok: () => fogStats().pct >= 50, gift:true },
+    { id:"fog75",   icon:"👑", name:"Quartier exploré à 75 %", ok: () => fogStats().pct >= 75, gift:true }
+  ];
+  function checkTrophies(){
+    const fresh = [];
+    for (const t of TROPHIES) if (!game.trophies[t.id] && t.ok()){ game.trophies[t.id] = new Date().toISOString(); fresh.push(t); }
+    return fresh;
+  }
+
+  // Accessoires de Roxy (débloqués avec les points gagnés au total)
+  const ACCS = [["", "Rien", 0], ["🎀", "Nœud", 200], ["🧣", "Écharpe", 600], ["🕶️", "Lunettes", 1200], ["🎩", "Chapeau", 2500], ["👑", "Couronne", 5000]];
+
+  // Ma progression, glissée dans le lien du récap ; les autres promeneurs la gardent quand ils ouvrent le lien
+  const OTHERS_KEY = "wouaf-autres";
+  function snapshot(){
+    ensureGame();
+    return { t: game.total, l: levelIndex(game.total), a: albumPct(), sk: ensureSeason().key, tr: Object.keys(game.trophies).length, c: Object.keys(game.seen).length, f: fogStats().pct };
+  }
+  function rememberOther(r){
+    if (!r || !r.g || !r.w || r.w === profile.walker) return;
+    const o = store.get(OTHERS_KEY, {});
+    if (!o[r.w] || (o[r.w].date || 0) < r.e){ o[r.w] = Object.assign({ date: r.e }, r.g); store.set(OTHERS_KEY, o); }
+  }
+
+  function renderProg(){
+    ensureGame();
+    const sea = ensureSeason(), lv = levelOf(game.total), fog = fogStats();
+    const daysLeft = Math.max(0, Math.ceil((new Date(sea.end) - Date.now()) / 86400000));
+    const me = snapshot(), others = store.get(OTHERS_KEY, {});
+    const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">🏅 ${g.t}</div></div>`;
+    $("#v-prog").innerHTML = `<div class="wallet">
+        <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
+        <div class="big" style="font-size:30px">${lv.name}</div>
+        <div class="bar"><i style="width:${lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100}%"></i></div>
+        <div class="lvl">🏅 ${game.total} pts${lv.next ? ` · encore ${lv.next[0] - game.total} pour ${lv.next[1]} 🎁` : " · niveau max !"}</div>
+      </div>
+      <div class="flabel">📖 Album ${esc(sea.name)} · encore ${daysLeft} jour${daysLeft > 1 ? "s" : ""}</div>
+      <div class="album">${Object.keys(sea.goal).map(k => `<div class="${sea.got[k] >= sea.goal[k] ? "full" : ""}"><b>${ITEMS[k].icon}</b>${Math.min(sea.got[k], sea.goal[k])} / ${sea.goal[k]}</div>`).join("")}</div>
+      <div class="howto" style="margin-top:6px">${sea.done ? "🎉 Album complet ! 🎁 Récompense de saison à choisir avec le superviseur." : "Album complet avant la fin de la saison = 🎁 une récompense à choisir avec le superviseur."}</div>
+      <div class="flabel">🌫️ Carte du brouillard</div>
+      <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
+        <div style="font-weight:600">${game.home ? `Quartier exploré à ${fog.pct} % (2 km autour de la maison)` : "Fais une première balade pour commencer ta carte"}</div>
+        <div class="bar" style="background:#efe9dc"><i style="width:${fog.pct}%;background:var(--green-2)"></i></div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">Paliers : 25 % 🌫️ · 50 % 🧭 🎁 · 75 % 👑 🎁</div>
+        <button class="ghost" id="fogBtn" style="margin-top:10px;width:100%">${fogLayer ? "Cacher le brouillard" : "🌫️ Voir ma carte d'exploration"}</button>
+      </div>
+      <div class="flabel">🏆 Trophées · ${Object.keys(game.trophies).length} / ${TROPHIES.length}</div>
+      <div class="tro">${TROPHIES.map(t => `<div class="${game.trophies[t.id] ? "" : "off"}"><b>${t.icon}</b>${esc(t.name)}${t.gift ? " 🎁" : ""}</div>`).join("")}</div>
+      <div class="flabel">🎨 ${DOG} sur la carte</div>
+      <div class="accs">${ACCS.map(([e, n, need]) => `<button data-acc="${e}" class="${(game.acc || "") === e ? "on" : ""}"${game.total < need ? " disabled" : ""} title="${esc(n)}${game.total < need ? ` (${need} pts)` : ""}" aria-label="${esc(n)}${game.total < need ? `, se débloque à ${need} points` : ""}">${e || "🐕"}</button>`).join("")}</div>
+      <div class="howto" style="margin-top:6px">Nouvel accessoire à 200, 600, 1 200, 2 500 et 5 000 points.</div>
+      <div class="flabel">👀 Où en sont les autres</div>
+      <div class="props others">${lineOf(profile.walker || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(n, g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
+      <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>`;
+    $("#fogBtn").onclick = toggleFog;
+    document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => {
+      game.acc = b.dataset.acc; saveGame();
+      if (youMarker) youMarker.setIcon(youIcon());
+      renderProg();
+    });
   }
 
   // ---------- Pendant la balade ----------
@@ -1322,7 +1543,7 @@
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 💶 +${fmtEur(r.eu)}` : ""}`;
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 💶 +${fmtEur(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${r.cb} €` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
   async function shareRecap(r, files){
@@ -1349,6 +1570,16 @@
       Total : ${game.pts} pts · ${lv.name}</small></div>`;
   }
 
+  function partyBox(r, res){
+    if (!res) return "";
+    const l = [];
+    if (res.chest) l.push(`💰 <b>Coffre trouvé : +${res.chest} € en bonus !</b>`);
+    if (res.levelUp) l.push(`🎉 <b>Nouveau niveau : ${esc(res.levelUp)} !</b> 🎁 Récompense à choisir avec le superviseur.`);
+    if (res.album) l.push(`📖 <b>Album ${esc(res.album)} complet !</b> 🎁 Récompense de saison à choisir avec le superviseur.`);
+    for (const t of res.trophies) l.push(`🏆 <b>Trophée : ${t.icon} ${esc(t.name)}</b>${t.gift ? " · 🎁 récompense à choisir avec le superviseur" : ""}`);
+    return l.length ? `<div class="party">${l.join("<br>")}<br><span style="font-size:13px">Le superviseur le verra dans ton récap.</span></div>` : "";
+  }
+
   function moneyBox(r, moneyMin){
     if (r.eu) return `<div class="gamebox">💶 <b>+${fmtEur(r.eu)}</b><small>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}${moneyThisMonth() >= MONEY_MAX ? " (maximum du mois atteint)" : ""}</small></div>`;
     if (moneyThisMonth() >= MONEY_MAX) return `<div class="warnline">💶 Maximum de ${MONEY_MAX} € atteint ce mois-ci.</div>`;
@@ -1366,6 +1597,7 @@
         <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
       </div>
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
+      ${partyBox(r, res)}
       ${moneyBox(r, moneyMin)}
       ${gameBox(res)}
       ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p>Pas de photo cette fois. La prochaine fois, touchez 📷 pendant la balade.</p>`}
@@ -1387,8 +1619,13 @@
     setTimeout(() => map.invalidateSize(), 50);
     if (!p) return;
     const r = buildRecap(p, endTs);
-    const res = finishGame(elapsed, r.f ? r.h === 1 : (r.cov != null && r.cov >= 70));
+    const res = finishGame(elapsed, r.f ? r.h === 1 : (r.cov != null && r.cov >= 70), r.m, t0, walkHome);
     if (res && !res.short) r.pt = res.total;
+    if (res && res.chest) r.cb = res.chest;
+    if (res && res.levelUp) r.lu = res.levelUp;
+    if (res && res.album) r.al = 1;
+    if (res && res.trophies.length) r.tro = res.trophies.map(t => t.icon + " " + t.name);
+    r.g = snapshot();
     // argent : selon la durée, mais pas plus que la distance réellement marchée ne le permet (≥ 1,8 km/h en moyenne)
     const moneyMin = Math.min(elapsed, r.m / 30);
     const eu = addMoney(walkEuros(moneyMin));
@@ -1413,6 +1650,7 @@
       return true;
     }
     document.body.classList.add("recap");
+    rememberOther(r);
     const s = new Date(r.s*1000), e = new Date(r.e*1000), dur = (r.e - r.s)/60;
     $("#recapbox").innerHTML = `<div class="card">
         <h2>🐾 ${r.f ? "Balade libre" : "Balade"} de ${esc(r.d)}</h2>
@@ -1515,7 +1753,7 @@
         if (j.jeu && typeof j.jeu === "object"){
           const seen = Object.assign({}, j.jeu.seen || {}, game.seen);
           if ((j.jeu.total || 0) > (game.total || 0)) game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{} }, j.jeu);
-          game.seen = seen; saveGame();
+          game.seen = seen; ensureGame(); saveGame();
         }
         const log = getLog(), ids = new Set(log.map(e => e.id));
         let added = 0;
@@ -1619,8 +1857,10 @@
     $("#v-walks").style.display = t === "walks" ? "" : "none";
     $("#v-log").style.display = t === "log" ? "" : "none";
     $("#v-shop").style.display = t === "shop" ? "" : "none";
+    $("#v-prog").style.display = t === "prog" ? "" : "none";
     if (t === "log") renderLog();
     else if (t === "shop") renderShop();
+    else if (t === "prog") renderProg();
     else if (state.sel != null) select(state.sel, true);
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
@@ -1727,8 +1967,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 14;
+  const APP_NUM = 15;
   const NEWS = {
+    15: [
+      "💰 Coffres surprise : de temps en temps, 5 € en bonus cachés sur une rue que tu n'as jamais prise.",
+      "🏆 Nouvel onglet Progrès : album de saison, trophées, niveaux de Roxy (avec récompenses), carte du brouillard et accessoires pour Roxy.",
+      "👀 Vois où en sont les autres promeneurs en ouvrant leurs récaps."
+    ],
     14: [
       "💶 Nouvelle tirelire : chaque balade d'au moins 15 min rapporte selon sa durée (25 min ≈ 0,35 €, 45 min ≈ 0,85 €, 1 h ≈ 1,30 €). Jusqu'à 15 € par mois.",
       "⏱️ Une longue balade rapporte plus que plusieurs courtes. Moins de 15 min : rien.",
@@ -1796,7 +2041,7 @@
     startWalk(FREE());
   });
 
-  window.__wouaf = { gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
+  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix };
 })();
 </script>
 </body>
