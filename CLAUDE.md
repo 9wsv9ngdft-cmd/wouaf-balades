@@ -63,7 +63,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 
 ## Rappels (notifications)
 - Programme Cloudflare : `worker/wouaf-rappels.js` + `worker/wrangler.jsonc`, déployé automatiquement depuis GitHub
-  (Workers Builds, dossier racine `worker`, Worker « wouaf-rappels » sur wouaf-rappels.6fgbcr2vtp.workers.dev ; KV `WOUAF`
+  (Workers Builds, dossier racine `worker`, Worker « wouaf-notifs » sur wouaf-notifs.6fgbcr2vtp.workers.dev (l’ancien « wouaf-rappels » est un Hello World inutile) ; KV `WOUAF`
   créée toute seule, Cron `*/15 * * * *`). Un push dans `worker/` met le programme à jour. Clés VAPID créées par le Worker (KV `vapid`), `GET /key`,
   `POST /register | /state | /test | /unregister` ; abonnés `u:<id>`, envois déjà faits `s:<id>`. Heure de Paris.
 - App : `PUSH_API` (URL du Worker ; vide = carte des rappels cachée), `sw.js` (push + clic seulement, pas de cache),

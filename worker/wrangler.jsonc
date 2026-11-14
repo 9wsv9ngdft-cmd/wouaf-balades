@@ -1,7 +1,7 @@
 // Réglages du programme Cloudflare « wouaf-rappels », installé automatiquement depuis GitHub
 // (Cloudflare › Worker › Settings › Build, dossier racine « worker »).
 {
-  "name": "wouaf-rappels",
+  "name": "wouaf-notifs",
   "main": "wouaf-rappels.js",
   "compatibility_date": "2026-11-01",
   // base de données créée toute seule au premier déploiement
