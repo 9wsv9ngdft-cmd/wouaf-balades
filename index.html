@@ -416,7 +416,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.162056";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.162458";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -487,7 +487,7 @@
       if (Math.abs(a - c.lat) > dLat || Math.abs(b - c.lon) > dLon) continue;
       holes.push([[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]);
     }
-    return L.polygon([outer, ...holes], { pane:"fog", stroke:false, fillColor:"#26302a", fillOpacity: opacity, interactive:false });
+    return L.polygon([outer, ...holes], { pane:"fog", stroke:false, fillColor:"#1e2621", fillOpacity: opacity, interactive:false });
   }
   L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
     maxZoom: 19, subdomains:"abc", attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -1156,7 +1156,7 @@
     walkFogAt = Date.now(); walkFogN = gw.cells.length;
     const clear = new Set(Object.keys(game.seen).filter(k => !isNewCell(k)).concat(gw.cells));
     if (walkFog) map.removeLayer(walkFog);
-    walkFog = fogPolygon(c, clear, .82).addTo(map);
+    walkFog = fogPolygon(c, clear, .93).addTo(map);
   }
   function clearWalkFog(){ if (walkFog){ map.removeLayer(walkFog); walkFog = null; } walkFogN = -1; }
   const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
@@ -1414,7 +1414,7 @@
     if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; document.body.classList.remove("fogview"); renderProg(); return; }
     if (!game.home){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
     const h = game.home;
-    const fog = fogPolygon(h, Object.keys(game.seen), .82);
+    const fog = fogPolygon(h, Object.keys(game.seen), .93);
     const ring = L.circle([h.lat, h.lon], { radius: FOG_R, color:"#ffd36b", weight:2, fill:false, dashArray:"6 8", interactive:false });
     fogLayer = L.featureGroup([fog, ring]).addTo(map);
     document.body.classList.add("fogview"); map.invalidateSize();   // la carte est cachée sur l'accueil : on l'affiche pour le brouillard

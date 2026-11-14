@@ -190,7 +190,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   🏆 Semaine parfaite (7/7, pauses déduites) : +30 (`PERFECT_WEEK`, `game.perfect`), annoncée dans le récap de la semaine.
 - Estimation par ado et par mois : rechigne ≈ 0 € · minimum chaque jour ≈ 0–4 € (bonus seulement) · 30 min la plupart des jours
   ≈ 12–16 € · 45 min et plus chaque jour ≈ 20–30 € (coffres compris).
-- 🌫️ Brouillard opaque (`fogPolygon`, calque `fog` sous les tracés, ≈ 50 km, opacité .82) pendant la balade (rues faites < 15 j
+- 🌫️ Brouillard opaque (`fogPolygon`, calque `fog` sous les tracés, ≈ 50 km, opacité .93) pendant la balade (rues faites < 15 j
   visibles) et dans Progrès (toutes les rues déjà vues).
 - Balade (v31, retours du 14/11) : carte plein écran au-dessus de la barre du bas (`--wbh` via ResizeObserver), en-tête et accueil
   cachés ; 1er point GPS → centré zoom 17 (`firstFix`) ; bouton 📍 « recentrer » quand on a déplacé la carte ; bandeau de départ
