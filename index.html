@@ -485,7 +485,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.182651";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.183056";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2380,10 +2380,10 @@
     if (digestRunning || document.body.classList.contains("recap")) return;
     digestRunning = true;
     const cards = [];
-    const news = NEWS[APP_NUM] || [];
+    // ✨ Nouvelle version : un seul écran à part (2–3 lignes), puis le reste éventuel du « Quoi de neuf »
     if (store.get("wouaf-vu", 0) < APP_NUM){
-      if (news.length) cards.push({ html: `<div class="dc-ic">✨</div><h2>Nouveau dans la version ${APP_LABEL}</h2><ul class="news">${news.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` });
-      store.set("wouaf-vu", APP_NUM);
+      if (!(NEWS[APP_NUM] || []).length) store.set("wouaf-vu", APP_NUM);
+      else if (!state.walk){ digestRunning = false; showNewsScreen(() => setTimeout(startupDigest, 400)); return; }   // en balade : on la montrera plus tard
     }
     if (await loadPauses()){
       if (await applyReset()){ digestRunning = false; return; }
@@ -2428,6 +2428,16 @@
     show();
   }
 
+  // ---------- ✨ Écran « Nouveau dans la version X » (une fois par téléphone et par version) ----------
+  function showNewsScreen(then){
+    const l = NEWS[APP_NUM] || [];
+    openSheet(`<div style="text-align:center;font-size:60px">✨</div><h2 style="text-align:center">Nouveau dans la version ${APP_LABEL}</h2>
+      <ul class="news">${l.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+      <div class="btns"><button id="nwOk">Super ! 🐾</button></div>`);
+    setTimeout(confetti, 200);
+    $("#nwOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); if (then) then(); };
+  }
+
   // ---------- 👋 Tutoriel complet (premier lancement, et à revoir depuis le menu ☰ › 📖 Tuto) ----------
   function tutoPages(){
     const cs = v => Math.round(v * CS);
@@ -2455,9 +2465,18 @@
       { pic:`<div><div style="font-size:44px">☰</div>${dog}</div>`, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, carnet, rappels, ce tuto) est dans le menu ☰ en haut à droite.` }
     ];
   }
+  // Tuto court (3 écrans) : premier lancement et remise à zéro. Le tuto complet (8 écrans) : menu ☰ › Tuto et « Les bonus ».
+  function tutoShort(){
+    const cs = v => Math.round(v * CS), full = tutoPages();
+    return [
+      { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte. Elle est contente quand tu la sors, triste quand elle attend trop.` },
+      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double. À la fin du mois, tes clebsous deviennent de vrais sous 💶. Un jour sans balade : −${cs(MALUS_DAY)}.` },
+      { pic: full[7].pic, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, rappels, le tuto complet) est dans le menu ☰ en haut à droite.` }
+    ];
+  }
   function showTuto(step, replay){
     step = step || 0;
-    const pages = tutoPages(), pg = pages[step], lastP = step === pages.length - 1;
+    const pages = replay ? tutoPages() : tutoShort(), pg = pages[step], lastP = step === pages.length - 1;
     openSheet(`<div class="tuto"><div class="pic">${pg.pic}</div><h2>${pg.h}</h2><p class="t">${esc(pg.t)}</p>
       <p class="dotsT">${pages.map((_, i) => i === step ? "●" : "○").join("")}</p>
       <div class="btns"><button id="tutoNext">${lastP ? "C'est parti ! 🐾" : "Suivant →"}</button>

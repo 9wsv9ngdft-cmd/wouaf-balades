@@ -242,4 +242,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - À savoir : prévenir Éric de taper son prénom **avant** que les ados ouvrent l'app (sinon l'un d'eux pourrait prendre « Éric »).
 - 🚨 Alerte trésor (décidé le 14/11) : si un promeneur annule sa balade (`cancelWalk`) après avoir trouvé le trésor, personne n'est payé : le téléphone envoie
   `POST /alert` (KV `alerts`) ; le tableau de bord d'Éric l'affiche avec « Redonner 500 » (`POST /alert-resolve`, ajoute une correction `/adjust` de 500) ou « Ignorer ».
-- Reporté (décidé le 14/11) : libérer le prénom Éric volé ou perdu (`/unclaim` avec `SUPERVISOR_CODE`). Trésor : on garde l'anneau 2–3 km, même endroit pour tous.
+- Correctifs du 14/11 au soir : `autoClaim()` à l'ouverture (prénom Éric choisi avant la 2.0 = pas de jeton → demandait le code) ; Éric pris ailleurs
+  (autre téléphone, Safari au lieu de l'icône) → Superviseur › « 🔑 C'est mon téléphone » avec le code une fois (`POST /claim` + `code` : nouveau jeton,
+  l'ancien ne marche plus, 20 essais/jour) ; « Payé ✓ » sans code sur le téléphone d'Éric ; tableau de bord lisible en mode sombre (`.dash .wk`).
+- ✨ Nouvelle version (décidé le 14/11) : **un seul écran** « Nouveau dans la version X » (`showNewsScreen`, `NEWS[APP_NUM]`, 2–3 lignes) avant le reste
+  du « Quoi de neuf ». Tuto **court de 3 écrans** (`tutoShort`) au 1er lancement et après la remise à zéro ; le tuto complet (8) reste dans ☰ › Tuto et « Les bonus ».
+  Tests : `tests/e2e_claim.py`, `tests/e2e_accueil.py`.
+- Libérer le prénom Éric volé ou perdu : fait avec « C'est mon téléphone » (code). Trésor : on garde l'anneau 2–3 km, même endroit pour tous.

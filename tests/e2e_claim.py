@@ -7,7 +7,7 @@ FAILS = []
 def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','34');localStorage.setItem('wouaf-welcome2','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Éric'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','34');localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Éric'}));}"
 local_api("GET", "/__wipe")
 errs = []
 with sync_playwright() as pw:
