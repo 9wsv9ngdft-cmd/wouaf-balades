@@ -301,7 +301,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.132418";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.132710";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -856,7 +856,12 @@
   game = Object.assign({ pts:0, total:0, streak:{ day:"", n:0 }, claims:[], seen:{}, money:{} }, game);
   const saveGame = () => store.set(GAME_KEY, game);
   const cellOf = p => Math.floor(p.lat / 0.0009) + ":" + Math.floor(p.lon / 0.0013);   // ≈ 100 m × 95 m
-  const isNewCell = c => !game.seen[c];
+  // « rue neuve » = case pas visitée depuis 15 jours (game.seen[c] = jour de la dernière visite) : il y a toujours des bonus
+  // à aller chercher en variant les trajets, même quand tout le quartier est connu. La carte du brouillard compte, elle, toutes les cases déjà vues.
+  const FRESH_DAYS = 15, MAX_NEW_CELLS = 10;
+  const dayNum = t => Math.floor(((t || Date.now()) - new Date(t || Date.now()).getTimezoneOffset() * 60000) / 86400000);
+  for (const c in game.seen) if (game.seen[c] === 1) game.seen[c] = dayNum();   // anciennes données : « vue aujourd'hui »
+  const isNewCell = c => !game.seen[c] || dayNum() - game.seen[c] >= FRESH_DAYS;
   function levelOf(t){
     let cur = LEVELS[0], next = null;
     for (const x of LEVELS){ if (t >= x[0]) cur = x; else { next = x; break; } }
@@ -934,7 +939,7 @@
     if (!gw.cells.includes(c)){
       gw.cells.push(c);
       if (onNew && gw.cells.length > 1){
-        gw.newCells++; toast("🗺️ Rue nouvelle +1 🪙", 1800);
+        if (gw.newCells < MAX_NEW_CELLS){ gw.newCells++; toast("🗺️ Rue neuve +1 🪙", 1800); }
         // 💰 coffre : seulement sur une rue jamais faite, au plus un toutes les ~2 semaines
         if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance()){ gw.chest = true; showChest(); }
       }
@@ -976,7 +981,7 @@
   const DEFI_PTS = 10;   // en clebsous
   const DEFIS = [
     { t:"Une balade d'au moins 30 min",       ok: x => x.min >= 30 },
-    { t:"Découvre 5 coins jamais explorés",   ok: x => x.cells >= 5 },
+    { t:"Passe par 5 rues neuves",   ok: x => x.cells >= 5 },
     { t:"Ramasse 6 objets",                   ok: x => x.n >= 6 },
     { t:"Fais au moins 2 km",                 ok: x => x.m >= 2000 },
     { t:"Trouve 2 balles 🎾",                 ok: x => x.got.t >= 2 },
@@ -988,7 +993,7 @@
     if (!gw) return null;
     ensureGame();
     const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
-    for (const c of gw.cells) game.seen[c] = 1;
+    for (const c of gw.cells) game.seen[c] = dayNum();
     if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
     const chest = gw.chest, rain = gw.rain;
     gw = null; gameLayer.clearLayers();
@@ -1108,14 +1113,14 @@
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
         <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtCs(walkEuros(n))}</b>`).join(" · ")}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as pas prise depuis longtemps. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
       </div>
       ${malusBox()}
       ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
       <div class="wallet" style="background:#eef3ec;color:var(--ink)">
         <div style="font-weight:600">🎮 ${lv.name} · ${fmtCs(game.total / CS)} gagnés depuis le début</div>
         <div style="font-size:13px;color:var(--muted);margin-top:4px">🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""} · 🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}${lv.next ? ` · encore ${fmtCs((lv.next[0] - game.total) / CS)} pour ${lv.next[1]}` : ""}</div>
-        <div class="howto" style="margin-top:8px">Bonus en clebsous : 🦴 1 · 🎾 2 · 🍖 3 · ⭐ 5 · 🗺️ +1 par rue jamais faite (objets ×2) · 🎯 défi +${DEFI_PTS} · balades longues multipliées. En vélo ou en voiture, rien ne compte 😉</div>
+        <div class="howto" style="margin-top:8px">Bonus en clebsous : 🦴 1 · 🎾 2 · 🍖 3 · ⭐ 5 · 🗺️ +1 par rue neuve, c'est-à-dire pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max par balade, objets ×2) · 🎯 défi +${DEFI_PTS} · balades longues multipliées. En vélo ou en voiture, rien ne compte 😉</div>
       </div>`;
     $("#bilNow").onclick = () => sendBilan(periodOf(Date.now()));
   }
@@ -1151,14 +1156,14 @@
     else if (game.streak.day !== today) l.push(`⏳ Pas encore de balade aujourd'hui. À gagner : ${[15, 25, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} ${fmtCs(walkEuros(n))}`).join(" · ")}. Ne passe pas à côté !`);
     else l.push(`✓ ${DOG} est déjà sortie aujourd'hui, bravo !`);
     if ((game.streak.n || 0) >= 2 && game.streak.day === dayKey(Date.now() - DAYMS)) l.push(`🔥 Série de ${game.streak.n} jours : 15 min aujourd'hui pour la garder !`);
-    if (chestChance() > 0) l.push("💰 Le coffre est chaud : prends une rue jamais faite !");
+    if (chestChance() > 0) l.push("💰 Le coffre est chaud : prends une rue que tu n'as pas faite depuis longtemps !");
     l.push(game.defiDone === today ? "🎯 Défi du jour réussi ✓" : `🎯 Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} clebsous)`);
     return l;
   }
   function showChest(){
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
-    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir pris une rue que tu n'avais jamais faite 🗺️</p>`;
+    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir changé de chemin 🗺️</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el);
     ding(); setTimeout(ding, 250); setTimeout(ding, 500);
@@ -1641,7 +1646,7 @@
           <button data-go="prog"><small>Niveau</small><b>${esc(lv.name.split(" ")[0])} ${esc(lv.name.split(" ")[1] || "")}</b><span>niveau de ${DOG}</span></button>
         </div>
         <div class="hl">${motivLines().map(esc).join("<br>")}</div>
-        <div class="ho">🐾 Promène ${DOG}, prends des rues où tu n'es jamais allé, ramasse les bonus cachés sur la carte : tout se transforme en 🪙 clebsous. À la fin du mois, tes clebsous deviennent de vrais sous 💶.</div>
+        <div class="ho">🐾 Promène ${DOG}, change de rues (celles pas faites depuis ${FRESH_DAYS} jours rapportent plus), ramasse les bonus cachés sur la carte : tout se transforme en 🪙 clebsous. À la fin du mois, tes clebsous deviennent de vrais sous 💶.</div>
         ${others.length ? `<div class="ho">👀 ${others.map(([w, g]) => `${esc(w)} : ${LEVELS[g.l] ? esc(LEVELS[g.l][1]) : ""}`).join(" · ")}</div>` : ""}
       </div>`;
     box.querySelectorAll("[data-go]").forEach(b => b.onclick = () => switchTab(b.dataset.go));
@@ -2417,8 +2422,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 21;
+  const APP_NUM = 22;
   const NEWS = {
+    22: [
+      "🗺️ Une rue redevient « neuve » si tu ne l'as pas prise depuis 15 jours : change de trajets pour gagner des bonus et trouver des coffres.",
+      "Au maximum 10 rues neuves comptent par balade."
+    ],
     21: [
       "🪙 Une seule monnaie : les clebsous. La durée de la balade, les objets ramassés 🦴 🎾 🍖 ⭐, les rues jamais faites et le défi du jour : tout rapporte des clebsous.",
       "💶 À la fin du mois, tes clebsous deviennent de vrais sous.",

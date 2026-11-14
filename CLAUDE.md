@@ -99,3 +99,8 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - `game.total` = clebsous gagnés depuis le début (durée + bonus) → niveaux 0/600/2 000/5 000/10 000 et accessoires
   400/1 200/2 400/5 000/10 000. Tirelire affichée (`moneyOf`) = gains − malus (≥ 0) + coffres du mois.
 - Accueil : phrase « tout se transforme en clebsous… à la fin du mois, de vrais sous ». Récap : « 🪙 +136 clebsous » avec le détail.
+
+## Rues neuves = pas faites depuis 15 jours (version 22, décidé le 14/11)
+- `game.seen[c]` = numéro du jour (`dayNum`) de la dernière visite (anciennes valeurs 1 converties en « aujourd'hui »).
+  `isNewCell` = jamais vue ou vue il y a ≥ `FRESH_DAYS` (15) jours : vaut pour +1 par rue, objets ×2, coffres, tri des parcours.
+  Au plus `MAX_NEW_CELLS` (10) rues neuves comptées par balade. Le brouillard compte toutes les cases déjà vues (à vie).

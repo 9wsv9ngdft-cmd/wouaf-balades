@@ -88,7 +88,7 @@ async function push(env, v, sub, msg){
 const GENERIC = [
   n => `${DOG} t'attend${n ? ", " + n : ""} ! Une petite balade ? 🐾`,
   () => `Des 🦴 et des 🎾 à ramasser aujourd'hui. Tu pars à la chasse avec ${DOG} ?`,
-  () => `Et si tu prenais une rue jamais faite ? Les coins neufs rapportent double 🗺️`,
+  () => `Et si tu changeais de trajet ? Les rues pas faites depuis 15 jours rapportent double 🗺️`,
   () => `25 min de balade = 35 clebsous 🪙 1 h = 130 ! Plus c'est long, plus ça rapporte.`,
   () => `${DOG} a besoin de se dégourdir les pattes. C'est le moment ? 🐕`
 ];
@@ -113,7 +113,7 @@ function pickMessage(u, slot, now){
   if (slot === 1) return gain;
   const ideas = [gain];
   if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+10 clebsous)` });
-  if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 500 clebsous peuvent se cacher sur une rue que tu n'as jamais prise. Pars à la chasse avec ${DOG} ?` });
+  if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 500 clebsous peuvent se cacher sur une rue que tu n'as pas prise depuis longtemps. Pars à la chasse avec ${DOG} ?` });
   const g = GENERIC[(dayNo + slot) % GENERIC.length];
   ideas.push({ title:"Wouaf Balades 🐾", body: g(n) });
   return ideas[(dayNo * 2 + slot) % ideas.length];
