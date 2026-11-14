@@ -88,7 +88,7 @@
   body:not(.hasmap):not(.fogview):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
   /* v2.1 : accueil qui remplit l'écran, un peu plus « premium » */
-  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}
+  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + 8px)}
   body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{flex:1;display:flex;flex-direction:column;gap:10px}
   .big.go{padding:18px 16px;font-size:19px;border-radius:18px;box-shadow:0 10px 24px -12px rgba(30,70,40,.6)}
   .lots{display:grid;gap:10px}
@@ -437,8 +437,8 @@
   #home .oneline{margin-top:0;padding:9px 12px} #home .oneline>span:nth-child(2){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lotsL{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--green-2);margin:1px 2px -4px}
   .ltiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
-  .lt{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;border-radius:16px;padding:10px 4px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:500;box-shadow:0 6px 16px -12px rgba(0,0,0,.4)}
-  .lt .e{font-size:28px;line-height:1.1} .lt b{font-size:19px;font-weight:800;white-space:nowrap} .lt small{font-size:11.5px;line-height:1.25;color:var(--muted);text-align:center}
+  .lt{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;border-radius:16px;padding:8px 4px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:500;box-shadow:0 6px 16px -12px rgba(0,0,0,.4)}
+  .lt .e{font-size:25px;line-height:1.1} .lt b{font-size:19px;font-weight:800;white-space:nowrap} .lt small{font-size:11.5px;line-height:1.25;color:var(--muted);text-align:center}
   .lt.gold{background:linear-gradient(135deg,#fff4cf,#ffd96b 55%,#f1b93c);border-color:#e3b13d;color:#4a3405} .lt.gold small{color:#6b4c0b}
   .lt.hot{border-color:#e0703a}
   .lots{gap:9px} .arena{padding:11px 13px} .arena .atag{font-size:14px;margin-top:5px} .arena .chal{margin-top:8px} .arena .chal button{padding:9px 12px}
@@ -461,6 +461,18 @@
     .lt.gold{background:linear-gradient(135deg,#5a4512,#a7801f 60%,#c99a2c);color:#fff7dc;border-color:#8a6a1c} .lt.gold small{color:#fbe9b5}
     .mlist,.micons button{background:#1b211d}
   }
+
+  /* v2.3 : Roxy parle (bulle) et se laisse caresser */
+  .say{all:unset;box-sizing:border-box;display:block;position:relative;width:100%;margin:5px 0 3px 4px;background:#f3ecdf;color:var(--ink);border-radius:12px;padding:6px 10px;font-size:13.5px;line-height:1.3;font-weight:500;cursor:pointer}
+  .say::before{content:"";position:absolute;left:20px;top:-7px;border:7px solid transparent;border-top:0;border-bottom-color:#f3ecdf}
+  #heroSay .say{margin:8px 0 0;width:100%;padding:5px 10px}
+  .say.pop{animation:sayPop .35s ease-out}
+  @keyframes sayPop{0%{transform:scale(.92);opacity:.3}100%{transform:scale(1);opacity:1}}
+  .heroDog,.tama-dog{touch-action:none;-webkit-user-select:none;user-select:none;position:relative}
+  .heroDog.petted .roxy,.tama-dog.petted .roxy{animation:wag .3s ease-in-out infinite}
+  .heart{position:absolute;pointer-events:none;font-size:18px;z-index:5;animation:heartUp 1.1s ease-out forwards}
+  @keyframes heartUp{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:1;transform:translateY(-8px) scale(1.1)}100%{transform:translateY(-46px) scale(.9);opacity:0}}
+  @media (prefers-color-scheme: dark){ .say{background:#2a322c;color:var(--ink)} .say::before{border-bottom-color:#2a322c} }
 </style>
 </head>
 <body>
@@ -479,6 +491,7 @@
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
     </div>
+    <div id="heroSay"></div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
       <button data-v="20" aria-label="20 minutes, le minimum">⚡ 20</button>
@@ -557,7 +570,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.230923";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.002005";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1131,9 +1144,11 @@
     $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
     if (profile.walker){
       let m = null; try{ m = mood(); }catch(e){}
-      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="Voir les dernières sorties de ${esc(DOG)}"><span class="mt">${esc(m.t)}</span><div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
+      $("#heroSay").innerHTML = m ? `<button class="say" id="sayBtn" aria-label="${esc(DOG)} dit, toucher pour une autre phrase" aria-live="polite">${esc(sayNow())}</button>` : "";
+      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="${esc(m.t)}. Voir les dernières sorties de ${esc(DOG)}"><div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
       if ($("#moodBtn")) $("#moodBtn").onclick = sheetOuts;
-    } else $("#heroSub").textContent = "Dis-nous qui tu es :";
+      if ($("#sayBtn")) $("#sayBtn").onclick = () => roxySay(sayNext());
+    } else { $("#heroSub").textContent = "Dis-nous qui tu es :"; $("#heroSay").innerHTML = ""; }
     $("#editWho").hidden = !!profile.walker;
     try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
@@ -2287,7 +2302,7 @@
     l.push(tile("chest", ch > 0 ? " hot" : "", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "Coffre<br>🔥 il est chaud !" : "Coffre<br>rues neuves"));
     const rec = store.get("wouaf-record", null);
     l.push(tile("rec", "", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}<br>par ${esc(rec.walker)}` : "Record<br>personne encore"));
-    const lots = `<div class="lotsL">💎 Les gros lots</div><div class="ltiles">${l.join("")}</div>`;
+    const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
     const ar = arenaHTML(), live = duelOK() && (myDuel() || myInvite());
     return `<div class="lots">${live ? ar + lots : lots + ar}</div>`;
   }
@@ -2310,7 +2325,7 @@
     if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${esc(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
     const pl = (duelData.players || []).slice(0, 3);
     return `<div class="arena"><div class="at"><span>⚔️ L'arène · 3 ou 7 jours</span><span class="bet">🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
-      <div class="atag">Qui sortira le plus ${DOG} ? Mise des clebsous et que le meilleur gagne !</div>
+      <div class="atag">Qui sortira le plus ${DOG} ? Mise des clebsous !</div>
       <div class="chal">${pl.length ? pl.map(p => `<button data-defy="${esc(p.walker)}">⚔️ Défier ${esc(p.walker)}</button>`).join("") : `<button data-arena="duels">⚔️ Lancer un défi</button>`}</div></div>`;
   }
   function bindLots(){
@@ -2734,7 +2749,8 @@
         </div>
         <div class="btns"><button id="tamaGo">▶️ Sortir ${DOG}</button><button class="ghost" id="tamaProg">🏆 Tous mes progrès</button><button class="ghost" id="tamaClose">Fermer</button></div>
       </div>`);
-    $("#tamaDog").onclick = () => { const d = $("#tamaDog"); d.classList.remove("pet"); void d.offsetWidth; d.classList.add("pet"); ding(); };
+    bindPet($("#tamaDog"));
+    $("#tamaDog").onclick = () => { if (Date.now() - petAt < 600) return; const d = $("#tamaDog"); d.classList.remove("pet"); void d.offsetWidth; d.classList.add("pet"); ding(); };
     $("#tamaGo").onclick = () => { closeSheet(); setTimeout(() => $("#freeWalk").click(), 300); };
     $("#tamaProg").onclick = () => { closeSheet(); switchTab("prog"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
     $("#tamaClose").onclick = closeSheet;
@@ -3130,6 +3146,72 @@
     const a = mine ? { t: new Date(mine.date).getTime(), w: profile.walker } : null;
     const o = store.get("wouaf-last", null), b = o && o.t ? { t: o.t * 1000, w: o.walker } : null;
     return !a ? b : !b ? a : (a.t >= b.t ? a : b);
+  }
+  // ---------- 🐶 Roxy parle (v2.3, lot 1) : accueil à l'ouverture + petites phrases selon l'heure, la dernière sortie, les gros lots ----------
+  let sayCur = null, sayUsed = [], petAt = 0;
+  function sayPool(){
+    const me = profile.walker || "", l = lastWalk(), h = l ? (Date.now() - l.t) / 3600000 : 99, hr = new Date().getHours(), wd = new Date().getDay();
+    const p = [];
+    if (hr >= 22 || hr < 6) p.push("Zzz… On se promène demain ? 😴", "Je rêve d'écureuils… 🐿️");
+    else if (hr < 10) p.push(`Bonjour ${me} ! Une petite balade pour bien commencer ? ☀️`, "Le matin, ça sent trop bon dehors ! 👃");
+    else if (hr >= 12 && hr < 14) p.push("Après manger, une balade pour digérer ? 🍖");
+    else if (hr >= 17 && hr < 22) p.push("Le soir, tous les chiens du quartier sont dehors ! 🐕");
+    if (wd === 0 || wd === 6) p.push("C'est le week-end ! On part longtemps ? 🗺️");
+    try{ const hu = weekHunt(), gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));
+      if (!gone && (!hu || (!hu.found && !hu.gone))) p.push("J'ai flairé un trésor à 2 ou 3 km… On y va ? 🏴‍☠️"); }catch(e){}
+    try{ if (chestChance() > 0) p.push("Mon flair me dit qu'un coffre est tout près… 💰"); }catch(e){}
+    const n = (game.streak && game.streak.n) || 0;
+    if (n >= 2 && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day))) p.push(`${n} jours d'affilée ! On continue ? 🔥`);
+    try{ if (duelOK()){ const du = myDuel(), inv = myInvite();
+      if (inv) p.push(`${inv.from} te défie ! On lui montre ? ⚔️`);
+      else if (du){ const [a, b] = scoreOf(du); p.push(a >= b ? `On va gagner ce duel contre ${otherN(du)} ! ⚔️` : `${otherN(du)} mène… Une balade et on revient ! 😤`); } } }catch(e){}
+    const rec = store.get("wouaf-record", null);
+    p.push(rec ? `Le record du mois, c'est ${fmtMin(rec.min)}. On le bat ? 🏅` : "Personne n'a encore le record du mois… Pourquoi pas toi ? 🏅");
+    if (l && h < 8) p.push("Je suis toute contente aujourd'hui ! 😊");
+    p.push("J'ai entendu un chat dehors ! 🐈", "Je connais une rue où personne ne passe jamais… 🗺️", "Un os, une balle… je les sens d'ici ! 🦴",
+      "Tu me grattes derrière l'oreille ? Glisse ton doigt sur ma photo ! 🥰", "Ma laisse est dans l'entrée, je dis ça, je dis rien… 🦮");
+    return p;
+  }
+  function sayHello(){   // l'accueil, à l'ouverture de l'app
+    const me = profile.walker || "", l = lastWalk();
+    if (!l) return `Salut ${me} ! On fait notre première balade ensemble ? 🥺`;
+    const h = (Date.now() - l.t) / 3600000, other = l.w && normName(l.w) !== normName(me) ? l.w : "";
+    if (h < 3) return other ? `${other} m'a sortie tout à l'heure, je suis toute contente ! 😍` : "Merci pour tout à l'heure, c'était trop bien ! 💛";
+    if (h >= 24) return `Tu me manques… Ça fait plus d'un jour que j'attends 😢`;
+    if (h >= 14) return "Je m'ennuie… On sort ? 🥺";
+    return null;
+  }
+  function sayNext(){
+    const pool = sayPool().filter(t => !sayUsed.includes(t) && t !== sayCur);
+    const t = pool.length ? pool[Math.floor(Math.random() * pool.length)] : sayPool()[0];
+    sayUsed.push(t); if (sayUsed.length > 6) sayUsed.shift();
+    return t;
+  }
+  function sayNow(){ if (!sayCur) sayCur = sayHello() || sayNext(); return sayCur; }
+  function roxySay(t){
+    sayCur = t; const b = $("#sayBtn"); if (!b) return;
+    b.textContent = t; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !state.walk){ sayCur = null; try{ renderWho(); }catch(e){} } });
+  // ❤️ Caresser Roxy : glisser le doigt sur sa photo (accueil et fiche Roxy)
+  function bindPet(el){
+    if (!el || el.dataset.pet) return; el.dataset.pet = "1";
+    let x0 = null, y0 = 0, moved = 0, lastH = 0, on = false;
+    el.addEventListener("pointerdown", e => { x0 = e.clientX; y0 = e.clientY; moved = 0; on = false; });
+    el.addEventListener("pointermove", e => {
+      if (x0 == null) return;
+      moved += Math.hypot(e.clientX - x0, e.clientY - y0); x0 = e.clientX; y0 = e.clientY;
+      if (moved < 14) return;
+      if (!on){ on = true; try{ haptic(1); }catch(_){} if (el.id === "heroDog") roxySay(["Oh oui, encore ! 😍", "Derrière l'oreille… parfait 🥰", "Je t'aime fort ! 💛", "Hmmm… trop bien 😌"][Math.floor(Math.random() * 4)]); }
+      petAt = Date.now(); el.classList.add("petted"); clearTimeout(el._pt); el._pt = setTimeout(() => el.classList.remove("petted"), 1800);
+      if (Date.now() - lastH > 140){ lastH = Date.now();
+        const r = el.getBoundingClientRect(), hrt = document.createElement("span");
+        hrt.className = "heart"; hrt.textContent = ["❤️", "💛", "🧡", "💕"][Math.floor(Math.random() * 4)];
+        hrt.style.left = (e.clientX - r.left - 9) + "px"; hrt.style.top = (e.clientY - r.top - 18) + "px";
+        el.appendChild(hrt); setTimeout(() => hrt.remove(), 1100); }
+    });
+    const end = () => { x0 = null; };
+    el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end); el.addEventListener("pointerleave", end);
   }
   function mood(){
     const l = lastWalk();
@@ -4260,7 +4342,9 @@
   }
   const gainEst = min => Math.round(walkEuros(min) * CS) + bonusEst(min);
   // toucher Roxy en haut : elle saute, aboie, puis sa fiche s'ouvre
+  bindPet($("#heroDog"));
   $("#heroDog").addEventListener("click", () => {
+    if (Date.now() - petAt < 600) return;   // c'était une caresse, pas un toucher
     const el = $("#heroDog");
     el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump");
     const b = document.createElement("span"); b.className = "bark"; b.textContent = ["Wouaf ! 🐾", "On sort ? 🥺", "Wouaf wouaf !"][Math.floor(Math.random() * 3)];
@@ -4355,8 +4439,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 36, APP_LABEL = "2.2";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 37, APP_LABEL = "2.3";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    37: [
+      "🐶 Roxy te parle ! Touche sa bulle pour qu'elle te dise autre chose.",
+      "❤️ Caresse-la : glisse ton doigt sur sa photo."
+    ],
     36: [
       "🏠 L'accueil tient sur un seul écran : plus besoin de faire défiler. Touche une tuile des gros lots pour l'explication.",
       "☰ Nouveau menu : Progrès, Tirelire, Duels et Exploration en grandes tuiles."

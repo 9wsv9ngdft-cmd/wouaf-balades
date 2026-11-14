@@ -309,3 +309,13 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   🔑 Superviseur pour Éric), réglages en icônes (`.micons` : rappels, raccourci, prénom, vie privée, tuto), pied « Superviseur » discret + « À propos · version »
   (`#muAbout`, fiche avec les crédits du `<footer>`, désormais caché). Mêmes id `mu…` qu'avant.
 - Tests : `tests/e2e_accueil.py` vérifie l'accueil et le menu sans défilement.
+
+## Version 2.3 (APP_NUM 37, décidé le 15/11 : « Roxy plus vivante », lot 1 points 2, 3, 4 ; le reste attend)
+- 🐶 **Roxy parle** : bulle sous l'en-tête (`#heroSay`, `#sayBtn`, classe `.say`). À l'ouverture et au retour dans l'app, phrase d'accueil (`sayHello` :
+  1re balade, « Merci pour tout à l'heure » / « X m'a sortie tout à l'heure » < 3 h, « Je m'ennuie » ≥ 14 h, « Tu me manques » ≥ 24 h), sinon une phrase au hasard
+  (`sayPool` : heure du jour, week-end, trésor, coffre chaud, série, duel, record, phrases générales ; `sayNext` évite les 6 dernières). Toucher la bulle = autre phrase.
+  L'humeur reste en barre sous « Salut X » (toucher = dernières sorties). Aucune donnée nouvelle envoyée.
+- ❤️ **Caresser Roxy** (`bindPet`, accueil et fiche Roxy) : glisser le doigt sur la photo → cœurs (`.heart`), queue qui remue vite (`.petted`), petit tic, phrase contente ;
+  un glissement n'ouvre pas la fiche (`petAt`).
+- Place gagnée : titre « Les gros lots » retiré (tuiles seules), tuiles un peu plus basses, arène « Qui sortira le plus Roxy ? Mise des clebsous ! ».
+- En attente (décidé le 15/11) : rappels « à la voix de Roxy », lot 2 (rythme de la journée, souvenirs, journal), lot 3 (photos par humeur, tenues, anniversaire), lot 4 (balle, réactions en balade).
