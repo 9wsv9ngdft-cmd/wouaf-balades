@@ -1,0 +1,12 @@
+// Réglages du programme Cloudflare « wouaf-rappels », installé automatiquement depuis GitHub
+// (Cloudflare › Worker › Settings › Build, dossier racine « worker »).
+{
+  "name": "wouaf-rappels",
+  "main": "wouaf-rappels.js",
+  "compatibility_date": "2026-11-01",
+  // base de données créée toute seule au premier déploiement
+  "kv_namespaces": [{ "binding": "WOUAF" }],
+  // réveil toutes les 15 minutes pour envoyer les rappels
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "observability": { "enabled": true }
+}
