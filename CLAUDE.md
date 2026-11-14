@@ -264,3 +264,7 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 💎 Accueil : la ligne importante montre d'abord le duel (`duelLine`), puis les gros lots (`lotsHTML`) : trésor doré tant qu'il n'est pas gagné, coffre (chaud ou pas),
   record, « Lance un duel ». L'accueil remplit l'écran (`main.wrap` en colonne). Retour dans l'app = `startupDigest` (résultats de duel sur les deux téléphones).
 - Tests : `tests/duels.test.mjs` (Node) et `tests/e2e_duels.py`. Relancer `tests/serve-worker.mjs` après une modification du Worker (il garde l'ancien code).
+- Retours du 14/11 (19 h) : défi sans réponse = expiré au bout de **6 h** (`DUEL_TTL`) ; l'adversaire peut **proposer une autre mise** (`/duel-counter` : l'ancien défi
+  devient `countered`, nouveau défi dans l'autre sens avec `counterOf` et `was`) ; celui qui a lancé peut « Retirer » ou « Changer le défi ».
+  👀 **Dans son ombre** (`shadowCheck` dans `onFix`, `shadowClear` à la fin) : pendant une balade d'un duel « Guerre des rues » commencé, les rues de l'autre sont en
+  violet sur la carte (`/duel-map`, rafraîchi toutes les 10 min) et un toast + petit tic préviennent quand on entre dans l'une d'elles (une fois par rue).

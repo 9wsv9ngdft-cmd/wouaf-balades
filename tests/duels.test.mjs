@@ -107,3 +107,20 @@ test("record du mois : la plus longue balade valide, Éric exclu, recalculé si 
   await api.post("/void", { token: tok, walker: "Léa", e: t + 30, why: "test" });
   assert.equal((await api.get("/pause")).j.record.walker, "Tom");
 });
+
+test("contre-proposition : l'adversaire propose une autre mise, nouveau défi dans l'autre sens ; expiration à 6 h", async () => {
+  const { api, env } = await setup(); await players(api);
+  const id = (await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 7, type: "streets", stake: 100, have: 200 })).j.duel.id;
+  assert.equal((await api.post("/duel-counter", { walker: "Léa", id, stake: 25, have: 200 })).status, 409);   // seul l'adversaire peut
+  assert.equal((await api.post("/duel-counter", { walker: "Tom", id, stake: 100, have: 200 })).status, 400);  // même mise : non
+  const c = await api.post("/duel-counter", { walker: "Tom", id, stake: 25, have: 200 });
+  assert.equal(c.status, 200); assert.equal(c.j.duel.from, "Tom"); assert.equal(c.j.duel.to, "Léa"); assert.equal(c.j.duel.stake, 25); assert.equal(c.j.duel.type, "streets");
+  const l = (await api.post("/duels", { walker: "Léa" })).j.duels;
+  assert.equal(l.find(d => d.id === id).status, "countered");
+  assert.equal((await api.post("/duel-answer", { walker: "Léa", id: c.j.duel.id, ok: true, have: 200 })).j.duel.status, "active");
+  // 6 h sans réponse = expiré
+  const { api: api2, env: env2 } = await setup(); await players(api2);
+  const id2 = (await api2.post("/duel-new", { walker: "Léa", to: "Tom", days: 3, type: "walks", stake: 0, have: 0 })).j.duel.id;
+  const d2 = await env2.WOUAF.get("duels", "json"); d2[0].created -= 6.5 * 3600000; await env2.WOUAF.put("duels", JSON.stringify(d2));
+  assert.equal((await api2.post("/duels", { walker: "Tom" })).j.duels.find(d => d.id === id2).status, "expired");
+});

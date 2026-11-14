@@ -215,7 +215,7 @@ const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length 
 // KV « duels » = liste de tous les duels (petite famille). Un duel : { id, from, to, days (3|7), type ("walks"|"streets"), stake (0|25|50|100),
 // status (pending | active | done | declined | expired | cancelled), created, start / end (jours « AAAA-MM-JJ » inclus, la journée commence à 4 h comme l'app),
 // cancel: [prénoms qui veulent annuler], cells: { case: prénom } (guerre des rues, effacées à la fin), lost: { prénom: rues perdues }, res: { a, b, winner, why } }
-const DUEL_DAYS = [3, 7], DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPES = ["walks", "streets"];
+const DUEL_TTL = 6 * 3600000, DUEL_DAYS = [3, 7], DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPES = ["walks", "streets"];
 const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const same = (a, b) => normName(a) === normName(b);
 const inDuel = (du, w) => same(du.from, w) || same(du.to, w);
@@ -258,12 +258,12 @@ async function finishDuel(env, du, winner, why){
   const txt = winner ? `${winner} a gagné le duel${why === "quit" ? " (abandon)" : ""}${du.stake ? ` : +${du.stake} clebsous` : ""} !` : "Égalité : chacun garde sa mise.";
   await pushTo(env, du.from, "⚔️ Duel terminé", txt); await pushTo(env, du.to, "⚔️ Duel terminé", txt);
 }
-// lit les duels et les met à jour : défi sans réponse au bout de 24 h = expiré ; duel fini (jour de fin passé) = résultat
+// lit les duels et les met à jour : défi sans réponse au bout de 6 h = expiré ; duel fini (jour de fin passé) = résultat
 async function getDuels(env, now){
   const l = (await env.WOUAF.get("duels", "json")) || [], today = isoDay(now);
   let changed = false;
   for (const du of l){
-    if (du.status === "pending" && now - du.created > 24 * 3600000){ du.status = "expired"; changed = true; }
+    if (du.status === "pending" && now - du.created > DUEL_TTL){ du.status = "expired"; changed = true; }
     else if (du.status === "active" && today > du.end){
       const sc = await duelScore(env, du); du.res = { a: sc.a, b: sc.b, am: sc.am, bm: sc.bm };
       const w = sc.a !== sc.b ? (sc.a > sc.b ? du.from : du.to) : (du.type === "walks" && sc.am !== sc.bm ? (sc.am > sc.bm ? du.from : du.to) : null);
@@ -473,7 +473,7 @@ export default {
         if (stake > Math.max(0, +b.have || 0) || (op.cs != null && stake > op.cs)) return json({ error:"stake" }, 400);   // pas plus que la tirelire de chacun
         const du = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), from: w, to: op.walker, days, type, stake, status:"pending", created: now };
         l.push(du); await saveDuels(env, l);
-        await pushTo(env, op.walker, "⚔️ Nouveau défi !", `${w} te lance un duel de ${days} jours${stake ? `, mise ${stake} clebsous` : ""}. Tu as 24 h pour répondre.`);
+        await pushTo(env, op.walker, "⚔️ Nouveau défi !", `${w} te lance un duel de ${days} jours${stake ? `, mise ${stake} clebsous` : ""}. Tu as 6 h pour répondre.`);
         return json({ ok:true, duel: await duelView(env, du) });
       }
       const du = l.find(x => x.id === b.id);
@@ -487,6 +487,18 @@ export default {
         await saveDuels(env, l);
         await pushTo(env, du.from, "⚔️ Défi accepté !", `${du.to} a accepté. Le duel commence demain, ${du.days} jours.`);
         return json({ ok:true, duel: await duelView(env, du) });
+      }
+      if (path === "/duel-counter"){   // ✏️ l'adversaire refuse la mise et propose la sienne : nouveau défi dans l'autre sens, mêmes règles
+        const stake = +b.stake;
+        if (du.status !== "pending" || !same(du.to, w)) return json({ error:"not pending" }, 409);
+        if (!DUEL_STAKES.includes(stake) || stake === du.stake || stake > Math.max(0, +b.have || 0)) return json({ error:"stake" }, 400);
+        const op = (await players(env)).find(p => same(p.walker, du.from));
+        if (op && op.cs != null && stake > op.cs) return json({ error:"stake" }, 400);
+        du.status = "countered";
+        const nd = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), from: w, to: du.from, days: du.days, type: du.type, stake, status:"pending", created: now, counterOf: du.id, was: du.stake };
+        l.push(nd); await saveDuels(env, l);
+        await pushTo(env, du.from, "⚔️ Contre-proposition", `${w} veut bien le duel, mais avec une mise de ${stake} clebsous au lieu de ${du.stake}. Tu as 6 h pour répondre.`);
+        return json({ ok:true, duel: await duelView(env, nd) });
       }
       if (path === "/duel-cancel"){   // annuler : défi en attente = retiré par celui qui l'a lancé ; duel en cours = seulement si les deux sont d'accord
         if (du.status === "pending"){ if (!same(du.from, w)) return json({ error:"no" }, 409); du.status = "cancelled"; du.by = w; await saveDuels(env, l); return json({ ok:true, duel: await duelView(env, du) }); }

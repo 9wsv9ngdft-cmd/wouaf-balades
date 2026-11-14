@@ -505,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.185148";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.190237";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2263,11 +2263,11 @@
     return `<div class="dfiche">
       <b>⚔️ Duel ${forTo ? "lancé par" : "contre"} ${esc(op)}</b><br>
       ⏱️ <b>Durée :</b> ${when}<br>
-      ${p.type === "streets" ? `🗺️ <b>Guerre des rues :</b> chaque rue parcourue pendant une balade valide (20 min ou plus) prend ta couleur. Passer sur une rue de l'autre la lui vole. Celui qui a le plus de rues à la fin gagne.<br>🔒 Ton adversaire verra les rues où tu passes pendant le duel (des cases d'environ 100 m, sans le tracé ni les horaires). Tout est effacé à la fin.`
+      ${p.type === "streets" ? `🗺️ <b>Guerre des rues :</b> chaque rue parcourue pendant une balade valide (20 min ou plus) prend ta couleur. Passer sur une rue de l'autre la lui vole. Celui qui a le plus de rues à la fin gagne. Pendant ta balade, ses rues sont en violet, et l'app te prévient quand tu entres « dans son ombre ».<br>🔒 Ton adversaire verra les rues où tu passes pendant le duel (des cases d'environ 100 m, sans le tracé ni les horaires). Tout est effacé à la fin.`
         : `🐾 <b>Balades :</b> celui qui fait le plus de balades valides (20 min ou plus) gagne. À égalité, c'est le total de minutes qui compte.`}<br>
       🪙 <b>Mise :</b> ${st ? `${st} clebsous chacun. Tu gagnes : <b>+${st}</b>. Tu perds : <b>−${st}</b>. Égalité : chacun garde sa mise.` : "aucune, juste pour le plaisir."}<br>
       📜 Un seul duel à la fois. Annuler : seulement si vous êtes d'accord tous les deux${st ? " (chacun garde sa mise)" : ""}. Arrêter seul = abandon = défaite.
-      ${forTo ? "<br>⌛ Sans réponse dans les 24 h, le défi expire." : ""}</div>`;
+      ${forTo ? "<br>⌛ Sans réponse dans les 6 h, le défi expire." : ""}</div>`;
   }
   async function duelCall(path, body){
     try{ const r = await api(path, Object.assign({ walker: profile.walker }, body)); const j = await r.json().catch(() => ({})); if (r.ok){ await loadDuels(); renderHome(); } return { ok: r.ok, status: r.status, j }; }
@@ -2283,9 +2283,10 @@
     let h = `<h2>⚔️ Duels</h2>`;
     if (inv){
       const can = (inv.stake || 0) <= myBal();
-      h += `<p><b>${esc(inv.from)} te lance un défi !</b></p>${ficheHTML(inv, true)}
-        ${can ? "" : `<p class="howto">Ta tirelire (${myBal()} clebsous) est plus petite que la mise : tu ne peux pas accepter.</p>`}
-        <div class="btns" style="flex-direction:row;gap:8px"><button id="dyYes" style="flex:1"${can ? "" : " disabled"}>✅ J'accepte</button><button class="ghost" id="dyNo" style="flex:1">❌ Non merci</button></div>`;
+      h += `<p><b>${inv.counterOf ? `${esc(inv.from)} te répond : d'accord pour le duel, mais avec une mise de ${inv.stake} clebsous (au lieu de ${inv.was})` : `${esc(inv.from)} te lance un défi !`}</b></p>${ficheHTML(inv, true)}
+        ${can ? "" : `<p class="howto">Ta tirelire (${myBal()} clebsous) est plus petite que la mise : tu ne peux pas accepter, mais tu peux proposer une autre mise.</p>`}
+        <div class="btns" style="flex-direction:row;gap:8px"><button id="dyYes" style="flex:1"${can ? "" : " disabled"}>✅ J'accepte</button><button class="ghost" id="dyNo" style="flex:1">❌ Non merci</button></div>
+        <div class="flabel">Ou propose une autre mise</div><div class="pick" id="dyCounter">${DUEL_STAKES.filter(v => v !== inv.stake).map(v => `<button data-v="${v}"${v > myBal() ? " disabled" : ""}>${v ? v + " 🪙" : "Sans mise"}</button>`).join("")}</div>`;
     }
     if (du){
       const [a, b] = scoreOf(du), mine = (du.cancel || []).some(x => sameN(x, profile.walker)), theirs = (du.cancel || []).some(x => !sameN(x, profile.walker));
@@ -2295,7 +2296,7 @@
         ${theirs ? `<p class="howto">${esc(otherN(du))} propose d'annuler le duel.</p>` : mine ? `<p class="howto">Tu as proposé d'annuler : on attend ${esc(otherN(du))}.</p>` : ""}
         <div class="btns" style="flex-direction:row;gap:8px">${mine ? "" : `<button class="ghost" id="dyCancel" style="flex:1">${theirs ? "D'accord, on annule" : "Proposer d'annuler"}</button>`}<button class="ghost" id="dyQuit" style="flex:1;color:#c8452f">Abandonner</button></div>`;
     }
-    if (sent) h += `<p>📨 Défi envoyé à <b>${esc(sent.to)}</b> : on attend sa réponse (24 h au plus).</p>${ficheHTML(sent)}<div class="btns"><button class="ghost" id="dyWithdraw">Retirer le défi</button></div>`;
+    if (sent) h += `<p>📨 ${sent.counterOf ? "Contre-proposition envoyée" : "Défi envoyé"} à <b>${esc(sent.to)}</b> : on attend sa réponse (6 h au plus).</p>${ficheHTML(sent)}<div class="btns" style="flex-direction:row;gap:8px"><button class="ghost" id="dyWithdraw" style="flex:1">Retirer le défi</button><button class="ghost" id="dyRedo" style="flex:1">Changer le défi</button></div>`;
     if (!inv && !du && !sent) h += `<p>Défie un autre promeneur : celui qui sort le plus ${DOG} gagne. Pas de classement, juste entre vous deux.</p><div class="btns"><button id="dyNew">⚔️ Lancer un défi</button></div>`;
     if (past.length) h += `<div class="flabel">Derniers duels</div><div class="props">${past.map(d => { const [x, y] = scoreOf(d), w = d.res && d.res.winner;
       return `<div class="entry"><div><h4>${w ? (sameN(w, profile.walker) ? "🏆 Gagné" : "Perdu") : "🤝 Égalité"} contre ${esc(otherN(d))} · ${x} – ${y}</h4><div class="when">${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} 🪙` : ""}${d.res && d.res.why === "quit" ? " · abandon" : ""}</div></div></div>`; }).join("")}</div>`;
@@ -2306,6 +2307,8 @@
     if ($("#dyYes")) $("#dyYes").onclick = async () => { msg("Un instant…"); const r = await duelCall("/duel-answer", { id: inv.id, ok: true, have: myBal() }); if (r.ok){ confetti(); sheetDuels(); } else msg(duelErr(r.status)); };
     if ($("#dyNo")) $("#dyNo").onclick = async () => { const r = await duelCall("/duel-answer", { id: inv.id, ok: false }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
     if ($("#dyWithdraw")) $("#dyWithdraw").onclick = async () => { const r = await duelCall("/duel-cancel", { id: sent.id }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
+    if ($("#dyRedo")) $("#dyRedo").onclick = async () => { const r = await duelCall("/duel-cancel", { id: sent.id }); r.ok ? sheetDuelNew({ to: sent.to, days: sent.days, type: sent.type, stake: sent.stake }) : msg(duelErr(r.status)); };
+    document.querySelectorAll("#dyCounter button").forEach(b => b.onclick = async () => { msg("Un instant…"); const r = await duelCall("/duel-counter", { id: inv.id, stake: +b.dataset.v, have: myBal() }); if (r.ok) sheetDuels(); else msg(duelErr(r.status)); });
     if ($("#dyCancel")) $("#dyCancel").onclick = async () => { const r = await duelCall("/duel-cancel", { id: du.id }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
     if ($("#dyQuit")) $("#dyQuit").onclick = () => {
       openSheet(`<h2>Abandonner le duel ?</h2><p>Un abandon compte comme une défaite${du.stake ? ` : tu perds ta mise de ${du.stake} clebsous` : ""}.</p><div class="btns"><button id="dqYes" style="background:#c8452f">Oui, j'abandonne</button><button class="ghost" id="dqNo">Non, je continue !</button></div>`);
@@ -2333,12 +2336,36 @@
     document.querySelectorAll(".pick button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; p[k] = (k === "to" || k === "type") ? b.dataset.v : +b.dataset.v; sheetDuelNew(p); });
     $("#dnBack").onclick = sheetDuels;
     $("#dnNext").onclick = () => {
-      openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${esc(p.to)} recevra exactement la même fiche, et a 24 h pour répondre.</p><p id="dnMsg" role="status"></p>
+      openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${esc(p.to)} recevra exactement la même fiche, et a 6 h pour répondre (il peut aussi proposer une autre mise).</p><p id="dnMsg" role="status"></p>
         <div class="btns"><button id="dnSend">📨 Envoyer le défi</button><button class="ghost" id="dnEdit">← Modifier</button></div>`);
       $("#dnEdit").onclick = () => sheetDuelNew(p);
       $("#dnSend").onclick = async () => { $("#dnMsg").textContent = "Un instant…"; const r = await duelCall("/duel-new", Object.assign({}, p, { have: myBal() })); if (r.ok) sheetDuels(); else $("#dnMsg").textContent = duelErr(r.status); };
     };
   }
+  // 👀 Guerre des rues pendant la balade : les rues de l'autre en violet sur la carte, et une alerte quand on entre dans « son ombre »
+  let shadow = null, shadowBusy = false;
+  async function shadowCheck(q){
+    if (!duelOK()) return;
+    const du = myDuel(); if (!du || du.type !== "streets" || isoDayLocal() < du.start) return;
+    if ((!shadow || shadow.id !== du.id || Date.now() - shadow.at > 10 * 60000) && !shadowBusy){
+      shadowBusy = true;
+      try{ const j = await (await api("/duel-map", { walker: profile.walker, id: du.id })).json();
+        if (j && j.cells){ shadowClear(); const op = otherN(du), lay = L.layerGroup().addTo(map), rects = {};
+          for (const k in j.cells) if (!sameN(j.cells[k], profile.walker)){ const [i, jj] = k.split(":").map(Number);
+            rects[k] = L.rectangle([[i * 0.0009, jj * 0.0013], [(i + 1) * 0.0009, (jj + 1) * 0.0013]], { color:"#7b3fb5", weight:1, fillOpacity:.35 }).addTo(lay); }
+          shadow = { id: du.id, at: Date.now(), op, cells: j.cells, rects, lay, warned: (shadow && shadow.id === du.id) ? shadow.warned : {} }; } }catch(e){}
+      shadowBusy = false;
+    }
+    if (!shadow || !q) return;
+    const c = cellOf(q);
+    if (shadow.cells[c] && !sameN(shadow.cells[c], profile.walker) && !shadow.warned[c]){
+      shadow.warned[c] = 1;
+      toast(`👀 Attention, tu es dans l'ombre de ${shadow.op} ! Cette rue sera à toi après la balade.`, 4500); try{ haptic(2); }catch(e){}
+      try{ shadow.rects[c].setStyle({ color:"#e07a1f" }); }catch(e){}
+    }
+  }
+  function shadowClear(){ try{ if (shadow && shadow.lay) shadow.lay.remove(); }catch(e){} if (shadow) shadow.lay = null; }
+
   // 🗺️ carte de la guerre des rues : mes rues, ses rues, sans brouillard
   let duelMap = null;
   async function sheetDuelMap(du){
@@ -2364,13 +2391,13 @@
     const seen = id => game.duelSeen.includes(id), mark = id => { game.duelSeen.push(id); game.duelSeen = game.duelSeen.slice(-60); };
     for (const d of duelData.duels || []){
       if (d.status === "pending" && sameN(d.to, me) && !seen("i" + d.id)){ mark("i" + d.id);
-        cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${esc(d.from)} te lance un défi !</h2><p>${d.days} jours · ${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} clebsous` : ""}. Tu as 24 h pour répondre.</p><div class="btns"><button class="ghost" data-go="duels">Voir le défi</button></div>`, bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(sheetDuels, 200); } }); }
+        cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.counterOf ? `${esc(d.from)} propose une autre mise` : `${esc(d.from)} te lance un défi !`}</h2><p>${d.days} jours · ${DUEL_TYPE[d.type]} · ${d.stake ? `mise ${d.stake} clebsous` : "sans mise"}. Tu as 6 h pour répondre.</p><div class="btns"><button class="ghost" data-go="duels">Voir le défi</button></div>`, bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(sheetDuels, 200); } }); }
       if (d.status === "done" && !seen("r" + d.id)){ mark("r" + d.id);
         const w = d.res && d.res.winner, [x, y] = scoreOf(d), won = w && sameN(w, me), op = otherN(d);
         cards.push({ party: won, html:`<div class="dc-ic">${won ? "🏆" : w ? "⚔️" : "🤝"}</div><h2>${won ? `Tu as gagné le duel !${d.stake ? ` +${d.stake}` : ""}` : w ? `${esc(op)} a gagné cette fois… revanche ?` : "Égalité ! Chacun garde sa mise."}</h2><p>${x} – ${y}${d.res && d.res.why === "quit" ? ` (abandon de ${esc(sameN(d.res.quit, me) ? "toi" : op)})` : ""}${!won && w && d.stake ? ` · −${d.stake} clebsous` : ""}</p><div class="btns"><button class="ghost" data-go="re">⚔️ Revanche</button></div>`,
           bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(() => sheetDuelNew({ to: op, days: d.days, type: d.type, stake: d.stake }), 200); } }); }
       if ((d.status === "declined" || d.status === "expired" || (d.status === "cancelled" && d.by === "sup")) && !seen("x" + d.id)){ mark("x" + d.id);
-        if (d.status === "cancelled" || sameN(d.from, me)) cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.status === "declined" ? `${esc(d.to)} a dit non merci` : d.status === "expired" ? "Défi expiré" : "Duel annulé"}</h2><p>${d.status === "declined" ? "Une autre fois peut-être !" : d.status === "expired" ? `${esc(d.to)} n'a pas répondu dans les 24 h.` : "Le superviseur a annulé le duel : chacun garde sa mise."}</p>` }); }
+        if (d.status === "cancelled" || sameN(d.from, me)) cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.status === "declined" ? `${esc(d.to)} a dit non merci` : d.status === "expired" ? "Défi expiré" : "Duel annulé"}</h2><p>${d.status === "declined" ? "Une autre fois peut-être !" : d.status === "expired" ? `${esc(d.to)} n'a pas répondu dans les 6 h.` : "Le superviseur a annulé le duel : chacun garde sa mise."}</p>` }); }
       if (d.status === "active" && d.lost && d.type === "streets"){
         const n = d.lost[Object.keys(d.lost).find(k => sameN(k, me))] || 0, k = "wouaf-lost-" + d.id, was = store.get(k, 0);
         if (n > was){ store.set(k, n); cards.push({ html:`<div class="dc-ic">🗺️</div><h2>${esc(otherN(d))} t'a pris ${n - was} rue${n - was > 1 ? "s" : ""} !</h2><p>Repasse dessus pendant une balade de 20 min ou plus pour les reprendre.</p>` }); }
@@ -3326,6 +3353,7 @@
     gameFix(q, walkHome);
     drawWalkFog(false);
     maybeAskPhoto();
+    shadowCheck(q);
     if (walkHome) checkHome(q);
     persist(false);
   }
@@ -3356,6 +3384,7 @@
 
   // « Pas de balade » : on arrête sans récap ni carnet
   function cancelWalk(){
+    shadowClear();
     // 🏴‍☠️ trésor trouvé puis balade annulée : personne n'est payé, on prévient le superviseur (il peut redonner les 500 clebsous)
     if (gw && gw.hunt && !isTester() && PUSH_API && profile.walker && game.hunt) api("/alert", { walker: profile.walker, kind: "hunt", week: game.hunt.wk }).catch(() => {});
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
@@ -3643,6 +3672,7 @@
   }
 
   function stopWalk(){
+    shadowClear();
     const p = state.walk;
     const endTs = Date.now();
     const elapsed = (endTs - t0) / 60000;
@@ -4254,7 +4284,7 @@
     renderHome();
   });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
 })();
 </script>
 </body>
