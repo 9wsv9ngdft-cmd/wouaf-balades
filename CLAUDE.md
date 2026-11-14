@@ -156,3 +156,18 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 👯 Balade à deux : bouton 👯 ; les deux touchent pendant la même balade (`POST /duo`, départs à < 45 min) → +15 chacun
   (`DUO_PTS`), vérifié aussi juste après la fin.
 - 🎂 Anniversaire de Roxy : `ROXY_BDAY` (« MM-JJ », vide tant que l'utilisateur ne l'a pas donné) → bonus ×3, chapeau 🎉, mission.
+
+## Version 29 : simplification et esthétique (décidé le 14/11)
+- 2 onglets : 🏠 Accueil et 🏆 Progrès ; la tirelire détaillée et le carnet s'ouvrent depuis Progrès (`.subnav`, bouton
+  « ← Retour aux progrès » `backBtn`). Les vues `shop` / `log` existent toujours.
+- Barre de balade : 📷, Terminer, Pipi/Caca ; 🆘 👯 🌙 rangés dans « ⋯ » (`#moreBtn` ; les vrais boutons sont cachés `.hid`).
+- Plus de bilan de quinzaine (remplacé par le tableau de bord et le jour de paie ; `sendBilan` reste dans le code, non appelé).
+- En-tête sans sous-titre ; crédits repliés dans « À propos » (pied de page `<details>`).
+- ✨ « Quoi de neuf » (`startupDigest`) : une seule fenêtre à cartes qui défilent (nouveautés, malus, message du superviseur,
+  jour de paie, semaine) ; remplace `showNews` / `showMalus` / `applyAdjust` / `offerPayday` / `offerWeek` à l'ouverture.
+- 🐕 Avatar : la 1re photo de Roxy devient sa photo (`wouaf-avatar`, 200 px), changeable depuis l'album (« En faire la photo de Roxy ») ;
+  `roxyHTML` l'utilise partout (accueil, carte, fiches), accessoires par-dessus.
+- 🎉 `confetti()` : coffre, trésor, paie, record, fin du tuto, niveau / album / trophée au récap.
+- 🧾 Récap façon ticket (grosse somme de clebsous, photo de Roxy), « Le détail » en dessous.
+- 🌙 Mode sombre automatique (`prefers-color-scheme: dark`, bloc CSS en fin de `<style>`).
+- Nouvelle icône (Roxy + pièce de clebsous) : icon-180/192/512.png (iOS garde l'ancienne icône tant que l'app n'est pas ré-ajoutée).

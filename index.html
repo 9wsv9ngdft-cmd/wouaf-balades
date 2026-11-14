@@ -156,6 +156,24 @@
   #walkbar .in{flex-wrap:wrap}
   #walkbar .needs{display:flex;gap:6px;width:100%;order:-1;margin-bottom:8px}
   #walkbar .needs button{flex:1;padding:8px;font-size:14px;background:rgba(255,255,255,.18);color:#fff;border-radius:10px}
+  #walkbar .photo.hid{display:none}
+  #moreBtn{font-size:22px;font-weight:800;min-width:48px}
+  .digest{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -4px}
+  .digest::-webkit-scrollbar{display:none}
+  .dcard{flex:0 0 100%;scroll-snap-align:center;padding:0 4px;text-align:center}
+  .dcard .props,.dcard .rgrid,.dcard ul{text-align:left}
+  .dc-ic{font-size:58px;margin:4px 0}
+  .ddots{text-align:center;color:var(--muted);letter-spacing:4px;margin:6px 0 0}
+  .confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:6000}
+  .ticket{text-align:center;background:linear-gradient(180deg,#fff8e6,#fffdf8);border:1px dashed #e0a21f;border-radius:18px;padding:14px 12px 6px;margin-bottom:12px}
+  .ticket .tk-photo{width:120px;height:120px;object-fit:cover;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .ticket .tk-dog{display:flex;justify-content:center;margin:10px 0} .ticket .tk-dog .roxy{width:84px;height:84px;font-size:50px;border-color:var(--accent)}
+  .ticket .tk-sum{font-size:52px;font-weight:800;color:#b86a12;line-height:1.1;margin-top:6px} .ticket .tk-sum .csi{width:44px;height:44px}
+  .ticket .tk-sub{color:var(--muted);font-size:14px}
+  .ticket h2{margin:10px 0 2px} .ticket p{margin:0 0 6px;color:var(--muted);font-size:14px}
+  .subnav{display:flex;gap:8px;margin:4px 0 12px} .subnav button{flex:1;padding:12px 8px}
+  .backp{width:100%;margin:4px 0 12px}
+  footer details summary{cursor:pointer;color:var(--muted);font-size:13px}
   #walkbar .photo.on{background:#fff;color:var(--green)}
   #walkbar .needs button.on{background:#fff;color:var(--green)}
   #walkbar .photo{padding:11px 10px}
@@ -229,6 +247,7 @@
   .reward.locked{opacity:.75}
   .howto{font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px}
   .roxy{width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid #2a7de1;display:flex;align-items:center;justify-content:center;font-size:19px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+  .roxy.ph{background-size:cover;background-position:center}
   .roxy i{position:absolute;font-style:normal;line-height:1;pointer-events:none}
   .roxy .a-bow{top:-9px;left:-7px;font-size:15px}
   .roxy .a-scarf{bottom:-10px;left:50%;transform:translateX(-50%);font-size:15px}
@@ -266,13 +285,39 @@
   .news{padding-left:20px;margin:8px 0 0}
   .news li{margin:6px 0}
   .leaflet-container{font:inherit}
+
+  /* 🌙 Mode sombre automatique (quand l'iPhone est en mode sombre) */
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#121614; --card:#1b211d; --ink:#e7ece6; --muted:#9ba69c; --line:#2d3630; --sand:#2a312c; --green:#3c7a4a; --green-2:#6fae7c }
+    html,body{background:var(--bg);color:var(--ink)}
+    header{background:#1d3a25}
+    input,select,textarea{background:#232a25;color:var(--ink);border-color:var(--line)}
+    button.ghost,.subnav button{background:#25302a;color:#cfe5d3}
+    button.go{background:linear-gradient(135deg,#2f5d3a,#4c8a5a)}
+    .seg,.rgrid div,.dots div,.homecard .hrow button,.missions .m .ic{background:#242b26 !important;color:var(--ink)}
+    .seg button{color:var(--ink)} .seg button.on{background:#3a463d;color:#fff}
+    .chips button{background:#1b211d;color:var(--ink);border-color:var(--line)} .chips button.on{background:#3c7a4a;color:#fff}
+    .missions,.homecard,.panel,.entry,.sheet{background:var(--card);border-color:var(--line)}
+    .missions .m.done .ic{background:#24362a !important}
+    .warnline{background:#3a2a1c;color:#f3c9a0} .party{background:#2b3524;color:#e9f3d8}
+    .ticket{background:linear-gradient(180deg,#2c2718,#1b211d);border-color:#7a6220} .ticket .tk-sum{color:#ffd35c}
+    .gohint button{background:#2c2718;color:#ffd35c;border-color:#7a6220}
+    .gohint button.bon{background:#1b211d}
+    [style*="background:#fffdf8"],[style*="background:#eef3ec"],[style*="background:#fff6ef"]{background:var(--card) !important;color:var(--ink) !important;border-color:var(--line) !important}
+    .bar{background:#2d3630 !important} .mood .mb{background:#2d3630}
+    .tabs button.on{background:#2a312c;color:var(--ink)}
+    .toast{background:#e7ece6;color:#121614}
+    .roxy{background:#1b211d}
+    .linkish{color:#9fd0aa;background:none}
+    .seg button.on,.chips button.on{color:#fff} .rgrid b,.entry .dur,.flabel{color:#a9d4b2}
+    footer{color:var(--muted)}
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <h1>🐾 Wouaf Balades <span id="evDeco"></span></h1>
-    <p>Des balades qui partent de là où vous êtes, et y reviennent.</p>
   </div>
 </header>
 
@@ -313,9 +358,7 @@
   <div id="map"></div>
 
   <div class="tabs" role="tablist">
-    <button class="on" data-tab="walks" role="tab">🐾 Balades</button>
-    <button data-tab="log" role="tab">📒 Carnet</button>
-    <button data-tab="shop" role="tab">🪙 Tirelire</button>
+    <button class="on" data-tab="walks" role="tab">🏠 Accueil</button>
     <button data-tab="prog" role="tab">🏆 Progrès</button>
   </div>
   <div id="views">
@@ -331,12 +374,12 @@
     <div id="v-prog" style="display:none"></div>
   </div>
 
-  <footer>
+  <footer><details><summary>À propos · <span id="appVer"></span></summary>
     Données © <a href="https://www.openstreetmap.org/copyright">contributeurs OpenStreetMap</a> (ODbL).
     Itinéraires piétons : <a href="https://routing.openstreetmap.de">FOSSGIS (OSRM, Valhalla)</a>, <a href="https://brouter.de">BRouter</a> · Lieux : <a href="https://photon.komoot.io">Photon</a> · Sentiers balisés : <a href="https://hiking.waymarkedtrails.org">Waymarked Trails</a> · Météo : <a href="https://open-meteo.com">Open-Meteo</a> (Météo-France).
-    <span id="appVer"></span>
+    
     Durées estimées à 3,5 km/h, rythme « chien qui renifle ». Vérifiez la signalisation sur place (laisse obligatoire, accès interdits aux chiens).
-  </footer>
+  </details></footer>
 </main>
 
 <div id="walkbar" role="region" aria-label="Balade en cours">
@@ -345,9 +388,10 @@
     <div class="wstats"><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
     <div class="needs"><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wbtns">
-      <button class="photo" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
-      <button class="photo" id="duoBtn" aria-label="Balade à deux : on est deux promeneurs avec Roxy">👯</button>
-      <button class="photo" id="pocketBtn" aria-label="Mode poche : écran noir, la balade continue">🌙</button>
+      <button class="photo" id="moreBtn" aria-label="Plus : alerte, balade à deux, mode poche">⋯</button>
+      <button class="photo hid" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
+      <button class="photo hid" id="duoBtn" aria-label="Balade à deux : on est deux promeneurs avec Roxy">👯</button>
+      <button class="photo hid" id="pocketBtn" aria-label="Mode poche : écran noir, la balade continue">🌙</button>
       <button class="photo" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
       <button id="stop">Terminer</button>
     </div>
@@ -364,7 +408,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.150633";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.152445";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -435,7 +479,8 @@
   const isBday = t => { if (!ROXY_BDAY) return false; const d = new Date(t || Date.now()); return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` === ROXY_BDAY; };
   const ACC_SLOT = { "🎀":"a-bow", "🧣":"a-scarf", "🕶️":"a-glasses", "🎩":"a-hat", "👑":"a-hat" };
   const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
-  const roxyHTML = list => { if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); return `<div class="roxy"><span>🐕</span>${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
+  const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || ""; }catch(e){ return ""; } };
+  const roxyHTML = list => { if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
   function youIcon(){
     let a = []; try{ a = accList(JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc); }catch(e){}
     return L.divIcon({ className:"", html: roxyHTML(a), iconSize:[34,34], iconAnchor:[17,17] });
@@ -1220,7 +1265,6 @@
         <div class="big">🪙 ${fmtCs(eur)}</div>
         <div class="lvl">Rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
         ${bonusThisMonth() ? `<div class="lvl">💰 dont ${fmtCs(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""}</div>` : ""}
-        <button class="ghost" id="bilNow" style="margin-top:10px;width:100%;background:rgba(255,255,255,.18);color:#fff">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
@@ -1235,7 +1279,6 @@
         <div style="font-size:13px;color:var(--muted);margin-top:4px">🗺️ ${coins} coin${coins > 1 ? "s" : ""} exploré${coins > 1 ? "s" : ""} · 🔥 série : ${game.streak.n || 0} jour${(game.streak.n || 0) > 1 ? "s" : ""}${lv.next ? ` · encore ${fmtCs((lv.next[0] - game.total) / CS)} pour ${lv.next[1]}` : ""}</div>
         <div class="howto" style="margin-top:8px">Bonus en clebsous : 🦴 1 · 🎾 2 · 🍖 3 · ⭐ 5 · 🗺️ +1 par rue neuve, c'est-à-dire pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max par balade, objets ×2) · 🎯 défi +${DEFI_PTS} · balades longues multipliées. En vélo ou en voiture, rien ne compte 😉</div>
       </div>`;
-    $("#bilNow").onclick = () => sendBilan(periodOf(Date.now()));
     bindPay(renderShop);
   }
 
@@ -1275,7 +1318,7 @@
     return l;
   }
   function showChest(){
-    pocketOff();
+    pocketOff(); setTimeout(confetti, 50);
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
     el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir changé de chemin 🗺️</p>`;
@@ -1382,7 +1425,8 @@
     const daysLeft = Math.max(0, Math.ceil((new Date(sea.end) - Date.now()) / 86400000));
     const me = snapshot(), others = store.get(OTHERS_KEY, {});
     const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">${LEVELS[g.l] ? LEVELS[g.l][1].split(" ")[0] : ""}</div></div>`;
-    $("#v-prog").innerHTML = `<div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
+    $("#v-prog").innerHTML = `<div class="subnav"><button class="ghost" id="goShop">🪙 Ma tirelire en détail</button><button class="ghost" id="goLog">📒 Mon carnet</button></div>
+      <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Aujourd'hui</div>
         <div style="font-size:14px;margin-top:4px;line-height:1.6">${motivLines().map(esc).join("<br>")}</div>
         ${PUSH_API ? `<button class="ghost" id="rapBtn" style="margin-top:10px;width:100%">🔔 Mes rappels${rap.on ? " (activés)" : ""}</button>` : ""}
@@ -1415,6 +1459,7 @@
       <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>
       ${PUSH_API ? `<p style="text-align:center;margin-top:24px"><button class="ghost" id="supBtn" style="font-size:12px;padding:6px 12px;opacity:.6">Superviseur</button></p>` : ""}`;
     $("#fogBtn").onclick = toggleFog;
+    $("#goShop").onclick = () => switchTab("shop"); $("#goLog").onclick = () => switchTab("log");
     if ($("#rapBtn")) $("#rapBtn").onclick = openRappels;
     if ($("#supBtn")) $("#supBtn").onclick = openSuper;
     fillGallery();
@@ -1459,8 +1504,25 @@
       img.src = u;
     });
   }
+  // avatar de Roxy : photo carrée 200 px (gardée sur le téléphone)
+  function setAvatarFrom(blob){
+    return new Promise(ok => {
+      const img = new Image(), u = URL.createObjectURL(blob);
+      img.onload = () => {
+        const s = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement("canvas"); c.width = c.height = 200;
+        c.getContext("2d").drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 200, 200);
+        URL.revokeObjectURL(u);
+        try{ localStorage.setItem("wouaf-avatar", c.toDataURL("image/jpeg", .82)); }catch(e){}
+        try{ renderWho(); if (youMarker) youMarker.setIcon(youIcon()); }catch(e){}
+        ok();
+      };
+      img.onerror = () => { URL.revokeObjectURL(u); ok(); };
+      img.src = u;
+    });
+  }
   async function savePhoto(file){
     const b = await shrink(file);
+    if (!avatar()) setAvatarFrom(b);   // la première photo de Roxy devient son avatar
     await phTx("readwrite", st => st.put({ t: Date.now(), w: profile.walker || "", b }));
     const keys = await phTx("readonly", st => st.getAllKeys());
     if (keys.length > PH_MAX) await phTx("readwrite", st => { for (const k of keys.slice(0, keys.length - PH_MAX)) st.delete(k); });
@@ -1476,8 +1538,9 @@
       const x = all.find(y => y.t === +btn.dataset.ph); if (!x) return;
       openSheet(`<img alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(x.b)}" style="width:100%;border-radius:12px">
         <p>${new Date(x.t).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}${x.w ? " · par " + esc(x.w) : ""}</p>
-        <div class="btns"><button id="phShare">📤 Partager</button><button class="ghost" id="phDel">🗑️ Supprimer</button><button class="ghost" id="phClose">Fermer</button></div>`);
+        <div class="btns"><button id="phAv">🐕 En faire la photo de ${esc(DOG)}</button><button class="ghost" id="phShare">📤 Partager</button><button class="ghost" id="phDel">🗑️ Supprimer</button><button class="ghost" id="phClose">Fermer</button></div>`);
       $("#phClose").onclick = closeSheet;
+      $("#phAv").onclick = async () => { await setAvatarFrom(x.b); closeSheet(); toast(`📸 C'est la nouvelle photo de ${DOG} !`, 2500); renderProg(); };
       $("#phShare").onclick = async () => {
         const f = new File([x.b], `${DOG}-${x.t}.jpg`, { type:"image/jpeg" });
         try{ if (navigator.canShare && navigator.canShare({ files:[f] })) await navigator.share({ files:[f] }); }catch(e){}
@@ -1827,8 +1890,7 @@
         <div><b>${fmtCs(monthPace())}</b><span>rythme pour la fin du mois</span></div><div><b>${fmtCs(bonusThisMonth())}</b><span>de coffres 💰</span></div></div>
       ${ws.length ? `<div class="props" style="margin-top:10px">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : `<p>Pas encore de balade ce mois-ci. La première t'attend 🐕</p>`}
       ${malusBox()}
-      <div class="btns"><button id="smImg">📱 Mon mois avec ${DOG} (image à partager)</button><button class="ghost" id="smBil">📊 Envoyer le bilan au superviseur</button><button class="ghost" id="smAll">Tout le détail</button><button class="ghost" id="smClose">Fermer</button></div>`);
-    $("#smBil").onclick = () => sendBilan(periodOf(Date.now()));
+      <div class="btns"><button id="smImg">📱 Mon mois avec ${DOG} (image à partager)</button><button class="ghost" id="smAll">Tout le détail</button><button class="ghost" id="smClose">Fermer</button></div>`);
     $("#smImg").onclick = () => monthCard(monthKey(Date.now()));
     $("#smAll").onclick = () => { closeSheet(); switchTab("shop"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
     $("#smClose").onclick = closeSheet;
@@ -1871,6 +1933,96 @@
   document.addEventListener("visibilitychange", () => { if (!document.hidden && !state.walk) renderHome(); });
 
 
+
+  // ---------- ✨ « Quoi de neuf » : nouveautés, malus, message du superviseur, paie, semaine… en une seule fenêtre ----------
+  const digestCards = [];
+  function weekCardData(){
+    const k = weekKey(Date.now());
+    if (game.weekSeen === k) return null;
+    if (!game.weekSeen){ game.weekSeen = k; saveGame(); return null; }
+    const ws0 = weekStart(Date.now()).getTime() - 7*DAYMS;
+    const w = weekStats(ws0), wm = malusIn(ws0, ws0 + 7*DAYMS);
+    game.weekSeen = k;
+    if (!w.n && !wm.eur){ saveGame(); return null; }
+    const best = game.bestWeek || 0, rec = w.min > best;
+    if (rec) game.bestWeek = w.min;
+    saveGame();
+    return { party: rec && best, html: `<div class="dc-ic">🏅</div><h2>Ta semaine avec ${DOG}</h2>
+      <div class="rgrid"><div><b>${w.n}</b><span>balade${w.n > 1 ? "s" : ""}</span></div><div><b>${fmtMin(w.min)}</b><span>de balade</span></div>
+        <div><b>${fmtKm(w.m)}</b><span>parcourus</span></div><div><b>${fmtCs(w.eur)}</b><span>dans la tirelire</span></div></div>
+      ${rec && best ? `<div class="party">🏆 <b>Record battu !</b> Ta meilleure semaine (avant : ${fmtMin(best)}).</div>` : best ? `<p>Ton record : ${fmtMin(best)} sur une semaine.</p>` : ""}
+      ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtCs(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}` };
+  }
+  function paydayCardData(){
+    ensureGame();
+    const k = prevMonthKey();
+    if (game.payShown === k) return null;
+    game.payShown = k; saveGame();
+    const eur = moneyOf(k);
+    if (!eur) return null;
+    return { party:true, html: `<div class="dc-ic">💶</div><h2>Jour de paie !</h2>
+      <p>En ${monthLabel(k)}, tu as gagné</p><div style="font-size:44px;font-weight:800;color:var(--accent)">${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</div>
+      <p style="margin-top:12px">🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>Ça te fait donc <b style="font-size:22px">${fmtEur(eur)}</b> ! 🎉</p>
+      <div class="btns"><button data-dg="payShare">📩 Envoyer au superviseur</button><button class="ghost" data-dg="payImg">📱 Mon mois avec ${DOG} en image</button></div>`,
+      bind: el => { const q = x => el.querySelector(`[data-dg="${x}"]`);
+        q("payShare").onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} };
+        q("payImg").onclick = () => monthCard(k); } };
+  }
+  async function fetchAdjust(){
+    if (!PUSH_API || !profile.walker) return [];
+    let list = [];
+    try{ list = (await (await api("/adjust?w=" + encodeURIComponent(profile.walker))).json()).list || []; }catch(e){ return []; }
+    ensureGame(); game.adj = game.adj || {}; game.adjDone = game.adjDone || [];
+    const fresh = list.filter(a => !game.adjDone.includes(a.id));
+    for (const a of fresh){ const k = monthKey(Date.now()); game.adj[k] = Math.round(((game.adj[k] || 0) + a.cs / CS) * 100) / 100; game.adjDone.push(a.id); }
+    game.adjDone = game.adjDone.slice(-200); if (fresh.length) saveGame();
+    return fresh;
+  }
+  let digestRunning = false;
+  async function startupDigest(){
+    if (digestRunning || document.body.classList.contains("recap")) return;
+    digestRunning = true;
+    const cards = [];
+    const news = NEWS[APP_NUM] || [];
+    if (store.get("wouaf-vu", 0) < APP_NUM){
+      if (news.length) cards.push({ html: `<div class="dc-ic">✨</div><h2>Nouveau dans la version ${APP_NUM}</h2><ul class="news">${news.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` });
+      store.set("wouaf-vu", APP_NUM);
+    }
+    if (await loadPauses()){
+      const n = processMalus();
+      if (n.length){ const eur = Math.round(n.reduce((a, x) => a + x.eur, 0) * 100) / 100;
+        cards.push({ html: `<div class="dc-ic">${eur ? "⚠️" : "🃏"}</div><h2>${eur ? `Malus : −${fmtCs(eur)}` : "Joker utilisé"}</h2><p style="line-height:1.7">${n.map(x => esc(malusLabel(x))).join("<br>")}</p>
+          <p>Une balade aujourd'hui pour te rattraper ? 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))} 🐾</p>` }); }
+    }
+    const adj = await fetchAdjust();
+    if (adj.length) cards.push({ html: `<div class="dc-ic">✏️</div><h2>Message du superviseur</h2><div class="props">${adj.map(a => `<div class="entry"><div><h4>${a.cs > 0 ? "+" : ""}${a.cs} 🪙</h4><div class="when">${esc(a.why || "")}</div></div></div>`).join("")}</div>` });
+    const pay = paydayCardData(); if (pay) cards.push(pay);
+    const wk = weekCardData(); if (wk) cards.push(wk);
+    renderHome();
+    digestRunning = false;
+    if (!cards.length) return;
+    const show = () => {
+      if ($("#modal").classList.contains("open") || state.walk){ setTimeout(show, 3000); return; }
+      let i = 0;
+      openSheet(`<div class="digest" id="dg">${cards.map((c, k) => `<div class="dcard" data-k="${k}">${c.html}</div>`).join("")}</div>
+        ${cards.length > 1 ? `<p class="ddots" id="dgDots"></p>` : ""}
+        <div class="btns"><button id="dgNext"></button></div>`);
+      const dg = $("#dg");
+      cards.forEach((c, k) => { if (c.bind) c.bind(dg.children[k]); });
+      const upd = () => {
+        $("#dgNext").textContent = i < cards.length - 1 ? `Suivant → (${i + 1}/${cards.length})` : "C'est parti ! 🐾";
+        if ($("#dgDots")) $("#dgDots").textContent = cards.map((_, k) => k === i ? "●" : "○").join(" ");
+        if (cards[i].party && !cards[i].partied){ cards[i].partied = true; confetti(); ding(); }
+      };
+      // on attend la fin du défilement (doigt ou bouton) avant de recalculer la carte affichée
+      let st = null;
+      dg.addEventListener("scroll", () => { clearTimeout(st); st = setTimeout(() => { const n = Math.round(dg.scrollLeft / dg.clientWidth); if (n !== i){ i = n; upd(); } }, 150); }, { passive:true });
+      $("#dgNext").onclick = () => { if (i < cards.length - 1){ i++; dg.scrollTo({ left: i * dg.clientWidth }); upd(); } else closeSheet(); };
+      upd();
+    };
+    show();
+  }
+
   // ---------- 👋 Tutoriel (premier lancement) ----------
   function showTuto(step){
     step = step || 0;
@@ -1885,8 +2037,8 @@
       <div class="btns"><button id="tutoNext">${step < pages.length - 1 ? "Suivant →" : "C'est parti ! 🐾"}</button></div>`);
     $("#tutoNext").onclick = () => {
       if (step < pages.length - 1){ showTuto(step + 1); return; }
-      store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); closeSheet();
-      const after = () => { renderHome(); setTimeout(() => { if (!offerPayday(offerWeek)) offerWeek(); }, 400); };
+      store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); closeSheet(); confetti();
+      const after = () => { renderHome(); setTimeout(startupDigest, 400); };
       if (!profile.walker) setTimeout(() => askProfile(after), 300); else after();
     };
   }
@@ -1987,7 +2139,7 @@
     el.className = "chest"; el.setAttribute("role", "alert");
     el.innerHTML = `<div class="ce">🏴‍☠️</div><b>TRÉSOR DE LA SEMAINE !</b><span>+${pts} 🪙</span><p style="opacity:.8;font-size:14px;margin-top:14px">${first ? "Tu es le premier de la maison à le trouver !" : `${esc(hu.by || "Quelqu'un")} l'avait trouvé avant toi, mais bravo !`}</p>`;
     el.onclick = () => el.remove();
-    document.body.appendChild(el); pocketOff();
+    document.body.appendChild(el); pocketOff(); confetti();
     ding(); setTimeout(ding, 250); setTimeout(ding, 500);
     setTimeout(() => el.remove(), 6000);
   }
@@ -2129,6 +2281,36 @@
     const u = URL.createObjectURL(blob), aEl = document.createElement("a"); aEl.href = u; aEl.download = f.name; aEl.click(); setTimeout(() => URL.revokeObjectURL(u), 5000);
   }
 
+
+  // ---------- 🎉 Confettis ----------
+  function confetti(){
+    try{
+      const c = document.createElement("canvas"); c.className = "confetti"; c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
+      document.body.appendChild(c);
+      const x = c.getContext("2d"), cols = ["#f5bd34", "#d9792b", "#4c8a5a", "#2a7de1", "#c8452f", "#ffffff"], dpr = devicePixelRatio;
+      const ps = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -Math.random() * c.height * .4, vx: (Math.random() - .5) * 4 * dpr, vy: (2 + Math.random() * 4) * dpr, s: (5 + Math.random() * 6) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: cols[Math.floor(Math.random() * cols.length)] }));
+      const t0c = performance.now();
+      const step = now => {
+        x.clearRect(0, 0, c.width, c.height);
+        for (const p of ps){ p.x += p.vx; p.y += p.vy; p.vy += .05 * dpr; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
+        if (now - t0c < 2600) requestAnimationFrame(step); else c.remove();
+      };
+      requestAnimationFrame(step);
+    }catch(e){}
+  }
+
+  // ---------- ⋯ menu de la balade ----------
+  $("#moreBtn").addEventListener("click", () => {
+    openSheet(`<h2>Pendant la balade</h2><div class="btns">
+      <button id="mPocket" style="padding:16px;font-size:16px">🌙 Mode poche (écran noir, la balade continue)</button>
+      <button class="ghost" id="mDuo" style="padding:16px;font-size:16px">👯 On est à deux (+${DUO_PTS} 🪙 chacun)${gw && (gw.duo || gw.duoPressed) ? " ✓" : ""}</button>
+      <button class="ghost" id="mSos" style="padding:16px;font-size:16px;color:#c8452f">🆘 Alerte : envoyer ma position</button>
+      <button class="ghost" id="mClose">Fermer</button></div>`);
+    $("#mPocket").onclick = () => { closeSheet(); $("#pocketBtn").click(); };
+    $("#mDuo").onclick = () => { closeSheet(); $("#duoBtn").click(); };
+    $("#mSos").onclick = () => { closeSheet(); setTimeout(() => $("#sosBtn").click(), 350); };
+    $("#mClose").onclick = closeSheet;
+  });
 
   // ---------- 👯 Balade à deux ----------
   const DUO_PTS = 15;
@@ -2608,7 +2790,7 @@
       const res = r._res, full = res && Math.abs(r.eu * CS - (res.dur + res.total)) < 1;
       const got = res ? Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ") : "";
       const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.rainMult ? " · 🌧️ ×1,5" : ""}${res.boostMult ? ` · ${isBday() ? "🎂" : "🎉"} ×${res.boostMult}` : ""}${res.duo ? ` · 👯 +${res.duo}` : ""}${res.hunt ? ` · 🏴‍☠️ +${res.hunt}` : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
-      return `<div class="gamebox">🪙 <b>+${fmtCs(r.eu)}</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
+      return `<div class="gamebox">🧾 <b>Le détail</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
     }
     if ((game.money[monthKey(Date.now())] || 0) >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
     if (r.ms) return `<div class="warnline">⏱️ Moins de 15 min, et c'est déjà la 3e balade trop courte de la semaine : <b>−${fmtCs(r.ms)}</b> dans la tirelire. Vise au moins 25 min la prochaine fois 💪</div>`;
@@ -2618,7 +2800,11 @@
   function showRecapSheet(r, files, title, res, moneyMin){
     const dur = (r.e - r.s) / 60;
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
-    openSheet(`<h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")}</p>
+    const hero = (files && files[0]) ? `<img class="tk-photo" alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(files[0])}">` : `<div class="tk-dog">${roxyHTML(game.acc || [])}</div>`;
+    openSheet(`<div class="ticket">${hero}
+        <div class="tk-sum">${r.eu ? `+${Math.round(r.eu * CS)}` : "0"} 🪙</div>
+        <div class="tk-sub">${r.eu ? "clebsous dans ta tirelire" : res && res.short ? "moins de 15 min : rien cette fois" : "clebsous"}</div>
+        <h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")} · ${new Date(r.s * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}</p></div>
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
         <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
@@ -2628,9 +2814,10 @@
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
       ${partyBox(r, res)}
       ${moneyBox(r, moneyMin)}
-      ${thumbs ? `<div class="thumbs">${thumbs}</div>` : `<p>Pas de photo cette fois. La prochaine fois, touchez 📷 pendant la balade.</p>`}
+      ${(files || []).length > 1 ? `<div class="thumbs">${thumbs}</div>` : !(files || []).length ? `<p class="howto">Pas de photo cette fois. La prochaine fois, touche 📷 pendant la balade.</p>` : ""}
       <div class="btns"><button id="sendRecap">📩 Envoyer au superviseur</button><button class="ghost" id="closeRecap">Fermer</button></div>`);
     $("#sendRecap").onclick = async () => { await shareRecap(r, files); };
+    if (res && (res.levelUp || res.album || res.chest || (res.trophies || []).length)) setTimeout(confetti, 300);
     $("#closeRecap").onclick = closeSheet;
   }
 
@@ -2897,15 +3084,20 @@
   purgeLog();
 
   // ---------- Onglets, filtres, boutons ----------
+  function backBtn(sel){
+    const v = $(sel); if (!v || v.querySelector(".backp")) return;
+    const b = document.createElement("button"); b.className = "ghost backp"; b.textContent = "← Retour aux progrès";
+    b.onclick = () => switchTab("prog"); v.prepend(b);
+  }
   function switchTab(t){
     state.tab = t;
-    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t || (b.dataset.tab === "prog" && (t === "shop" || t === "log"))));
     $("#v-walks").style.display = t === "walks" ? "" : "none";
     $("#v-log").style.display = t === "log" ? "" : "none";
     $("#v-shop").style.display = t === "shop" ? "" : "none";
     $("#v-prog").style.display = t === "prog" ? "" : "none";
-    if (t === "log") renderLog();
-    else if (t === "shop") renderShop();
+    if (t === "log"){ renderLog(); backBtn("#v-log"); }
+    else if (t === "shop"){ renderShop(); backBtn("#v-shop"); }
     else if (t === "prog") renderProg();
     else { renderHome(); if (state.sel != null) select(state.sel, true); }
   }
@@ -3066,8 +3258,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 28;
+  const APP_NUM = 29;
   const NEWS = {
+    29: [
+      "✨ L'app est plus simple : 2 onglets (Accueil et Progrès), et les boutons 🆘 👯 🌙 sont rangés dans « ⋯ » pendant la balade.",
+      "🐕 La première photo de Roxy devient sa photo dans l'app (change-la depuis l'album photo).",
+      "🎉 Des confettis pour les grands moments, et un récap de balade tout neuf."
+    ],
     28: [
       "👯 Balade à deux : si vous sortez Roxy à deux, touchez tous les deux 👯 pendant la balade : +15 🪙 chacun.",
       "💾 Ta tirelire est maintenant sauvegardée : si tu changes de téléphone, le superviseur peut tout récupérer.",
@@ -3175,14 +3372,7 @@
       <div class="btns"><button id="newsOk">OK</button></div>`);
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
-  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get("wouaf-tuto", 0)) showNews(); else showTuto(); }, 800);
-  setTimeout(offerBilan, 2500);
-  setTimeout(async () => {
-    const next0 = () => { if (!offerPayday(offerWeek)) offerWeek(); };
-    const next = () => { applyAdjust(next0).then(shown => { if (!shown) next0(); }); };
-    if (await loadPauses()){ const n = processMalus(); renderHome(); if (n.length && showMalus(n, next)) return; }
-    next();
-  }, 3000);
+  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
   setTimeout(() => { pushState(false); flushWalks(); backupNow(false); }, 5000);
   if (EVENT || isBday()) $("#evDeco").textContent = isBday() ? "🎂" : EVENT.deco;
 
