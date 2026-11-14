@@ -127,3 +127,18 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Onglet Tirelire : mois précédents, « Payé ✓ » avec le code superviseur (`POST /check` du Worker, `game.paid`).
 - 📸 « Montre-moi Roxy ! » une fois par balade (`maybeAskPhoto`, entre 6 min et la moitié de la durée) : photo dans les 5 min = +5.
 - 🌧️ Bonus courage : il pleut au 1er point GPS → bonus du jeu ×1,5 (`res.rainMult`).
+
+## Version 27 (décidé le 14/11)
+- 🌙 Mode poche (`pocketOn/Off`, `#pocket`) : écran noir, GPS et balade continuent ; double toucher pour revenir ; se ferme au coffre,
+  au trésor, au retour maison et à la fin.
+- 📊 Tableau de bord superviseur : après chaque balade, l'app envoie **seulement des chiffres** (`queueWalk` → `POST /walk`, file
+  `wouaf-envois` réessayée à l'ouverture) ; le Worker garde `d:<prénom>` (60 dernières balades + résumé) et `last` (dernière sortie
+  de Roxy). Superviseur › code › « 📊 Tableau de bord » (`POST /dash`). Pas de notification « Roxy est sortie » (refusé : WhatsApp suffit).
+- 🎉 Jours bonus ×2 (`POST /boost`, KV `boosts`, dans la même fenêtre Superviseur que les pauses) : bonus du jeu ×2 (`res.boostMult`),
+  mission et rappel du matin.
+- 🥺 Humeur de Roxy (`mood()`) selon les heures depuis sa dernière vraie balade, tous promeneurs (`last` reçu avec `/pause`).
+- 🏴‍☠️ Trésor de la semaine (`weekHunt`, `game.hunt`) : même endroit pour toute la maison (tiré avec la semaine), à 0,9–1,8 km de la
+  maison, recalé sur le lieu le plus proche (Photon) ; zone de 200 m sur la carte ; +50 au premier (`POST /treasure`), +20 ensuite.
+- 📡 Radar (`radar()`) : objet ou trésor à < 150 m (tiède / chaud / brûlant, vibration Android) ; balade libre : prochain objet dans ~X m.
+- 📱 « Mon mois avec Roxy » (`monthCard`) : image 1080×1350 (photo, balades, km, temps, clebsous, niveau) à partager, depuis la
+  tuile Tirelire et le jour de paie.

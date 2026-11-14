@@ -109,6 +109,8 @@ function pickMessage(u, slot, now){
   }
   if (walked) return null;   // déjà sortie aujourd'hui : on ne dérange pas
   if (slot === 1 && danger) return { title:`🔥 Série de ${s.sn} jours en danger !`, body:`Sors ${DOG} au moins 15 min ce soir pour la garder.` };
+  const boosted = (s.boost || []).some(p => isoDay(now) >= p.from && isoDay(now) <= p.to);
+  if (boosted) return { title:"🎉 Bonus ×2 aujourd'hui !", body:`Tous les bonus comptent double. Pars à la chasse avec ${DOG} !` };
   const gain = { title:"⏳ Pas encore de balade aujourd'hui", body:`À gagner : 15 min ${fmtEur(walkEuros(15))} · 25 min ${fmtEur(walkEuros(25))} · 45 min ${fmtEur(walkEuros(45))} · 1 h ${fmtEur(walkEuros(60))}. Ne passe pas à côté !` };
   if (slot === 1) return gain;
   const ideas = [gain];
@@ -124,6 +126,7 @@ async function run(env, now){
   const v = await vapid(env, false); if (!v) return;
   const l = local(now), nowMin = l.h * 60 + l.min, date = `${l.y}-${l.m}-${l.d}`;
   const pauses = (await env.WOUAF.get("pauses", "json")) || [];
+  const boosts = (await env.WOUAF.get("boosts", "json")) || [];
   const today = isoDay(now);
   if (pauses.some(p => today >= p.from && today <= p.to)) return;   // pause du superviseur : aucun rappel
   const list = await env.WOUAF.list({ prefix:"u:" });
@@ -138,7 +141,7 @@ async function run(env, now){
       const tm = +t.slice(0, 2) * 60 + +t.slice(3);
       if (nowMin < tm || nowMin - tm >= 30 || sent[slot] === date) continue;
       sent[slot] = date; changed = true;
-      const msg = pickMessage(u, slot, now);
+      const msg = pickMessage(Object.assign({}, u, { state: Object.assign({}, u.state, { boost: boosts }) }), slot, now);
       if (!msg) continue;
       msg.url = APP_URL; msg.tag = "wouaf";
       try{
@@ -162,7 +165,7 @@ const cleanSched = s => Array.from({ length:7 }, (_, i) => [0, 1].map(j => { con
 const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length < 3000) ? s : {};
 
 export default {
-  async fetch(req, env){
+  async fetch(req, env, ctx){
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
     const path = new URL(req.url).pathname;
     if (req.method === "GET" && path === "/key"){
@@ -170,19 +173,53 @@ export default {
       return json({ key: v.pub });
     }
     if (req.method === "GET" && path === "/") return json({ ok:true, app:"Wouaf Balades : rappels" });
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [] });
+    // infos communes lues par l'app à l'ouverture : pauses, jours boostés, dernière balade de Roxy (tous promeneurs)
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
-    if (path === "/check" || path === "/pause"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash"){
       // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
       if (!b || !env.SUPERVISOR_CODE || String(b.code) !== String(env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
       if (path === "/check") return json({ ok:true });   // vérifie seulement le code (ex. « payé ✓ » dans l'app)
+      if (path === "/dash"){   // 📊 tableau de bord : chiffres de chaque promeneur (jamais de position)
+        const l = await env.WOUAF.list({ prefix:"d:" });
+        const all = [];
+        for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) all.push(d); }
+        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json") });
+      }
       const ok = d => typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d);
+      if (path === "/boost"){   // 🎉 jours à bonus ×2
+        const boosts = (Array.isArray(b.boosts) ? b.boosts : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
+        await env.WOUAF.put("boosts", JSON.stringify(boosts));
+        return json({ ok:true, boosts });
+      }
       const pauses = (Array.isArray(b.pauses) ? b.pauses : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
       await env.WOUAF.put("pauses", JSON.stringify(pauses));
       return json({ ok:true, pauses });
+    }
+    if (path === "/treasure"){   // 🏴‍☠️ premier à trouver le trésor de la semaine (aucune position reçue)
+      const wk = String(b.week || "").slice(0, 12), w = String(b.walker || "").slice(0, 30);
+      if (!wk || !w) return json({ error:"bad" }, 400);
+      const by = await env.WOUAF.get("t:" + wk);
+      if (!by){ await env.WOUAF.put("t:" + wk, w, { expirationTtl: 60*86400 }); return json({ first:true }); }
+      return json({ first: by === w, by });
+    }
+    if (path === "/walk"){   // une balade terminée : chiffres seulement (durée, distance, clebsous…), jamais le trajet
+      const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
+      if (!w || !x.e) return json({ error:"bad" }, 400);
+      const num = v => Math.max(0, Math.min(1e7, Math.round(+v || 0))), ts = v => Math.max(0, Math.min(4e9, Math.round(+v || 0)));
+      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms) };
+      const dk = "d:" + w.toLowerCase().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_");
+      const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
+      if (!d.walks.some(y => y.e === walk.e)) d.walks.unshift(walk);
+      d.walks = d.walks.slice(0, 60); d.walker = w; d.sum = cleanState(b.sum); d.at = Date.now();
+      await env.WOUAF.put(dk, JSON.stringify(d));
+      const last = await env.WOUAF.get("last", "json");
+      // dernière sortie de Roxy (tous promeneurs) : sert à l'humeur de Roxy dans l'app. Pas de notification (le récap arrive déjà sur WhatsApp)
+      if (!last || walk.e > last.t) await env.WOUAF.put("last", JSON.stringify({ walker: w, t: walk.e, min: walk.min }));
+      return json({ ok:true });
     }
     if (!b || !okId(b.id)) return json({ error:"bad id" }, 400);
     const key = "u:" + b.id;
