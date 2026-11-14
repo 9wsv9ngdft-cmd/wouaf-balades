@@ -198,3 +198,20 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐕 Fiche Tamagotchi (v32, `sheetRoxy`, ouverte en touchant Roxy en haut ou la tuile Roxy) : écran avec Roxy animée selon son
   humeur (saute si contente, triste et grise si elle attend), barres ❤️ Bonheur (`mood()`), ⚡ Forme (minutes de la semaine / 3 h 30),
   niveau, 🗺️ Exploration ; cagnotte, série, clebsous pour le prochain niveau ; bouton « ▶️ Sortir Roxy ».
+
+## Version 33 (décidé le 14/11) : accueil allégé, menu ☰, brouillard « lampe », tuto complet
+- Fiches (`openSheet`) : contenu dans `.sbody` qui défile seul, derniers `.btns` déplacés dans un pied collé `.sfoot`
+  (sauf dans un formulaire), croix ✕ `#sheetX` ; la page derrière est bloquée (`lockBody` / `unlockBody`, classe `body.locked`).
+- Accueil : en-tête avec bouton ☰ (`#menuBtn`, `openMenu`), Roxy Tamagotchi + humeur + 🪙 cagnotte du mois (`#purse` → `sheetMoney`),
+  durée + « C'est parti », puis **une seule ligne** (`#oneLine`, priorité 🏖️ 🎂 🔥 💰 🎉 🏴‍☠️ 🎯 → `sheetToday`). Plus de tuiles ni d'onglets.
+- Menu ☰ : Progrès, Tirelire (vue `shop`), Carte d'exploration, Dernières sorties, Carnet, Album (Progrès › photos), Mes rappels,
+  Bonus et règles, Tuto, Changer de prénom, Superviseur (discret). Pages = `body.page` + bouton fixe `#backHome` « ← Accueil ».
+- 🌫️ Brouillard « lampe » 100 % opaque : toile `FogCanvas` (L.Canvas modifié : repeint tout en `FOG_COLOR`, puis efface en
+  `destination-out`) dans le calque `fog` ; chemins éclairés sur `LAMP_M` = 40 m (épaisseur recalculée au zoom), anciennes cases
+  sans chemin = ronds de 55 m ; repeint pendant les glissements. Chemins gardés **seulement sur le téléphone** (`wouaf-traces`,
+  `saveTrace` à la fin d'une balade, ~600 Ko max, jamais envoyés). En balade : chemins < 15 jours + chemin en cours en direct.
+- 🗺️ Carte d'exploration plein écran (`openExplore`, `body.explore`, barre `#exploreBar`) centrée sur ma position avec Roxy ;
+  plus de cercle des 2 km (le % reste calculé sur 2 km).
+- Balade : zoom toujours au centre quand la carte suit (`setFollow`), recentrage après zoom ; Roxy placée au 1er point GPS.
+  Ligne du chrono et mode poche : « 🪙 +12 · 447 au total » (`liveMoney`).
+- 📖 Tuto 8 écrans illustrés (`tutoPages`, `showTuto(step, replay)`), à revoir depuis le menu ou « Les bonus ».

@@ -25,6 +25,41 @@
   header{padding:calc(env(safe-area-inset-top) + 16px) 0 12px;background:var(--green);color:#fff}
   header h1{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:26px;margin:0 0 2px;letter-spacing:-.3px}
   header p{margin:0;opacity:.85;font-size:14px}
+  header .hdr{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #menuBtn{background:rgba(255,255,255,.16);color:#fff;font-size:22px;line-height:1;padding:8px 13px;border-radius:12px}
+  .menu{display:grid;gap:6px;margin-top:8px}
+  .menu button{justify-content:flex-start;background:#f3ecdf;color:var(--ink);font-weight:600;padding:13px 14px;font-size:16px;text-align:left}
+  .menu button small{margin-left:auto;font-weight:500;color:var(--muted);font-size:13px}
+  .menu .sup{background:none;color:var(--muted);font-size:13px;font-weight:500;justify-content:center;margin-top:10px;opacity:.7}
+  .purse{flex:none;display:flex;flex-direction:column;align-items:center;gap:0;background:linear-gradient(135deg,#d9792b,#e9a23b);color:#fff;border-radius:14px;padding:8px 10px;min-width:78px;box-shadow:0 6px 14px -8px rgba(0,0,0,.4)}
+  .purse b{font-size:19px;line-height:1.1;white-space:nowrap} .purse small{font-size:11px;font-weight:500;opacity:.95}
+  .oneline{width:100%;margin-top:10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:11px 12px;font-weight:500;font-size:14px;justify-content:flex-start;text-align:left;gap:10px}
+  .oneline .ic{font-size:20px;flex:none} .oneline .more{margin-left:auto;color:var(--muted);font-size:13px;flex:none}
+  #backHome{display:none} body.page #backHome{display:flex}
+  body.page:not(.explore) #map{display:none !important}
+  body.page .panel,body.page #home,body.page #status,body.page #meteo{display:none}
+  body.explore header,body.explore main > :not(#map){display:none !important}
+  body.explore #map{position:fixed !important;left:0;right:0;top:0;bottom:0;height:auto !important;min-height:0;border-radius:0;border:0;z-index:1}
+  #exploreBar{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:1100;display:none;align-items:center;gap:10px;background:var(--green);color:#fff;border-radius:16px;padding:10px 12px;box-shadow:0 6px 20px -6px rgba(0,0,0,.45)}
+  body.explore #exploreBar{display:flex}
+  #exploreBar .t{flex:1;font-size:14px;line-height:1.3} #exploreBar b{font-size:17px}
+  #exploreBar button{background:#fff;color:var(--green)}
+  body.explore .leaflet-top{top:env(safe-area-inset-top)}
+  .tuto{text-align:center}
+  .tuto .pic{height:170px;display:flex;align-items:center;justify-content:center;margin:2px 0 8px;border-radius:18px;background:radial-gradient(circle at 50% 45%,#fff6dc,#f3ecdf);position:relative;overflow:hidden}
+  .tuto h2{text-align:center} .tuto p.t{text-align:center;line-height:1.55;color:var(--ink);font-size:15px}
+  .tuto .dotsT{color:var(--muted);letter-spacing:4px;margin:6px 0 0}
+  .tuto .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+  .tuto .chip{background:#fff;border-radius:12px;padding:8px 10px;font-size:14px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.08)}
+  .tuto .big{font-size:56px;line-height:1}
+  .tuto .clock{font-size:42px;font-weight:800;color:var(--green);font-family:Fraunces,Georgia,serif}
+  .tuto .fogpic{width:100%;height:100%;display:block}
+  .tuto .mockbar{background:var(--green);color:#fff;border-radius:14px;padding:10px;display:flex;gap:6px;align-items:center;font-size:13px}
+  .tuto .mockbar span{background:#fff;color:var(--green);border-radius:9px;padding:6px 8px;font-weight:700}
+  .tuto .cal{display:grid;grid-template-columns:repeat(7,30px);gap:5px;font-size:20px}
+  .tnav{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .tuto .bob{animation:bob 1.6s ease-in-out infinite;display:inline-block}
   .wrap{max-width:720px;margin:0 auto;padding:0 14px}
   main.wrap{padding-bottom:calc(env(safe-area-inset-bottom) + 110px)}
   .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:-4px;position:relative;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
@@ -196,7 +231,8 @@
   .tama-grid div{background:#f6f2ea;border-radius:12px;padding:9px 8px;text-align:center} .tama-grid b{display:block;font-size:17px} .tama-grid span{font-size:11px;color:var(--muted)}
   @media (prefers-color-scheme: dark){ .tama-screen{background:radial-gradient(circle at 50% 40%,#2c2718,#1b211d);border-color:#5a4a28} .tama-screen.sad{background:radial-gradient(circle at 50% 40%,#23272b,#1a1d20);border-color:#3a4048} .tbb{background:#2d3630} .tama-grid div{background:#242b26} }
   .subnav{display:flex;gap:8px;margin:4px 0 12px} .subnav button{flex:1;padding:12px 8px}
-  .backp{width:100%;margin:4px 0 12px}
+  .backp{width:100%;margin:12px 0 12px}
+  .ptitle{font-family:Fraunces,Georgia,serif;font-size:24px;margin:4px 2px 10px}
   footer details summary{cursor:pointer;color:var(--muted);font-size:13px}
   #walkbar .photo.on{background:#fff;color:var(--green)}
   #walkbar .needs button.on{background:#fff;color:var(--green)}
@@ -206,7 +242,16 @@
   #walkbar .photo{background:rgba(255,255,255,.18);color:#fff}
   .modal{position:fixed;inset:0;background:rgba(20,30,22,.45);display:none;align-items:flex-end;justify-content:center;z-index:2000}
   .modal.open{display:flex}
-  .sheet{background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:18px 18px calc(env(safe-area-inset-bottom) + 18px);max-height:90vh;overflow:auto}
+  .modal{overscroll-behavior:contain}
+  body.locked{position:fixed;left:0;right:0;overflow:hidden}
+  .sheet{background:var(--card);width:100%;max-width:560px;border-radius:20px 20px 0 0;padding:0;max-height:90vh;max-height:90dvh;overflow:auto;display:flex;flex-direction:column;position:relative}
+  .sheet .sbody{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:18px 18px 14px}
+  .sheet .sbody:last-child{padding-bottom:calc(env(safe-area-inset-bottom) + 18px)}
+  .sheet .sfoot{flex:none;padding:10px 18px calc(env(safe-area-inset-bottom) + 12px);border-top:1px solid var(--line);background:var(--card);box-shadow:0 -8px 14px -10px rgba(0,0,0,.18)}
+  .sheet .sfoot .btns{margin-top:0}
+  .sheetx{position:absolute;top:10px;right:10px;z-index:3;width:34px;height:34px;border-radius:50%;padding:0;background:var(--card);color:var(--ink);font-size:15px;box-shadow:0 1px 6px rgba(0,0,0,.18)}
+  #editWho[hidden]{display:none}
+  .sheet .sbody > h2:first-child,.sheet .sbody > div:first-child > h2:first-child{padding-right:36px}
   .sheet h2{font-family:Fraunces,Georgia,serif;margin:0 0 4px;font-size:22px}
   .sheet p{margin:4px 0 12px;color:var(--muted);font-size:14px}
   .sheet label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
@@ -336,12 +381,19 @@
     .seg button.on,.chips button.on{color:#fff} .rgrid b,.entry .dur,.flabel{color:#a9d4b2}
     footer{color:var(--muted)}
   }
+  @media (prefers-color-scheme: dark){
+    .menu button{background:#242b26}
+    .oneline{background:var(--card)}
+    .sheetx{background:#2a312c}
+    .tuto .pic{background:radial-gradient(circle at 50% 45%,#2c2718,#1b211d)} .tuto .chip{background:#242b26;color:var(--ink)}
+  }
 </style>
 </head>
 <body>
 <header>
-  <div class="wrap">
+  <div class="wrap hdr">
     <h1>🐾 Wouaf Balades <span id="evDeco"></span></h1>
+    <button id="menuBtn" aria-label="Menu : progrès, tirelire, carte, carnet, réglages">☰</button>
   </div>
 </header>
 
@@ -350,8 +402,8 @@
   <div class="panel">
     <div class="hero">
       <button class="heroDog" id="heroDog" aria-label="Voir Roxy, son niveau et ses accessoires"></button>
-      <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div></div>
-      <button class="linkish" id="editWho">changer</button>
+      <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
+      <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
     </div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
@@ -381,11 +433,8 @@
   <div id="status" aria-live="polite"></div>
   <div id="map"></div>
 
-  <div class="tabs" role="tablist">
-    <button class="on" data-tab="walks" role="tab">🏠 Accueil</button>
-    <button data-tab="prog" role="tab">🏆 Progrès</button>
-  </div>
   <div id="views">
+    <button class="ghost backp" id="backHome">← Accueil</button>
     <div id="v-walks">
       <div class="toolbar" id="toolbar" style="display:none">
         <button class="ghost" id="surprise">🎲 Surprends-moi</button>
@@ -424,6 +473,7 @@
 </div>
 
 <button id="recenter" aria-label="Recentrer la carte sur moi" hidden>📍</button>
+<div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
 <div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
 <div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
@@ -433,7 +483,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.163109";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.165901";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -494,18 +544,36 @@
   const map = L.map("map", { zoomControl:true }).setView([48.8566, 2.3522], 12);
   // calque du brouillard : au-dessus du fond de carte, sous les tracés, Roxy et les objets
   map.createPane("fog"); map.getPane("fog").style.zIndex = 350; map.getPane("fog").style.pointerEvents = "none";
-  // grand rectangle (≈ 50 km) percé des cases connues
-  function fogPolygon(c, cells, opacity){
-    const dLat = .45, dLon = .65;
-    const outer = [[c.lat - dLat, c.lon - dLon], [c.lat - dLat, c.lon + dLon], [c.lat + dLat, c.lon + dLon], [c.lat + dLat, c.lon - dLon]];
-    const holes = [];
-    for (const k of cells){
-      const [i, j] = k.split(":").map(Number), a = i * 0.0009, b = j * 0.0013;
-      if (Math.abs(a - c.lat) > dLat || Math.abs(b - c.lon) > dLon) continue;
-      holes.push([[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]);
+  // Brouillard « lampe » : une toile 100 % opaque, effacée le long des chemins déjà faits (rayon LAMP_M)
+  const FOG_COLOR = "#1e2621", LAMP_M = 40, CELL_LAMP_M = 55;
+  const FogCanvas = L.Canvas.extend({
+    _draw(){   // toujours repeindre tout le brouillard avant d'effacer les chemins
+      const b = this._redrawBounds || this._bounds;
+      if (b){ const c = this._ctx, z = b.getSize(); c.save(); c.globalCompositeOperation = "source-over"; c.globalAlpha = 1; c.fillStyle = FOG_COLOR; c.fillRect(b.min.x - 1, b.min.y - 1, z.x + 2, z.y + 2); c.restore(); }
+      L.Canvas.prototype._draw.call(this);
+    },
+    _fillStroke(ctx, layer){
+      ctx.save(); ctx.globalCompositeOperation = "destination-out";
+      L.Canvas.prototype._fillStroke.call(this, ctx, layer);
+      ctx.restore();
     }
-    return L.polygon([outer, ...holes], { pane:"fog", stroke:false, fillColor:"#1e2621", fillOpacity: opacity, interactive:false });
+  });
+  const lampPx = () => { const z = map.getZoom(), c = map.getCenter(); const mpp = 40075016.686 * Math.cos(c.lat * Math.PI / 180) / Math.pow(2, z + 8); return Math.max(2, 2 * LAMP_M / mpp); };
+  // fog = { r: toile, line: chemins, cells: anciennes cases sans chemin }
+  function fogMake(lines, cells){
+    const r = new FogCanvas({ pane:"fog", padding:.6 }); map.addLayer(r);
+    const o = { renderer:r, interactive:false, color:"#000", fillColor:"#000" };
+    const line = L.polyline(lines, Object.assign({ weight: lampPx(), opacity:1, lineCap:"round", lineJoin:"round", fill:false, smoothFactor:1.5 }, o)).addTo(map);
+    const cs = [];
+    for (const k of cells){ const [i, j] = k.split(":").map(Number); cs.push(L.circle([(i + .5) * 0.0009, (j + .5) * 0.0013], Object.assign({ radius: CELL_LAMP_M, stroke:false, fill:true, fillOpacity:1 }, o)).addTo(map)); }
+    return { r, line, cs };
   }
+  function fogKill(f){ if (!f) return; map.removeLayer(f.line); f.cs.forEach(c => map.removeLayer(c)); map.removeLayer(f.r); }
+  const fogs = new Set();
+  map.on("zoomend", () => { const w = lampPx(); fogs.forEach(f => f.line.setStyle({ weight:w })); });
+  // en glissant la carte, on repeint pour ne jamais laisser voir la carte au bord
+  let fogRaf = 0;
+  map.on("move", () => { if (!fogs.size || fogRaf) return; fogRaf = requestAnimationFrame(() => { fogRaf = 0; if (!map._animatingZoom) fogs.forEach(f => f.r._update()); }); });
   L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
     maxZoom: 19, subdomains:"abc", attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
@@ -970,12 +1038,36 @@
       let m = null; try{ m = mood(); }catch(e){}
       $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="Voir les dernières sorties de ${esc(DOG)}">${esc(m.t)}<div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
       if ($("#moodBtn")) $("#moodBtn").onclick = sheetOuts;
-    } else $("#heroSub").textContent = "Touche « renseigner » pour mettre ton prénom";
-    $("#editWho").textContent = profile.walker ? "changer" : "renseigner";
+    } else $("#heroSub").textContent = "Dis-nous qui tu es :";
+    $("#editWho").hidden = !!profile.walker;
+    try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
   }
-  function openSheet(html){ $("#sheet").innerHTML = html; $("#modal").classList.add("open"); }
-  function closeSheet(){ $("#modal").classList.remove("open"); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); }
+  // Fiche : le contenu défile, les boutons du bas restent collés, la page derrière ne bouge plus (iPhone)
+  let lockY = null;
+  function lockBody(){
+    if (lockY != null) return;
+    lockY = window.scrollY || 0;
+    document.body.style.top = -lockY + "px"; document.body.classList.add("locked");
+  }
+  function unlockBody(){
+    if (lockY == null) return;
+    document.body.classList.remove("locked"); document.body.style.top = "";
+    window.scrollTo(0, lockY); lockY = null;
+  }
+  function openSheet(html){
+    const s = $("#sheet");
+    s.innerHTML = `<button class="sheetx" id="sheetX" aria-label="Fermer">✕</button><div class="sbody">${html}</div>`;
+    const body = s.querySelector(".sbody"), all = body.querySelectorAll(".btns"), last = all[all.length - 1];
+    // les derniers boutons (s'ils terminent la fiche) passent dans un pied collé en bas
+    let atEnd = !!last && !last.closest("form");
+    for (let e = last; atEnd && e && e !== body; e = e.parentElement) if (e.nextElementSibling) atEnd = false;
+    if (atEnd){ const f = document.createElement("div"); f.className = "sfoot"; f.appendChild(last); s.appendChild(f); }
+    $("#sheetX").onclick = closeSheet;
+    body.scrollTop = 0;
+    $("#modal").classList.add("open"); lockBody();
+  }
+  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -991,6 +1083,7 @@
     setTimeout(() => { const i = $("#wName"); if (i) i.focus(); }, 50);
   }
   $("#editWho").addEventListener("click", () => askProfile());
+  $("#purse").addEventListener("click", () => sheetMoney());
   renderWho();
 
   // ---------- Jeu : Points Roxy ----------
@@ -1164,18 +1257,46 @@
     }
     $("#walktip").textContent = msg;
   }
-  let walkFog = null, walkFogAt = 0, walkFogN = -1;
+  // 🗺️ Chemins des balades, gardés seulement sur ce téléphone (jamais envoyés) pour le brouillard « lampe »
+  const TRACE_KEY = "wouaf-traces", TRACE_MAX = 600000;
+  const getTraces = () => store.get(TRACE_KEY, []);
+  function saveTrace(pts){
+    const ok = pts.filter(q => !q.a || q.a <= 40);
+    if (ok.length < 2) return;
+    const tr = getTraces();
+    tr.push({ d: dayNum(), s: encPoly(simplify(ok, 12), 5) });
+    while (tr.length > 1 && JSON.stringify(tr).length > TRACE_MAX) tr.shift();
+    while (!store.set(TRACE_KEY, tr) && tr.length > 1) tr.shift();
+  }
+  // lignes à éclairer + anciennes cases (d'avant les chemins) à éclairer en rond
+  function fogData(recentOnly, extra){
+    const lines = [], covered = new Set(), today = dayNum();
+    for (const t of getTraces()){
+      if (recentOnly && today - t.d >= FRESH_DAYS) continue;
+      const pts = decPoly(t.s, 5); if (!pts.length) continue;
+      lines.push(pts.map(q => [q.lat, q.lon])); pts.forEach(q => covered.add(cellOf(q)));
+    }
+    if (extra && extra.length){ lines.push(extra.map(q => [q.lat, q.lon])); extra.forEach(q => covered.add(cellOf(q))); }
+    const cells = Object.keys(game.seen).filter(k => !covered.has(k) && (!recentOnly || !isNewCell(k)));
+    return { lines, cells };
+  }
+  let walkFog = null, walkFogAt = 0;
+  // pendant la balade : rues faites depuis moins de 15 jours + le chemin en cours, qui s'éclaire en direct
   function drawWalkFog(force){
     if (!gw || !state.walk) return;
-    const c = game.home || walkHome || (track[0] ? { lat: track[0].lat, lon: track[0].lon } : state.start);
-    if (!c) return;
-    if (!force && (gw.cells.length === walkFogN || Date.now() - walkFogAt < 8000)) return;
-    walkFogAt = Date.now(); walkFogN = gw.cells.length;
-    const clear = new Set(Object.keys(game.seen).filter(k => !isNewCell(k)).concat(gw.cells));
-    if (walkFog) map.removeLayer(walkFog);
-    walkFog = fogPolygon(c, clear, .93).addTo(map);
+    if (walkFog && !force){
+      if (Date.now() - walkFogAt < 1500) return;
+      walkFogAt = Date.now();
+      const ls = walkFog.line.getLatLngs(), cur = track.map(q => [q.lat, q.lon]);
+      if (cur.length === 1) cur.push([cur[0][0] + 0.000005, cur[0][1]]);
+      if (cur.length){ if (walkFog.live) ls[ls.length - 1] = cur; else { ls.push(cur); walkFog.live = true; } walkFog.line.setLatLngs(ls); }
+      return;
+    }
+    clearWalkFog();
+    const d = fogData(true, track.length ? track : null);
+    walkFog = fogMake(d.lines, d.cells); walkFog.live = track.length > 0; fogs.add(walkFog); walkFogAt = Date.now();
   }
-  function clearWalkFog(){ if (walkFog){ map.removeLayer(walkFog); walkFog = null; } walkFogN = -1; }
+  function clearWalkFog(){ if (walkFog){ fogs.delete(walkFog); fogKill(walkFog); walkFog = null; } }
   const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
   const dayKey = t => { const x = new Date(t - 4*3600000); return x.getFullYear() + "-" + (x.getMonth()+1) + "-" + x.getDate(); };   // la journée commence à 4 h
   // semaine du lundi au dimanche
@@ -1426,19 +1547,40 @@
     for (const c in game.seen){ const [i, j] = c.split(":").map(Number); if (inside(i, j)) seen++; }
     return { pct: Math.round(100 * seen / fogTotalCache.n), seen, total: fogTotalCache.n };
   }
-  let fogLayer = null;
-  function toggleFog(){
-    if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; document.body.classList.remove("fogview"); renderProg(); return; }
-    if (!game.home){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
-    const h = game.home;
-    const fog = fogPolygon(h, Object.keys(game.seen), .93);
-    const ring = L.circle([h.lat, h.lon], { radius: FOG_R, color:"#ffd36b", weight:2, fill:false, dashArray:"6 8", interactive:false });
-    fogLayer = L.featureGroup([fog, ring]).addTo(map);
-    document.body.classList.add("fogview"); map.invalidateSize();   // la carte est cachée sur l'accueil : on l'affiche pour le brouillard
-    map.fitBounds(L.latLngBounds([[h.lat - FOG_R / 111320, h.lon - FOG_R / 73000], [h.lat + FOG_R / 111320, h.lon + FOG_R / 73000]]));
-    $("#map").scrollIntoView({ behavior:"smooth", block:"center" });
-    renderProg();
+  let exploreFog = null, exploreMe = null;
+  function exploreCenter(fly){
+    const fallback = () => { const tr = getTraces(), last = tr.length ? decPoly(tr[tr.length - 1].s, 5) : []; return game.home || last[last.length - 1] || state.start; };
+    const put = (p, z) => {
+      if (!document.body.classList.contains("explore") || !p) return;
+      if (exploreMe) exploreMe.setLatLng([p.lat, p.lon]);
+      else exploreMe = L.marker([p.lat, p.lon], { icon: youIcon(), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(map);
+      map.setView([p.lat, p.lon], z || Math.max(map.getZoom(), 16), { animate: !!fly });
+    };
+    put(fallback(), 16);
+    if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => put({ lat: pos.coords.latitude, lon: pos.coords.longitude }), () => {}, { enableHighAccuracy:true, maximumAge:30000, timeout:10000 });
   }
+  function openExplore(){
+    ensureGame();
+    if (!game.home && !getTraces().length){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
+    closeExplore(true);
+    document.body.classList.add("explore"); map.options.touchZoom = map.options.scrollWheelZoom = map.options.doubleClickZoom = "center";
+    const st = fogStats();
+    $("#exploreTxt").innerHTML = `<b>🗺️ Exploré à ${st.pct} %</b><br>2 km autour de la maison · le brouillard se lève là où tu marches`;
+    setTimeout(() => {
+      map.invalidateSize();
+      const d = fogData(false); exploreFog = fogMake(d.lines, d.cells); fogs.add(exploreFog);
+      exploreCenter(false);
+    }, 60);
+  }
+  function closeExplore(quiet){
+    if (exploreFog){ fogs.delete(exploreFog); fogKill(exploreFog); exploreFog = null; }
+    if (exploreMe){ map.removeLayer(exploreMe); exploreMe = null; }
+    if (!document.body.classList.contains("explore")) return;
+    document.body.classList.remove("explore"); map.options.touchZoom = map.options.scrollWheelZoom = map.options.doubleClickZoom = true;
+    if (!quiet) setTimeout(() => map.invalidateSize(), 50);
+  }
+  $("#exploreClose").addEventListener("click", () => closeExplore());
+  $("#exploreMe").addEventListener("click", () => exploreCenter(true));
 
   // Trophées permanents (🎁 = récompense réelle à choisir avec le superviseur)
   const TROPHIES = [
@@ -1482,12 +1624,7 @@
     const daysLeft = Math.max(0, Math.ceil((new Date(sea.end) - Date.now()) / 86400000));
     const me = snapshot(), others = store.get(OTHERS_KEY, {});
     const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">${LEVELS[g.l] ? LEVELS[g.l][1].split(" ")[0] : ""}</div></div>`;
-    $("#v-prog").innerHTML = `<div class="subnav"><button class="ghost" id="goShop">🪙 Ma tirelire en détail</button><button class="ghost" id="goLog">📒 Mon carnet</button></div>
-      <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
-        <div style="font-weight:600">Aujourd'hui</div>
-        <div style="font-size:14px;margin-top:4px;line-height:1.6">${motivLines().map(esc).join("<br>")}</div>
-        ${PUSH_API ? `<button class="ghost" id="rapBtn" style="margin-top:10px;width:100%">🔔 Mes rappels${rap.on ? " (activés)" : ""}</button>` : ""}
-      </div>
+    $("#v-prog").innerHTML = `<h2 class="ptitle">🏆 Mes progrès</h2>
       <div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
         <div class="big" style="font-size:30px">${lv.name}</div>
@@ -1502,7 +1639,7 @@
         <div style="font-weight:600">${game.home ? `Quartier exploré à ${fog.pct} % (2 km autour de la maison)` : "Fais une première balade pour commencer ta carte"}</div>
         <div class="bar" style="background:#efe9dc"><i style="width:${fog.pct}%;background:var(--green-2)"></i></div>
         <div style="font-size:13px;color:var(--muted);margin-top:6px">Paliers : 25 % 🌫️ · 50 % 🧭 🎁 · 75 % 👑 🎁</div>
-        <button class="ghost" id="fogBtn" style="margin-top:10px;width:100%">${fogLayer ? "Cacher le brouillard" : "🌫️ Voir ma carte d'exploration"}</button>
+        <button class="ghost" id="fogBtn" style="margin-top:10px;width:100%">🗺️ Voir ma carte d'exploration</button>
       </div>
       <div class="flabel">🏆 Trophées · ${Object.keys(game.trophies).length} / ${TROPHIES.length}</div>
       <div class="tro">${TROPHIES.map(t => `<div class="${game.trophies[t.id] ? "" : "off"}"><b>${t.icon}</b>${esc(t.name)}${t.gift ? " 🎁" : ""}</div>`).join("")}</div>
@@ -1513,12 +1650,8 @@
       <div class="howto" style="margin-top:6px">Touche un accessoire pour le mettre ou l'enlever à ${DOG} (tu peux en porter plusieurs). Nouveaux accessoires à 400, 1 200, 2 400, 5 000 et 10 000 clebsous gagnés.</div>
       <div class="flabel">👀 Où en sont les autres</div>
       <div class="props others">${lineOf(profile.walker || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(n, g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
-      <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>
-      ${PUSH_API ? `<p style="text-align:center;margin-top:24px"><button class="ghost" id="supBtn" style="font-size:12px;padding:6px 12px;opacity:.6">Superviseur</button></p>` : ""}`;
-    $("#fogBtn").onclick = toggleFog;
-    $("#goShop").onclick = () => switchTab("shop"); $("#goLog").onclick = () => switchTab("log");
-    if ($("#rapBtn")) $("#rapBtn").onclick = openRappels;
-    if ($("#supBtn")) $("#supBtn").onclick = openSuper;
+      <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>`;
+    $("#fogBtn").onclick = openExplore;
     fillGallery();
     document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => {
       const e = b.dataset.acc;
@@ -1930,16 +2063,52 @@
     const lv = levelOf(game.total), n = game.streak.n || 0;
     const alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
     const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
-    const others = Object.entries(store.get(OTHERS_KEY, {})).filter(([w]) => w !== profile.walker);
-    box.innerHTML = `<div class="tiles">
-        <button class="t1" id="tMoney"><small>Tirelire</small><b>🪙 ${Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR")}</b><span>clebsous en ${monthName(Date.now())}</span></button>
-        <button class="t2" id="tStreak"><small>Série</small><b>🔥 ${alive ? n : 0}</b><span>${alive ? `jour${n > 1 ? "s" : ""} d'affilée` : "à lancer aujourd'hui"}</span></button>
-        <button class="t3" id="tRoxy"><small>${DOG}</small><b>${esc(lv.name.split(" ")[0])} ${esc(lv.name.split(" ").slice(1).join(" "))}</b><div class="tbar"><i style="width:${pct}%"></i></div></button>
-      </div>
-      <div class="missions"><div class="flabel" style="margin:8px 0 2px">Aujourd'hui</div>${missions().map(m => `<div class="m${m.done ? " done" : ""}"><div class="ic">${m.ic}</div><div>${esc(m.t)}</div>${m.done ? '<span class="ok">✓</span>' : ""}</div>`).join("")}</div>
-      <div class="homefoot">${others.length ? `👀 ${others.map(([w, g]) => `${esc(w)} : ${LEVELS[g.l] ? esc(LEVELS[g.l][1]) : ""}`).join(" · ")}<br>` : ""}🐾 Change de rues, ramasse les bonus cachés sur la carte : tout se transforme en 🪙 clebsous, et à la fin du mois tes clebsous deviennent de vrais sous 💶.</div>`;
-    $("#tMoney").onclick = sheetMoney; $("#tStreak").onclick = sheetStreak; $("#tRoxy").onclick = sheetRoxy;
+    // une seule ligne : la chose la plus importante du jour (toucher = toutes les missions)
+    const ms = missions(), order = ["🏖️", "🎂", "🔥", "💰", "🎉", "🏴‍☠️", "🎯"];
+    let pick = null;
+    for (const ic of order){ pick = ms.find(m => m.ic === ic && !m.done); if (pick) break; }
+    if (!pick) pick = ms.find(m => !m.done && m.ic !== "🐕") || ms.find(m => m.ic === "🐕");
+    const left = ms.filter(m => !m.done).length;
+    box.innerHTML = pick ? `<button class="oneline" id="oneLine"><span class="ic">${pick.done ? "✅" : pick.ic}</span><span>${esc(pick.t)}</span><span class="more">${left > 1 ? `${left} missions ›` : "›"}</span></button>` : "";
+    if ($("#oneLine")) $("#oneLine").onclick = sheetToday;
   }
+  function sheetToday(){
+    openSheet(`<h2>📋 Aujourd'hui</h2>
+      <div class="missions" style="margin-top:8px">${missions().map(m => `<div class="m${m.done ? " done" : ""}"><div class="ic">${m.ic}</div><div>${esc(m.t)}</div>${m.done ? '<span class="ok">✓</span>' : ""}</div>`).join("")}</div>
+      <div class="btns"><button id="tdClose">Fermer</button></div>`);
+    $("#tdClose").onclick = closeSheet;
+  }
+
+  // ---------- ☰ Menu ----------
+  function openMenu(){
+    const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
+    openSheet(`<h2>☰ Menu</h2><div class="menu">
+      ${it("muProg", "🏆", "Progrès", esc(levelOf(game.total).name))}
+      ${it("muMoney", "🪙", "Tirelire", Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
+      ${it("muFog", "🗺️", "Carte d'exploration", game.home ? fogStats().pct + " %" : "")}
+      ${it("muOuts", "🐾", "Dernières sorties", "")}
+      ${it("muLog", "📒", "Carnet", "")}
+      ${it("muAlbum", "📸", "Album photo", "")}
+      ${PUSH_API ? it("muRap", "🔔", "Mes rappels", rap.on ? "activés" : "") : ""}
+      ${it("muBonus", "🎁", "Bonus et règles", "")}
+      ${it("muTuto", "📖", "Tuto", "")}
+      ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
+      ${PUSH_API ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
+    </div>`);
+    const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
+    go("muProg", () => switchTab("prog"));
+    go("muMoney", () => switchTab("shop"));
+    go("muFog", openExplore);
+    go("muOuts", sheetOuts);
+    go("muLog", () => switchTab("log"));
+    go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
+    go("muRap", openRappels);
+    go("muBonus", sheetBonus);
+    go("muTuto", () => showTuto(0, true));
+    go("muWho", () => askProfile());
+    go("muSup", openSuper);
+  }
+  $("#menuBtn").addEventListener("click", openMenu);
   function sheetMoney(){
     const d = new Date(), m0 = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
     const ws = walksBetween(m0, Date.now() + 1);
@@ -2099,24 +2268,50 @@
     show();
   }
 
-  // ---------- 👋 Tutoriel (premier lancement) ----------
-  function showTuto(step){
-    step = step || 0;
-    const pages = [
-      ["🐕", `Sors ${DOG}, gagne des clebsous`, `Choisis une durée, touche « C'est parti », puis balade libre ou parcours proposé. Sortir ${DOG} au moins 20 min par jour, c'est obligatoire. En chemin, les bonus remplissent ta tirelire de 🪙 clebsous, et au-delà de 20 min la durée rapporte aussi : 45 min = ${Math.round(walkEuros(45) * CS)}, 1 h = ${Math.round(walkEuros(60) * CS)}.`],
-      ["🎁", "Ramasse les bonus", `En marchant, tu trouves 🦴 🎾 🍖 et un ⭐ trésor. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours rapportent double, le défi du jour +${DEFI_PTS}, et parfois un 💰 coffre de ${Math.round(CHEST_EUR * CS)} clebsous se cache sur ton chemin !`],
-      ["💶", "Les règles du jeu", `Garde l'app ouverte pendant la balade : une balade sans l'app ne compte pas. Un jour sans balade enlève des clebsous (2 jokers par mois). Et à la fin du mois… tes clebsous deviennent de vrais sous ! (Nouveau téléphone ? Le superviseur peut récupérer ta tirelire.)`]
+  // ---------- 👋 Tutoriel complet (premier lancement, et à revoir depuis le menu ☰ › 📖 Tuto) ----------
+  function tutoPages(){
+    const cs = v => Math.round(v * CS);
+    const dog = `<div class="bigdog bob" style="margin:0">${roxyHTML(accList(game.acc))}</div>`;
+    const fogSvg = `<svg class="fogpic" viewBox="0 0 300 170" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs><mask id="tm"><rect width="300" height="170" fill="#fff"/><path d="M30 140 C70 120 80 70 130 80 S190 140 230 90 S270 40 285 30" stroke="#000" stroke-width="34" fill="none" stroke-linecap="round"/></mask></defs>
+      <rect width="300" height="170" fill="#efe6d2"/>
+      <g stroke="#fff" stroke-width="7"><path d="M0 40H300M0 95H300M0 150H300M60 0V170M150 0V170M240 0V170"/></g>
+      <g fill="#cfe3c4"><rect x="72" y="104" width="64" height="36" rx="6"/><rect x="164" y="10" width="64" height="72" rx="6"/></g>
+      <rect width="300" height="170" fill="${FOG_COLOR}" mask="url(#tm)"/>
+      <text x="285" y="34" font-size="22" text-anchor="middle">🐕</text></svg>`;
+    return [
+      { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle est contente quand tu la sors, et triste quand elle attend trop. Touche sa photo en haut de l'accueil pour voir son humeur, sa forme et ton niveau.` },
+      { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span></div></div>`,
+        h:"La règle", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes, avec l'app ouverte pendant toute la balade. Une balade sans l'app ne compte pas.` },
+      { pic:`<div><div class="big bob">🪙</div><div class="row" style="margin-top:10px"><span class="chip">45 min = ${cs(walkEuros(45))}</span><span class="chip">1 h = ${cs(walkEuros(60))}</span><span class="chip">1 h 30 = ${cs(walkEuros(90))}</span></div></div>`,
+        h:"Les clebsous", t:`Tout ce que tu gagnes, ce sont des 🪙 clebsous. Les 20 premières minutes ne rapportent rien (c'est l'obligation), la durée au-delà oui, et les bonus dès 20 min. À la fin du mois, tes clebsous deviennent de vrais sous 💶.` },
+      { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">🏴‍☠️ trésor +${HUNT_FIRST}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span><span class="chip">💰 coffre ${cs(CHEST_EUR)}</span></div>`,
+        h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, le trésor de la semaine, et parfois un coffre 💰 !` },
+      { pic: fogSvg, h:"La carte se découvre", t:`La carte est cachée sous le brouillard : il se lève là où tu marches, comme une lampe. Pendant la balade, tout ce qui est encore dans le noir, ce sont des rues neuves qui rapportent plus. Ta carte d'exploration est dans le menu ☰.` },
+      { pic:`<div style="width:88%"><div class="mockbar"><b style="flex:1">32 min · 🪙 +21</b><span>💧</span><span>💩</span><span>📷</span><span>⋯</span></div><div class="row" style="margin-top:10px"><span class="chip">🌙 mode poche</span><span class="chip">📡 radar : brûlant !</span><span class="chip">📍 recentrer</span></div></div>`,
+        h:"Pendant la balade", t:`En bas : le temps et les clebsous gagnés. Note 💧 pipi et 💩 caca, prends ${DOG} en photo 📷. Dans ⋯ : le mode poche (écran noir, la balade continue) et la balade à deux. Le radar te dit quand un objet est tout près.` },
+      { pic:`<div><div class="cal"><span>✅</span><span>✅</span><span>⬜</span><span>✅</span><span>✅</span><span>✅</span><span>✅</span></div><div class="row" style="margin-top:10px"><span class="chip">⬜ −${cs(MALUS_DAY)}</span><span class="chip">7/7 = +${cs(PERFECT_WEEK)} 🏆</span></div></div>`,
+        h:"Les amendes", t:`Un jour sans balade d'au moins 20 min : −${cs(MALUS_DAY)} (${JOKERS} joker par mois). Dès la 3e balade trop courte de la semaine : −${cs(MALUS_SHORT)} chacune. Moins de ${WEEK_DAYS} jours dans la semaine : −${cs(MALUS_WEEK)}. Mais 7 jours sur 7 : +${cs(PERFECT_WEEK)} !` },
+      { pic:`<div><div style="font-size:44px">☰</div>${dog}</div>`, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, carnet, rappels, ce tuto) est dans le menu ☰ en haut à droite.` }
     ];
-    const [ic, h, t] = pages[step];
-    openSheet(`<div style="text-align:center;font-size:64px;margin:6px 0">${ic}</div><h2 style="text-align:center">${h}</h2><p style="text-align:center;line-height:1.6">${esc(t)}</p>
-      <p style="text-align:center;color:var(--muted)">${pages.map((_, i) => i === step ? "●" : "○").join(" ")}</p>
-      <div class="btns"><button id="tutoNext">${step < pages.length - 1 ? "Suivant →" : "C'est parti ! 🐾"}</button></div>`);
-    $("#tutoNext").onclick = () => {
-      if (step < pages.length - 1){ showTuto(step + 1); return; }
-      store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); closeSheet(); confetti();
+  }
+  function showTuto(step, replay){
+    step = step || 0;
+    const pages = tutoPages(), pg = pages[step], lastP = step === pages.length - 1;
+    openSheet(`<div class="tuto"><div class="pic">${pg.pic}</div><h2>${pg.h}</h2><p class="t">${esc(pg.t)}</p>
+      <p class="dotsT">${pages.map((_, i) => i === step ? "●" : "○").join("")}</p>
+      <div class="btns"><button id="tutoNext">${lastP ? "C'est parti ! 🐾" : "Suivant →"}</button>
+        <div class="tnav"><button class="ghost" id="tutoPrev"${step ? "" : " disabled"}>← Retour</button><button class="ghost" id="tutoSkip">${lastP ? "Fermer" : "Passer le tuto"}</button></div></div></div>`);
+    const done = () => {
+      closeSheet();
+      if (replay) return;
+      store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); confetti();
       const after = () => { renderHome(); setTimeout(startupDigest, 400); };
       if (!profile.walker) setTimeout(() => askProfile(after), 300); else after();
     };
+    $("#tutoNext").onclick = () => lastP ? done() : showTuto(step + 1, replay);
+    $("#tutoPrev").onclick = () => showTuto(step - 1, replay);
+    $("#tutoSkip").onclick = done;
   }
 
   // ---------- 💶 Jour de paie (première ouverture d'un nouveau mois) ----------
@@ -2244,9 +2439,9 @@
     $("#pocket").hidden = false;
     const up = () => {
       const el = (Date.now() - t0) / 60000, p = state.walk || {};
-      const cs = Math.round((el >= MONEY_MIN ? walkEuros(el) : 0) * CS) + livePts();
+      const cs = liveGain(el), tot = Math.round(moneyThisMonth() * CS) + cs;
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
-      $("#pocketStats").innerHTML = `<span class="big">${Math.floor(el)} min</span>${p.min && el < p.min ? `🎯 encore ${Math.ceil(p.min - el)} min · ` : ""}📏 ${fmtKm(m)}<span class="cs">🪙 ${cs}${el < MONEY_MIN ? ` · gains dès 15 min` : ""}</span>`;
+      $("#pocketStats").innerHTML = `<span class="big">${Math.floor(el)} min</span>${p.min && el < p.min ? `🎯 encore ${Math.ceil(p.min - el)} min · ` : ""}📏 ${fmtKm(m)}<span class="cs">🪙 +${cs}</span>${el < MONEY_MIN ? `minimum dans ${Math.ceil(MONEY_MIN - el)} min` : `${tot.toLocaleString("fr-FR")} au total dans la tirelire`}`;
     };
     up(); clearInterval(pocketTick); pocketTick = setInterval(up, 10000);
     keepAwake();
@@ -2302,10 +2497,10 @@
       const start = new Date(t - x.min * 60000);
       html += `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
     }
-    $("#sheet").innerHTML = `<h2>🐾 Les dernières sorties de ${DOG}</h2>
+    openSheet(`<h2>🐾 Les dernières sorties de ${DOG}</h2>
       ${list.length ? `<div class="props">${html}</div>` : `<p>Pas encore de sortie enregistrée.</p>`}
       <p class="howto">Qui, quand et combien de temps : les trajets restent dans les récaps envoyés sur WhatsApp.</p>
-      <div class="btns"><button id="outClose">Fermer</button></div>`;
+      <div class="btns"><button id="outClose">Fermer</button></div>`);
     $("#outClose").onclick = closeSheet;
   }
 
@@ -2334,8 +2529,8 @@
   async function openDash(code){
     openSheet(`<h2>📊 Tableau de bord</h2><p>Un instant…</p>`);
     let j;
-    try{ const r = await api("/dash", { code }); if (r.status === 403){ $("#sheet").innerHTML = `<h2>📊 Tableau de bord</h2><p>Code incorrect.</p><div class="btns"><button id="dsClose">Fermer</button></div>`; $("#dsClose").onclick = closeSheet; return; } j = await r.json(); }
-    catch(e){ $("#sheet").innerHTML = `<h2>📊 Tableau de bord</h2><p>Pas de connexion pour l'instant.</p><div class="btns"><button id="dsClose">Fermer</button></div>`; $("#dsClose").onclick = closeSheet; return; }
+    try{ const r = await api("/dash", { code }); if (r.status === 403){ openSheet(`<h2>📊 Tableau de bord</h2><p>Code incorrect.</p><div class="btns"><button id="dsClose">Fermer</button></div>`); $("#dsClose").onclick = closeSheet; return; } j = await r.json(); }
+    catch(e){ openSheet(`<h2>📊 Tableau de bord</h2><p>Pas de connexion pour l'instant.</p><div class="btns"><button id="dsClose">Fermer</button></div>`); $("#dsClose").onclick = closeSheet; return; }
     const ws = (j.walkers || []).sort((a, b) => (b.at || 0) - (a.at || 0));
     const wk0 = weekStart(Date.now()).getTime() / 1000;
     const card = d => {
@@ -2349,11 +2544,11 @@
         ${w.length ? `<details style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000); return `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.ms ? " ⏱️ trop courte" : ""}`; }).join("<br>")}</details>` : ""}
       </div></div>`;
     };
-    $("#sheet").innerHTML = `<h2>📊 Tableau de bord</h2>
+    openSheet(`<h2>📊 Tableau de bord</h2>
       ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
       <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée (version 27 ou plus).</p>`}</div>
       <p class="howto">Seulement des chiffres : aucun trajet ni position n'est envoyé.</p>
-      <div class="btns"><button id="dsClose">Fermer</button></div>`;
+      <div class="btns"><button id="dsClose">Fermer</button></div>`);
     $("#dsClose").onclick = closeSheet;
   }
 
@@ -2447,10 +2642,10 @@
   async function openRestore(code){
     openSheet(`<h2>♻️ Restaurer un promeneur</h2><p>Un instant…</p>`);
     let names = [];
-    try{ const r = await api("/restore", { code }); if (r.status === 403){ $("#sheet").innerHTML = `<h2>♻️ Restaurer</h2><p>Code incorrect.</p><div class="btns"><button id="rsClose">Fermer</button></div>`; $("#rsClose").onclick = closeSheet; return; } names = (await r.json()).names || []; }
-    catch(e){ $("#sheet").innerHTML = `<h2>♻️ Restaurer</h2><p>Pas de connexion.</p><div class="btns"><button id="rsClose">Fermer</button></div>`; $("#rsClose").onclick = closeSheet; return; }
-    $("#sheet").innerHTML = `<h2>♻️ Restaurer un promeneur</h2><p>Sur un nouveau téléphone (ou après un effacement), récupère la tirelire, le niveau, les trophées et le carnet d'un promeneur. <b>Ça remplace ce qu'il y a sur ce téléphone.</b></p>
-      <div class="btns">${names.length ? names.map(n => `<button class="ghost" data-rs="${esc(n)}">👤 ${esc(n)}</button>`).join("") : "<p>Aucune sauvegarde pour l'instant.</p>"}<button id="rsClose">Fermer</button></div><p id="rsMsg" role="status"></p>`;
+    try{ const r = await api("/restore", { code }); if (r.status === 403){ openSheet(`<h2>♻️ Restaurer</h2><p>Code incorrect.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; } names = (await r.json()).names || []; }
+    catch(e){ openSheet(`<h2>♻️ Restaurer</h2><p>Pas de connexion.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; }
+    openSheet(`<h2>♻️ Restaurer un promeneur</h2><p>Sur un nouveau téléphone (ou après un effacement), récupère la tirelire, le niveau, les trophées et le carnet d'un promeneur. <b>Ça remplace ce qu'il y a sur ce téléphone.</b></p>
+      <div class="btns">${names.length ? names.map(n => `<button class="ghost" data-rs="${esc(n)}">👤 ${esc(n)}</button>`).join("") : "<p>Aucune sauvegarde pour l'instant.</p>"}<button id="rsClose">Fermer</button></div><p id="rsMsg" role="status"></p>`);
     $("#rsClose").onclick = closeSheet;
     document.querySelectorAll("[data-rs]").forEach(b => b.onclick = async () => {
       $("#rsMsg").textContent = "Un instant…";
@@ -2500,7 +2695,7 @@
   }
 
   // ---------- Pendant la balade ----------
-  let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true;
+  let watchId = null, tick = null, wakeLock = null, t0 = 0, cum = [], walked = 0, followMap = true, lastFix = null;
   let track = [], photos = [], hiddenAt = null, pausedMs = 0, trackLayer = null;
   async function keepAwake(){ try{ if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); }catch(e){} }
 
@@ -2533,7 +2728,7 @@
   function chooseRoute(){
     hideBanner();
     document.body.classList.remove("walking"); document.body.classList.add("choosing");
-    followMap = false;
+    setFollow(false);
     setTimeout(() => map.invalidateSize(), 50);
     const here = track[track.length-1] || walkHome || state.start;
     if (here) setStart({ lat: here.lat, lon: here.lon }, true);
@@ -2541,7 +2736,7 @@
   }
   function backToWalk(){
     document.body.classList.remove("choosing"); document.body.classList.add("walking");
-    followMap = true; layers.routes.clearLayers();
+    setFollow(true); layers.routes.clearLayers();
     if (state.walk && !state.walk.line.length) layers.sel.clearLayers();
     if (trackLayer){ trackLayer.addTo(layers.sel); }
     setTimeout(() => map.invalidateSize(), 50);
@@ -2567,7 +2762,7 @@
       if (gw){ gw.items = seedItems(p); drawItems(); }
       trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
       document.body.classList.remove("choosing"); document.body.classList.add("walking");
-      followMap = true; hideBanner();
+      setFollow(true); hideBanner();
       setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
       $("#walktip").textContent = "🗺️ Parcours choisi : la balade continue.";
       updateWalk(null); persist(true);
@@ -2581,11 +2776,11 @@
     setTimeout(() => {
       map.invalidateSize();
       if (!free) map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] });
-      else if (state.start) map.setView([state.start.lat, state.start.lon], 17);
       else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { if (state.walk && firstFix) map.setView([pos.coords.latitude, pos.coords.longitude], 17); }, () => {}, { enableHighAccuracy:true, maximumAge:60000, timeout:8000 });
     }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
-    t0 = Date.now(); walked = 0; followMap = true; firstFix = !p.line.length; track = []; photos = []; hiddenAt = null; pausedMs = 0;
+    t0 = Date.now(); walked = 0; setFollow(true); firstFix = !p.line.length; lastFix = null;
+    if (free && youMarker && !resume) layers.me.clearLayers(), youMarker = null;   // pas d'ancienne position : on attend le GPS track = []; photos = []; hiddenAt = null; pausedMs = 0;
     walkHome = null; maxAway = 0; homeSnooze = false; clearInterval(homeTimer); homeTimer = null; hideBanner();
     if (resume){
       t0 = resume.t0; track = resume.track || []; walked = resume.walked || 0; walkHome = resume.home || null; maxAway = resume.maxAway || 0;
@@ -2626,10 +2821,11 @@
   function onFix(pos){
     if (!state.walk) return;
     const q = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: Date.now(), a: pos.coords.accuracy || 0 };
-    if (!youMarker) showStart(q);
+    if (!youMarker || (firstFix && !state.walk.line.length)) showStart(q);
     if (firstFix){ firstFix = false; map.setView([q.lat, q.lon], 17, { animate:false }); }
     if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
     if (followMap) map.panTo([q.lat, q.lon], { animate:true });
+    lastFix = q;
     // on garde les points assez précis, tous les 8 m ou toutes les 30 s
     if (q.a <= 60){
       const last = track[track.length-1];
@@ -2638,6 +2834,7 @@
     if (!walkHome && q.a <= 40) walkHome = { lat:q.lat, lon:q.lon };
     updateWalk(q);
     gameFix(q, walkHome);
+    drawWalkFog(false);
     maybeAskPhoto();
     if (walkHome) checkHome(q);
     persist(false);
@@ -2696,12 +2893,24 @@
       watchId = navigator.geolocation.watchPosition(onFix, () => {}, { enableHighAccuracy:true, maximumAge:3000, timeout:20000 });
     }
   });
-  map.on("dragstart", () => { if (state.walk){ followMap = false; $("#recenter").hidden = false; } });
+  // en suivant : on zoome toujours sur moi (pas là où sont les doigts)
+  function setFollow(on){
+    followMap = on;
+    map.options.touchZoom = map.options.scrollWheelZoom = map.options.doubleClickZoom = on ? "center" : true;
+  }
+  map.on("zoomend", () => { if (state.walk && followMap && lastFix) map.panTo([lastFix.lat, lastFix.lon], { animate:false }); });
+  map.on("dragstart", () => { if (state.walk){ setFollow(false); $("#recenter").hidden = false; } });
   $("#recenter").addEventListener("click", () => {
-    followMap = true; $("#recenter").hidden = true;
-    const t = track[track.length - 1]; if (t) map.setView([t.lat, t.lon], Math.max(map.getZoom(), 16));
+    setFollow(true); $("#recenter").hidden = true;
+    const t = lastFix || track[track.length - 1]; if (t) map.setView([t.lat, t.lon], Math.max(map.getZoom(), 16));
   });
 
+  // 🪙 « +12 · 447 au total » : gagné pendant la balade (si elle dure 20 min) + la tirelire du mois
+  function liveGain(el){ return Math.round(walkEuros(el) * CS) + livePts(); }
+  function liveMoney(el){
+    const tot = Math.round(moneyThisMonth() * CS), g = liveGain(el);
+    return el < MONEY_MIN ? `🪙 +${g} · minimum dans ${Math.ceil(MONEY_MIN - el)} min` : `🪙 +${g} · ${(tot + g).toLocaleString("fr-FR")} au total`;
+  }
   function updateWalk(q){
     const p = state.walk; if (!p) return;
     const elapsed = (Date.now() - t0) / 60000;
@@ -2713,7 +2922,7 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> · 🪙 ${Math.round(walkEuros(elapsed) * CS) + livePts()}${elapsed < MONEY_MIN ? ` · minimum dans ${Math.ceil(MONEY_MIN - elapsed)} min` : ""}`;
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> · ${liveMoney(elapsed)}`;
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
@@ -2956,6 +3165,7 @@
     const moneyMin = Math.min(elapsed, r.m / 30);
     const durCs = Math.round(walkEuros(moneyMin) * CS);
     const duoWait = gw && gw.duoPressed && !gw.duo;
+    try{ saveTrace(track); }catch(e){}
     const res = finishGame(elapsed, r.f ? r.h === 1 : (r.cov != null && r.cov >= 70), r.m, t0, walkHome, durCs);
     if (res && res.chest) r.cb = res.chest;
     if (res && res.levelUp) r.lu = res.levelUp;
@@ -3202,22 +3412,21 @@
   purgeLog();
 
   // ---------- Onglets, filtres, boutons ----------
-  function backBtn(sel){
-    const v = $(sel); if (!v || v.querySelector(".backp")) return;
-    const b = document.createElement("button"); b.className = "ghost backp"; b.textContent = "← Retour aux progrès";
-    b.onclick = () => switchTab("prog"); v.prepend(b);
-  }
+  function backBtn(){}   // le bouton « ← Accueil » est fixe en haut des pages (#backHome)
+  $("#backHome").addEventListener("click", () => switchTab("walks"));
   function switchTab(t){
+    const was = state.tab;
     state.tab = t;
-    document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === t || (b.dataset.tab === "prog" && (t === "shop" || t === "log"))));
+    document.body.classList.toggle("page", t !== "walks");
     $("#v-walks").style.display = t === "walks" ? "" : "none";
     $("#v-log").style.display = t === "log" ? "" : "none";
     $("#v-shop").style.display = t === "shop" ? "" : "none";
     $("#v-prog").style.display = t === "prog" ? "" : "none";
     if (t === "log"){ renderLog(); backBtn("#v-log"); }
     else if (t === "shop"){ renderShop(); backBtn("#v-shop"); }
-    else if (t === "prog") renderProg();
+    else if (t === "prog"){ renderProg(); backBtn("#v-prog"); }
     else { renderHome(); if (state.sel != null) select(state.sel, true); }
+    if (t !== was && !state.walk) window.scrollTo(0, 0);
   }
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
 
@@ -3328,10 +3537,10 @@
         ${row("💰", "Coffre surprise, sur une rue pas faite depuis longtemps (si tu es sorti au moins 4 jours sur les 7 derniers)", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
         ${row("🏆", "Semaine parfaite : Roxy sortie 7 jours sur 7", `+${Math.round(PERFECT_WEEK * CS)} 🪙`)}
       </div>
-      <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 15 min ≈ ${gainEst(15)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
+      <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 20 min ≈ ${gainEst(20)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
       <div class="btns"><button id="bonClose">Compris !</button><button class="ghost" id="bonTuto">📖 Revoir le tuto</button></div>`);
     $("#bonClose").onclick = closeSheet;
-    $("#bonTuto").onclick = () => showTuto(0);
+    $("#bonTuto").onclick = () => showTuto(0, true);
   }
   updateGo();
   $("#locate").addEventListener("click", locate);
@@ -3385,8 +3594,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 32;
+  const APP_NUM = 33;
   const NEWS = {
+    33: [
+      "☰ Accueil plus simple : Roxy et ta tirelire en haut, la durée et « C'est parti » au milieu. Tout le reste est dans le menu ☰ en haut à droite.",
+      "🗺️ La carte est cachée sous un brouillard bien noir : il se lève comme une lampe là où tu marches, et la carte reste centrée sur toi.",
+      "📖 Un tuto complet, à revoir quand tu veux depuis le menu. Et pendant la balade : « 🪙 +12 · 447 au total »."
+    ],
     32: [
       "🐕 Touche Roxy en haut de l'accueil : sa fiche façon Tamagotchi montre son bonheur, sa forme, son niveau et ta cagnotte. Plus elle attend, plus elle est triste !"
     ],
@@ -3533,7 +3747,7 @@
     renderHome();
   });
 
-  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive };
 })();
 </script>
 </body>
