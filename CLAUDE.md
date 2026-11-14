@@ -90,4 +90,4 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   sortie, série, coffre chaud, défi), ligne « 👀 » des autres. La carte est cachée sauf en balade, en choix de parcours,
   sur un récap ou après « Proposer des parcours » (classe `hasmap`, retirée à la fin d'une balade).
 - 🪙 **Clebsous** : monnaie affichée aux promeneurs, 100 clebsous = 1 € (`fmtCs`), partout dans l'app et les rappels (y compris
-  malus et coffre = 500 clebsous). Les données restent en euros ; le **récap et le bilan envoyés au superviseur restent en €**.
+  malus et coffre = 500 clebsous). Les données restent en euros, mais **l'équivalent en € est secret** (choix de l'utilisateur : les promeneurs le découvriront après le 1er mois) : aucun « € » à l'écran, récaps et bilans compris (le superviseur divise par 100).

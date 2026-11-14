@@ -301,7 +301,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.131413";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.131804";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -845,7 +845,7 @@
   const MONEY_MIN = 15, REF_MIN = 25, REF_EUR = 0.35, MONEY_MAX = 15, MONEY_POW = 1.5;
   const walkEuros = min => min < MONEY_MIN ? 0 : Math.round(REF_EUR * Math.pow(min / REF_MIN, MONEY_POW) * 100) / 100;
   const fmtEur = v => v.toFixed(2).replace(".", ",") + " €";
-  // 🪙 Clebsous : la monnaie affichée aux promeneurs (100 clebsous = 1 €) ; le superviseur reçoit les euros
+  // 🪙 Clebsous : la seule monnaie affichée (100 clebsous = 1 €). L'équivalent en euros reste SECRET pour les promeneurs (choix du superviseur) : jamais de « € » à l'écran ni dans les messages
   const CS = 100;
   const fmtCs = v => { const n = Math.round(v * CS); return n.toLocaleString("fr-FR") + (Math.abs(n) > 1 ? " clebsous" : " clebsou"); };
   const monthKey = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); };
@@ -1068,9 +1068,9 @@
     const tot = moneyOf(monthKey(per.start.getTime()));
     const ml = malusIn(per.start.getTime(), per.end.getTime());
     const chests = (game.chests || []).filter(c => { const t = new Date(c).getTime(); return t >= per.start.getTime() && t < per.end.getTime(); }).length;
-    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 💶 ${fmtEur(eur)}${chests ? ` · 💰 ${chests} coffre${chests > 1 ? "s" : ""} (+${chests * CHEST_EUR} €)` : ""}` +
-      (ml.eur ? ` · ⚠️ malus −${fmtEur(ml.eur)} (${ml.text})` : "") +
-      (per.first ? "" : ` · tirelire de ${monthName(per.start)} : ${fmtEur(tot)}`);
+    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 🪙 ${fmtCs(eur)}${chests ? ` · 💰 ${chests} coffre${chests > 1 ? "s" : ""} (+${fmtCs(chests * CHEST_EUR)})` : ""}` +
+      (ml.eur ? ` · ⚠️ malus −${fmtCs(ml.eur)} (${ml.text})` : "") +
+      (per.first ? "" : ` · tirelire de ${monthName(per.start)} : ${fmtCs(tot)}`);
     return { n: ws.length, text };
   }
   async function sendBilan(per){
@@ -1099,14 +1099,14 @@
     $("#v-shop").innerHTML = `<div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
         <div class="big">🪙 ${fmtCs(eur)}</div>
-        <div class="lvl">= ${fmtEur(eur)} · rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
+        <div class="lvl">Rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
         ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtCs(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus</div>` : ""}
         <button class="ghost" id="bilNow" style="margin-top:10px;width:100%;background:rgba(255,255,255,.18);color:#fff">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
         <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtCs(walkEuros(n))}</b>`).join(" · ")}</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois. 100 clebsous = 1 €.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as jamais prise. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
       </div>
       ${malusBox()}
       ${ws.length ? `<div class="flabel">Balades de ${monthName(Date.now())}</div><div class="props">${ws.slice(0, 31).map(e => `<div class="entry"><div><h4>${e.icon || "🐾"} ${fmtMin(e.min)} · ${fmtKm(e.m)}</h4><div class="when">${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })}</div></div><div class="dur">${e.recap && e.recap.eu ? "+" + fmtCs(e.recap.eu) : "—"}</div></div>`).join("")}</div>` : ""}
@@ -1634,7 +1634,7 @@
     const others = Object.entries(store.get(OTHERS_KEY, {})).filter(([w]) => w !== profile.walker);
     box.innerHTML = `<div class="homecard">
         <div class="hrow">
-          <button data-go="shop"><small>Tirelire de ${monthName(Date.now())}</small><b>🪙 ${fmtCs(moneyThisMonth())}</b><span>= ${fmtEur(moneyThisMonth())}</span></button>
+          <button data-go="shop"><small>Tirelire de ${monthName(Date.now())}</small><b>🪙 ${fmtCs(moneyThisMonth())}</b><span>ce mois-ci</span></button>
           <button data-go="prog"><small>Série</small><b>🔥 ${alive ? n : 0} jour${alive && n > 1 ? "s" : ""}</b><span>${alive ? "continue !" : "à lancer"}</span></button>
           <button data-go="prog"><small>Niveau</small><b>${esc(lv.name.split(" ")[0])} ${game.total}</b><span>${esc(lv.name.split(" ").slice(1).join(" "))}</span></button>
         </div>
@@ -1983,7 +1983,7 @@
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 💶 +${fmtEur(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${r.cb} €` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtEur(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
+    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
   async function shareRecap(r, files){
@@ -2421,7 +2421,7 @@
   const APP_NUM = 20;
   const NEWS = {
     20: [
-      "🪙 Nouvelle monnaie : les Clebsous ! 100 clebsous = 1 €. Une balade de 45 min = 85 clebsous, 1 h = 130.",
+      "🪙 Nouvelle monnaie : les Clebsous ! Une balade de 45 min = 85 clebsous, 1 h = 130.",
       "🏠 Nouvel écran d'accueil : ta tirelire, ta série, ton niveau et le défi du jour. Touche « ▶️ C'est parti avec Roxy » pour démarrer.",
       "🗺️ La carte s'affiche pendant la balade ou quand tu demandes des parcours."
     ],
@@ -2431,8 +2431,8 @@
       "Pas de rappel du soir si tu as déjà sorti Roxy dans la journée."
     ],
     18: [
-      "⚠️ Malus dès le lundi 16 novembre : jour sans balade d'au moins 15 min avec l'app = −0,20 € (2 jokers par mois).",
-      "⏱️ Dès la 3e balade de moins de 15 min dans la semaine : −0,10 € ; semaine de moins de 4 jours de balade : −0,50 €.",
+      "⚠️ Malus dès le lundi 16 novembre : jour sans balade d'au moins 15 min avec l'app = −20 clebsous (2 jokers par mois).",
+      "⏱️ Dès la 3e balade de moins de 15 min dans la semaine : −10 clebsous ; semaine de moins de 4 jours de balade : −50 clebsous.",
       "Une balade faite sans l'app ne compte pas. Tout est détaillé dans l'onglet 💶 Tirelire."
     ],
     17: [
