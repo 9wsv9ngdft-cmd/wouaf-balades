@@ -174,3 +174,8 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐾 Dernières sorties (décidé le 14/11, option A : sans trajet) : toucher la ligne d'humeur sous « Salut X » ouvre `sheetOuts`
   (qui, quand, durée, km, 💧💩, tous promeneurs) via `GET /recent` du Worker (fusionné avec le carnet local). Jamais de trajet
   ni de position envoyés ; les trajets restent dans les liens de récap WhatsApp.
+- Départ (v30, décidé le 14/11) : « ▶️ C'est parti » ouvre un choix « 🚶 Balade libre » (démarre aussitôt) / « 🗺️ Choisir un
+  parcours » (`locate()` → propositions sur la carte, bouton « ▶️ On y va ») ; plus de bouton « Proposer des parcours » visible ;
+  bandeau de départ = « 🐾 C'est parti ! » + missions, boutons « 👍 OK » / « ✕ Annuler ».
+- 🌫️ Brouillard en direct pendant la balade (`drawWalkFog`, 3 km autour de la maison) : grisé = rues neuves (pas faites depuis
+  15 jours = bonus), éclairci au passage ; le brouillard de Progrès reste « à vie ».
