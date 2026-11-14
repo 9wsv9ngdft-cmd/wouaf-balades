@@ -281,3 +281,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   `showNewsScreen` n'est plus appelé à l'ouverture) ; mode sombre relu (album, trophées, accessoires, puces du tuto, sélecteurs) ; tout message `role=status`
   d'une fiche hors de l'écran → bandeau (MutationObserver sur `#sheet`) ; boutons « ❌ Annuler » du tableau de bord plus grands ; tuto court : « rue neuve »
   expliquée ; menu d'Éric : une seule entrée « 🔑 Superviseur » (`sheetSupMenu`).
+- 🔒 Statistiques **seulement avec l'accord du promeneur** (`wouaf-stats-ok`, décidé le 14/11) : carte de choix en tête de la fenêtre d'ouverture tant qu'il n'a
+  pas répondu (`statsCardHTML`, « ✅ D'accord » / « Non merci »), avec le rappel de ce qui reste privé (`PRIVACY_TXT`) ; changer d'avis : ☰ › 🔒 Vie privée
+  (`sheetPrivacy`). Non = rien compté, chiffres effacés sur le serveur.

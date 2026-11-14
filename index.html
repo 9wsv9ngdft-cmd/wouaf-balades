@@ -508,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.201313";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.201845";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2452,7 +2452,29 @@
   // ---------- 📈 Statistiques d'utilisation pour le superviseur (v2.1) : chiffres seulement (ouvertures, temps dans l'app, pages vues) ----------
   const USE_KEY = "wouaf-usage";
   let useStart = document.hidden ? null : Date.now(), useSent = 0;
-  const useOn = () => !!(PUSH_API && profile.walker && !isTester());
+  const STATS_KEY = "wouaf-stats-ok";   // choix du promeneur : true = d'accord, false = non, absent = pas encore demandé
+  const useOn = () => !!(PUSH_API && profile.walker && !isTester() && store.get(STATS_KEY, null) === true);
+  const statsAsk = () => !!(PUSH_API && profile.walker && !isTester() && store.get(STATS_KEY, null) == null);
+  const PRIVACY_TXT = `🔒 <b>Ce qui reste privé, toujours :</b> tes trajets et ta position ne quittent jamais ton téléphone. Le superviseur voit seulement des chiffres : tes balades (jour, durée, distance), ta tirelire et ton niveau. Seule exception : pendant un duel « Guerre des rues », ton adversaire voit les rues que tu prends.`;
+  function statsChoice(ok){
+    store.set(STATS_KEY, !!ok);
+    if (ok){ useStart = Date.now(); useOpen(); sendUsage(true); }
+    else { store.set(USE_KEY, {}); try{ fetch(PUSH_API.replace(/\/$/, "") + "/usage", { method:"POST", headers:{ "Content-Type":"text/plain" }, body: JSON.stringify({ walker: profile.walker, days: {} }) }).catch(() => {}); }catch(e){} }
+  }
+  const statsCardHTML = () => `<div class="dc-ic">📈</div><h2>Tu nous aides à améliorer l'app ?</h2>
+    <p>Wouaf peut compter <b>combien de fois tu l'ouvres</b>, <b>combien de temps</b> tu y passes et <b>quelles pages</b> tu regardes. Rien d'autre. Tu peux changer d'avis quand tu veux (menu ☰ › 🔒 Vie privée).</p>
+    <p class="howto">${PRIVACY_TXT}</p>
+    <div class="btns" style="flex-direction:row;gap:8px"><button data-st="1" style="flex:1">✅ D'accord</button><button class="ghost" data-st="0" style="flex:1">Non merci</button></div>`;
+  function bindStats(el, after){ el.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { statsChoice(b.dataset.st === "1"); el.querySelectorAll("[data-st]").forEach(x => x.disabled = true); b.textContent = b.dataset.st === "1" ? "✅ Merci !" : "C'est noté"; if (after) after(); }); }
+  function sheetPrivacy(){
+    const v = store.get(STATS_KEY, null);
+    openSheet(`<h2>🔒 Vie privée</h2><p>Statistiques d'utilisation (ouvertures, temps, pages vues) : <b>${v === true ? "partagées avec le superviseur" : "non partagées"}</b>.</p>
+      <p class="howto">${PRIVACY_TXT}</p>
+      <div class="btns">${v === true ? `<button class="ghost" id="pvNo">Ne plus partager mes statistiques</button>` : `<button id="pvYes">✅ Partager mes statistiques</button>`}<button class="ghost" id="pvClose">Fermer</button></div>`);
+    $("#pvClose").onclick = closeSheet;
+    if ($("#pvNo")) $("#pvNo").onclick = () => { statsChoice(false); sheetPrivacy(); };
+    if ($("#pvYes")) $("#pvYes").onclick = () => { statsChoice(true); sheetPrivacy(); };
+  }
   function useDayRec(){
     const u = store.get(USE_KEY, {}), k = dIso(Date.now());
     u[k] = u[k] || { o:0, s:0, p:{} };
@@ -2507,6 +2529,7 @@
       ${it("muBonus", "🎁", "Bonus et règles", "")}
       ${it("muTuto", "📖", "Tuto", "")}
       ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
+      ${PUSH_API && !isTester() ? it("muPriv", "🔒", "Vie privée", store.get(STATS_KEY, null) === true ? "statistiques partagées" : "") : ""}
       ${PUSH_API && supToken() ? it("muSupAll", "🔑", "Superviseur", "tableau de bord, pause, remise à zéro…") : ""}
       ${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
     </div>`);
@@ -2522,6 +2545,7 @@
     go("muBonus", sheetBonus);
     go("muTuto", () => showTuto(0, true));
     go("muWho", () => askProfile());
+    go("muPriv", sheetPrivacy);
     go("muSup", openSuper);
     go("muSupP", openSuper);
     go("muSupAll", sheetSupMenu);
@@ -2731,6 +2755,7 @@
     { const hu = game.hunt; if (hu && hu.gone && game.huntNote !== hu.wk){ game.huntNote = hu.wk; saveGame();
         cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${esc(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
     if (duelOK()){ await loadDuels(); cards.push(...duelCards()); }
+    if (statsAsk()) cards.unshift({ html: statsCardHTML(), bind: el => bindStats(el) });
     const pay = paydayCardData(); if (pay) cards.push(pay);
     const wk = weekCardData(); if (wk) cards.push(wk);
     renderHome();
