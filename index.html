@@ -508,7 +508,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.221841";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.222841";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1119,7 +1119,8 @@
     if (!st) continue; const t = st.textContent.trim(); if (!t || t === "Un instant…" || st.dataset.last === t) continue; st.dataset.last = t;
     const r = st.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight - 70 || r.height === 0) try{ toast(t, 4000); }catch(e){} } })
     .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
-  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
+  let introRunning = false;   // écran « tout repart de zéro » + tuto en cours : pas de rechargement (mise à jour, remise à zéro) avant la fin
+  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -1991,6 +1992,7 @@
     return true;
   }
   function showWelcome2(){
+    introRunning = true;
     openSheet(`<div style="text-align:center;font-size:64px">🎉</div><h2 style="text-align:center">Wouaf Balades ${APP_LABEL}, tout repart de zéro !</h2>
       <p style="text-align:center">Nouvelle version, nouveau départ pour tout le monde : clebsous, série, carte, carnet, photos… tout est remis à zéro. Ton prénom, tes rappels et la photo de ${DOG} sont gardés. Les amendes repartent demain.</p>
       <div class="btns"><button id="w2Ok">C'est parti ! 🐾</button></div>`);
@@ -2857,12 +2859,14 @@
   }
   function showTuto(step, replay){
     step = step || 0;
+    if (!replay) introRunning = true;
     const pages = replay ? tutoPages() : tutoShort(), pg = pages[step], lastP = step === pages.length - 1;
     openSheet(`<div class="tuto"><div class="pic">${pg.pic}</div><h2>${pg.h}</h2><p class="t">${esc(pg.t)}</p>
       <p class="dotsT">${pages.map((_, i) => i === step ? "●" : "○").join("")}</p>
       <div class="btns"><button id="tutoNext">${lastP ? "C'est parti ! 🐾" : "Suivant →"}</button>
         <div class="tnav"><button class="ghost" id="tutoPrev"${step ? "" : " disabled"}>← Retour</button><button class="ghost" id="tutoSkip">${lastP ? "Fermer" : "Passer le tuto"}</button></div></div></div>`);
     const done = () => {
+      if (!replay) introRunning = false;
       closeSheet();
       if (replay) return;
       store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM); confetti();
@@ -4240,6 +4244,7 @@
   }
   function busy(){ return !!state.walk || $("#modal").classList.contains("open"); }
   function applyUpdate(){
+    if (introRunning) return;   // pendant l'intro : on attend la fin du tuto (la mise à jour se fait à la fermeture)
     try{ const n = JSON.parse(sessionStorage.getItem("wouaf-reloads") || "[]"); n.push(Date.now()); sessionStorage.setItem("wouaf-reloads", JSON.stringify(n)); }catch(e){}
     location.reload();
   }

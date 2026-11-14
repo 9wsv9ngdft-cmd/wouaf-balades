@@ -292,3 +292,5 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   À vérifier sur iPhone : le raccourci doit ouvrir l'app de l'écran d'accueil, pas Safari (stockages séparés).
 - 📲 Fenêtre d'ouverture : carte « Sors Roxy en un seul geste » **une fois par téléphone** (`wouaf-sc-tip`, pas pour Éric), bouton « Je l'installe » → `sheetShortcut` ;
   dernière page du tuto court : astuce ☰ › 📲.
+- Correctif 14/11 (22 h 30) : intro vue deux fois après la remise à zéro (une mise à jour en attente rechargeait la page en fermant l'écran « tout repart »,
+  en plein tuto) → `introRunning` (écran d'accueil + tuto non rejoué) bloque `applyUpdate` et les rechargements de `closeSheet` jusqu'à la fin du tuto.
