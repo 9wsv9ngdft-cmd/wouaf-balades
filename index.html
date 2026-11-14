@@ -164,7 +164,13 @@
   .reward.locked{opacity:.75}
   .howto{font-size:13px;color:var(--muted);line-height:1.6;margin-top:14px}
   .roxy{width:34px;height:34px;border-radius:50%;background:#fff;border:3px solid #2a7de1;display:flex;align-items:center;justify-content:center;font-size:19px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-  .roxy i{position:absolute;top:-12px;right:-10px;font-size:17px;font-style:normal}
+  .roxy i{position:absolute;font-style:normal;line-height:1;pointer-events:none}
+  .roxy .a-bow{top:-9px;left:-7px;font-size:15px}
+  .roxy .a-scarf{bottom:-10px;left:50%;transform:translateX(-50%);font-size:15px}
+  .roxy .a-glasses{top:7px;left:3px;font-size:12px}
+  .roxy .a-hat{top:-19px;left:50%;transform:translateX(-50%);font-size:17px}
+  .accs .roxy{margin:2px auto 0;border-color:var(--line);box-shadow:none}
+  .accs button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;min-width:74px;padding:14px 8px 8px}
   .chest{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,30,22,.82);color:#fff;text-align:center;animation:pop .3s ease-out}
   .chest .ce{font-size:96px;animation:bounce 1s ease-in-out infinite}
   .chest b{font-family:Fraunces,Georgia,serif;font-size:32px;margin-top:10px}
@@ -275,7 +281,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.111150";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.111305";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -340,9 +346,13 @@
   const layers = { routes: L.layerGroup().addTo(map), sel: L.layerGroup().addTo(map), me: L.layerGroup().addTo(map) };
   window.addEventListener("resize", () => map.invalidateSize());
   let youMarker = null;
+  // Roxy est toujours là ; les accessoires choisis s'ajoutent sur elle (plusieurs à la fois, un seul couvre-chef)
+  const ACC_SLOT = { "🎀":"a-bow", "🧣":"a-scarf", "🕶️":"a-glasses", "🎩":"a-hat", "👑":"a-hat" };
+  const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
+  const roxyHTML = list => `<div class="roxy"><span>🐕</span>${list.map(e => `<i class="${ACC_SLOT[e] || "a-bow"}">${e}</i>`).join("")}</div>`;
   function youIcon(){
-    let a = ""; try{ a = (JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc) || ""; }catch(e){}
-    return L.divIcon({ className:"", html:`<div class="roxy"><span>🐕</span>${a ? `<i>${a}</i>` : ""}</div>`, iconSize:[34,34], iconAnchor:[17,17] });
+    let a = []; try{ a = accList(JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc); }catch(e){}
+    return L.divIcon({ className:"", html: roxyHTML(a), iconSize:[34,34], iconAnchor:[17,17] });
   }
   function showStart(p){
     layers.me.clearLayers();
@@ -1053,7 +1063,7 @@
     game.stats = Object.assign({ walks:0, km:0, early:0, rain:0, long:0, bestStreak:0 }, game.stats || {});
     game.trophies = game.trophies || {};
     if (game.levelSeen == null) game.levelSeen = levelIndex(game.total || 0);
-    if (game.acc == null) game.acc = "";
+    game.acc = accList(game.acc);
     if (!game.firstUse) game.firstUse = Date.now();
     return game;
   }
@@ -1151,7 +1161,7 @@
   }
 
   // Accessoires de Roxy (débloqués avec les points gagnés au total)
-  const ACCS = [["", "Rien", 0], ["🎀", "Nœud", 200], ["🧣", "Écharpe", 600], ["🕶️", "Lunettes", 1200], ["🎩", "Chapeau", 2500], ["👑", "Couronne", 5000]];
+  const ACCS = [["🎀", "Nœud", 200], ["🧣", "Écharpe", 600], ["🕶️", "Lunettes", 1200], ["🎩", "Chapeau", 2500], ["👑", "Couronne", 5000]];
 
   // Ma progression, glissée dans le lien du récap ; les autres promeneurs la gardent quand ils ouvrent le lien
   const OTHERS_KEY = "wouaf-autres";
@@ -1190,14 +1200,17 @@
       <div class="flabel">🏆 Trophées · ${Object.keys(game.trophies).length} / ${TROPHIES.length}</div>
       <div class="tro">${TROPHIES.map(t => `<div class="${game.trophies[t.id] ? "" : "off"}"><b>${t.icon}</b>${esc(t.name)}${t.gift ? " 🎁" : ""}</div>`).join("")}</div>
       <div class="flabel">🎨 ${DOG} sur la carte</div>
-      <div class="accs">${ACCS.map(([e, n, need]) => `<button data-acc="${e}" class="${(game.acc || "") === e ? "on" : ""}"${game.total < need ? " disabled" : ""} title="${esc(n)}${game.total < need ? ` (${need} pts)` : ""}" aria-label="${esc(n)}${game.total < need ? `, se débloque à ${need} points` : ""}">${e || "🐕"}</button>`).join("")}</div>
-      <div class="howto" style="margin-top:6px">Nouvel accessoire à 200, 600, 1 200, 2 500 et 5 000 points.</div>
+      <div class="accs">${ACCS.map(([e, n, need]) => { const on = game.acc.includes(e), locked = game.total < need; return `<button data-acc="${e}" class="${on ? "on" : ""}"${locked ? " disabled" : ""} aria-pressed="${on}" aria-label="${esc(n)}${locked ? `, se débloque à ${need} points` : on ? ", porté" : ""}">${roxyHTML([e])}<span>${locked ? `🔒 ${need} pts` : esc(n)}</span></button>`; }).join("")}</div>
+      <div class="howto" style="margin-top:6px">Touche un accessoire pour le mettre ou l'enlever à ${DOG} (tu peux en porter plusieurs). Nouveaux accessoires à 200, 600, 1 200, 2 500 et 5 000 points.</div>
       <div class="flabel">👀 Où en sont les autres</div>
       <div class="props others">${lineOf(profile.walker || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(n, g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
       <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>`;
     $("#fogBtn").onclick = toggleFog;
     document.querySelectorAll("[data-acc]").forEach(b => b.onclick = () => {
-      game.acc = b.dataset.acc; saveGame();
+      const e = b.dataset.acc;
+      if (game.acc.includes(e)) game.acc = game.acc.filter(x => x !== e);
+      else game.acc = game.acc.filter(x => !(ACC_SLOT[x] === "a-hat" && ACC_SLOT[e] === "a-hat")).concat(e);   // un seul couvre-chef
+      saveGame();
       if (youMarker) youMarker.setIcon(youIcon());
       renderProg();
     });
