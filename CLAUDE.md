@@ -271,3 +271,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Retours du 14/11 (19 h 30) : champ prénom lisible en mode sombre (`.sheet input` dans le bloc sombre) ; prénom Éric refusé → champ code dans la fiche du
   prénom (`#whoSup`, « C'est moi ») ; « Quoi de neuf » = **une carte à la fois** (plus de glissement horizontal, qui coinçait sur iPhone) ; messages de la fenêtre
   Superviseur et de la remise à zéro aussi en bandeau (`toast`).
+- Retours du 14/11 (20 h) : confettis calés sur le temps (même vitesse à 30/60/120 images/s) et jusqu'en bas de l'écran (7 s max) ; Éric voit ☰ › ⚔️ Duels
+  en **aperçu** (`duelPreview`, `duelPrev` : formulaire et fiche avec les vrais prénoms de `/recent`, envoi désactivé) ; tableau de bord : % d'exploration
+  (`sum.fog`, un chiffre, aucun trajet) et duel en cours de chaque promeneur.

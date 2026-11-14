@@ -505,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.194051";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.200244";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2333,29 +2333,41 @@
     if ($("#dyNew")) $("#dyNew").onclick = () => sheetDuelNew();
     if ($("#dyMap")) $("#dyMap").onclick = () => sheetDuelMap(du);
   }
+  // 🧪 Éric (testeur) : il voit les écrans des duels comme les promeneurs, mais rien n'est envoyé
+  let duelPrev = false;
+  async function duelPreview(){
+    let names = [];
+    try{ names = ((await (await api("/recent")).json()).walks || []).map(w => w.w).filter((w, i, a) => w && !isEricName(w) && a.indexOf(w) === i); }catch(e){}
+    if (!names.length) names = ["Léa", "Tom"];
+    duelPrev = true;
+    duelData = Object.assign({}, duelData, { players: names.map(w => ({ walker: w, cs: null })) });
+    sheetDuelNew();
+  }
   // ⚔️ lancer un défi : qui, combien de temps, quel type, quelle mise → fiche récap → envoyer
   function sheetDuelNew(p){
+    if (!isTester()) duelPrev = false;
     p = Object.assign({ to:"", days:3, type:"walks", stake:0 }, p || {});
     const pl = (duelData.players || []);
     if (!pl.length){ openSheet(`<h2>⚔️ Lancer un défi</h2><p>Personne à défier pour l'instant : ton adversaire doit avoir fait au moins une balade avec l'app.</p><div class="btns"><button id="dnClose">OK</button></div>`); $("#dnClose").onclick = closeSheet; return; }
     if (!pl.some(x => sameN(x.walker, p.to))) p.to = pl[0].walker;
     const opBal = () => { const o = pl.find(x => sameN(x.walker, p.to)); return o && o.cs != null ? o.cs : Infinity; };
-    const maxSt = () => Math.min(myBal(), opBal());
+    const maxSt = () => duelPrev ? 100 : Math.min(myBal(), opBal());
     if (p.stake > maxSt()) p.stake = 0;
     const chips = (k, list, lab) => `<div class="pick" data-k="${k}">${list.map(v => `<button data-v="${v}" class="${String(p[k]) === String(v) ? "on" : ""}"${k === "stake" && v > maxSt() ? " disabled" : ""}>${lab(v)}</button>`).join("")}</div>`;
     openSheet(`<h2>⚔️ Lancer un défi</h2>
       <div class="flabel">Qui ?</div>${chips("to", pl.map(x => x.walker), v => esc(v))}
       <div class="flabel">Combien de temps ?</div>${chips("days", [3, 7], v => `${v} jours`)}
       <div class="flabel">Quel duel ?</div>${chips("type", ["walks", "streets"], v => DUEL_TYPE[v])}
+      ${duelPrev ? `<p class="howto">🧪 Aperçu superviseur : c'est l'écran que voient les promeneurs. Rien ne sera envoyé.</p>` : ""}
       <div class="flabel">La mise (ta tirelire : ${myBal()} 🪙)</div>${chips("stake", DUEL_STAKES, v => v ? `${v} 🪙` : "Aucune")}
       <div class="btns"><button id="dnNext">Voir la fiche →</button><button class="ghost" id="dnBack">Retour</button></div>`);
     document.querySelectorAll(".pick button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; p[k] = (k === "to" || k === "type") ? b.dataset.v : +b.dataset.v; sheetDuelNew(p); });
-    $("#dnBack").onclick = sheetDuels;
+    $("#dnBack").onclick = duelPrev ? closeSheet : sheetDuels;
     $("#dnNext").onclick = () => {
       openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${esc(p.to)} recevra exactement la même fiche, et a 6 h pour répondre (il peut aussi proposer une autre mise).</p><p id="dnMsg" role="status"></p>
-        <div class="btns"><button id="dnSend">📨 Envoyer le défi</button><button class="ghost" id="dnEdit">← Modifier</button></div>`);
+        <div class="btns">${duelPrev ? `<button id="dnSend" disabled>🧪 Aperçu : pas d'envoi pour le superviseur</button>` : `<button id="dnSend">📨 Envoyer le défi</button>`}<button class="ghost" id="dnEdit">← Modifier</button></div>`);
       $("#dnEdit").onclick = () => sheetDuelNew(p);
-      $("#dnSend").onclick = async () => { $("#dnMsg").textContent = "Un instant…"; const r = await duelCall("/duel-new", Object.assign({}, p, { have: myBal() })); if (r.ok) sheetDuels(); else $("#dnMsg").textContent = duelErr(r.status); };
+      if (!duelPrev) $("#dnSend").onclick = async () => { $("#dnMsg").textContent = "Un instant…"; const r = await duelCall("/duel-new", Object.assign({}, p, { have: myBal() })); if (r.ok) sheetDuels(); else $("#dnMsg").textContent = duelErr(r.status); };
     };
   }
   // 👀 Guerre des rues pendant la balade : les rues de l'autre en violet sur la carte, et une alerte quand on entre dans « son ombre »
@@ -2432,6 +2444,7 @@
     openSheet(`<h2>☰ Menu</h2><div class="menu">
       ${it("muProg", "🏆", "Progrès", esc(levelOf(game.total).name))}
       ${it("muMoney", "🪙", "Tirelire", Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
+      ${isTester() && PUSH_API ? it("muDuel", "⚔️", "Duels", "aperçu") : ""}
       ${duelOK() ? it("muDuel", "⚔️", "Duels", myDuel() ? scoreOf(myDuel()).join(" – ") : myInvite() ? "défi reçu !" : "") : ""}
       ${it("muFog", "🗺️", "Carte d'exploration", game.home ? fogStats().pct + " %" : "")}
       ${it("muOuts", "🐾", "Dernières sorties", "")}
@@ -2448,7 +2461,7 @@
     go("muProg", () => switchTab("prog"));
     go("muMoney", () => switchTab("shop"));
     go("muFog", openExplore);
-    go("muDuel", sheetDuels);
+    go("muDuel", () => isTester() ? duelPreview() : sheetDuels());
     go("muOuts", sheetOuts);
     go("muLog", () => switchTab("log"));
     go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
@@ -2971,7 +2984,7 @@
     const test = isTester();   // 🧪 testeur : ses balades comptent pour les dernières sorties et l'humeur de Roxy, mais aucun argent
     const item = { walker: profile.walker,
       walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0 },
-      sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, test: test ? 1 : 0 } };
+      sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, fog: (() => { try{ return game.home ? fogStats().pct : 0; }catch(e){ return 0; } })(), test: test ? 1 : 0 } };
     const sd = duelOK() && myDuel();
     if (sd && sd.type === "streets" && res && res.cl && item.walk.min >= 20) item.cells = res.cl;   // 🗺️ guerre des rues : seulement des cases, jamais le trajet
     const q = store.get("wouaf-envois", []); q.push(item); store.set("wouaf-envois", q.slice(-30));
@@ -3009,7 +3022,9 @@
       const l = last ? new Date(last.e * 1000) : null;
       return `<div class="wk"><h4>${esc(d.walker)}${s.test ? " 🧪 testeur" : ""} · ${esc(s.lv || "")}</h4><div class="s">
         🪙 Tirelire du mois : <b>${(s.cs || 0).toLocaleString("fr-FR")} clebsous = ${fmtEur((s.cs || 0) / CS)}</b>${s.mal ? ` (malus −${s.mal} : ${esc(s.malt || "")})` : ""}<br>
-        📅 Cette semaine : ${week.length} balade${week.length > 1 ? "s" : ""}, ${fmtMin(week.reduce((n, x) => n + x.min, 0))} · 🔥 série ${s.n || 0} j<br>
+        📅 Cette semaine : ${week.length} balade${week.length > 1 ? "s" : ""}, ${fmtMin(week.reduce((n, x) => n + x.min, 0))} · 🔥 série ${s.n || 0} j${s.fog != null ? ` · 🗺️ exploration ${s.fog} %` : ""}<br>
+        ${(() => { const du = (j.duels || []).find(x => sameN(x.from, d.walker) || sameN(x.to, d.walker)); if (!du) return ""; const me = sameN(du.from, d.walker), op = me ? du.to : du.from, sc = du.score;
+          return `⚔️ Duel avec ${esc(op)} : ${du.status === "pending" ? "en attente de réponse" : `${me ? sc.a : sc.b} – ${me ? sc.b : sc.a}`} (${DUEL_TYPE[du.type]})<br>`; })()}
         ${l ? `🐾 Dernière : ${l.toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })} à ${hm(l)}, ${fmtMin(last.min)} · ${fmtKm(last.m)} · +${last.cs} 🪙${last.pp ? " · 💧" : ""}${last.cc ? " · 💩" : ""}` : "Pas encore de balade"}
         ${w.length ? `<details${voidMode ? " open" : ""} style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000);
           const txt = `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.tr ? " 🏴‍☠️" : ""}${x.ms ? " ⏱️ trop courte" : ""}`;
@@ -3119,11 +3134,12 @@
       document.body.appendChild(c);
       const x = c.getContext("2d"), cols = ["#f5bd34", "#d9792b", "#4c8a5a", "#2a7de1", "#c8452f", "#ffffff"], dpr = devicePixelRatio;
       const ps = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -Math.random() * c.height * .4, vx: (Math.random() - .5) * 4 * dpr, vy: (2 + Math.random() * 4) * dpr, s: (5 + Math.random() * 6) * dpr, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: cols[Math.floor(Math.random() * cols.length)] }));
-      const t0c = performance.now();
+      const t0c = performance.now(); let last = t0c;
       const step = now => {
+        const k = Math.min(4, (now - last) / 16.7); last = now;   // même vitesse à 30, 60 ou 120 images/s
         x.clearRect(0, 0, c.width, c.height);
-        for (const p of ps){ p.x += p.vx; p.y += p.vy; p.vy += .05 * dpr; p.r += p.vr; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
-        if (now - t0c < 2600) requestAnimationFrame(step); else c.remove();
+        for (const p of ps){ p.x += p.vx * k; p.y += p.vy * k; p.vy += .05 * dpr * k; p.r += p.vr * k; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
+        if (ps.some(p => p.y < c.height + 20 * dpr) && now - t0c < 7000) requestAnimationFrame(step); else c.remove();   // jusqu'en bas de l'écran
       };
       requestAnimationFrame(step);
     }catch(e){}
