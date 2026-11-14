@@ -57,8 +57,10 @@ with sync_playwright() as pw:
     nh = Cc.locator(".heart").count(); Cc.mouse.up(); Cc.wait_for_timeout(300)
     check("caresse : des cœurs, Roxy remue, une phrase contente", nh >= 2 and Cc.evaluate("document.querySelector('#heroDog').classList.contains('petted')"), nh)
     check("caresse : n'ouvre pas la fiche de Roxy", not Cc.evaluate("document.querySelector('#modal').classList.contains('open')"))
-    Cc.evaluate("localStorage.setItem('wouaf-last', JSON.stringify({t: Math.round(Date.now()/1000) - 3600, walker: 'Tom'}))")
-    Cc.evaluate("document.dispatchEvent(new Event('visibilitychange'))"); Cc.wait_for_timeout(200)
+    import json as _j, time as _t
+    e = int(_t.time()) - 3600
+    local_api("POST", "/walk", _j.dumps({"walker": "Tom", "walk": {"s": e - 1800, "e": e, "min": 30, "m": 2000, "cs": 10}, "sum": {}}).encode())
+    Cc.evaluate("document.dispatchEvent(new Event('visibilitychange'))"); Cc.wait_for_timeout(1500); Cc.evaluate("__wouaf.renderHome && __wouaf.renderHome()"); Cc.wait_for_timeout(200)
     check("retour dans l'app : « Tom m'a sortie tout à l'heure »", "Tom m'a sortie" in say(), say())
     h = Cc.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     check("accueil toujours sans défilement avec la bulle", h[0] <= h[1], h)

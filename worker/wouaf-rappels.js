@@ -290,6 +290,21 @@ async function players(env){
   }
   return Object.values(out);
 }
+// 🧭 classement des explorateurs (v2.3) : semaine du lundi au dimanche (journée de l'app, 4 h) ; points = 3 × rues neuves + objets,
+// balades valides (≥ 20 min, non annulées), Éric testeur exclu. On ne renvoie QUE les places (ex aequo = même place), jamais les points.
+const weekOfDay = day => { const d = new Date(day + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7); return d.toISOString().slice(0, 10); };
+async function explorers(env, now){
+  const wk = weekOfDay(isoDay(now)), pd = new Date(wk + "T12:00:00Z"); pd.setUTCDate(pd.getUTCDate() - 7);
+  const pwk = pd.toISOString().slice(0, 10), admin = await env.WOUAF.get("admin"), sc = { [wk]: {}, [pwk]: {} };
+  const keys = []; let cur;   // toutes les pages de la liste (la KV pagine)
+  do { const l = await env.WOUAF.list({ prefix:"d:", cursor: cur }); keys.push(...l.keys); cur = l.list_complete ? null : l.cursor; } while (cur);
+  for (const k of keys){ const d = await env.WOUAF.get(k.name, "json"); if (!d || !d.walker || (admin && normName(d.walker) === SUP_NAME)) continue;
+    for (const w of d.walks || []){ if (w.v || w.min < 20) continue; const k2 = weekOfDay(isoDay(w.e * 1000)); if (!sc[k2]) continue;
+      sc[k2][d.walker] = (sc[k2][d.walker] || 0) + 3 * (w.nc || 0) + (w.ob || 0); } }
+  const rank = o => { const a = Object.entries(o).filter(x => x[1] > 0).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]));
+    return a.map(x => ({ w: x[0], r: a.findIndex(y => y[1] === x[1]) + 1 })); };
+  return { wk, rank: rank(sc[wk]), prev: { wk: pwk, rank: rank(sc[pwk]) } };
+}
 // 🏅 record du mois : la plus longue balade valide (≥ 20 min) du mois, tous promeneurs (Éric testeur exclu)
 async function recomputeRecord(env, mk){
   const l = await env.WOUAF.list({ prefix:"d:" }), admin = await env.WOUAF.get("admin");
@@ -321,7 +336,7 @@ export default {
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json") });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()) });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
@@ -542,7 +557,7 @@ export default {
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
       if (!w || !x.e) return json({ error:"bad" }, 400);
       const num = v => Math.max(0, Math.min(1e7, Math.round(+v || 0))), ts = v => Math.max(0, Math.min(4e9, Math.round(+v || 0)));
-      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms), tr: x.tr ? 1 : 0 };
+      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms), tr: x.tr ? 1 : 0, nc: Math.min(50, num(x.nc)), ob: Math.min(200, num(x.ob)) };
       const rs = (await env.WOUAF.get("reset", "json")) || 0;
       if (rs && walk.e * 1000 < rs) return json({ ok:true, ignored:true });   // balade d'avant la remise à zéro (envoi en retard)
       const dk = "d:" + slug(w);

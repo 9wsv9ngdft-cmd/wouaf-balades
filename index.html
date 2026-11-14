@@ -473,6 +473,23 @@
   .heart{position:absolute;pointer-events:none;font-size:18px;z-index:5;animation:heartUp 1.1s ease-out forwards}
   @keyframes heartUp{0%{transform:translateY(0) scale(.6);opacity:0}20%{opacity:1;transform:translateY(-8px) scale(1.1)}100%{transform:translateY(-46px) scale(.9);opacity:0}}
   @media (prefers-color-scheme: dark){ .say{background:#2a322c;color:var(--ink)} .say::before{border-bottom-color:#2a322c} }
+
+  /* v2.3 : classement des explorateurs */
+  .explo{display:block;width:100%;text-align:left;border-radius:18px;padding:10px 12px;color:#fff;background:linear-gradient(135deg,#1f4c66,#2f7a8a 60%,#3a9a7a);box-shadow:0 8px 20px -14px rgba(0,0,0,.6);font-weight:600}
+  .explo .at{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .explo .prize{background:#ffd25e;color:#4a3405;border-radius:99px;padding:2px 8px;font-size:12px;text-transform:none;letter-spacing:0;white-space:nowrap}
+  .explo .pod{display:flex;gap:6px;margin-top:8px}
+  .explo .pod span{flex:1;min-width:0;border-radius:11px;background:rgba(255,255,255,.15);text-align:center;padding:4px 2px;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .explo .pod span.me{background:#fff;color:#1f4c66} .explo .pod small{display:block;font-size:18px;line-height:1.1} .explo .pod .empty{font-weight:500;font-size:13px;padding:8px 4px;white-space:normal}
+  .explo .tip{display:block;font-size:13px;font-weight:500;margin-top:7px;opacity:.95}
+  .arena.slim{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px} .arena.slim .chal{margin-top:0;flex-wrap:nowrap} .arena.slim .chal button{padding:7px 10px;font-size:14px;white-space:nowrap}
+  #home .arena .atag{display:none} #home .arena.ping .atag{display:none}
+  .lt small{white-space:nowrap}
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin:14px 0 4px}
+  .podium .step{flex:1;text-align:center} .podium .who{font-weight:800;font-size:15px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .podium .face{font-size:28px}
+  .podium .blk{border-radius:12px 12px 0 0;display:grid;place-items:center;font-size:24px;font-weight:900;color:#fff}
+  .podium .s1 .blk{height:100px;background:linear-gradient(180deg,#e8b93a,#a87d16)} .podium .s2 .blk{height:72px;background:linear-gradient(180deg,#b9c3cc,#7d8892)} .podium .s3 .blk{height:52px;background:linear-gradient(180deg,#d08a52,#8c5428)}
+  .podium .step.me .blk{box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--green-2)} .podium .off{opacity:.35}
 </style>
 </head>
 <body>
@@ -570,7 +587,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.002005";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.003911";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -675,7 +692,7 @@
   const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
   // photo de Roxy : celle choisie sur ce téléphone, sinon la photo officielle (roxy.jpg)
   const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || "roxy.jpg"; }catch(e){ return "roxy.jpg"; } };
-  const roxyHTML = list => { if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
+  const roxyHTML = list => { if (wearCrown()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("👑"); if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
   function youIcon(){
     let a = []; try{ a = accList(JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc); }catch(e){}
     return L.divIcon({ className:"", html: roxyHTML(a), iconSize:[34,34], iconAnchor:[17,17] });
@@ -2045,7 +2062,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -2069,10 +2086,12 @@
       const j = await (await api("/pause")).json();
       pauses = j.pauses || []; store.set("wouaf-pauses", pauses);
       boosts = j.boosts || []; store.set("wouaf-boosts", boosts);
+      if (JSON.stringify(store.get("wouaf-last", null)) !== JSON.stringify(j.last || null)) sayCur = null;   // nouvelle sortie connue : Roxy refait son accueil
       store.set("wouaf-last", j.last || null);   // null = plus aucune sortie valable (remise à zéro, balade annulée)
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
       store.set("wouaf-record", j.record || null);
+      if (j.explo) store.set("wouaf-explo", j.explo);
       syncHunt();
       return true;
     }
@@ -2265,19 +2284,9 @@
   function renderHome(){
     const box = $("#home"); if (!box) return;
     ensureGame(); renderWho(); updateGo();
-    const lv = levelOf(game.total), n = game.streak.n || 0;
-    const alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
-    const pct = lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100;
-    // une seule ligne : la chose la plus importante du jour (toucher = toutes les missions)
-    const ms = missions(), order = ["🏖️", "🎂", "🔥", "💰", "🎉", "🏴‍☠️", "🎯"];
-    let pick = null;
-    for (const ic of order){ pick = ms.find(m => m.ic === ic && !m.done); if (pick) break; }
-    if (!pick) pick = ms.find(m => !m.done && m.ic !== "🐕") || ms.find(m => m.ic === "🐕");
-    const left = ms.filter(m => !m.done).length;
-    const dl = "";   // le duel est dans l'arène, juste en dessous
-    box.innerHTML = (dl ? `<button class="oneline" id="oneLine" style="font-weight:700"><span class="ic">⚔️</span><span>${esc(dl)}</span><span class="more">›</span></button>`
-      : pick ? `<button class="oneline" id="oneLine"><span class="ic">${pick.done ? "✅" : pick.ic}</span><span>${esc(pick.t)}</span><span class="more">${left > 1 ? `${left} missions ›` : "›"}</span></button>` : "") + lotsHTML();
-    if ($("#oneLine")) $("#oneLine").onclick = dl ? sheetDuels : sheetToday;
+    // v2.3 : le classement des explorateurs remplace la ligne des missions (les missions passent dans la bulle de Roxy et le menu)
+    box.innerHTML = exploHTML() + lotsHTML();
+    const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
     bindLots();
   }
   function sheetToday(){
@@ -2288,6 +2297,45 @@
   }
 
 
+  // ---------- 🧭 Classement des explorateurs (v2.3, décidé le 15/11) : la semaine, seulement les places, la couronne 👑 pour le 1er ----------
+  // Le serveur calcule (3 × rues neuves + objets, balades ≥ 20 min) et ne renvoie que les places ; ex aequo = même place.
+  function exploMe(){
+    const ex = store.get("wouaf-explo", null) || { rank:[], prev:{ rank:[] } }, me = profile.walker || "";
+    const rank = ex.rank || [], mine = rank.find(x => normName(x.w) === normName(me));
+    const above = mine && mine.r > 1 ? (rank.filter(x => x.r < mine.r).pop() || {}).w : null;
+    return { ex, rank, mine, above };
+  }
+  function wearCrown(){   // 👑 sur Roxy chez le premier explorateur de la semaine dernière, toute la semaine
+    try{ const ex = store.get("wouaf-explo", null), me = profile.walker;
+      return !!(ex && ex.prev && me && !isTester() && (ex.prev.rank || []).some(x => x.r === 1 && normName(x.w) === normName(me))); }catch(e){ return false; }
+  }
+  const MEDAL = r => ["🥇", "🥈", "🥉"][r - 1] || `${r}e`;
+  function exploHTML(){
+    if (!PUSH_API || !profile.walker) return "";
+    const { rank, mine, above } = exploMe(), top = rank.slice(0, 3), sun = new Date(Date.now() - 4 * 3600000).getDay() === 0;
+    const pod = top.length ? top.map(x => `<span class="${mine && x === mine ? "me" : ""}"><small>${MEDAL(x.r)}</small>${mine && x === mine ? "Toi" : esc(x.w)}</span>`).join("")
+      : `<span class="empty">Personne n'est encore classé cette semaine</span>`;
+    const tip = isTester() ? "Les ados se classent avec les rues nouvelles et les objets. Aucun chiffre affiché."
+      : mine ? (mine.r === 1 ? "👑 Tu es en tête ! Garde ta place jusqu'à dimanche." : `🔥 Encore quelques rues nouvelles et tu passes devant ${esc(above || "")} !`) + (mine.r > 3 ? ` (tu es ${mine.r}e)` : "")
+      : "🧭 Fais une balade avec des rues nouvelles pour entrer dans le classement !";
+    return `<button class="explo" id="exploCard"><span class="at"><span>🧭 Explorateurs · ${sun ? "fin ce soir" : "fin dimanche"}</span><span class="prize">🥇 = 👑 sur ${DOG}</span></span>
+      <span class="pod">${pod}</span><span class="tip">${tip}</span></button>`;
+  }
+  function sheetExplo(){
+    const { ex, rank, mine } = exploMe(), wk = ex.wk ? new Date(ex.wk + "T12:00:00") : null;
+    const end = wk ? new Date(wk.getTime() + 6 * DAYMS) : null, f = d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
+    const left = (() => { if (!wk) return ""; const e = new Date(wk.getTime() + 7 * DAYMS); e.setHours(4, 0, 0, 0); const h = Math.max(0, Math.round((e - Date.now()) / 3600000)); return h >= 24 ? `plus que ${Math.floor(h / 24)} j ${h % 24} h` : `plus que ${h} h`; })();
+    const step = (x, cls) => x ? `<div class="step ${cls}${mine && x === mine ? " me" : ""}"><div class="face">${x.r === 1 ? "👑" : "🐾"}</div><div class="who">${mine && x === mine ? "Toi" : esc(x.w)}</div><div class="blk">${x.r}</div></div>` : `<div class="step ${cls} off"><div class="face">❔</div><div class="who">&nbsp;</div><div class="blk"></div></div>`;
+    const rest = rank.slice(3);
+    openSheet(`<h2 style="text-align:center">🧭 Les explorateurs</h2><p class="howto" style="text-align:center;margin-top:-4px">${wk ? `Semaine du ${f(wk)} au ${f(end)} · ${left}` : "Cette semaine"}</p>
+      <div class="podium">${step(rank[1], "s2")}${step(rank[0], "s1")}${step(rank[2], "s3")}</div>
+      ${rest.length ? `<p style="text-align:center">${rest.map(x => `${x.r}e ${mine && x === mine ? "<b>Toi</b>" : esc(x.w)}`).join(" · ")}</p>` : ""}
+      <div class="entry" style="margin-top:10px"><div><h4>🥇 Le premier</h4><div class="when">porte la couronne 👑 sur ${DOG}, chez lui, toute la semaine suivante</div></div></div>
+      <p class="warnline" style="margin-top:10px">💡 Pour passer devant : prends des rues que tu n'as pas faites depuis 15 jours, et ramasse les objets en route.</p>
+      <p class="howto">Ce qui compte : les rues nouvelles (surtout) et les objets ramassés, pendant les balades de 20 min ou plus. On ne montre pas les chiffres, seulement les places. Tout repart à zéro le lundi.</p>
+      <div class="btns"><button id="exGo">▶️ Partir explorer</button></div>`);
+    $("#exGo").onclick = () => { closeSheet(); setTimeout(() => $("#freeWalk").click(), 250); };
+  }
   // ---------- 💎 Les gros lots sur l'accueil (v2.1) : trésor (tant qu'il n'est pas gagné), coffre, record, duel ----------
   const RECORD_CS = 50;
   function lotsHTML(){   // v2.2 : trois petites tuiles côte à côte (toucher = l'explication)
@@ -2295,13 +2343,13 @@
     const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));   // déjà trouvé cette semaine (par quelqu'un)
     const tile = (k, cls, e, v, t) => `<button class="lt${cls}" data-lot="${k}"><span class="e">${e}</span><b>${v} 🪙</b><small>${t}</small></button>`;
     if (!game.home && !gone)   // pas encore de maison (1re balade, ou après la remise à zéro) : le trésor est quand même annoncé
-      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor<br>1 seul gagnant"));
+      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor"));
     else if (hu && !hu.found && !hu.gone)
-      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor<br>${game.home ? "à ~" + fmtKm(dist(game.home, hu)) + " " + compass(game.home, hu) : "1 seul gagnant"}`));
+      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor${game.home ? " · " + fmtKm(dist(game.home, hu)) : ""}`));
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(tile("chest", ch > 0 ? " hot" : "", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "Coffre<br>🔥 il est chaud !" : "Coffre<br>rues neuves"));
+    l.push(tile("chest", ch > 0 ? " hot" : "", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
     const rec = store.get("wouaf-record", null);
-    l.push(tile("rec", "", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}<br>par ${esc(rec.walker)}` : "Record<br>personne encore"));
+    l.push(tile("rec", "", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
     const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
     const ar = arenaHTML(), live = duelOK() && (myDuel() || myInvite());
     return `<div class="lots">${live ? ar + lots : lots + ar}</div>`;
@@ -2324,9 +2372,8 @@
     }
     if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${esc(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
     const pl = (duelData.players || []).slice(0, 3);
-    return `<div class="arena"><div class="at"><span>⚔️ L'arène · 3 ou 7 jours</span><span class="bet">🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
-      <div class="atag">Qui sortira le plus ${DOG} ? Mise des clebsous !</div>
-      <div class="chal">${pl.length ? pl.map(p => `<button data-defy="${esc(p.walker)}">⚔️ Défier ${esc(p.walker)}</button>`).join("") : `<button data-arena="duels">⚔️ Lancer un défi</button>`}</div></div>`;
+    return `<div class="arena slim"><div class="at"><span>⚔️ L'arène · 🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
+      <div class="chal"><button data-arena="duels">⚔️ ${pl.length === 1 ? `Défier ${esc(pl[0].walker)}` : "Lancer un défi"}</button></div></div>`;
   }
   function bindLots(){
     document.querySelectorAll("[data-arena]").forEach(b => b.onclick = e => { e.stopPropagation(); b.dataset.arena === "prev" ? duelPreview() : sheetDuels(); });
@@ -2540,6 +2587,11 @@
     const rec = store.get("wouaf-record", null);
     if (rec && !sameN(rec.walker, me)){ const k = rec.walker + rec.min;
       if (store.get("wouaf-record-vu", "") !== k){ store.set("wouaf-record-vu", k); cards.push({ html:`<div class="dc-ic">🏅</div><h2>${esc(rec.walker)} a battu le record : ${fmtMin(rec.min)}</h2><p>Fais une balade plus longue pour le reprendre : +${RECORD_CS} clebsous !</p>` }); } }
+    try{ const ex = store.get("wouaf-explo", null), pr = ex && ex.prev;   // 🧭 lundi : le premier explorateur de la semaine passée
+      if (pr && pr.wk && (pr.rank || []).length && store.get("wouaf-explo-vu", "") !== pr.wk){ store.set("wouaf-explo-vu", pr.wk);
+        const first = pr.rank.filter(x => x.r === 1), won = !isTester() && first.some(x => sameN(x.w, me)), mine = pr.rank.find(x => sameN(x.w, me));
+        cards.push({ party: won, html: won ? `<div class="dc-ic"><div class="bigdog" style="margin:30px 0 6px">${roxyHTML(accList(game.acc))}</div></div><h2>Tu es l'explorateur de la semaine !</h2><p>${DOG} porte la couronne 👑 chez toi jusqu'à dimanche. Nouvelle semaine : tout repart à zéro… qui va te la piquer ? 😏</p>`
+          : `<div class="dc-ic">👑</div><h2>${first.map(x => esc(x.w)).join(" et ")} ${first.length > 1 ? "sont les explorateurs" : "est l'explorateur"} de la semaine !</h2><p>${mine ? `Toi : ${MEDAL(mine.r)} ${mine.r > 3 ? "" : "place"}. ` : ""}Nouvelle semaine, tout repart à zéro : à toi la couronne ? 🧭</p>` }); } }catch(e){}
     saveGame();
     return cards;
   }
@@ -2653,6 +2705,7 @@
       ${li("muOuts", "🐾", "Dernières sorties", "")}
       ${li("muLog", "📒", "Carnet", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
+      ${li("muToday", "📋", "Missions du jour", "")}
       ${li("muBonus", "🎁", "Bonus et règles", "")}
       ${PUSH_API && supToken() ? li("muSupAll", "🔑", "Superviseur", "") : ""}
       </div>
@@ -2676,6 +2729,7 @@
     go("muBonus", sheetBonus);
     go("muShort", sheetShortcut);
     go("muTuto", () => showTuto(0, true));
+    go("muToday", sheetToday);
     go("muAbout", () => { const d = document.querySelector("footer details"); const h = d ? d.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, "") : "";
       openSheet(`<h2>ℹ️ À propos</h2><p><b>Wouaf Balades, version ${APP_LABEL}.</b></p><p class="howto">${h}</p><div class="btns"><button id="abClose">Fermer</button></div>`); $("#abClose").onclick = closeSheet; });
     go("muWho", () => askProfile());
@@ -3168,6 +3222,10 @@
     const rec = store.get("wouaf-record", null);
     p.push(rec ? `Le record du mois, c'est ${fmtMin(rec.min)}. On le bat ? 🏅` : "Personne n'a encore le record du mois… Pourquoi pas toi ? 🏅");
     if (l && h < 8) p.push("Je suis toute contente aujourd'hui ! 😊");
+    const sm = sayMission(); if (sm) p.push(sm);
+    try{ const ex = exploMe(); if (ex.mine){ if (ex.mine.r === 1) p.push("Tu es premier explorateur ! On garde la tête jusqu'à dimanche ? 👑");
+      else if (ex.above) p.push(`${ex.above} est devant toi… on lui reprend la place ? 😤`); }
+      else if (!isTester()) p.push("Des rues nouvelles, et tu entres dans le classement des explorateurs ! 🧭"); }catch(e){}
     p.push("J'ai entendu un chat dehors ! 🐈", "Je connais une rue où personne ne passe jamais… 🗺️", "Un os, une balle… je les sens d'ici ! 🦴",
       "Tu me grattes derrière l'oreille ? Glisse ton doigt sur ma photo ! 🥰", "Ma laisse est dans l'entrée, je dis ça, je dis rien… 🦮");
     return p;
@@ -3187,7 +3245,16 @@
     sayUsed.push(t); if (sayUsed.length > 6) sayUsed.shift();
     return t;
   }
-  function sayNow(){ if (!sayCur) sayCur = sayHello() || sayNext(); return sayCur; }
+  function sayMission(){   // ce qui était la « ligne importante » de l'accueil, dit par Roxy
+    try{
+      if (paused(dIso(Date.now()))) return "🏖️ Pause du superviseur : pas de malus en ce moment !";
+      if (isBday()) return "🎂 C'est mon anniversaire ! Tous les bonus comptent triple 🎉";
+      if (boosted(dIso(Date.now()))) return "🎉 Jour bonus : tous les bonus comptent double aujourd'hui !";
+      if (game.defiDone !== dayKey(Date.now())) return `🎯 Mon défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} 🪙)`;
+    }catch(e){}
+    return null;
+  }
+  function sayNow(){ if (!sayCur) sayCur = sayHello() || sayMission() || sayNext(); return sayCur; }
   function roxySay(t){
     sayCur = t; const b = $("#sayBtn"); if (!b) return;
     b.textContent = t; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
@@ -3266,7 +3333,7 @@
     const ml = malusIn(m0, Date.now() + DAYMS), w = weekStats(Date.now()), lv = levelOf(game.total);
     const test = isTester();   // 🧪 testeur : ses balades comptent pour les dernières sorties et l'humeur de Roxy, mais aucun argent
     const item = { walker: profile.walker,
-      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0 },
+      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0, nc: res ? res.cells || 0 : 0, ob: res && res.got ? Object.values(res.got).reduce((a, b) => a + (+b || 0), 0) : 0 },
       sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, fog: (() => { try{ return game.home ? fogStats().pct : 0; }catch(e){ return 0; } })(), test: test ? 1 : 0 } };
     const sd = duelOK() && myDuel();
     if (sd && sd.type === "streets" && res && res.cl && item.walk.min >= 20) item.cells = res.cl;   // 🗺️ guerre des rues : seulement des cases, jamais le trajet
@@ -4443,7 +4510,8 @@
   const NEWS = {
     37: [
       "🐶 Roxy te parle ! Touche sa bulle pour qu'elle te dise autre chose.",
-      "❤️ Caresse-la : glisse ton doigt sur sa photo."
+      "❤️ Caresse-la : glisse ton doigt sur sa photo.",
+      "🧭 Le classement des explorateurs : le plus de rues nouvelles de la semaine gagne la couronne 👑 pour Roxy !"
     ],
     36: [
       "🏠 L'accueil tient sur un seul écran : plus besoin de faire défiler. Touche une tuile des gros lots pour l'explication.",

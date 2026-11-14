@@ -319,3 +319,11 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   un glissement n'ouvre pas la fiche (`petAt`).
 - Place gagnée : titre « Les gros lots » retiré (tuiles seules), tuiles un peu plus basses, arène « Qui sortira le plus Roxy ? Mise des clebsous ! ».
 - En attente (décidé le 15/11) : rappels « à la voix de Roxy », lot 2 (rythme de la journée, souvenirs, journal), lot 3 (photos par humeur, tenues, anniversaire), lot 4 (balle, réactions en balade).
+- 🧭 **Classement des explorateurs** (décidé le 15/11 : « de l'enjeu », **seulement la couronne**, à la semaine) : le Worker calcule, pour la semaine lundi–dimanche
+  (journée de l'app, 4 h ; `weekOfDay`, `explorers`), 3 × rues neuves + objets ramassés des balades ≥ 20 min non annulées (Éric exclu), et `GET /pause` renvoie
+  `explo = { wk, rank:[{w, r}], prev:{ wk, rank } }` : **seulement les places** (ex aequo = même place), jamais les points. L'app envoie `nc` (rues neuves, `res.cells`)
+  et `ob` (objets, `res.got`) avec `/walk`. Accueil : carte `#exploCard` (`exploHTML`, podium 3 premiers, « Toi », astuce « tu passes devant X ») à la place de la ligne
+  des missions ; fiche `sheetExplo` (podium, règles) ; lundi : carte dans « Quoi de neuf » (clé `wouaf-explo-vu`). 👑 **Couronne** sur Roxy (`wearCrown` dans `roxyHTML`)
+  chez le 1er de la semaine passée, toute la semaine. Pas de clebsous. Test : `tests/explo.test.mjs`, `tests/e2e_explo.py`.
+- Les missions du jour passent dans la bulle de Roxy (`sayMission` : pause, anniversaire, jour bonus, défi du jour) et dans le menu (📋 `#muToday` → `sheetToday`).
+  Arène sans duel = une ligne (`.arena.slim`, un seul bouton) ; sur l'accueil, pas de phrase sous le face-à-face (`#home .arena .atag`).
