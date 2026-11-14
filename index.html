@@ -275,7 +275,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.110514";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.111150";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1028,9 +1028,8 @@
     $("#v-shop").innerHTML = `<div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
         <div class="big">💶 ${fmtEur(eur)}</div>
-        <div class="bar"><i style="width:${Math.round(100 * eur / MONEY_MAX)}%"></i></div>
-        <div class="lvl">Rythme ≈ ${monthPace()} € à la fin du mois · ${MONEY_MAX} € maximum</div>
-        ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtEur(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus (en plus des ${MONEY_MAX} €)</div>` : ""}
+        <div class="lvl">Rythme ≈ ${monthPace()} € à la fin du mois</div>
+        ${bonusThisMonth() ? `<div class="lvl">💰 + ${fmtEur(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""} en bonus</div>` : ""}
         <button class="ghost" id="bilNow" style="margin-top:10px;width:100%;background:rgba(255,255,255,.18);color:#fff">📊 Envoyer le bilan de la quinzaine</button>
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
@@ -1578,8 +1577,9 @@
   }
 
   function moneyBox(r, moneyMin){
-    if (r.eu) return `<div class="gamebox">💶 <b>+${fmtEur(r.eu)}</b><small>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}${moneyThisMonth() >= MONEY_MAX ? " (maximum du mois atteint)" : ""}</small></div>`;
-    if (moneyThisMonth() >= MONEY_MAX) return `<div class="warnline">💶 Maximum de ${MONEY_MAX} € atteint ce mois-ci.</div>`;
+    // le maximum mensuel n'est jamais affiché aux promeneurs (choix du superviseur : pas de « ligne d'arrivée »)
+    if (r.eu) return `<div class="gamebox">💶 <b>+${fmtEur(r.eu)}</b><small>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}</small></div>`;
+    if (moneyThisMonth() >= MONEY_MAX) return `<div class="gamebox">💶 <b>Tirelire de ${monthName(Date.now())} : ${fmtEur(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
     return `<div class="warnline">💶 Moins de 15 min de vraie balade : celle-ci ne rapporte rien. Vise au moins 15 min, et plus c'est long, plus ça rapporte.</div>`;
   }
 
@@ -1976,21 +1976,21 @@
       "👀 Vois où en sont les autres promeneurs en ouvrant leurs récaps."
     ],
     14: [
-      "💶 Nouvelle tirelire : chaque balade d'au moins 15 min rapporte selon sa durée (25 min ≈ 0,35 €, 45 min ≈ 0,85 €, 1 h ≈ 1,30 €). Jusqu'à 15 € par mois.",
+      "💶 Nouvelle tirelire : chaque balade d'au moins 15 min rapporte selon sa durée (25 min ≈ 0,35 €, 45 min ≈ 0,85 €, 1 h ≈ 1,30 €). Plus tu promènes Roxy longtemps, plus ça rapporte.",
       "⏱️ Une longue balade rapporte plus que plusieurs courtes. Moins de 15 min : rien.",
       "🎮 Les points restent pour le jeu (niveaux de Roxy, coins explorés)."
     ],
     13: [
-      "💶 Les euros suivent maintenant le temps de balade : 25 min par jour ≈ 10 € par mois, 15 min ≈ 6 €, 45 min ou plus = 15 € (maximum).",
+      "💶 Les euros suivent maintenant le temps de balade : 25 min par jour ≈ 10 € par mois, 15 min ≈ 6 €, plus si les balades sont plus longues.",
       "📊 L'onglet Récompenses affiche tes minutes de balade par jour ce mois-ci."
     ],
     12: [
-      "💶 Le prix des 5 € s'ajuste tous les 15 jours : une balade par jour ≈ 10 € par mois, plus si tu promènes Roxy davantage (15 € maximum).",
+      "💶 Le prix des 5 € s'ajuste tous les 15 jours : une balade par jour ≈ 10 € par mois, plus si tu promènes Roxy davantage.",
       "📊 Le 1er et le 16, l'app propose d'envoyer le bilan de la quinzaine au superviseur."
     ],
     11: [
       "⚖️ Points rééquilibrés : moins d'objets (un tous les ~400 m), trésor ⭐ à 5 points.",
-      "🎁 Nouveaux prix des récompenses, et 💶 15 € maximum par mois et par promeneur."
+      "🎁 Nouveaux prix des récompenses."
     ],
     10: [
       "🏅 Points Roxy : ramasse 🦴 🎾 🍖 et un ⭐ trésor par balade, juste en passant à côté.",
