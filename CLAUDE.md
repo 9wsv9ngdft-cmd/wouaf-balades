@@ -290,3 +290,5 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   = balade libre tout de suite (durée choisie en dernier) ; ☰ › 📲 Bouton « Sortir Roxy » (`sheetShortcut`) : copier le lien + étapes Raccourcis › « Ouvrir les URL »
   › icône `sortir-roxy.png` (Roxy + ▶️) via « Sur l'écran d'accueil ». **Lien testé par Éric : `webapp://<hôte><chemin>#go`** (ouvre l'app, pas Safari ; la forme avec https ne marche pas). `SHORTCUT_URL` = lien iCloud du raccourci d'Éric (14/11) → bouton « ⬇️ Télécharger le raccourci ». Test : `tests/e2e_go.py`.
   À vérifier sur iPhone : le raccourci doit ouvrir l'app de l'écran d'accueil, pas Safari (stockages séparés).
+- 📲 Fenêtre d'ouverture : carte « Sors Roxy en un seul geste » **une fois par téléphone** (`wouaf-sc-tip`, pas pour Éric), bouton « Je l'installe » → `sheetShortcut` ;
+  dernière page du tuto court : astuce ☰ › 📲.

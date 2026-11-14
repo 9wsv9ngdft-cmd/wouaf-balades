@@ -8,7 +8,7 @@ def check(n, c, x=""):
     if not c: FAILS.append(n)
 txt = lambda p: p.evaluate("document.querySelector('#sheet').innerText")
 post = lambda path, b: local_api("POST", path, json.dumps(b).encode())
-INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
+INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
 local_api("GET", "/__wipe")
 now = int(time.time())
 for w in ("Léa", "Tom"): post("/walk", {"walker": w, "walk": {"s": now - 90000, "e": now - 86400, "min": 10, "m": 900, "cs": 0}, "sum": {"cs": 200}})

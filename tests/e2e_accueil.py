@@ -34,6 +34,7 @@ with sync_playwright() as pw:
     b3, c3, Cc = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}")
     open_app(Cc, 4000); t = txt(Cc)
     check("démarrage : choix des statistiques + rappel « privé »", "améliorer l'app" in t and "reste privé" in t and Cc.locator("[data-st]").count() == 2, t[:300])
+    check("démarrage : carte « Sors Roxy en un seul geste » avec « Je l'installe »", "un seul geste" in t and Cc.locator("[data-go='sc']").count() == 1, t[:400])
     Cc.click("[data-st='0']"); Cc.wait_for_timeout(300)
     check("Non merci : rien n'est compté", Cc.evaluate("localStorage.getItem('wouaf-stats-ok')") == "false" and Cc.evaluate("JSON.stringify(JSON.parse(localStorage.getItem('wouaf-usage')||'{}'))") == "{}")
     Cc.click("#dgNext"); Cc.wait_for_timeout(300); Cc.evaluate("__wouaf.openMenu()"); Cc.wait_for_timeout(200)
