@@ -165,9 +165,9 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - En-tête sans sous-titre ; crédits repliés dans « À propos » (pied de page `<details>`).
 - ✨ « Quoi de neuf » (`startupDigest`) : une seule fenêtre à cartes qui défilent (nouveautés, malus, message du superviseur,
   jour de paie, semaine) ; remplace `showNews` / `showMalus` / `applyAdjust` / `offerPayday` / `offerWeek` à l'ouverture.
-- 🐕 Avatar : la 1re photo de Roxy devient sa photo (`wouaf-avatar`, 200 px), changeable depuis l'album (« En faire la photo de Roxy ») ;
+- 🐕 Avatar : photo officielle `roxy.jpg` (envoyée par l'utilisateur le 14/11), remplaçable sur un téléphone depuis l'album (« En faire la photo de Roxy », `wouaf-avatar`) ;
   `roxyHTML` l'utilise partout (accueil, carte, fiches), accessoires par-dessus.
 - 🎉 `confetti()` : coffre, trésor, paie, record, fin du tuto, niveau / album / trophée au récap.
 - 🧾 Récap façon ticket (grosse somme de clebsous, photo de Roxy), « Le détail » en dessous.
 - 🌙 Mode sombre automatique (`prefers-color-scheme: dark`, bloc CSS en fin de `<style>`).
-- Nouvelle icône (Roxy + pièce de clebsous) : icon-180/192/512.png (iOS garde l'ancienne icône tant que l'app n'est pas ré-ajoutée).
+- Icône = vraie tête de Roxy (photo du 14/11) dans un cercle + pièce de clebsous : icon-180/192/512.png (iOS garde l'ancienne icône tant que l'app n'est pas ré-ajoutée).

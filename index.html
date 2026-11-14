@@ -408,7 +408,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.152445";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.152619";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -479,7 +479,8 @@
   const isBday = t => { if (!ROXY_BDAY) return false; const d = new Date(t || Date.now()); return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` === ROXY_BDAY; };
   const ACC_SLOT = { "🎀":"a-bow", "🧣":"a-scarf", "🕶️":"a-glasses", "🎩":"a-hat", "👑":"a-hat" };
   const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
-  const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || ""; }catch(e){ return ""; } };
+  // photo de Roxy : celle choisie sur ce téléphone, sinon la photo officielle (roxy.jpg)
+  const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || "roxy.jpg"; }catch(e){ return "roxy.jpg"; } };
   const roxyHTML = list => { if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
   function youIcon(){
     let a = []; try{ a = accList(JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc); }catch(e){}
@@ -1522,7 +1523,7 @@
   }
   async function savePhoto(file){
     const b = await shrink(file);
-    if (!avatar()) setAvatarFrom(b);   // la première photo de Roxy devient son avatar
+
     await phTx("readwrite", st => st.put({ t: Date.now(), w: profile.walker || "", b }));
     const keys = await phTx("readonly", st => st.getAllKeys());
     if (keys.length > PH_MAX) await phTx("readwrite", st => { for (const k of keys.slice(0, keys.length - PH_MAX)) st.delete(k); });
