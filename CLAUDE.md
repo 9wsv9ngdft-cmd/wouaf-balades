@@ -249,3 +249,18 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   du « Quoi de neuf ». Tuto **court de 3 écrans** (`tutoShort`) au 1er lancement et après la remise à zéro ; le tuto complet (8) reste dans ☰ › Tuto et « Les bonus ».
   Tests : `tests/e2e_claim.py`, `tests/e2e_accueil.py`.
 - Libérer le prénom Éric volé ou perdu : fait avec « C'est mon téléphone » (code). Trésor : on garde l'anneau 2–3 km, même endroit pour tous.
+
+## Version 2.1 (APP_NUM 35, décidé le 14/11 : PLAN-v35)
+- ⚔️ **Duels** (menu ☰ › Duels, `sheetDuels`, `sheetDuelNew`, `ficheHTML`) : qui, 3 ou 7 jours, 🐾 Balades (plus de balades ≥ 20 min, puis minutes) ou
+  🗺️ Guerre des rues, mise 0/25/50/100 (≤ tirelire de chacun : `have` envoyé + `sum.cs` du serveur). Fiche récap identique pour les deux ; 24 h pour répondre ;
+  commence le lendemain (journée de l'app, 4 h). Un seul duel ouvert par personne. Annuler = les deux d'accord ; abandon = défaite ; égalité = rien ne bouge.
+  Worker : KV `duels` (liste), routes `/duels /duel-new /duel-answer /duel-cancel /duel-quit /duel-map`, `/duel-admin` (superviseur), fin calculée à la lecture
+  et par le cron (`getDuels`). Mises = corrections `a:<prénom>` avec `duel:1` (hors plafond, pas de carte « Message du superviseur » à part). Notifications push
+  (`pushTo`) : défi reçu, accepté, refusé, rues volées, fin. Éric exclu (403), voit et annule les duels dans le tableau de bord.
+- 🗺️ **Guerre des rues** : seulement pendant un duel « streets », l'app ajoute `cells` (cases `cellOf` ≈ 100 m, sans tracé ni horaires) à l'envoi `/walk` d'une balade
+  ≥ 20 min ; passer sur une case de l'autre la vole (`lost`). Carte `sheetDuelMap` (rectangles orange / violet, sans brouillard). Cases effacées à la fin du duel.
+- 🏅 **Record du mois** : KV `rec:AAAA-MM` (plus longue balade valide, Éric exclu), renvoyé par `/walk` (`record`) et `GET /pause` ; +50 hors plafond (`RECORD_CS`,
+  `game.recWins` pour le retirer si la balade est annulée ; `/void` recalcule le record). Affiché dans Progrès, sur l'accueil, et carte « X a battu le record ».
+- 💎 Accueil : la ligne importante montre d'abord le duel (`duelLine`), puis les gros lots (`lotsHTML`) : trésor doré tant qu'il n'est pas gagné, coffre (chaud ou pas),
+  record, « Lance un duel ». L'accueil remplit l'écran (`main.wrap` en colonne). Retour dans l'app = `startupDigest` (résultats de duel sur les deux téléphones).
+- Tests : `tests/duels.test.mjs` (Node) et `tests/e2e_duels.py`. Relancer `tests/serve-worker.mjs` après une modification du Worker (il garde l'ancien code).

@@ -9,7 +9,7 @@ def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + ((" → " + str(extra)) if (extra != "" and not cond) else ""))
     if not cond: FAILS.append(name)
 
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','34');}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');}"
 NOW = datetime.datetime(2026, 11, 17, 12, 0, 0)     # mardi 17/11 : les amendes ont commencé le 16/11
 
 local_api("GET", "/__wipe") if False else None
@@ -49,6 +49,9 @@ def close_sheet(page):
     if modal_open(page): page.click("#sheetX"); page.wait_for_timeout(700)
 
 local_api("GET", "/__wipe")
+# un record du mois très long (Zoé, 4 h) pour que les balades de test ne battent pas le record (+50 testé dans e2e_duels.py)
+_e = int(__import__("time").time()) - 3 * 3600
+local_api("POST", "/walk", json.dumps({"walker": "Zoé", "walk": {"s": _e - 14400, "e": _e, "min": 240, "m": 15000, "cs": 0}, "sum": {}}).encode())
 errs = []
 with sync_playwright() as pw:
     bA, cA, A = phone(pw, errs)   # Éric (superviseur / testeur)

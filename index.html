@@ -87,6 +87,25 @@
   #status.err{color:var(--warn)}
   body:not(.hasmap):not(.fogview):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
+  /* v2.1 : accueil qui remplit l'écran, un peu plus « premium » */
+  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{min-height:calc(100dvh - 70px);display:flex;flex-direction:column}
+  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{flex:1;display:flex;flex-direction:column;gap:10px}
+  .big.go{padding:18px 16px;font-size:19px;border-radius:18px;box-shadow:0 10px 24px -12px rgba(30,70,40,.6)}
+  .lots{display:grid;gap:10px}
+  .lot{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border-radius:18px;padding:14px 16px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:500;box-shadow:0 8px 22px -14px rgba(0,0,0,.35)}
+  .lot .li{font-size:34px;line-height:1}
+  .lot b{display:block;font-size:16px}
+  .lot small{display:block;font-size:13px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .lot .lv{margin-left:auto;font-weight:800;font-size:18px;white-space:nowrap}
+  .lot.gold{background:linear-gradient(135deg,#fff4cf,#ffd96b 55%,#f1b93c);border-color:#e3b13d;color:#4a3405;position:relative;overflow:hidden}
+  .lot.gold small{color:#6b4c0b}
+  .lot.gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);transform:translateX(-100%);animation:shine 3.2s ease-in-out infinite}
+  @keyframes shine{60%,100%{transform:translateX(100%)}}
+  .lot.duel{background:linear-gradient(135deg,#2c3e66,#4b2f6b);color:#fff;border-color:#3b3f6b} .lot.duel small{color:#d8dcf5}
+  .lot.hot{border-color:#e07a3a;box-shadow:0 0 0 2px rgba(224,122,58,.25),0 8px 22px -14px rgba(0,0,0,.35)}
+  .dsc{font-size:34px;font-weight:800;text-align:center;margin:6px 0}
+  .dfiche{background:var(--sand,#f6f2ea);border-radius:14px;padding:12px 14px;line-height:1.6;font-size:14px}
+  .pick{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px} .pick button{flex:1 1 auto;min-width:64px;background:var(--card);color:var(--ink);border:1px solid var(--line)} .pick button.on{background:var(--green,#2f5d3a);color:#fff;border-color:transparent} .pick button:disabled{opacity:.35}
   #recenter{position:fixed;right:12px;bottom:calc(var(--wbh,200px) + 12px);z-index:900;width:48px;height:48px;border-radius:50%;background:#fff;color:#000;font-size:22px;box-shadow:0 3px 10px rgba(0,0,0,.3);padding:0}
   body:not(.walking) #recenter{display:none}
   #pocket{position:fixed;inset:0;background:#000;z-index:5000;display:flex;align-items:center;justify-content:center;text-align:center;color:#b5b5b5;user-select:none;-webkit-user-select:none}
@@ -370,6 +389,7 @@
     .missions,.homecard,.panel,.entry,.sheet{background:var(--card);border-color:var(--line)}
     .missions .m.done .ic{background:#24362a !important}
     .dash .wk{background:#242b26;color:var(--ink)} .dash .wk h4{color:var(--ink)}
+    .lot.gold{background:linear-gradient(135deg,#5a4512,#a7801f 60%,#c99a2c);color:#fff7dc;border-color:#8a6a1c} .lot.gold small{color:#fbe9b5} .dfiche{background:#242b26}
     .warnline{background:#3a2a1c;color:#f3c9a0} .party{background:#2b3524;color:#e9f3d8}
     .ticket{background:linear-gradient(180deg,#2c2718,#1b211d);border-color:#7a6220} .ticket .tk-sum{color:#ffd35c}
     .gohint button{background:#2c2718;color:#ffd35c;border-color:#7a6220}
@@ -485,7 +505,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.183056";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.185148";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1352,7 +1372,7 @@
   function finishGame(elapsedMin, cameHome, meters, startTs, home, durCs){
     if (!gw) return null;
     ensureGame();
-    const res = { items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
+    const res = { cl: gw.cells.slice(0, 400), items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
     for (const c of gw.cells) game.seen[c] = dayNum();
     if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
     const chest = gw.chest, rain = gw.rain, needs = gw.needs, photoBonus = gw.photoBonus || 0, huntPts = gw.hunt || 0, duoPts = gw.duo ? DUO_PTS : 0;
@@ -1665,7 +1685,9 @@
     const daysLeft = Math.max(0, Math.ceil((new Date(sea.end) - Date.now()) / 86400000));
     const me = snapshot(), others = store.get(OTHERS_KEY, {});
     const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">${LEVELS[g.l] ? LEVELS[g.l][1].split(" ")[0] : ""}</div></div>`;
+    const recP = store.get("wouaf-record", null);
     $("#v-prog").innerHTML = `<h2 class="ptitle">🏆 Mes progrès</h2>
+      <div class="entry" style="margin-bottom:10px"><div><h4>🏅 Record du mois : ${recP ? `${fmtMin(recP.min)} par ${esc(recP.walker)}` : "pas encore"}</h4><div class="when">Battre le record = +${RECORD_CS} clebsous · repart de zéro le 1er du mois</div></div></div>
       <div class="wallet">
         <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
         <div class="big" style="font-size:30px">${lv.name}</div>
@@ -1932,7 +1954,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -1958,6 +1980,7 @@
       store.set("wouaf-last", j.last || null);   // null = plus aucune sortie valable (remise à zéro, balade annulée)
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
+      store.set("wouaf-record", j.record || null);
       syncHunt();
       return true;
     }
@@ -2159,8 +2182,11 @@
     for (const ic of order){ pick = ms.find(m => m.ic === ic && !m.done); if (pick) break; }
     if (!pick) pick = ms.find(m => !m.done && m.ic !== "🐕") || ms.find(m => m.ic === "🐕");
     const left = ms.filter(m => !m.done).length;
-    box.innerHTML = pick ? `<button class="oneline" id="oneLine"><span class="ic">${pick.done ? "✅" : pick.ic}</span><span>${esc(pick.t)}</span><span class="more">${left > 1 ? `${left} missions ›` : "›"}</span></button>` : "";
-    if ($("#oneLine")) $("#oneLine").onclick = sheetToday;
+    const dl = duelLine();
+    box.innerHTML = (dl ? `<button class="oneline" id="oneLine" style="font-weight:700"><span class="ic">⚔️</span><span>${esc(dl)}</span><span class="more">›</span></button>`
+      : pick ? `<button class="oneline" id="oneLine"><span class="ic">${pick.done ? "✅" : pick.ic}</span><span>${esc(pick.t)}</span><span class="more">${left > 1 ? `${left} missions ›` : "›"}</span></button>` : "") + lotsHTML();
+    if ($("#oneLine")) $("#oneLine").onclick = dl ? sheetDuels : sheetToday;
+    bindLots();
   }
   function sheetToday(){
     openSheet(`<h2>📋 Aujourd'hui</h2>
@@ -2169,12 +2195,201 @@
     $("#tdClose").onclick = closeSheet;
   }
 
+
+  // ---------- 💎 Les gros lots sur l'accueil (v2.1) : trésor (tant qu'il n'est pas gagné), coffre, record, duel ----------
+  const RECORD_CS = 50;
+  function lotsHTML(){
+    if (isTester()) return "";
+    const l = [], hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
+    if (hu && !hu.found && !hu.gone)
+      l.push(`<button class="lot gold" data-lot="hunt"><span class="li">🏴‍☠️</span><span><b>Trésor de la semaine</b><small>Un seul gagnant ! Caché à ~${game.home ? fmtKm(dist(game.home, hu)) + " " + compass(game.home, hu) : "2 à 3 km"} de la maison</small></span><span class="lv">${HUNT_FIRST} 🪙</span></button>`);
+    let ch = 0; try{ ch = chestChance(); }catch(e){}
+    l.push(`<button class="lot${ch > 0 ? " hot" : ""}" data-lot="chest"><span class="li">💰</span><span><b>Coffre surprise${ch > 0 ? " · 🔥 il est chaud !" : ""}</b><small>${ch > 0 ? "Prends des rues que tu n'as pas faites depuis longtemps : il peut sortir à tout moment." : "Caché dans les rues neuves. Sors Roxy souvent (4 jours sur 7) pour qu'il se réveille."}</small></span><span class="lv">${Math.round(CHEST_EUR * CS)} 🪙</span></button>`);
+    const rec = store.get("wouaf-record", null);
+    l.push(`<button class="lot" data-lot="rec"><span class="li">🏅</span><span><b>Record du mois${rec ? ` : ${fmtMin(rec.min)}` : ""}</b><small>${rec ? `par ${esc(rec.walker)}. Fais une balade plus longue pour le battre !` : "Personne encore : la plus longue balade du mois gagne."}</small></span><span class="lv">+${RECORD_CS} 🪙</span></button>`);
+    if (duelOK() && !(duelData.duels || []).some(d => d.status === "active" || d.status === "pending"))
+      l.push(`<button class="lot duel" data-lot="duel"><span class="li">⚔️</span><span><b>Lance un duel</b><small>Défie un autre promeneur sur 3 ou 7 jours, avec ou sans mise.</small></span><span class="lv">›</span></button>`);
+    return `<div class="lots">${l.join("")}</div>`;
+  }
+  function bindLots(){
+    document.querySelectorAll("[data-lot]").forEach(b => b.onclick = () => {
+      const k = b.dataset.lot;
+      if (k === "duel") return sheetDuels();
+      if (k === "hunt" || k === "chest") return sheetBonus();
+      const rec = store.get("wouaf-record", null);
+      openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${esc(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
+      $("#rcClose").onclick = closeSheet;
+    });
+  }
+  // attend qu'aucune fiche ne soit ouverte (ni balade en cours) pour montrer quelque chose
+  function whenFree(fn){ if ($("#modal").classList.contains("open") || state.walk || document.body.classList.contains("recap")){ setTimeout(() => whenFree(fn), 3000); return; } fn(); }
+
+  // ---------- ⚔️ Duels entre promeneurs (v2.1) ----------
+  const DUEL_KEY = "wouaf-duels", DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPE = { walks:"🐾 Balades", streets:"🗺️ Guerre des rues" };
+  let duelData = store.get(DUEL_KEY, { duels:[], players:[] });
+  const duelOK = () => !!(PUSH_API && profile.walker && !isTester());
+  const sameN = (a, b) => normName(a) === normName(b);
+  const myDuel = () => (duelData.duels || []).find(d => d.status === "active");
+  const myInvite = () => (duelData.duels || []).find(d => d.status === "pending" && sameN(d.to, profile.walker));
+  const mySent = () => (duelData.duels || []).find(d => d.status === "pending" && sameN(d.from, profile.walker));
+  const otherN = du => sameN(du.from, profile.walker) ? du.to : du.from;
+  const meFirst = du => sameN(du.from, profile.walker);
+  const myBal = () => Math.round(moneyThisMonth() * CS);
+  const isoDayLocal = () => dIso(Date.now());
+  const frDay = iso => new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" });
+  async function loadDuels(){
+    if (!duelOK()) return duelData;
+    try{ const j = await (await api("/duels", { walker: profile.walker })).json(); if (j.ok){ duelData = j; store.set(DUEL_KEY, j); } }catch(e){}
+    return duelData;
+  }
+  function scoreOf(du){ const sc = du.score || du.res || { a:0, b:0 }; return meFirst(du) ? [sc.a || 0, sc.b || 0] : [sc.b || 0, sc.a || 0]; }
+  function leftTxt(du){
+    const today = isoDayLocal();
+    if (today < du.start) return "commence demain";
+    const n = Math.round((new Date(du.end + "T12:00:00") - new Date(today + "T12:00:00")) / 86400000) + 1;
+    return n <= 1 ? "dernier jour !" : `encore ${n} jours`;
+  }
+  function duelLine(){
+    if (!duelOK()) return "";
+    const inv = myInvite(); if (inv) return `${inv.from} te lance un défi ! Touche pour répondre`;
+    const du = myDuel(); if (!du) return "";
+    const [a, b] = scoreOf(du);
+    return `Duel avec ${otherN(du)} : ${a} – ${b} · ${leftTxt(du)}`;
+  }
+  // 📄 la fiche qui dit tout, avant d'envoyer et avant d'accepter
+  function ficheHTML(p, forTo){
+    const op = forTo ? p.from : p.to, st = +p.stake || 0;
+    const when = p.start ? `du ${frDay(p.start)} au ${frDay(p.end)} inclus` : `${p.days} jours, à partir du lendemain de l'acceptation (de minuit à minuit)`;
+    return `<div class="dfiche">
+      <b>⚔️ Duel ${forTo ? "lancé par" : "contre"} ${esc(op)}</b><br>
+      ⏱️ <b>Durée :</b> ${when}<br>
+      ${p.type === "streets" ? `🗺️ <b>Guerre des rues :</b> chaque rue parcourue pendant une balade valide (20 min ou plus) prend ta couleur. Passer sur une rue de l'autre la lui vole. Celui qui a le plus de rues à la fin gagne.<br>🔒 Ton adversaire verra les rues où tu passes pendant le duel (des cases d'environ 100 m, sans le tracé ni les horaires). Tout est effacé à la fin.`
+        : `🐾 <b>Balades :</b> celui qui fait le plus de balades valides (20 min ou plus) gagne. À égalité, c'est le total de minutes qui compte.`}<br>
+      🪙 <b>Mise :</b> ${st ? `${st} clebsous chacun. Tu gagnes : <b>+${st}</b>. Tu perds : <b>−${st}</b>. Égalité : chacun garde sa mise.` : "aucune, juste pour le plaisir."}<br>
+      📜 Un seul duel à la fois. Annuler : seulement si vous êtes d'accord tous les deux${st ? " (chacun garde sa mise)" : ""}. Arrêter seul = abandon = défaite.
+      ${forTo ? "<br>⌛ Sans réponse dans les 24 h, le défi expire." : ""}</div>`;
+  }
+  async function duelCall(path, body){
+    try{ const r = await api(path, Object.assign({ walker: profile.walker }, body)); const j = await r.json().catch(() => ({})); if (r.ok){ await loadDuels(); renderHome(); } return { ok: r.ok, status: r.status, j }; }
+    catch(e){ return { ok:false, status:0, j:{} }; }
+  }
+  const duelErr = st => st === 409 ? "L'un de vous a déjà un duel en cours." : st === 400 ? "La mise est plus grosse qu'une des tirelires." : st === 404 ? "Cet adversaire n'a pas encore fait de balade avec l'app." : "Pas de connexion pour l'instant, réessaie.";
+  async function sheetDuels(){
+    if (!duelOK()) return;
+    openSheet(`<h2>⚔️ Duels</h2><p>Un instant…</p>`);
+    await loadDuels();
+    const inv = myInvite(), sent = mySent(), du = myDuel();
+    const past = (duelData.duels || []).filter(d => d.status === "done").slice(-5).reverse();
+    let h = `<h2>⚔️ Duels</h2>`;
+    if (inv){
+      const can = (inv.stake || 0) <= myBal();
+      h += `<p><b>${esc(inv.from)} te lance un défi !</b></p>${ficheHTML(inv, true)}
+        ${can ? "" : `<p class="howto">Ta tirelire (${myBal()} clebsous) est plus petite que la mise : tu ne peux pas accepter.</p>`}
+        <div class="btns" style="flex-direction:row;gap:8px"><button id="dyYes" style="flex:1"${can ? "" : " disabled"}>✅ J'accepte</button><button class="ghost" id="dyNo" style="flex:1">❌ Non merci</button></div>`;
+    }
+    if (du){
+      const [a, b] = scoreOf(du), mine = (du.cancel || []).some(x => sameN(x, profile.walker)), theirs = (du.cancel || []).some(x => !sameN(x, profile.walker));
+      h += `<div class="dsc">${a} – ${b}</div><p style="text-align:center;margin-top:0">Toi contre <b>${esc(otherN(du))}</b> · ${DUEL_TYPE[du.type]} · ${leftTxt(du)}${du.stake ? ` · mise ${du.stake} 🪙` : ""}</p>
+        ${du.type === "streets" ? `<div class="btns"><button id="dyMap">🗺️ Voir la carte des rues</button></div>` : ""}
+        <details><summary>Les règles de ce duel</summary>${ficheHTML(du, !meFirst(du))}</details>
+        ${theirs ? `<p class="howto">${esc(otherN(du))} propose d'annuler le duel.</p>` : mine ? `<p class="howto">Tu as proposé d'annuler : on attend ${esc(otherN(du))}.</p>` : ""}
+        <div class="btns" style="flex-direction:row;gap:8px">${mine ? "" : `<button class="ghost" id="dyCancel" style="flex:1">${theirs ? "D'accord, on annule" : "Proposer d'annuler"}</button>`}<button class="ghost" id="dyQuit" style="flex:1;color:#c8452f">Abandonner</button></div>`;
+    }
+    if (sent) h += `<p>📨 Défi envoyé à <b>${esc(sent.to)}</b> : on attend sa réponse (24 h au plus).</p>${ficheHTML(sent)}<div class="btns"><button class="ghost" id="dyWithdraw">Retirer le défi</button></div>`;
+    if (!inv && !du && !sent) h += `<p>Défie un autre promeneur : celui qui sort le plus ${DOG} gagne. Pas de classement, juste entre vous deux.</p><div class="btns"><button id="dyNew">⚔️ Lancer un défi</button></div>`;
+    if (past.length) h += `<div class="flabel">Derniers duels</div><div class="props">${past.map(d => { const [x, y] = scoreOf(d), w = d.res && d.res.winner;
+      return `<div class="entry"><div><h4>${w ? (sameN(w, profile.walker) ? "🏆 Gagné" : "Perdu") : "🤝 Égalité"} contre ${esc(otherN(d))} · ${x} – ${y}</h4><div class="when">${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} 🪙` : ""}${d.res && d.res.why === "quit" ? " · abandon" : ""}</div></div></div>`; }).join("")}</div>`;
+    h += `<p id="dyMsg" role="status"></p><div class="btns"><button class="ghost" id="dyClose">Fermer</button></div>`;
+    openSheet(h);
+    const msg = t => { const m = $("#dyMsg"); if (m) m.textContent = t; };
+    $("#dyClose").onclick = closeSheet;
+    if ($("#dyYes")) $("#dyYes").onclick = async () => { msg("Un instant…"); const r = await duelCall("/duel-answer", { id: inv.id, ok: true, have: myBal() }); if (r.ok){ confetti(); sheetDuels(); } else msg(duelErr(r.status)); };
+    if ($("#dyNo")) $("#dyNo").onclick = async () => { const r = await duelCall("/duel-answer", { id: inv.id, ok: false }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
+    if ($("#dyWithdraw")) $("#dyWithdraw").onclick = async () => { const r = await duelCall("/duel-cancel", { id: sent.id }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
+    if ($("#dyCancel")) $("#dyCancel").onclick = async () => { const r = await duelCall("/duel-cancel", { id: du.id }); r.ok ? sheetDuels() : msg(duelErr(r.status)); };
+    if ($("#dyQuit")) $("#dyQuit").onclick = () => {
+      openSheet(`<h2>Abandonner le duel ?</h2><p>Un abandon compte comme une défaite${du.stake ? ` : tu perds ta mise de ${du.stake} clebsous` : ""}.</p><div class="btns"><button id="dqYes" style="background:#c8452f">Oui, j'abandonne</button><button class="ghost" id="dqNo">Non, je continue !</button></div>`);
+      $("#dqNo").onclick = sheetDuels; $("#dqYes").onclick = async () => { await duelCall("/duel-quit", { id: du.id }); sheetDuels(); };
+    };
+    if ($("#dyNew")) $("#dyNew").onclick = () => sheetDuelNew();
+    if ($("#dyMap")) $("#dyMap").onclick = () => sheetDuelMap(du);
+  }
+  // ⚔️ lancer un défi : qui, combien de temps, quel type, quelle mise → fiche récap → envoyer
+  function sheetDuelNew(p){
+    p = Object.assign({ to:"", days:3, type:"walks", stake:0 }, p || {});
+    const pl = (duelData.players || []);
+    if (!pl.length){ openSheet(`<h2>⚔️ Lancer un défi</h2><p>Personne à défier pour l'instant : ton adversaire doit avoir fait au moins une balade avec l'app.</p><div class="btns"><button id="dnClose">OK</button></div>`); $("#dnClose").onclick = closeSheet; return; }
+    if (!pl.some(x => sameN(x.walker, p.to))) p.to = pl[0].walker;
+    const opBal = () => { const o = pl.find(x => sameN(x.walker, p.to)); return o && o.cs != null ? o.cs : Infinity; };
+    const maxSt = () => Math.min(myBal(), opBal());
+    if (p.stake > maxSt()) p.stake = 0;
+    const chips = (k, list, lab) => `<div class="pick" data-k="${k}">${list.map(v => `<button data-v="${v}" class="${String(p[k]) === String(v) ? "on" : ""}"${k === "stake" && v > maxSt() ? " disabled" : ""}>${lab(v)}</button>`).join("")}</div>`;
+    openSheet(`<h2>⚔️ Lancer un défi</h2>
+      <div class="flabel">Qui ?</div>${chips("to", pl.map(x => x.walker), v => esc(v))}
+      <div class="flabel">Combien de temps ?</div>${chips("days", [3, 7], v => `${v} jours`)}
+      <div class="flabel">Quel duel ?</div>${chips("type", ["walks", "streets"], v => DUEL_TYPE[v])}
+      <div class="flabel">La mise (ta tirelire : ${myBal()} 🪙)</div>${chips("stake", DUEL_STAKES, v => v ? `${v} 🪙` : "Aucune")}
+      <div class="btns"><button id="dnNext">Voir la fiche →</button><button class="ghost" id="dnBack">Retour</button></div>`);
+    document.querySelectorAll(".pick button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; p[k] = (k === "to" || k === "type") ? b.dataset.v : +b.dataset.v; sheetDuelNew(p); });
+    $("#dnBack").onclick = sheetDuels;
+    $("#dnNext").onclick = () => {
+      openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${esc(p.to)} recevra exactement la même fiche, et a 24 h pour répondre.</p><p id="dnMsg" role="status"></p>
+        <div class="btns"><button id="dnSend">📨 Envoyer le défi</button><button class="ghost" id="dnEdit">← Modifier</button></div>`);
+      $("#dnEdit").onclick = () => sheetDuelNew(p);
+      $("#dnSend").onclick = async () => { $("#dnMsg").textContent = "Un instant…"; const r = await duelCall("/duel-new", Object.assign({}, p, { have: myBal() })); if (r.ok) sheetDuels(); else $("#dnMsg").textContent = duelErr(r.status); };
+    };
+  }
+  // 🗺️ carte de la guerre des rues : mes rues, ses rues, sans brouillard
+  let duelMap = null;
+  async function sheetDuelMap(du){
+    const [a, b] = scoreOf(du);
+    openSheet(`<h2>🗺️ Guerre des rues</h2><div class="dsc" id="dmSc">${a} – ${b}</div><p style="text-align:center;margin-top:0">🟧 tes rues · 🟪 celles de ${esc(otherN(du))}</p>
+      <div id="dmap" style="height:55vh;border-radius:14px;overflow:hidden"></div><div class="btns"><button class="ghost" id="dmBack">← Retour</button></div>`);
+    $("#dmBack").onclick = sheetDuels;
+    let j; try{ j = await (await api("/duel-map", { walker: profile.walker, id: du.id })).json(); }catch(e){ return; }
+    if (!j || !j.cells || !$("#dmap")) return;
+    try{ if (duelMap) duelMap.remove(); }catch(e){}
+    duelMap = L.map("dmap", { zoomControl:true });
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", { maxZoom: 19, subdomains:"abc", attribution:"© OpenStreetMap" }).addTo(duelMap);
+    const rs = [];
+    for (const k in j.cells){ const [i, jj] = k.split(":").map(Number), me = sameN(j.cells[k], profile.walker);
+      rs.push(L.rectangle([[i * 0.0009, jj * 0.0013], [(i + 1) * 0.0009, (jj + 1) * 0.0013]], { color: me ? "#e07a1f" : "#7b3fb5", weight:1, fillOpacity:.55 }).addTo(duelMap)); }
+    if (rs.length) duelMap.fitBounds(L.featureGroup(rs).getBounds(), { padding:[20, 20] }); else duelMap.setView(game.home ? [game.home.lat, game.home.lon] : [48.8566, 2.3522], 15);
+    setTimeout(() => { try{ duelMap.invalidateSize(); }catch(e){} }, 350);
+  }
+  // cartes du « Quoi de neuf » : défi reçu, résultat, défi refusé ou expiré, rues volées, record battu par un autre
+  function duelCards(){
+    const cards = [], me = profile.walker; if (!duelOK()) return cards;
+    ensureGame(); game.duelSeen = game.duelSeen || [];
+    const seen = id => game.duelSeen.includes(id), mark = id => { game.duelSeen.push(id); game.duelSeen = game.duelSeen.slice(-60); };
+    for (const d of duelData.duels || []){
+      if (d.status === "pending" && sameN(d.to, me) && !seen("i" + d.id)){ mark("i" + d.id);
+        cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${esc(d.from)} te lance un défi !</h2><p>${d.days} jours · ${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} clebsous` : ""}. Tu as 24 h pour répondre.</p><div class="btns"><button class="ghost" data-go="duels">Voir le défi</button></div>`, bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(sheetDuels, 200); } }); }
+      if (d.status === "done" && !seen("r" + d.id)){ mark("r" + d.id);
+        const w = d.res && d.res.winner, [x, y] = scoreOf(d), won = w && sameN(w, me), op = otherN(d);
+        cards.push({ party: won, html:`<div class="dc-ic">${won ? "🏆" : w ? "⚔️" : "🤝"}</div><h2>${won ? `Tu as gagné le duel !${d.stake ? ` +${d.stake}` : ""}` : w ? `${esc(op)} a gagné cette fois… revanche ?` : "Égalité ! Chacun garde sa mise."}</h2><p>${x} – ${y}${d.res && d.res.why === "quit" ? ` (abandon de ${esc(sameN(d.res.quit, me) ? "toi" : op)})` : ""}${!won && w && d.stake ? ` · −${d.stake} clebsous` : ""}</p><div class="btns"><button class="ghost" data-go="re">⚔️ Revanche</button></div>`,
+          bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(() => sheetDuelNew({ to: op, days: d.days, type: d.type, stake: d.stake }), 200); } }); }
+      if ((d.status === "declined" || d.status === "expired" || (d.status === "cancelled" && d.by === "sup")) && !seen("x" + d.id)){ mark("x" + d.id);
+        if (d.status === "cancelled" || sameN(d.from, me)) cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.status === "declined" ? `${esc(d.to)} a dit non merci` : d.status === "expired" ? "Défi expiré" : "Duel annulé"}</h2><p>${d.status === "declined" ? "Une autre fois peut-être !" : d.status === "expired" ? `${esc(d.to)} n'a pas répondu dans les 24 h.` : "Le superviseur a annulé le duel : chacun garde sa mise."}</p>` }); }
+      if (d.status === "active" && d.lost && d.type === "streets"){
+        const n = d.lost[Object.keys(d.lost).find(k => sameN(k, me))] || 0, k = "wouaf-lost-" + d.id, was = store.get(k, 0);
+        if (n > was){ store.set(k, n); cards.push({ html:`<div class="dc-ic">🗺️</div><h2>${esc(otherN(d))} t'a pris ${n - was} rue${n - was > 1 ? "s" : ""} !</h2><p>Repasse dessus pendant une balade de 20 min ou plus pour les reprendre.</p>` }); }
+      }
+    }
+    const rec = store.get("wouaf-record", null);
+    if (rec && !sameN(rec.walker, me)){ const k = rec.walker + rec.min;
+      if (store.get("wouaf-record-vu", "") !== k){ store.set("wouaf-record-vu", k); cards.push({ html:`<div class="dc-ic">🏅</div><h2>${esc(rec.walker)} a battu le record : ${fmtMin(rec.min)}</h2><p>Fais une balade plus longue pour le reprendre : +${RECORD_CS} clebsous !</p>` }); } }
+    saveGame();
+    return cards;
+  }
+
   // ---------- ☰ Menu ----------
   function openMenu(){
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>☰ Menu</h2><div class="menu">
       ${it("muProg", "🏆", "Progrès", esc(levelOf(game.total).name))}
       ${it("muMoney", "🪙", "Tirelire", Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
+      ${duelOK() ? it("muDuel", "⚔️", "Duels", myDuel() ? scoreOf(myDuel()).join(" – ") : myInvite() ? "défi reçu !" : "") : ""}
       ${it("muFog", "🗺️", "Carte d'exploration", game.home ? fogStats().pct + " %" : "")}
       ${it("muOuts", "🐾", "Dernières sorties", "")}
       ${it("muLog", "📒", "Carnet", "")}
@@ -2190,6 +2405,7 @@
     go("muProg", () => switchTab("prog"));
     go("muMoney", () => switchTab("shop"));
     go("muFog", openExplore);
+    go("muDuel", sheetDuels);
     go("muOuts", sheetOuts);
     go("muLog", () => switchTab("log"));
     go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
@@ -2327,6 +2543,8 @@
     if (isTester()) return { a, ent, lost, fine };   // 🧪 testeur : rien à retirer
     const less = (obj, k, v) => { obj[k] = round2(Math.max(0, (obj[k] || 0) - v)); };
     if (r.eu){ less(game.money, mk, r.eu); lost += Math.round(r.eu * CS); }
+    const rw = (game.recWins || {})[a.e];   // 🏅 record gagné avec cette balade : retiré aussi
+    if (rw){ less(game.bonus, rw, RECORD_CS / CS); lost += RECORD_CS; delete game.recWins[a.e]; }
     if (g.c){
       less(game.bonus, mk, g.c); lost += Math.round(g.c * CS);
       let bi = -1, bd = Infinity; (game.chests || []).forEach((c, i) => { const d = Math.abs(new Date(c).getTime() - end); if (d < bd){ bd = d; bi = i; } });
@@ -2401,6 +2619,7 @@
     syncHunt();
     { const hu = game.hunt; if (hu && hu.gone && game.huntNote !== hu.wk){ game.huntNote = hu.wk; saveGame();
         cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${esc(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
+    if (duelOK()){ await loadDuels(); cards.push(...duelCards()); }
     const pay = paydayCardData(); if (pay) cards.push(pay);
     const wk = weekCardData(); if (wk) cards.push(wk);
     renderHome();
@@ -2714,6 +2933,8 @@
     const item = { walker: profile.walker,
       walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0 },
       sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, test: test ? 1 : 0 } };
+    const sd = duelOK() && myDuel();
+    if (sd && sd.type === "streets" && res && res.cl && item.walk.min >= 20) item.cells = res.cl;   // 🗺️ guerre des rues : seulement des cases, jamais le trajet
     const q = store.get("wouaf-envois", []); q.push(item); store.set("wouaf-envois", q.slice(-30));
     flushWalks();
   }
@@ -2721,7 +2942,16 @@
     if (!PUSH_API || resetPending()) return;
     let q = store.get("wouaf-envois", []);
     while (q.length){
-      try{ const r = await api("/walk", q[0]); if (!r.ok && r.status !== 400) break; }catch(e){ break; }
+      try{ const r = await api("/walk", q[0]); if (!r.ok && r.status !== 400) break;
+        const j = await r.json().catch(() => ({}));
+        if (j.record && !isTester()){   // 🏅 record du mois battu : +50 hors plafond
+          ensureGame(); game.bonus = game.bonus || {}; const k = monthKey(Date.now());
+          game.bonus[k] = Math.round(((game.bonus[k] || 0) + RECORD_CS / CS) * 100) / 100;
+          game.recWins = game.recWins || {}; game.recWins[q[0].walk.e] = k; saveGame();
+          store.set("wouaf-record", { walker: profile.walker, min: j.record.min }); store.set("wouaf-record-vu", profile.walker + j.record.min);
+          whenFree(() => { openSheet(`<div style="text-align:center;font-size:64px">🏅</div><h2 style="text-align:center">Nouveau record !</h2><p style="text-align:center">${fmtMin(j.record.min)} : la plus longue balade du mois${j.record.prev ? ` (avant : ${fmtMin(j.record.prev.min)} par ${esc(j.record.prev.walker)})` : ""}.<br><b>+${RECORD_CS} clebsous</b> dans ta tirelire !</p><div class="btns"><button id="rcOk">Trop bien ! 🐾</button></div>`); confetti(); $("#rcOk").onclick = closeSheet; renderHome(); });
+        }
+      }catch(e){ break; }
       q.shift(); store.set("wouaf-envois", q);
     }
   }
@@ -2754,6 +2984,7 @@
       ${alerts}
       ${voidMode ? `<p class="howto">Choisis la balade à annuler (bouton ❌). Le téléphone du promeneur retirera ses gains à sa prochaine ouverture.</p>` : ""}
       ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
+      ${(j.duels || []).length ? `<div class="flabel">⚔️ Duels</div><div class="props">${j.duels.map(d => `<div class="entry"><div><h4>${esc(d.from)} contre ${esc(d.to)} · ${d.score ? `${d.score.a} – ${d.score.b}` : "en attente"}</h4><div class="when">${DUEL_TYPE[d.type]} · ${d.days} j${d.stake ? ` · mise ${d.stake}` : ""}${d.end ? ` · fin le ${new Date(d.end + "T12:00:00").toLocaleDateString("fr-FR")}` : ""}</div></div><button class="ghost" data-dcan="${d.id}">Annuler</button></div>`).join("")}</div>` : ""}
       <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée.</p>`}</div>
       <p class="howto">Seulement des chiffres : aucun trajet ni position n'est envoyé.</p>
       <div class="btns"><button id="dsClose">Fermer</button></div>`);
@@ -2761,6 +2992,7 @@
     document.querySelectorAll("[data-al]").forEach(b => b.onclick = async () => {
       try{ const r = await api("/alert-resolve", Object.assign({}, auth, { id: b.dataset.al, give: !!b.dataset.give })); if (r.ok) openDash(auth, voidMode); }catch(e){}
     });
+    document.querySelectorAll("[data-dcan]").forEach(b => b.onclick = async () => { try{ const r = await api("/duel-admin", Object.assign({}, auth, { id: b.dataset.dcan })); if (r.ok) openDash(auth, voidMode); }catch(e){} });
     document.querySelectorAll("[data-void]").forEach(b => b.onclick = () => openVoidForm(auth, b.dataset.w, +b.dataset.void, b.parentElement.textContent.replace("❌ Annuler", "").trim(), voidMode));
   }
   // ❌ motif obligatoire, puis POST /void
@@ -3856,8 +4088,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 34, APP_LABEL = "2.0";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 35, APP_LABEL = "2.1";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    35: [
+      "⚔️ Les duels : défie un autre promeneur sur 3 ou 7 jours (menu ☰ › Duels). Et la Guerre des rues : vole les rues de l'autre !",
+      "🏅 Le record du mois : fais la plus longue balade du mois et gagne +50 clebsous.",
+      "💎 Sur l'accueil : le trésor (500 !), le coffre et le record, pour ne rien rater."
+    ],
     34: [
       "🎉 Wouaf Balades 2.0 : tout repart de zéro pour tout le monde, avec les mêmes règles pour tous !",
       "🏴‍☠️ Le trésor de la semaine est plus loin (2 à 3 km) et il n'y a qu'un seul gagnant : 500 clebsous en bonus pour le premier qui le trouve.",
@@ -3996,7 +4233,7 @@
   setTimeout(async () => { try{ await autoClaim(); }catch(e){} try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
   // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
   let lastShared = 0;
-  document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).catch(() => {}); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).then(rs => { if (!rs && !$("#modal").classList.contains("open")) startupDigest(); else renderHome(); }).catch(() => {}); });
   if (EVENT || isBday()) $("#evDeco").textContent = isBday() ? "🎂" : EVENT.deco;
 
   // ---------- Au lancement ----------
@@ -4017,7 +4254,7 @@
     renderHome();
   });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, showWelcome2, startupDigest, missions };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, askProfile, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
 })();
 </script>
 </body>

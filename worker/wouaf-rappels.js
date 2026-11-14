@@ -211,6 +211,93 @@ async function recomputeLast(env){
 const cleanSched = s => Array.from({ length:7 }, (_, i) => [0, 1].map(j => { const t = s && s[i] && s[i][j]; return typeof t === "string" && /^\d\d:\d\d$/.test(t) ? t : ""; }));
 const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length < 3000) ? s : {};
 
+// ---------- ⚔️ Duels entre promeneurs (v2.1) ----------
+// KV « duels » = liste de tous les duels (petite famille). Un duel : { id, from, to, days (3|7), type ("walks"|"streets"), stake (0|25|50|100),
+// status (pending | active | done | declined | expired | cancelled), created, start / end (jours « AAAA-MM-JJ » inclus, la journée commence à 4 h comme l'app),
+// cancel: [prénoms qui veulent annuler], cells: { case: prénom } (guerre des rues, effacées à la fin), lost: { prénom: rues perdues }, res: { a, b, winner, why } }
+const DUEL_DAYS = [3, 7], DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPES = ["walks", "streets"];
+const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const same = (a, b) => normName(a) === normName(b);
+const inDuel = (du, w) => same(du.from, w) || same(du.to, w);
+const otherOf = (du, w) => same(du.from, w) ? du.to : du.from;
+const isOpen = du => du.status === "pending" || du.status === "active";
+async function pushTo(env, walker, title, body){   // notification à un promeneur (s'il a activé les rappels)
+  try{
+    const v = await vapid(env, false); if (!v) return;
+    const l = await env.WOUAF.list({ prefix:"u:" });
+    for (const k of l.keys){ const u = await env.WOUAF.get(k.name, "json"); if (u && same(u.walker, walker)) await push(env, v, u.sub, { title, body, url: APP_URL, tag:"wouaf-duel" }); }
+  }catch(e){}
+}
+async function addAdj(env, walker, cs, why, id){   // les mises passent par les corrections (appliquées par le téléphone, hors plafond)
+  const k = "a:" + slug(walker), adj = (await env.WOUAF.get(k, "json")) || [];
+  if (adj.some(a => a.id === id)) return;
+  adj.push({ id, cs, why, t: Date.now(), duel: 1 });
+  await env.WOUAF.put(k, JSON.stringify(adj.slice(-50)));
+}
+// score : balades valides (≥ 20 min, pas annulées) faites pendant le duel ; à égalité, les minutes. Guerre des rues : nombre de rues possédées.
+async function duelScore(env, du){
+  if (du.type === "streets"){
+    const c = { [du.from]: 0, [du.to]: 0 };
+    for (const k in du.cells || {}){ const o = du.cells[k]; if (same(o, du.from)) c[du.from]++; else if (same(o, du.to)) c[du.to]++; }
+    return { a: c[du.from], b: c[du.to], am: 0, bm: 0 };
+  }
+  const one = async w => { const d = await env.WOUAF.get("d:" + slug(w), "json"), r = { n: 0, m: 0 };
+    for (const x of (d && d.walks) || []){ const day = isoDay(x.e * 1000); if (!x.v && x.min >= 20 && day >= du.start && day <= du.end){ r.n++; r.m += x.min; } }
+    return r; };
+  const A = await one(du.from), B = await one(du.to);
+  return { a: A.n, b: B.n, am: A.m, bm: B.m };
+}
+async function finishDuel(env, du, winner, why){
+  du.status = "done"; du.res = Object.assign(du.res || {}, { winner: winner || null, why: why || "end" }); du.doneAt = Date.now();
+  delete du.cells;   // guerre des rues : plus aucune case gardée sur le serveur
+  if (winner && du.stake){
+    const loser = otherOf(du, winner);
+    await addAdj(env, winner, du.stake, `⚔️ Duel gagné contre ${loser}`, "dw" + du.id);
+    await addAdj(env, loser, -du.stake, `⚔️ Duel perdu contre ${winner}`, "dl" + du.id);
+  }
+  const txt = winner ? `${winner} a gagné le duel${why === "quit" ? " (abandon)" : ""}${du.stake ? ` : +${du.stake} clebsous` : ""} !` : "Égalité : chacun garde sa mise.";
+  await pushTo(env, du.from, "⚔️ Duel terminé", txt); await pushTo(env, du.to, "⚔️ Duel terminé", txt);
+}
+// lit les duels et les met à jour : défi sans réponse au bout de 24 h = expiré ; duel fini (jour de fin passé) = résultat
+async function getDuels(env, now){
+  const l = (await env.WOUAF.get("duels", "json")) || [], today = isoDay(now);
+  let changed = false;
+  for (const du of l){
+    if (du.status === "pending" && now - du.created > 24 * 3600000){ du.status = "expired"; changed = true; }
+    else if (du.status === "active" && today > du.end){
+      const sc = await duelScore(env, du); du.res = { a: sc.a, b: sc.b, am: sc.am, bm: sc.bm };
+      const w = sc.a !== sc.b ? (sc.a > sc.b ? du.from : du.to) : (du.type === "walks" && sc.am !== sc.bm ? (sc.am > sc.bm ? du.from : du.to) : null);
+      await finishDuel(env, du, w, "end"); changed = true;
+    }
+  }
+  if (changed) await env.WOUAF.put("duels", JSON.stringify(l.slice(-60)));
+  return l;
+}
+const saveDuels = (env, l) => env.WOUAF.put("duels", JSON.stringify(l.slice(-60)));
+async function duelView(env, du){   // ce que voit l'app : sans les cases (sauf pour la carte, demandée à part)
+  const o = Object.assign({}, du); delete o.cells;
+  if (du.status === "active") o.score = await duelScore(env, du);
+  return o;
+}
+// promeneurs qu'on peut défier : ceux qui ont déjà envoyé une balade ou une sauvegarde (Éric testeur exclu), avec leur tirelire du mois si connue
+async function players(env){
+  const out = {}, admin = await env.WOUAF.get("admin");
+  for (const pre of ["d:", "b:"]){
+    const l = await env.WOUAF.list({ prefix: pre });
+    for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); const w = d && d.walker; if (!w || (admin && normName(w) === SUP_NAME)) continue;
+      const key = normName(w); if (!out[key]) out[key] = { walker: w, cs: null }; if (pre === "d:" && d.sum && typeof d.sum.cs === "number") out[key].cs = d.sum.cs; }
+  }
+  return Object.values(out);
+}
+// 🏅 record du mois : la plus longue balade valide (≥ 20 min) du mois, tous promeneurs (Éric testeur exclu)
+async function recomputeRecord(env, mk){
+  const l = await env.WOUAF.list({ prefix:"d:" }), admin = await env.WOUAF.get("admin");
+  let best = null;
+  for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (!d || (admin && normName(d.walker) === SUP_NAME)) continue;
+    for (const w of d.walks || []) if (!w.v && w.min >= 20 && isoDay(w.e * 1000).slice(0, 7) === mk && (!best || w.min > best.min)) best = { walker: d.walker, min: w.min, e: w.e }; }
+  if (best) await env.WOUAF.put("rec:" + mk, JSON.stringify(best)); else await env.WOUAF.delete("rec:" + mk);
+}
+
 export default {
   async fetch(req, env, ctx){
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -233,7 +320,7 @@ export default {
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env) });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
@@ -263,7 +350,7 @@ export default {
       await env.WOUAF.put("alerts", JSON.stringify(l.slice(-30)));
       return json({ ok:true });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -273,7 +360,15 @@ export default {
         const l = await env.WOUAF.list({ prefix:"d:" });
         const all = [];
         for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) all.push(d); }
-        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json"), alerts: (await env.WOUAF.get("alerts", "json")) || [] });
+        const dl = (await getDuels(env, Date.now())).filter(isOpen);
+        return json({ ok:true, walkers: all, last: await env.WOUAF.get("last", "json"), alerts: (await env.WOUAF.get("alerts", "json")) || [], duels: await Promise.all(dl.map(du => duelView(env, du))) });
+      }
+      if (path === "/duel-admin"){   // ⚔️ le superviseur annule un duel en cours : chacun garde sa mise
+        const l = await getDuels(env, Date.now()), du = l.find(x => x.id === b.id);
+        if (!du || !isOpen(du)) return json({ error:"not found" }, 404);
+        du.status = "cancelled"; du.by = "sup"; delete du.cells; await saveDuels(env, l);
+        await pushTo(env, du.from, "⚔️ Duel annulé", "Le superviseur a annulé le duel : chacun garde sa mise."); await pushTo(env, du.to, "⚔️ Duel annulé", "Le superviseur a annulé le duel : chacun garde sa mise.");
+        return json({ ok:true });
       }
       if (path === "/restore"){   // ♻️ sauvegarde d'un promeneur, pour un nouveau téléphone
         const d = await env.WOUAF.get("b:" + slug(b.walker), "json");
@@ -281,7 +376,8 @@ export default {
         return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
-        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:"));
+        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:"));
+        await env.WOUAF.delete("duels");
         await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts");
         const reset = Date.now();
         await env.WOUAF.put("reset", JSON.stringify(reset));
@@ -310,7 +406,7 @@ export default {
         const k = "a:" + slug(w), l = ((await env.WOUAF.get(k, "json")) || []).filter(x => x.id !== "v" + e);
         l.push({ id: "v" + e, type:"void", e, why, t: Date.now() });
         await env.WOUAF.put(k, JSON.stringify(l.slice(-50)));
-        await recomputeLast(env);
+        await recomputeLast(env); await recomputeRecord(env, isoDay(e * 1000).slice(0, 7));
         return json({ ok:true });
       }
       if (path === "/adjust"){   // ✏️ ajouter / retirer des clebsous avec un motif
@@ -358,6 +454,62 @@ export default {
       if (!by){ await env.WOUAF.put("t:" + wk, w, { expirationTtl: 60*86400 }); return json({ first:true, by:w }); }
       return json({ first: by === w, found:true, by });
     }
+    if (path.startsWith("/duel")){   // ⚔️ duels entre promeneurs (prénom seulement, comme le reste de l'app)
+      const now = Date.now(), w = String(b.walker || "").slice(0, 30);
+      if (!w) return json({ error:"bad" }, 400);
+      if (await isTester(env, w)) return json({ error:"tester" }, 403);   // 🧪 Éric ne fait pas de duel
+      const l = await getDuels(env, now);
+      if (path === "/duels"){   // mes duels (en attente, en cours, terminés depuis moins de 14 jours) + qui je peux défier
+        const mine = l.filter(du => inDuel(du, w) && (isOpen(du) || now - (du.doneAt || du.created) < 14 * 86400000));
+        return json({ ok:true, duels: await Promise.all(mine.map(du => duelView(env, du))), players: (await players(env)).filter(p => !same(p.walker, w)), today: isoDay(now) });
+      }
+      if (path === "/duel-new"){
+        const to = String(b.to || "").slice(0, 30), days = +b.days, stake = +b.stake, type = String(b.type || "");
+        if (!to || same(to, w) || !DUEL_DAYS.includes(days) || !DUEL_STAKES.includes(stake) || !DUEL_TYPES.includes(type)) return json({ error:"bad" }, 400);
+        if (normName(to) === SUP_NAME && await env.WOUAF.get("admin")) return json({ error:"tester" }, 403);
+        if (l.some(du => isOpen(du) && (inDuel(du, w) || inDuel(du, to)))) return json({ error:"busy" }, 409);   // 1 seul duel à la fois par personne
+        const op = (await players(env)).find(p => same(p.walker, to));
+        if (!op) return json({ error:"unknown" }, 404);
+        if (stake > Math.max(0, +b.have || 0) || (op.cs != null && stake > op.cs)) return json({ error:"stake" }, 400);   // pas plus que la tirelire de chacun
+        const du = { id: now.toString(36) + Math.random().toString(36).slice(2, 6), from: w, to: op.walker, days, type, stake, status:"pending", created: now };
+        l.push(du); await saveDuels(env, l);
+        await pushTo(env, op.walker, "⚔️ Nouveau défi !", `${w} te lance un duel de ${days} jours${stake ? `, mise ${stake} clebsous` : ""}. Tu as 24 h pour répondre.`);
+        return json({ ok:true, duel: await duelView(env, du) });
+      }
+      const du = l.find(x => x.id === b.id);
+      if (!du || !inDuel(du, w)) return json({ error:"not found" }, 404);
+      if (path === "/duel-answer"){   // l'adversaire accepte ou refuse ; le duel commence demain (journée de l'app)
+        if (du.status !== "pending" || !same(du.to, w)) return json({ error:"not pending" }, 409);
+        if (!b.ok){ du.status = "declined"; await saveDuels(env, l); await pushTo(env, du.from, "⚔️ Défi refusé", `${du.to} a dit non merci cette fois.`); return json({ ok:true, duel: await duelView(env, du) }); }
+        if (du.stake > Math.max(0, +b.have || 0)) return json({ error:"stake" }, 400);
+        if (l.some(x => x !== du && x.status === "active" && (inDuel(x, du.from) || inDuel(x, du.to)))) return json({ error:"busy" }, 409);
+        du.status = "active"; du.start = addDays(isoDay(now), 1); du.end = addDays(du.start, du.days - 1); du.cells = {}; du.lost = {};
+        await saveDuels(env, l);
+        await pushTo(env, du.from, "⚔️ Défi accepté !", `${du.to} a accepté. Le duel commence demain, ${du.days} jours.`);
+        return json({ ok:true, duel: await duelView(env, du) });
+      }
+      if (path === "/duel-cancel"){   // annuler : défi en attente = retiré par celui qui l'a lancé ; duel en cours = seulement si les deux sont d'accord
+        if (du.status === "pending"){ if (!same(du.from, w)) return json({ error:"no" }, 409); du.status = "cancelled"; du.by = w; await saveDuels(env, l); return json({ ok:true, duel: await duelView(env, du) }); }
+        if (du.status !== "active") return json({ error:"not active" }, 409);
+        du.cancel = du.cancel || []; if (!du.cancel.some(x => same(x, w))) du.cancel.push(w);
+        if (du.cancel.length >= 2){ du.status = "cancelled"; du.by = "both"; delete du.cells; }
+        await saveDuels(env, l);
+        if (du.status === "cancelled") await pushTo(env, otherOf(du, w), "⚔️ Duel annulé", "Vous étiez d'accord tous les deux : chacun garde sa mise.");
+        else await pushTo(env, otherOf(du, w), "⚔️ Annuler le duel ?", `${w} propose d'annuler le duel. Ouvre Wouaf pour répondre.`);
+        return json({ ok:true, duel: await duelView(env, du) });
+      }
+      if (path === "/duel-quit"){   // abandon = défaite
+        if (du.status !== "active") return json({ error:"not active" }, 409);
+        du.res = Object.assign(await duelScore(env, du), { quit: w });
+        await finishDuel(env, du, otherOf(du, w), "quit"); await saveDuels(env, l);
+        return json({ ok:true, duel: await duelView(env, du) });
+      }
+      if (path === "/duel-map"){   // 🗺️ guerre des rues : les cases des deux joueurs, seulement pendant le duel
+        if (du.type !== "streets" || du.status !== "active") return json({ error:"no map" }, 409);
+        return json({ ok:true, cells: du.cells || {}, score: await duelScore(env, du) });
+      }
+      return json({ error:"not found" }, 404);
+    }
     if (path === "/walk"){   // une balade terminée : chiffres seulement (durée, distance, clebsous…), jamais le trajet
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
       if (!w || !x.e) return json({ error:"bad" }, 400);
@@ -367,13 +519,32 @@ export default {
       if (rs && walk.e * 1000 < rs) return json({ ok:true, ignored:true });   // balade d'avant la remise à zéro (envoi en retard)
       const dk = "d:" + slug(w);
       const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
-      if (!d.walks.some(y => y.e === walk.e)) d.walks.unshift(walk);
+      const fresh = !d.walks.some(y => y.e === walk.e), out = { ok:true };
+      if (fresh) d.walks.unshift(walk);
       d.walks = d.walks.slice(0, 60); d.walker = w; d.sum = cleanState(b.sum); d.at = Date.now();
       await env.WOUAF.put(dk, JSON.stringify(d));
       const last = await env.WOUAF.get("last", "json");
       // dernière sortie de Roxy (tous promeneurs) : sert à l'humeur de Roxy dans l'app. Pas de notification (le récap arrive déjà sur WhatsApp)
       if (!last || walk.e > last.t) await env.WOUAF.put("last", JSON.stringify({ walker: w, t: walk.e, min: walk.min }));
-      return json({ ok:true });
+      const tester = await isTester(env, w), day = isoDay(walk.e * 1000);
+      if (fresh && !tester && walk.min >= 20){
+        // 🏅 record du mois : la plus longue balade valide
+        const rk = "rec:" + day.slice(0, 7), rec = await env.WOUAF.get(rk, "json");
+        if (!rec || walk.min > rec.min){ await env.WOUAF.put(rk, JSON.stringify({ walker: w, min: walk.min, e: walk.e })); out.record = { min: walk.min, prev: rec || null }; }
+        // 🗺️ guerre des rues : les cases de cette balade (envoyées seulement pendant un duel « Guerre des rues »)
+        if (Array.isArray(b.cells) && b.cells.length){
+          const l = await getDuels(env, Date.now()), du = l.find(x => x.status === "active" && x.type === "streets" && inDuel(x, w) && day >= x.start && day <= x.end);
+          if (du){
+            const op = otherOf(du, w); let stolen = 0;
+            du.cells = du.cells || {};
+            for (const c of b.cells.slice(0, 400)){ if (typeof c !== "string" || !/^-?\d{1,6}:-?\d{1,6}$/.test(c)) continue; if (same(du.cells[c], op)) stolen++; du.cells[c] = w; }
+            du.lost = du.lost || {}; if (stolen) du.lost[op] = (du.lost[op] || 0) + stolen;
+            await saveDuels(env, l); out.stolen = stolen;
+            if (stolen) await pushTo(env, op, "🗺️ Guerre des rues", `${w} t'a pris ${stolen} rue${stolen > 1 ? "s" : ""} !`);
+          }
+        }
+      }
+      return json(out);
     }
     if (!b || !okId(b.id)) return json({ error:"bad id" }, 400);
     const key = "u:" + b.id;
@@ -402,6 +573,6 @@ export default {
     return json({ error:"not found" }, 404);
   },
   async scheduled(event, env, ctx){
-    ctx.waitUntil(run(env, event.scheduledTime || Date.now()));
+    ctx.waitUntil(Promise.all([run(env, event.scheduledTime || Date.now()), getDuels(env, event.scheduledTime || Date.now())]));
   }
 };
