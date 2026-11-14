@@ -22,15 +22,15 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Clé `wouaf-jeu` : `pts` (disponibles), `total` (gagnés, pour les niveaux), `streak`, `claims`, `seen` (cases ~100 m déjà visitées).
 - Objets : 🦴1 🎾2 🍖3 ⭐5 ; parcours choisi → semés tous les 350–450 m sur le tracé, ramassés à < 25 m ; balade libre → trouvés tous les 350–450 m,
   ⭐ à 400 m du départ. Objet dans une case jamais visitée ×2 ; +1 par case neuve. Ignoré au-delà de 15 km/h ou précision > 35 m.
-- Fin (≥ 5 min) : (objets + cases) × durée (1 / 1,25 dès 40 min / 1,5 dès 55 / 2 dès 85) + 2 retour au départ + 1 série ≥ 3 jours.
-- Équilibre (v11, 14/11) : ~1 balade par jour et par ado ≈ 600–700 pts/mois (45 min ≈ 20–25 pts une fois le quartier exploré).
-- Récompenses réelles : tableau `REWARDS` dans index.html (à modifier sur demande de l'utilisateur) : écran 50, glace 60, repas 120,
-  5 € (`euros:5`, prix variable), ciné 300.
-- Euros (v13) : référence 25 min de balade par jour ≈ 10 €/mois (15 min ≈ 6 €, ≥ 45 min = 15 €), 15 € max par mois calendaire
-  (`EURO_MAX`). Prix des 5 € = 375 min × points gagnés par minute (balades ≥ 5 min, 15 jours précédents, ≥ 60 min sinon prix
-  inchangé), recalculé le 1er et le 16 (`game.euro`, clé suffixée « -min », défaut ≈ 200, borné 60–500). Rythme du mois en
-  minutes/jour, bilan de quinzaine (proposé au 1er/16, `game.bilanSeen`). Réclamer = points retirés
-  + message au superviseur via le menu Partager.
+- Points = score de jeu seulement (niveaux, coins). Fin (≥ 15 min, sinon rien) : (objets + cases) × durée (1 / 1,25 dès 40 min /
+  1,5 dès 55 / 2 dès 85) + 2 retour au départ + 1 série ≥ 3 jours.
+- **Argent (v14, décidé le 14/11)** : pas de boutique (glace, écran, ciné… retirés), seulement une tirelire. Chaque balade de
+  ≥ 15 min rapporte `walkEuros(min) = 0,35 € × (min/25)^1,5` (15 min 0,16 · 25 min 0,35 · 30 min 0,46 · 45 min 0,85 · 1 h 1,30),
+  donc 2 × 15 min < 1 × 30 min (voulu par l'utilisateur : ne pas additionner les petites balades). Toute balade compte (pas
+  besoin de revenir au départ). Durée retenue = min(durée, distance marchée / 30 m/min). Plafond 15 €/mois calendaire
+  (`game.money["AAAA-MM"]`). Objectif ≈ 10 €/mois pour 25 min par jour. Récap : « 💶 +0,46 € ».
+- Bilan de quinzaine (1er–15, 16–fin) proposé au 1er/16 (`game.bilanSeen`) et bouton dans l'onglet 💶 Tirelire ; le bilan
+  de fin de mois ajoute le total de la tirelire.
 - Propositions : rang bonus pour les lieux en cases neuves, tri final par `newPct` (« 🆕 x % de nouveau »).
 
 ## Méthode de travail
