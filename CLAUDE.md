@@ -300,3 +300,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Éric : arène en aperçu. La ligne importante ne montre plus le duel.
 - 🎲 **Que des paris** (décidé le 14/11, 22 h 40) : mises 25 / 50 / 100 seulement (`DUEL_STAKES` dans l'app et le Worker, 0 refusé) ; il faut ≥ 25 dans les deux
   tirelires (sinon « Voir la fiche » grisé avec un message) ; contre-proposition parmi les autres mises.
+
+## Version 2.2 (APP_NUM 36, décidé le 14/11 : maquettes « accueil A » et « menu C »)
+- 🏠 **Accueil sur un seul écran** (testé à 393 × 760, iPhone sans barres) : en-tête plus fin, humeur sur une ligne (`.moodBtn .mt`), « Combien de temps ? »
+  caché, bouton « C'est parti » compact (« jusqu'à N 🪙 clebsous », le détail durée + bonus reste dans « 🎁 Bonus ? »), astuce courte « 💡 1 h : jusqu'à N (×1,5) ».
+  Gros lots = **3 tuiles** côte à côte (`.ltiles .lt`, même `data-lot` qu'avant), titre « 💎 Les gros lots », arène raccourcie ; plus de `min-height` sur `main.wrap`.
+- ☰ **Menu en tuiles** (`openMenu`) : 4 grosses tuiles (`.mgrid` : Progrès, Tirelire, Duels, Exploration), liste courte (`.mlist` : sorties, carnet, album, bonus,
+  🔑 Superviseur pour Éric), réglages en icônes (`.micons` : rappels, raccourci, prénom, vie privée, tuto), pied « Superviseur » discret + « À propos · version »
+  (`#muAbout`, fiche avec les crédits du `<footer>`, désormais caché). Mêmes id `mu…` qu'avant.
+- Tests : `tests/e2e_accueil.py` vérifie l'accueil et le menu sans défilement.

@@ -9,7 +9,7 @@ def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + ((" → " + str(extra)) if (extra != "" and not cond) else ""))
     if not cond: FAILS.append(name)
 
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','36');}"
 NOW = datetime.datetime(2026, 11, 17, 12, 0, 0)     # mardi 17/11 : les amendes ont commencé le 16/11
 
 local_api("GET", "/__wipe") if False else None
@@ -74,7 +74,7 @@ with sync_playwright() as pw:
     check("menu d'Éric : pas de rappels (testeur)", "Mes rappels" not in tA)
     close_sheet(A)
     ev(B, "__wouaf.openMenu()"); tB = sheet_text(B)
-    check("menu de Léa : rappels, lien discret « Superviseur », rien de plus", "Mes rappels" in tB and "Superviseur" in tB and "Tout remettre à zéro" not in tB and "Annuler une balade" not in tB, tB)
+    check("menu de Léa : rappels, lien discret « Superviseur », rien de plus", "Rappels" in tB and "Superviseur" in tB and "Tout remettre à zéro" not in tB and "Annuler une balade" not in tB, tB)
     close_sheet(B)
 
     # ---------- 3. balades ----------

@@ -8,7 +8,7 @@ def check(n, c, x=""):
     if not c: FAILS.append(n)
 txt = lambda p: p.evaluate("document.querySelector('#sheet').innerText")
 post = lambda path, b: local_api("POST", path, json.dumps(b).encode())
-INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
+INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','36');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
 local_api("GET", "/__wipe")
 now = int(time.time())
 for w in ("Léa", "Tom"): post("/walk", {"walker": w, "walk": {"s": now - 90000, "e": now - 86400, "min": 10, "m": 900, "cs": 0}, "sum": {"cs": 200}})
@@ -19,7 +19,7 @@ with sync_playwright() as pw:
     GIVE = "(() => { const g = __wouaf.getGame(), d = new Date(), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); g.money = g.money || {}; g.money[k] = 0.3; localStorage.setItem('wouaf-jeu', JSON.stringify(g)); })()"
     L.evaluate(GIVE); T.evaluate(GIVE)   # 30 clebsous chacun : assez pour parier 25
     home = L.evaluate("document.querySelector('#home').innerText")
-    check("accueil : gros lots (trésor, coffre, record, lancer un duel)", "Trésor de la semaine" in home and "Coffre surprise" in home and "Record du mois" in home and "Défier Tom" in home, home[:400])
+    check("accueil : gros lots (trésor, coffre, record, lancer un duel)", "Trésor" in home and "Coffre" in home and "Record" in home and "Défier Tom" in home, home[:400])
     L.evaluate("__wouaf.openMenu()"); check("menu : ⚔️ Duels", "Duels" in txt(L)); L.click("#muDuel"); L.wait_for_timeout(1500)
     L.click("#dyNew"); L.wait_for_timeout(400)
     check("formulaire : Tom proposé, que des paris (pas de « sans mise »), 50 grisé (tirelire 30)", "Tom" in txt(L) and "Aucune" not in txt(L) and L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"50\"]').disabled") and not L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"25\"]').disabled"))
@@ -57,10 +57,10 @@ with sync_playwright() as pw:
     L.evaluate("__wouaf.openMenu()"); L.wait_for_timeout(200); L.click("#muMoney"); L.wait_for_timeout(500)
     L.evaluate("__wouaf.sendUsage(true)"); L.wait_for_timeout(800)
     # Éric : voit le duel dans le tableau de bord
-    bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','35');")
+    bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','36');")
     open_app(E, 1500); E.evaluate("__wouaf.askProfile()"); E.fill("#wName", "Éric"); E.click("#whoForm button[type=submit]"); E.wait_for_timeout(800)
     ho = E.evaluate("document.querySelector('#home').innerText")
-    check("Éric (testeur) : voit aussi le trésor et les gros lots sur l'accueil", "Trésor de la semaine" in ho and "Coffre surprise" in ho, ho[:200])
+    check("Éric (testeur) : voit aussi le trésor et les gros lots sur l'accueil", "Trésor" in ho and "Coffre" in ho, ho[:200])
     E.evaluate("__wouaf.openMenu()"); check("Éric : menu Duels en aperçu", "aperçu" in txt(E))
     E.click("#muDuel"); E.wait_for_timeout(1500); f = txt(E)
     check("Éric : aperçu du formulaire avec les vrais prénoms", "Aperçu superviseur" in f and "Léa" in f, f[:300])

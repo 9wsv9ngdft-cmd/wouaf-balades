@@ -88,7 +88,7 @@
   body:not(.hasmap):not(.fogview):not(.walking):not(.choosing):not(.recap) #map{display:none}
   #home{margin-top:12px}
   /* v2.1 : accueil qui remplit l'écran, un peu plus « premium » */
-  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{min-height:calc(100dvh - 70px);display:flex;flex-direction:column}
+  body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{display:flex;flex-direction:column;padding-bottom:calc(env(safe-area-inset-bottom) + 14px)}
   body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{flex:1;display:flex;flex-direction:column;gap:10px}
   .big.go{padding:18px 16px;font-size:19px;border-radius:18px;box-shadow:0 10px 24px -12px rgba(30,70,40,.6)}
   .lots{display:grid;gap:10px}
@@ -422,6 +422,45 @@
     .sheetx{background:#2a312c}
     .tuto .pic{background:radial-gradient(circle at 50% 45%,#2c2718,#1b211d)} .tuto .chip{background:#242b26;color:var(--ink)}
   }
+
+  /* v2.2 (décidé le 14/11) : accueil sur un seul écran (maquette A) et menu en tuiles (maquette C) */
+  header{padding:calc(env(safe-area-inset-top) + 8px) 0 8px} header h1{font-size:23px} #menuBtn{padding:6px 12px;font-size:20px}
+  main.wrap .panel{padding:10px 12px;margin-top:8px}
+  .heroDog .roxy{width:52px;height:52px}
+  .hero .hi{font-size:19px} .heroTxt .moodBtn{width:100%;box-sizing:border-box} .moodBtn .mt{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .mood{margin-top:2px}
+  .panel #durLabel{display:none} .panel .seg.durs{margin-top:10px} .seg.durs button{padding:9px 2px}
+  button.go{margin-top:9px;padding:11px 14px;gap:0} button.big.go{padding:11px 14px}
+  button.go .gain{background:none;padding:0;margin-top:2px;gap:6px;align-items:center}
+  button.go .gain b{font-size:26px} button.go .gain .csi{width:22px;height:22px} button.go .gain span{font-size:15px}
+  .gohint{margin-top:8px} .gohint button{padding:8px 10px}
+  #home{margin-top:9px} body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{gap:9px}
+  #home .oneline{margin-top:0;padding:9px 12px} #home .oneline>span:nth-child(2){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lotsL{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--green-2);margin:1px 2px -4px}
+  .ltiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+  .lt{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;border-radius:16px;padding:10px 4px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:500;box-shadow:0 6px 16px -12px rgba(0,0,0,.4)}
+  .lt .e{font-size:28px;line-height:1.1} .lt b{font-size:19px;font-weight:800;white-space:nowrap} .lt small{font-size:11.5px;line-height:1.25;color:var(--muted);text-align:center}
+  .lt.gold{background:linear-gradient(135deg,#fff4cf,#ffd96b 55%,#f1b93c);border-color:#e3b13d;color:#4a3405} .lt.gold small{color:#6b4c0b}
+  .lt.hot{border-color:#e0703a}
+  .lots{gap:9px} .arena{padding:11px 13px} .arena .atag{font-size:14px;margin-top:5px} .arena .chal{margin-top:8px} .arena .chal button{padding:9px 12px}
+  footer{display:none}
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:6px}
+  .mgrid button{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:4px;min-height:92px;border-radius:18px;padding:12px;color:#fff;text-align:left;box-shadow:0 8px 18px -12px rgba(0,0,0,.5)}
+  .mgrid button:last-child:nth-child(odd){grid-column:span 2;min-height:70px}
+  .mgrid .e{font-size:28px;line-height:1} .mgrid b{font-size:15px;line-height:1.2} .mgrid small{display:block;font-size:19px;font-weight:800;line-height:1.15;color:#fff}
+  .mgrid .k1{background:linear-gradient(135deg,#2f5d3a,#4b8a57)} .mgrid .k2{background:linear-gradient(135deg,#c0621f,#f0a53a)}
+  .mgrid .k3{background:linear-gradient(135deg,#3b2a78,#b03a5b)} .mgrid .k4{background:linear-gradient(135deg,#1f4c66,#3a83a8)}
+  .mgrid .k3.ping{animation:aping 1.6s ease-in-out infinite}
+  .mlist{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .mlist button{display:flex;width:100%;justify-content:flex-start;gap:12px;background:none;color:var(--ink);border-radius:0;border-top:1px solid var(--line);padding:11px 14px;font-weight:500;font-size:16px;text-align:left}
+  .mlist button:first-child{border-top:0} .mlist button::after{content:"›";margin-left:auto;color:var(--muted)} .mlist button small{margin-left:auto;color:var(--muted);font-size:13px}
+  .micons{display:flex;gap:7px;margin-top:10px}
+  .micons button{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:9px 2px;font-size:22px;line-height:1}
+  .micons small{font-size:10.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .mfoot{display:flex;justify-content:center;gap:16px;margin-top:12px} .mfoot button{background:none;color:var(--muted);font-size:13px;font-weight:500;padding:6px 8px;opacity:.8}
+  @media (prefers-color-scheme: dark){
+    .lt.gold{background:linear-gradient(135deg,#5a4512,#a7801f 60%,#c99a2c);color:#fff7dc;border-color:#8a6a1c} .lt.gold small{color:#fbe9b5}
+    .mlist,.micons button{background:#1b211d}
+  }
 </style>
 </head>
 <body>
@@ -518,7 +557,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.224401";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.230923";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1092,7 +1131,7 @@
     $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
     if (profile.walker){
       let m = null; try{ m = mood(); }catch(e){}
-      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="Voir les dernières sorties de ${esc(DOG)}">${esc(m.t)}<div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
+      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="Voir les dernières sorties de ${esc(DOG)}"><span class="mt">${esc(m.t)}</span><div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
       if ($("#moodBtn")) $("#moodBtn").onclick = sheetOuts;
     } else $("#heroSub").textContent = "Dis-nous qui tu es :";
     $("#editWho").hidden = !!profile.walker;
@@ -2236,19 +2275,21 @@
 
   // ---------- 💎 Les gros lots sur l'accueil (v2.1) : trésor (tant qu'il n'est pas gagné), coffre, record, duel ----------
   const RECORD_CS = 50;
-  function lotsHTML(){
+  function lotsHTML(){   // v2.2 : trois petites tuiles côte à côte (toucher = l'explication)
     const l = [], hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
     const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));   // déjà trouvé cette semaine (par quelqu'un)
+    const tile = (k, cls, e, v, t) => `<button class="lt${cls}" data-lot="${k}"><span class="e">${e}</span><b>${v} 🪙</b><small>${t}</small></button>`;
     if (!game.home && !gone)   // pas encore de maison (1re balade, ou après la remise à zéro) : le trésor est quand même annoncé
-      l.push(`<button class="lot gold" data-lot="hunt"><span class="li">🏴‍☠️</span><span><b>Trésor de la semaine</b><small>Un seul gagnant ! Il apparaîtra sur ta carte, à 2 ou 3 km de la maison, dès ta première balade.</small></span><span class="lv">${HUNT_FIRST} 🪙</span></button>`);
+      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor<br>1 seul gagnant"));
     else if (hu && !hu.found && !hu.gone)
-      l.push(`<button class="lot gold" data-lot="hunt"><span class="li">🏴‍☠️</span><span><b>Trésor de la semaine</b><small>Un seul gagnant ! Caché à ~${game.home ? fmtKm(dist(game.home, hu)) + " " + compass(game.home, hu) : "2 à 3 km"} de la maison</small></span><span class="lv">${HUNT_FIRST} 🪙</span></button>`);
+      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor<br>${game.home ? "à ~" + fmtKm(dist(game.home, hu)) + " " + compass(game.home, hu) : "1 seul gagnant"}`));
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(`<button class="lot${ch > 0 ? " hot" : ""}" data-lot="chest"><span class="li">💰</span><span><b>Coffre surprise${ch > 0 ? " · 🔥 il est chaud !" : ""}</b><small>${ch > 0 ? "Prends des rues que tu n'as pas faites depuis longtemps : il peut sortir à tout moment." : "Caché dans les rues neuves. Sors Roxy souvent (4 jours sur 7) pour qu'il se réveille."}</small></span><span class="lv">${Math.round(CHEST_EUR * CS)} 🪙</span></button>`);
+    l.push(tile("chest", ch > 0 ? " hot" : "", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "Coffre<br>🔥 il est chaud !" : "Coffre<br>rues neuves"));
     const rec = store.get("wouaf-record", null);
-    l.push(`<button class="lot" data-lot="rec"><span class="li">🏅</span><span><b>Record du mois${rec ? ` : ${fmtMin(rec.min)}` : ""}</b><small>${rec ? `par ${esc(rec.walker)}. Fais une balade plus longue pour le battre !` : "Personne encore : la plus longue balade du mois gagne."}</small></span><span class="lv">+${RECORD_CS} 🪙</span></button>`);
+    l.push(tile("rec", "", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}<br>par ${esc(rec.walker)}` : "Record<br>personne encore"));
+    const lots = `<div class="lotsL">💎 Les gros lots</div><div class="ltiles">${l.join("")}</div>`;
     const ar = arenaHTML(), live = duelOK() && (myDuel() || myInvite());
-    return `<div class="lots">${live ? ar + l.join("") : l.join("") + ar}</div>`;
+    return `<div class="lots">${live ? ar + lots : lots + ar}</div>`;
   }
   // ⚔️ l'Arène : le duel en face-à-face, le défi reçu, ou « Défier X » (Éric : aperçu)
   function arenaHTML(){
@@ -2269,7 +2310,7 @@
     if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${esc(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
     const pl = (duelData.players || []).slice(0, 3);
     return `<div class="arena"><div class="at"><span>⚔️ L'arène · 3 ou 7 jours</span><span class="bet">🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
-      <div class="atag">Qui sortira le plus ${DOG} ? Lance un duel, mets des clebsous en jeu, et que le meilleur gagne !</div>
+      <div class="atag">Qui sortira le plus ${DOG} ? Mise des clebsous et que le meilleur gagne !</div>
       <div class="chal">${pl.length ? pl.map(p => `<button data-defy="${esc(p.walker)}">⚔️ Défier ${esc(p.walker)}</button>`).join("") : `<button data-arena="duels">⚔️ Lancer un défi</button>`}</div></div>`;
   }
   function bindLots(){
@@ -2580,26 +2621,34 @@
   }
 
   // ---------- ☰ Menu ----------
-  function openMenu(){
-    const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
-    openSheet(`<h2>☰ Menu</h2><div class="menu">
-      ${it("muProg", "🏆", "Progrès", esc(levelOf(game.total).name))}
-      ${it("muMoney", "🪙", "Tirelire", Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
-      ${isTester() && PUSH_API ? it("muDuel", "⚔️", "Duels", "aperçu") : ""}
-      ${duelOK() ? it("muDuel", "⚔️", "Duels", myDuel() ? scoreOf(myDuel()).join(" – ") : myInvite() ? "défi reçu !" : "") : ""}
-      ${it("muFog", "🗺️", "Carte d'exploration", game.home ? fogStats().pct + " %" : "")}
-      ${it("muOuts", "🐾", "Dernières sorties", "")}
-      ${it("muLog", "📒", "Carnet", "")}
-      ${it("muAlbum", "📸", "Album photo", "")}
-      ${PUSH_API && !isTester() ? it("muRap", "🔔", "Mes rappels", rap.on ? "activés" : "") : ""}
-      ${it("muShort", "📲", "Bouton « Sortir Roxy »", "sur l'écran d'accueil")}
-      ${it("muBonus", "🎁", "Bonus et règles", "")}
-      ${it("muTuto", "📖", "Tuto", "")}
-      ${it("muWho", "👤", "Changer de prénom", esc(profile.walker || ""))}
-      ${PUSH_API && !isTester() ? it("muPriv", "🔒", "Vie privée", store.get(STATS_KEY, null) === true ? "statistiques partagées" : "") : ""}
-      ${PUSH_API && supToken() ? it("muSupAll", "🔑", "Superviseur", "tableau de bord, pause, remise à zéro…") : ""}
-      ${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}
-    </div>`);
+  function openMenu(){   // v2.2 : 4 grosses tuiles, une courte liste, les réglages en icônes
+    const tl = (id, k, ic, t, v) => `<button id="${id}" class="${k}"><span class="e">${ic}</span><span><b>${t}</b>${v !== "" ? `<small>${v}</small>` : ""}</span></button>`;
+    const li = (id, ic, t, sub) => `<button id="${id}"><span>${ic}</span>${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
+    const ic = (id, e, t) => `<button id="${id}">${e}<small>${t}</small></button>`;
+    const inv = duelOK() && myInvite(), du = duelOK() && myDuel();
+    openSheet(`<h2>☰ Menu</h2>
+      <div class="mgrid">
+      ${tl("muProg", "k1", "🏆", "Progrès", esc(levelOf(game.total).name))}
+      ${tl("muMoney", "k2", "🪙", "Tirelire", "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
+      ${isTester() && PUSH_API ? tl("muDuel", "k3", "⚔️", "Duels", "aperçu") : ""}
+      ${duelOK() ? tl("muDuel", "k3" + (inv ? " ping" : ""), "⚔️", "Duels", du ? scoreOf(du).join(" – ") : inv ? "défi reçu !" : "lancer un défi") : ""}
+      ${tl("muFog", "k4", "🗺️", "Exploration", game.home ? fogStats().pct + " %" : "à découvrir")}
+      </div>
+      <div class="mlist">
+      ${li("muOuts", "🐾", "Dernières sorties", "")}
+      ${li("muLog", "📒", "Carnet", "")}
+      ${li("muAlbum", "📸", "Album photo", "")}
+      ${li("muBonus", "🎁", "Bonus et règles", "")}
+      ${PUSH_API && supToken() ? li("muSupAll", "🔑", "Superviseur", "") : ""}
+      </div>
+      <div class="micons">
+      ${PUSH_API && !isTester() ? ic("muRap", "🔔", rap.on ? "Rappels ✓" : "Rappels") : ""}
+      ${ic("muShort", "📲", "Raccourci")}
+      ${ic("muWho", "👤", "Prénom")}
+      ${PUSH_API && !isTester() ? ic("muPriv", "🔒", "Vie privée") : ""}
+      ${ic("muTuto", "📖", "Tuto")}
+      </div>
+      <div class="mfoot">${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}<button id="muAbout">À propos · version ${APP_LABEL}</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muProg", () => switchTab("prog"));
     go("muMoney", () => switchTab("shop"));
@@ -2612,6 +2661,8 @@
     go("muBonus", sheetBonus);
     go("muShort", sheetShortcut);
     go("muTuto", () => showTuto(0, true));
+    go("muAbout", () => { const d = document.querySelector("footer details"); const h = d ? d.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, "") : "";
+      openSheet(`<h2>ℹ️ À propos</h2><p><b>Wouaf Balades, version ${APP_LABEL}.</b></p><p class="howto">${h}</p><div class="btns"><button id="abClose">Fermer</button></div>`); $("#abClose").onclick = closeSheet; });
     go("muWho", () => askProfile());
     go("muPriv", sheetPrivacy);
     go("muSup", openSuper);
@@ -4219,10 +4270,10 @@
   function updateGo(){
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur);
     $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
-    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${dur + bon}</b>🪙<span>clebsous<small>${dur} pour la durée<br>+ ~${bon} de bonus</small></span>`;
+    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${dur + bon}</b>🪙<span>clebsous</span>`;
     const next = [20, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
-    $("#goHint").innerHTML = (next ? `<button id="goUp">💡 En ${fmtMin(next)} : jusqu'à <b>${gainEst(next)}</b> 🪙, soit ${(gainEst(next) / (dur + bon)).toFixed(1).replace(".", ",").replace(",0", "")} fois plus ! Touche ici</button>` : "") +
-      `<button class="bon" id="goBon">🎁 Les bonus ?</button>`;
+    $("#goHint").innerHTML = (next ? `<button id="goUp">💡 ${fmtMin(next)} : jusqu'à <b>${gainEst(next)}</b> 🪙 (×${(gainEst(next) / (dur + bon)).toFixed(1).replace(".", ",").replace(",0", "")})</button>` : "") +
+      `<button class="bon" id="goBon">🎁 Bonus ?</button>`;
     if ($("#goUp")) $("#goUp").onclick = () => { const b = document.querySelector(`#durSeg button[data-v="${next}"]`); if (b) b.click(); };
     $("#goBon").onclick = sheetBonus;
   }
@@ -4304,8 +4355,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 35, APP_LABEL = "2.1";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 36, APP_LABEL = "2.2";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    36: [
+      "🏠 L'accueil tient sur un seul écran : plus besoin de faire défiler. Touche une tuile des gros lots pour l'explication.",
+      "☰ Nouveau menu : Progrès, Tirelire, Duels et Exploration en grandes tuiles."
+    ],
     35: [
       "⚔️ Les duels : défie un autre promeneur sur 3 ou 7 jours (menu ☰ › Duels). Et la Guerre des rues : vole les rues de l'autre !",
       "🏅 Le record du mois : fais la plus longue balade du mois et gagne +50 clebsous.",
