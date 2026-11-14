@@ -251,7 +251,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.075909";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.080100";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -682,7 +682,7 @@
       const i = state.results.indexOf(p);
       return `<div class="prop${state.sel === i ? " sel" : ""}" tabindex="0" data-i="${i}" style="border-left:5px solid ${COLORS[i % COLORS.length]}">
         <div class="ico">${iconOf(p)}</div>
-        <div><h3>${esc(titleOf(p))}</h3><div class="sub"><span class="tag">${CATS[p.cat].icon} ${CATS[p.cat].label}</span>${p.newPct >= 10 ? `<span class="tag new">🆕 ${p.newPct} % de nouveau</span>` : ""}${esc(subOf(p))}</div></div>
+        <div><h3>${esc(titleOf(p))}</h3><div class="sub"><span class="tag">${CATS[p.cat].icon} ${CATS[p.cat].label}</span>${p.newPct >= 10 && Object.keys(game.seen).length ? `<span class="tag new">🆕 ${p.newPct} % de nouveau</span>` : ""}${esc(subOf(p))}</div></div>
         <div class="time">${fmtMin(p.min)}<small>${fmtKm(p.m)}</small></div>
         <button class="go" data-go="${i}">🐾 C'est parti</button>
       </div>`;
@@ -839,9 +839,10 @@
       acc += dist(p.line[i-1], p.line[i]);
       if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 120 + Math.random()*70; }
     }
+    // trésor : sur le tracé, au plus près du lieu sympa du parcours (sinon au point le plus éloigné du départ)
     let best = null;
     const v = (p.via || []).find(x => x.pt && x.kind && x.kind !== "walk");
-    if (v) best = v.pt;
+    if (v){ let bd = Infinity; for (const q of p.line){ const d = dist(v.pt, q); if (d < bd){ bd = d; best = q; } } }
     else { let bd = -1; for (const q of p.line){ const d = dist(p.line[0], q); if (d > bd){ bd = d; best = q; } } }
     if (best) out.push({ lat:best.lat, lon:best.lon, k:"s" });
     return out;
