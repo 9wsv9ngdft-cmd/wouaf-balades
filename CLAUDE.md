@@ -179,3 +179,16 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   bandeau de départ = « 🐾 C'est parti ! » + missions, boutons « 👍 OK » / « ✕ Annuler ».
 - 🌫️ Brouillard en direct pendant la balade (`drawWalkFog`, 3 km autour de la maison) : grisé = rues neuves (pas faites depuis
   15 jours = bonus), éclairci au passage ; le brouillard de Progrès reste « à vie ».
+
+## Version 31 : règles d'argent finales (décidé le 14/11)
+- **Sortie obligatoire : 1 balade ≥ 20 min par jour** (`MONEY_MIN = 20`). La durée ne paie qu'au-delà : `walkEuros(min) =
+  0,35 × ((min/25)^1,5 − (20/25)^1,5)` → 20 min 0 · 30 min 21 · 45 min 60 · 1 h 105 · 1 h 30 214 clebsous. Les **bonus** du jeu
+  (objets, rues neuves, défi, trésor, photo, duo…) comptent dès 20 min. Durées proposées : 20/30/45/60/90.
+- Plafond doux secret : au-delà de 15 € (gains du mois), chaque gain ÷ 4 ; plafond final 20 € (`MONEY_SOFT`, `MONEY_MAX`, `addMoney`).
+  Coffres hors plafond, **seulement si ≥ 4 jours de balade sur les 7 derniers** (`regular()`).
+- Malus : jour sans balade ≥ 20 min −30 (1 joker/mois) ; semaine < 6 jours −50 ; 3e balade < 20 min de la semaine −10.
+  🏆 Semaine parfaite (7/7, pauses déduites) : +30 (`PERFECT_WEEK`, `game.perfect`), annoncée dans le récap de la semaine.
+- Estimation par ado et par mois : rechigne ≈ 0 € · minimum chaque jour ≈ 0–4 € (bonus seulement) · 30 min la plupart des jours
+  ≈ 12–16 € · 45 min et plus chaque jour ≈ 20–30 € (coffres compris).
+- 🌫️ Brouillard opaque (`fogPolygon`, calque `fog` sous les tracés, ≈ 50 km, opacité .82) pendant la balade (rues faites < 15 j
+  visibles) et dans Progrès (toutes les rues déjà vues).

@@ -333,7 +333,7 @@
     </div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
-      <button data-v="15" aria-label="15 minutes, balade express">⚡ 15</button>
+      <button data-v="20" aria-label="20 minutes, le minimum">⚡ 20</button>
       <button data-v="30">30 min</button>
       <button data-v="45">45 min</button>
       <button data-v="60">1 h</button>
@@ -410,7 +410,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.154447";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.161307";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -429,7 +429,7 @@
   };
 
   const state = { start:null, dur: store.get("wouaf-dur", 45), cat:"all", results:[], sel:null, walk:null, picking:false, tab:"walks", cands:null, round:0, exclude:new Set(), detour:null };
-  if (![15, 30, 45, 60, 90].includes(state.dur)) state.dur = 45;
+  if (![20, 30, 45, 60, 90].includes(state.dur)) state.dur = 45;
 
   // ---------- Géométrie ----------
   const R = 6371000, toR = Math.PI/180;
@@ -469,6 +469,20 @@
 
   // ---------- Carte ----------
   const map = L.map("map", { zoomControl:true }).setView([48.8566, 2.3522], 12);
+  // calque du brouillard : au-dessus du fond de carte, sous les tracés, Roxy et les objets
+  map.createPane("fog"); map.getPane("fog").style.zIndex = 350; map.getPane("fog").style.pointerEvents = "none";
+  // grand rectangle (≈ 50 km) percé des cases connues
+  function fogPolygon(c, cells, opacity){
+    const dLat = .45, dLon = .65;
+    const outer = [[c.lat - dLat, c.lon - dLon], [c.lat - dLat, c.lon + dLon], [c.lat + dLat, c.lon + dLon], [c.lat + dLat, c.lon - dLon]];
+    const holes = [];
+    for (const k of cells){
+      const [i, j] = k.split(":").map(Number), a = i * 0.0009, b = j * 0.0013;
+      if (Math.abs(a - c.lat) > dLat || Math.abs(b - c.lon) > dLon) continue;
+      holes.push([[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]);
+    }
+    return L.polygon([outer, ...holes], { pane:"fog", stroke:false, fillColor:"#26302a", fillOpacity: opacity, interactive:false });
+  }
   L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
     maxZoom: 19, subdomains:"abc", attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
@@ -974,8 +988,11 @@
   if (EVENT) for (const k in EVENT.it){ ITEMS[k].icon = EVENT.it[k][0]; ITEMS[k].name = EVENT.it[k][1]; }
   // Tirelire (argent réel) : chaque balade d'au moins 15 min rapporte selon SA durée, de façon plus que proportionnelle
   // (2 × 15 min rapportent moins qu'une balade de 30 min). 25 min par jour ≈ 10 € par mois, 15 € maximum par mois.
-  const MONEY_MIN = 15, REF_MIN = 25, REF_EUR = 0.35, MONEY_MAX = 15, MONEY_POW = 1.5;
-  const walkEuros = min => min < MONEY_MIN ? 0 : Math.round(REF_EUR * Math.pow(min / REF_MIN, MONEY_POW) * 100) / 100;
+  // Sortie obligatoire : 1 balade d'au moins 20 min par jour (MONEY_MIN). Elle ne rapporte rien pour la durée (seulement les bonus) :
+  // la durée ne paie qu'au-delà de 20 min. Plafond doux : au-delà de 15 € dans le mois, gains ÷ 4 ; plafond final 20 € (secrets).
+  const MONEY_MIN = 20, REF_MIN = 25, REF_EUR = 0.35, MONEY_SOFT = 15, MONEY_MAX = 20, MONEY_POW = 1.5;
+  const walkRaw = min => REF_EUR * Math.pow(min / REF_MIN, MONEY_POW);
+  const walkEuros = min => min <= MONEY_MIN ? 0 : Math.round((walkRaw(min) - walkRaw(MONEY_MIN)) * 100) / 100;
   const fmtEur = v => v.toFixed(2).replace(".", ",") + " €";
   // 🪙 Clebsous : la seule monnaie affichée (100 clebsous = 1 €). L'équivalent en euros reste SECRET pour les promeneurs (choix du superviseur) : jamais de « € » à l'écran ni dans les messages
   const CS = 100;
@@ -1133,17 +1150,9 @@
     if (!c) return;
     if (!force && (gw.cells.length === walkFogN || Date.now() - walkFogAt < 8000)) return;
     walkFogAt = Date.now(); walkFogN = gw.cells.length;
-    const R = 3000, dLat = R / 111320, dLon = R / (111320 * Math.cos(c.lat * Math.PI / 180));
-    const outer = [[c.lat - dLat, c.lon - dLon], [c.lat - dLat, c.lon + dLon], [c.lat + dLat, c.lon + dLon], [c.lat + dLat, c.lon - dLon]];
     const clear = new Set(Object.keys(game.seen).filter(k => !isNewCell(k)).concat(gw.cells));
-    const holes = [];
-    for (const k of clear){
-      const [i, j] = k.split(":").map(Number), a = i * 0.0009, b = j * 0.0013;
-      if (Math.abs(a - c.lat) > dLat || Math.abs(b - c.lon) > dLon) continue;
-      holes.push([[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]);
-    }
     if (walkFog) map.removeLayer(walkFog);
-    walkFog = L.polygon([outer, ...holes], { stroke:false, fillColor:"#1f2a22", fillOpacity:.32, interactive:false }).addTo(map);
+    walkFog = fogPolygon(c, clear, .82).addTo(map);
   }
   function clearWalkFog(){ if (walkFog){ map.removeLayer(walkFog); walkFog = null; } walkFogN = -1; }
   const livePts = () => gw ? gw.itemPts + gw.newCells : 0;
@@ -1224,7 +1233,9 @@
   function addMoney(eur){
     const k = monthKey(Date.now());
     const before = game.money[k] || 0;
-    const added = Math.max(0, Math.min(eur, MONEY_MAX - before));
+    const full = Math.max(0, Math.min(eur, MONEY_SOFT - before));
+    const soft = Math.max(0, Math.min((eur - full) / 4, MONEY_MAX - before - full));
+    const added = Math.round((full + soft) * 100) / 100;
     game.money[k] = Math.round((before + added) * 100) / 100;
     saveGame();
     return added;
@@ -1293,7 +1304,7 @@
       </div>
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
-        <div style="font-size:14px;margin-top:6px;line-height:1.7">${[15, 25, 30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} → <b>${fmtCs(walkEuros(n))}</b>`).join(" · ")}</div>
+        <div style="font-size:14px;margin-top:6px;line-height:1.7">${[20, 30, 45, 60, 90].map(n => `${n === 60 ? "1 h" : n === 90 ? "1 h 30" : n + " min"} → <b>${n === MONEY_MIN ? "0 (le minimum)" : fmtCs(walkEuros(n))}</b>`).join(" · ")} · + les bonus</div>
         <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as pas prise depuis longtemps. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
       </div>
       ${malusBox()}
@@ -1326,7 +1337,9 @@
     const last = game.chests.length ? new Date(game.chests[game.chests.length - 1]).getTime() : game.firstUse - 5*86400000;
     return last + CHEST_GAP_DAYS * 86400000;
   }
+  const regular = () => { let n = 0; for (let i = 1; i <= 7; i++) if (walkedOn(dIso(Date.now() - i * DAYMS))) n++; return n >= 4; };
   function chestChance(){
+    if (!regular()) return 0;
     const d = (Date.now() - chestFrom()) / 86400000;
     return d < 0 ? 0 : Math.min(0.2, 0.05 + 0.015 * d);
   }
@@ -1335,7 +1348,7 @@
     ensureGame();
     const l = [], today = dayKey(Date.now());
     if (paused(dIso(Date.now()))) l.push("🏖️ Pause décidée par le superviseur : pas de malus en ce moment (les balades rapportent toujours 💶).");
-    else if (game.streak.day !== today) l.push(`⏳ Pas encore de balade aujourd'hui. À gagner : ${[15, 25, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} ${fmtCs(walkEuros(n))}`).join(" · ")}. Ne passe pas à côté !`);
+    else if (game.streak.day !== today) l.push(`⏳ Pas encore de balade aujourd'hui. Minimum 20 min. À gagner : ${[30, 45, 60].map(n => `${n === 60 ? "1 h" : n + " min"} ${fmtCs(walkEuros(n))}`).join(" · ")} + les bonus. Ne passe pas à côté !`);
     else l.push(`✓ ${DOG} est déjà sortie aujourd'hui, bravo !`);
     if ((game.streak.n || 0) >= 2 && game.streak.day === dayKey(Date.now() - DAYMS)) l.push(`🔥 Série de ${game.streak.n} jours : 15 min aujourd'hui pour la garder !`);
     if (chestChance() > 0) l.push("💰 Le coffre est chaud : prends une rue que tu n'as pas faite depuis longtemps !");
@@ -1396,10 +1409,8 @@
   function toggleFog(){
     if (fogLayer){ map.removeLayer(fogLayer); fogLayer = null; document.body.classList.remove("fogview"); renderProg(); return; }
     if (!game.home){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
-    const h = game.home, dLat = 3000 / 111320, dLon = 3000 / (111320 * Math.cos(h.lat * Math.PI / 180));
-    const outer = [[h.lat - dLat, h.lon - dLon], [h.lat - dLat, h.lon + dLon], [h.lat + dLat, h.lon + dLon], [h.lat + dLat, h.lon - dLon]];
-    const holes = Object.keys(game.seen).map(c => { const [i, j] = c.split(":").map(Number); const a = i * 0.0009, b = j * 0.0013; return [[a, b], [a + 0.0009, b], [a + 0.0009, b + 0.0013], [a, b + 0.0013]]; });
-    const fog = L.polygon([outer, ...holes], { stroke:false, fillColor:"#1f2a22", fillOpacity:.55, interactive:false });
+    const h = game.home;
+    const fog = fogPolygon(h, Object.keys(game.seen), .82);
     const ring = L.circle([h.lat, h.lon], { radius: FOG_R, color:"#ffd36b", weight:2, fill:false, dashArray:"6 8", interactive:false });
     fogLayer = L.featureGroup([fog, ring]).addTo(map);
     document.body.classList.add("fogview"); map.invalidateSize();   // la carte est cachée sur l'accueil : on l'affiche pour le brouillard
@@ -1621,7 +1632,7 @@
     const defis = {};
     for (let i = 0; i < 8; i++){ const t = Date.now() + i * DAYMS; defis[dayKey(t)] = defiOf(t).t; }
     const w = weekStats(Date.now());
-    return { sn: game.streak.n || 0, sd: game.streak.day || "", hot: chestFrom(), defis, wk: { k: w.k, n: w.n, min: w.min, eur: w.eur } };
+    return { sn: game.streak.n || 0, sd: game.streak.day || "", hot: regular() ? chestFrom() : 9e15, defis, wk: { k: w.k, n: w.n, min: w.min, eur: w.eur } };
   }
   const api = (path, body) => fetch(PUSH_API.replace(/\/$/, "") + path, { method: body ? "POST" : "GET", body: body ? JSON.stringify(body) : undefined, headers: body ? { "Content-Type":"text/plain" } : {} });
   async function subscribePush(){
@@ -1689,7 +1700,7 @@
   // Jour sans balade d'au moins 15 min avec l'app : −0,20 € (2 jokers par mois) ; dès la 3e balade de moins de 15 min
   // dans la semaine : −0,10 € chacune ; semaine de moins de 4 jours de balade : −0,50 €. Pas pendant une pause du superviseur.
   // La tirelire affichée = gains − malus du mois, jamais sous 0 €.
-  const MALUS_START = "2026-11-16", MALUS_DAY = 0.2, MALUS_SHORT = 0.1, MALUS_WEEK = 0.5, JOKERS = 2, WEEK_DAYS = 4;
+  const MALUS_START = "2026-11-16", MALUS_DAY = 0.3, MALUS_SHORT = 0.1, MALUS_WEEK = 0.5, JOKERS = 1, WEEK_DAYS = 6, PERFECT_WEEK = 0.3;
   const pad2 = n => String(n).padStart(2, "0");
   const isoOf = d => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
   const dIso = t => isoOf(new Date(t - 4*3600000));   // la journée commence à 4 h
@@ -1751,6 +1762,7 @@
       for (let i = 0; i < 7; i++){ const d = nextIso(w, i); if (paused(d)) off++; else if (walkedOn(d)) n++; }
       const need = Math.max(0, WEEK_DAYS - off);
       if (n < need) out.push(addMalus({ k:"week", d: w, eur: MALUS_WEEK, n, need }));
+      else if (off < 7 && n >= 7 - off){ addMoney(PERFECT_WEEK); game.perfect = game.perfect || {}; game.perfect[w] = 1; }   // 🏆 semaine parfaite
       game.weekMalusDone = w;
     }
     saveGame();
@@ -1788,7 +1800,7 @@
     return `<div class="wallet" style="background:#fff6ef;color:var(--ink);border:1px solid #f0d9c4">
         <div style="font-weight:600">⚠️ Malus de ${monthName(Date.now())}${ml.eur ? ` : −${fmtCs(ml.eur)}` : " : aucun 👏"}</div>
         ${ml.list.length ? `<div style="font-size:13px;margin-top:6px;line-height:1.6">${ml.list.map(x => esc(malusLabel(x))).join("<br>")}</div>` : ""}
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 15 min avec l'app : −${fmtCs(MALUS_DAY)} · dès la 3e balade de moins de 15 min dans la semaine : −${fmtCs(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtCs(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 20 min avec l'app : −${fmtCs(MALUS_DAY)} · dès la 3e balade de moins de 20 min dans la semaine : −${fmtCs(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtCs(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
       </div>`;
   }
   // à l'ouverture : annoncer les nouveaux malus (ou jokers utilisés)
@@ -1801,7 +1813,7 @@
     const eur = Math.round(list.reduce((n, x) => n + x.eur, 0) * 100) / 100;
     openSheet(`<h2>${eur ? `⚠️ Malus : −${fmtCs(eur)}` : "🃏 Joker utilisé"}</h2>
       <p style="line-height:1.7">${list.map(x => esc(malusLabel(x))).join("<br>")}</p>
-      <p>Tirelire de ${monthName(Date.now())} : <b>${fmtCs(moneyThisMonth())}</b>. Une balade aujourd'hui pour te rattraper ? 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))} 🐾</p>
+      <p>Tirelire de ${monthName(Date.now())} : <b>${fmtCs(moneyThisMonth())}</b>. Une balade aujourd'hui pour te rattraper ? 45 min = ${fmtCs(walkEuros(45))}, 1 h = ${fmtCs(walkEuros(60))} + les bonus 🐾</p>
       <div class="btns"><button id="malOk">OK</button></div>`);
     $("#malOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 400); };
     return true;
@@ -1884,7 +1896,7 @@
     if (boosted(dIso(Date.now()))) l.push({ ic:"🎉", t:"Jour bonus : tous les bonus comptent double aujourd'hui !", done:false });
     const hu = weekHunt();
     if (hu) l.push({ ic:"🏴‍☠️", t: hu.found ? "Trésor de la semaine trouvé, bravo !" : `Trésor de la semaine : caché à ~${fmtKm(dist(game.home, hu))} ${compass(game.home, hu)} de la maison (+${HUNT_FIRST} au premier)`, done: !!hu.found });
-    l.push({ ic:"🐕", t: walked ? `${DOG} est sortie aujourd'hui, bravo !` : `Sortir ${DOG} : 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))}`, done: walked });
+    l.push({ ic:"🐕", t: walked ? `${DOG} est sortie aujourd'hui, bravo !` : `Sortie obligatoire : au moins 20 min. Et au-delà : 45 min = ${fmtCs(walkEuros(45))}, 1 h = ${fmtCs(walkEuros(60))} + les bonus`, done: walked });
     l.push({ ic:"🎯", t: `Défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} 🪙)`, done: game.defiDone === today });
     const n = game.streak.n || 0;
     if (n >= 1 && !walked && streakAlive(game.streak.day)) l.push({ ic:"🔥", t:`Garder ta série de ${n} jour${n > 1 ? "s" : ""}`, done:false });
@@ -1972,11 +1984,12 @@
     const best = game.bestWeek || 0, rec = w.min > best;
     if (rec) game.bestWeek = w.min;
     saveGame();
-    return { party: rec && best, html: `<div class="dc-ic">🏅</div><h2>Ta semaine avec ${DOG}</h2>
+    return { html: `<div class="dc-ic">🏅</div><h2>Ta semaine avec ${DOG}</h2>
       <div class="rgrid"><div><b>${w.n}</b><span>balade${w.n > 1 ? "s" : ""}</span></div><div><b>${fmtMin(w.min)}</b><span>de balade</span></div>
         <div><b>${fmtKm(w.m)}</b><span>parcourus</span></div><div><b>${fmtCs(w.eur)}</b><span>dans la tirelire</span></div></div>
       ${rec && best ? `<div class="party">🏆 <b>Record battu !</b> Ta meilleure semaine (avant : ${fmtMin(best)}).</div>` : best ? `<p>Ton record : ${fmtMin(best)} sur une semaine.</p>` : ""}
-      ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtCs(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}` };
+      ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtCs(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}
+      ${(game.perfect || {})[isoOf(new Date(ws0))] ? `<div class="party">🏆 <b>Semaine parfaite : 7 jours sur 7 !</b> +${Math.round(PERFECT_WEEK * CS)} 🪙</div>` : ""}`, party: !!(game.perfect || {})[isoOf(new Date(ws0))] || !!(rec && best) };
   }
   function paydayCardData(){
     ensureGame();
@@ -2017,7 +2030,7 @@
       const n = processMalus();
       if (n.length){ const eur = Math.round(n.reduce((a, x) => a + x.eur, 0) * 100) / 100;
         cards.push({ html: `<div class="dc-ic">${eur ? "⚠️" : "🃏"}</div><h2>${eur ? `Malus : −${fmtCs(eur)}` : "Joker utilisé"}</h2><p style="line-height:1.7">${n.map(x => esc(malusLabel(x))).join("<br>")}</p>
-          <p>Une balade aujourd'hui pour te rattraper ? 25 min = ${fmtCs(walkEuros(25))}, 45 min = ${fmtCs(walkEuros(45))} 🐾</p>` }); }
+          <p>Une balade aujourd'hui pour te rattraper ? 45 min = ${fmtCs(walkEuros(45))}, 1 h = ${fmtCs(walkEuros(60))} + les bonus 🐾</p>` }); }
     }
     const adj = await fetchAdjust();
     if (adj.length) cards.push({ html: `<div class="dc-ic">✏️</div><h2>Message du superviseur</h2><div class="props">${adj.map(a => `<div class="entry"><div><h4>${a.cs > 0 ? "+" : ""}${a.cs} 🪙</h4><div class="when">${esc(a.why || "")}</div></div></div>`).join("")}</div>` });
@@ -2052,7 +2065,7 @@
   function showTuto(step){
     step = step || 0;
     const pages = [
-      ["🐕", `Sors ${DOG}, gagne des clebsous`, `Choisis une durée, touche « C'est parti », puis balade libre ou parcours proposé. Chaque balade d'au moins 15 min remplit ta tirelire de 🪙 clebsous. Plus c'est long, plus ça rapporte : 15 min = ${Math.round(walkEuros(15) * CS)}, 45 min = ${Math.round(walkEuros(45) * CS)}, 1 h = ${Math.round(walkEuros(60) * CS)}.`],
+      ["🐕", `Sors ${DOG}, gagne des clebsous`, `Choisis une durée, touche « C'est parti », puis balade libre ou parcours proposé. Sortir ${DOG} au moins 20 min par jour, c'est obligatoire. En chemin, les bonus remplissent ta tirelire de 🪙 clebsous, et au-delà de 20 min la durée rapporte aussi : 45 min = ${Math.round(walkEuros(45) * CS)}, 1 h = ${Math.round(walkEuros(60) * CS)}.`],
       ["🎁", "Ramasse les bonus", `En marchant, tu trouves 🦴 🎾 🍖 et un ⭐ trésor. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours rapportent double, le défi du jour +${DEFI_PTS}, et parfois un 💰 coffre de ${Math.round(CHEST_EUR * CS)} clebsous se cache sur ton chemin !`],
       ["💶", "Les règles du jeu", `Garde l'app ouverte pendant la balade : une balade sans l'app ne compte pas. Un jour sans balade enlève des clebsous (2 jokers par mois). Et à la fin du mois… tes clebsous deviennent de vrais sous ! (Nouveau téléphone ? Le superviseur peut récupérer ta tirelire.)`]
     ];
@@ -2649,7 +2662,7 @@
       }
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
-    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · ${elapsed < MONEY_MIN ? `🪙 dans ${Math.ceil(MONEY_MIN - elapsed)} min${livePts() ? ` (+${livePts()} de bonus)` : ""}` : `🪙 ${fmtCs(walkEuros(elapsed) + livePts() / CS)}`}`;
+    const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> de balade · ${elapsed < MONEY_MIN ? `🎯 minimum dans ${Math.ceil(MONEY_MIN - elapsed)} min${livePts() ? ` · 🪙 ${livePts()} de bonus` : ""}` : `🪙 ${fmtCs(walkEuros(elapsed) + livePts() / CS)}`}`;
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
@@ -3238,7 +3251,7 @@
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur);
     $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
     $("#goGain").innerHTML = `<span>jusqu'à</span><b>${dur + bon}</b>🪙<span>clebsous<small>${dur} pour la durée<br>+ ~${bon} de bonus</small></span>`;
-    const next = [15, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
+    const next = [20, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
     $("#goHint").innerHTML = (next ? `<button id="goUp">💡 En ${fmtMin(next)} : jusqu'à <b>${gainEst(next)}</b> 🪙, soit ${(gainEst(next) / (dur + bon)).toFixed(1).replace(".", ",").replace(",0", "")} fois plus ! Touche ici</button>` : "") +
       `<button class="bon" id="goBon">🎁 Les bonus ?</button>`;
     if ($("#goUp")) $("#goUp").onclick = () => { const b = document.querySelector(`#durSeg button[data-v="${next}"]`); if (b) b.click(); };
@@ -3247,7 +3260,7 @@
   function sheetBonus(){
     const row = (ic, t, v) => `<div class="entry"><div><h4>${ic} ${t}</h4></div><div class="dur">${v}</div></div>`;
     openSheet(`<h2>🎁 Les bonus</h2>
-      <p>En plus des clebsous de la durée, tout ça se ramasse en route et s'ajoute à ta tirelire (balade d'au moins 15 min) :</p>
+      <p>La sortie obligatoire (20 min) ne rapporte rien pour la durée, mais tout ça se ramasse en route, dès 20 min, et s'ajoute à ta tirelire :</p>
       <div class="props">
         ${row("🦴", "Un os", "+1 🪙")}${row("🎾", "Une balle", "+2 🪙")}${row("🍖", "Une friandise", "+3 🪙")}${row("⭐", "Le trésor (1 par balade)", "+5 🪙")}
         ${row("🗺️", `Chaque rue pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max)`, "+1 🪙")}
@@ -3261,7 +3274,8 @@
         ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
-        ${row("💰", "Coffre surprise, caché sur une rue pas faite depuis longtemps", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
+        ${row("💰", "Coffre surprise, sur une rue pas faite depuis longtemps (si tu es sorti au moins 4 jours sur les 7 derniers)", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
+        ${row("🏆", "Semaine parfaite : Roxy sortie 7 jours sur 7", `+${Math.round(PERFECT_WEEK * CS)} 🪙`)}
       </div>
       <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 15 min ≈ ${gainEst(15)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
       <div class="btns"><button id="bonClose">Compris !</button><button class="ghost" id="bonTuto">📖 Revoir le tuto</button></div>`);
@@ -3320,8 +3334,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 30;
+  const APP_NUM = 31;
   const NEWS = {
+    31: [
+      "🐕 Sortir Roxy au moins 20 min par jour, c'est obligatoire : ça ne rapporte rien en soi, mais les bonus trouvés en route comptent ! Au-delà de 20 min, la durée rapporte aussi.",
+      "🏆 Semaine parfaite (7 jours sur 7) : +30 🪙. Les coffres sont réservés à ceux qui sortent Roxy au moins 4 jours sur 7.",
+      "🌫️ Pendant la balade, la carte est cachée sous le brouillard : seules les rues faites ces 15 derniers jours sont visibles."
+    ],
     30: [
       "▶️ « C'est parti » te demande d'abord : balade libre ou parcours proposé ? Puis « On y va ».",
       "🌫️ Pendant la balade, la carte est grisée sur les rues que tu n'as pas faites depuis 15 jours : c'est là que sont les bonus ! Elles s'éclaircissent quand tu passes."

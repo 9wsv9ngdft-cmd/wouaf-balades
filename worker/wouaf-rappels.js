@@ -33,7 +33,8 @@ const dayKey = ts => { const l = local(ts - 4*3600000); return `${l.y}-${l.m}-${
 const weekKey = ts => { const l = local(ts - 4*3600000); return dayKey(ts - ((l.dow + 6) % 7) * 86400000); };
 const fmtMin = m => { m = Math.round(m); return m < 60 ? `${m} min` : `${Math.floor(m/60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}`; };
 const isoDay = ts => { const l = local(ts - 4*3600000); return `${l.y}-${String(l.m).padStart(2, "0")}-${String(l.d).padStart(2, "0")}`; };
-const walkEuros = min => Math.round(0.35 * Math.pow(min / 25, 1.5) * 100) / 100;
+// même calcul que l'app : la durée ne paie qu'au-delà des 20 min obligatoires
+const walkEuros = min => min <= 20 ? 0 : Math.round((0.35 * Math.pow(min / 25, 1.5) - 0.35 * Math.pow(20 / 25, 1.5)) * 100) / 100;
 // 🪙 Clebsous : la monnaie de l'app (100 clebsous = 1 €)
 const fmtEur = v => { const n = Math.round((v || 0) * 100); return n.toLocaleString("fr-FR") + (n > 1 ? " clebsous" : " clebsou"); };
 
@@ -89,7 +90,7 @@ const GENERIC = [
   n => `${DOG} t'attend${n ? ", " + n : ""} ! Une petite balade ? 🐾`,
   () => `Des 🦴 et des 🎾 à ramasser aujourd'hui. Tu pars à la chasse avec ${DOG} ?`,
   () => `Et si tu changeais de trajet ? Les rues pas faites depuis 15 jours rapportent double 🗺️`,
-  () => `25 min de balade = 35 clebsous 🪙 1 h = 130 ! Plus c'est long, plus ça rapporte.`,
+  () => `Au-delà des 20 min, ça rapporte : 1 h = ${Math.round(walkEuros(60) * 100)} clebsous 🪙 + les bonus. Plus c'est long, plus ça rapporte.`,
   () => `${DOG} a besoin de se dégourdir les pattes. C'est le moment ? 🐕`
 ];
 function pickMessage(u, slot, now){
@@ -108,10 +109,10 @@ function pickMessage(u, slot, now){
       : `Pas encore de balade cette semaine. ${DOG} compte sur toi ce soir 🐾` };
   }
   if (walked) return null;   // déjà sortie aujourd'hui : on ne dérange pas
-  if (slot === 1 && danger) return { title:`🔥 Série de ${s.sn} jours en danger !`, body:`Sors ${DOG} au moins 15 min ce soir pour la garder.` };
+  if (slot === 1 && danger) return { title:`🔥 Série de ${s.sn} jours en danger !`, body:`Sors ${DOG} au moins 20 min ce soir pour la garder.` };
   const boosted = (s.boost || []).some(p => isoDay(now) >= p.from && isoDay(now) <= p.to);
   if (boosted) return { title:"🎉 Bonus ×2 aujourd'hui !", body:`Tous les bonus comptent double. Pars à la chasse avec ${DOG} !` };
-  const gain = { title:"⏳ Pas encore de balade aujourd'hui", body:`À gagner : 15 min ${fmtEur(walkEuros(15))} · 25 min ${fmtEur(walkEuros(25))} · 45 min ${fmtEur(walkEuros(45))} · 1 h ${fmtEur(walkEuros(60))}. Ne passe pas à côté !` };
+  const gain = { title:"⏳ Pas encore de balade aujourd'hui", body:`Au moins 20 min avec ${DOG}, c'est obligatoire. Et au-delà : 45 min ${fmtEur(walkEuros(45))} · 1 h ${fmtEur(walkEuros(60))} + les bonus. Ne passe pas à côté !` };
   if (slot === 1) return gain;
   const ideas = [gain];
   if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+10 clebsous)` });
