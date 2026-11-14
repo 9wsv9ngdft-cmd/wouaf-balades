@@ -9,6 +9,8 @@ const APP_URL = "https://9wsv9ngdft-cmd.github.io/wouaf-balades/";
 const TZ = "Europe/Paris";
 const DOG = "Roxy";
 const MAX_USERS = 30;
+// Code du superviseur pour mettre l'app en pause (à changer ici quand tu veux, puis « Déployer »)
+const SUPERVISOR_CODE = "731948";
 const PUSH_HOSTS = ["push.apple.com", "googleapis.com", "push.services.mozilla.com", "notify.windows.com"];
 
 // ---------- petites aides ----------
@@ -30,6 +32,8 @@ const dayKey = ts => { const l = local(ts - 4*3600000); return `${l.y}-${l.m}-${
 // lundi de la semaine (même clé que l'app)
 const weekKey = ts => { const l = local(ts - 4*3600000); return dayKey(ts - ((l.dow + 6) % 7) * 86400000); };
 const fmtMin = m => { m = Math.round(m); return m < 60 ? `${m} min` : `${Math.floor(m/60)} h${m % 60 ? " " + String(m % 60).padStart(2, "0") : ""}`; };
+const isoDay = ts => { const l = local(ts - 4*3600000); return `${l.y}-${String(l.m).padStart(2, "0")}-${String(l.d).padStart(2, "0")}`; };
+const walkEuros = min => Math.round(0.35 * Math.pow(min / 25, 1.5) * 100) / 100;
 const fmtEur = v => (v || 0).toFixed(2).replace(".", ",") + " €";
 
 // ---------- clés VAPID (créées une seule fois, gardées dans KV) ----------
@@ -104,7 +108,9 @@ function pickMessage(u, slot, now){
   }
   if (walked) return null;   // déjà sortie aujourd'hui : on ne dérange pas
   if (slot === 1 && danger) return { title:`🔥 Série de ${s.sn} jours en danger !`, body:`Sors ${DOG} au moins 15 min ce soir pour la garder.` };
-  const ideas = [];
+  const gain = { title:"⏳ Pas encore de balade aujourd'hui", body:`À gagner : 15 min ${fmtEur(walkEuros(15))} · 25 min ${fmtEur(walkEuros(25))} · 45 min ${fmtEur(walkEuros(45))} · 1 h ${fmtEur(walkEuros(60))}. Ne passe pas à côté !` };
+  if (slot === 1) return gain;
+  const ideas = [gain];
   if (defi) ideas.push({ title:"🎯 Défi du jour", body:`${defi} (+15 pts)` });
   if (hot) ideas.push({ title:"🔥 Le coffre est chaud !", body:`💰 5 € peuvent se cacher sur une rue que tu n'as jamais prise. Pars à la chasse avec ${DOG} ?` });
   const g = GENERIC[(dayNo + slot) % GENERIC.length];
@@ -116,6 +122,9 @@ function pickMessage(u, slot, now){
 async function run(env, now){
   const v = await vapid(env, false); if (!v) return;
   const l = local(now), nowMin = l.h * 60 + l.min, date = `${l.y}-${l.m}-${l.d}`;
+  const pauses = (await env.WOUAF.get("pauses", "json")) || [];
+  const today = isoDay(now);
+  if (pauses.some(p => today >= p.from && today <= p.to)) return;   // pause du superviseur : aucun rappel
   const list = await env.WOUAF.list({ prefix:"u:" });
   for (const k of list.keys){
     const id = k.name.slice(2);
@@ -160,8 +169,19 @@ export default {
       return json({ key: v.pub });
     }
     if (req.method === "GET" && path === "/") return json({ ok:true, app:"Wouaf Balades : rappels" });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [] });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
+    if (path === "/pause"){
+      // pause pour tous les promeneurs, seulement avec le code du superviseur (20 essais ratés par jour au plus)
+      const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
+      if (fails >= 20) return json({ error:"too many" }, 429);
+      if (!b || String(b.code) !== SUPERVISOR_CODE){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
+      const ok = d => typeof d === "string" && /^\d{4}-\d\d-\d\d$/.test(d);
+      const pauses = (Array.isArray(b.pauses) ? b.pauses : []).filter(p => p && ok(p.from) && ok(p.to) && p.from <= p.to).slice(-20).map(p => ({ from: p.from, to: p.to }));
+      await env.WOUAF.put("pauses", JSON.stringify(pauses));
+      return json({ ok:true, pauses });
+    }
     if (!b || !okId(b.id)) return json({ error:"bad id" }, 400);
     const key = "u:" + b.id;
     if (path === "/register"){

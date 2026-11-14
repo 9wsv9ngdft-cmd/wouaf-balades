@@ -69,3 +69,16 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   clé `wouaf-rappels` (id, on, horaires matin/soir par jour, index = getDay()). Il faut l'app sur l'écran d'accueil (iOS 16.4+).
 - **Jamais de position envoyée** : seulement prénom, horaires, série, coffre chaud, défis des 8 jours, résumé de la semaine.
 - Messages : pas de rappel si déjà sortie aujourd'hui ; soir = série en danger en priorité ; dimanche soir = résumé de la semaine.
+
+## Malus (version 18, décidé le 14/11)
+- À partir du lundi 16/11/2026 (et pas avant le 1er jour d'utilisation du téléphone) : jour sans balade ≥ 15 min avec l'app
+  = −0,20 € (2 jokers/mois, appliqués dans l'ordre) ; dès la 3e balade < 15 min de la semaine −0,10 € chacune ; semaine
+  (lun–dim) avec moins de 4 jours de balade (moins les jours de pause) −0,50 €. Malus même si un autre promeneur est sorti.
+- `game.malus` (liste), `game.malusEur["AAAA-MM"]` ; tirelire affichée = `moneyOf(k)` = gains − malus, jamais < 0.
+  Calcul à l'ouverture (`processMalus`, rattrape les jours passés), annonce dans une fenêtre ; détail dans l'onglet Tirelire,
+  le récap de la semaine, le bilan de quinzaine et le récap (« ⏱️ trop courte −0,10 € »).
+- Rappels et bannières : formulation positive (« À gagner : 15 min 0,16 € · 25 min 0,35 € · 45 min 0,85 € · 1 h 1,30 € »),
+  jamais de « −0,20 € » ; le négatif seulement dans Tirelire / récaps.
+- 🏖️ Pause du superviseur : lien discret « Superviseur » en bas de Progrès (si `PUSH_API`), code `SUPERVISOR_CODE` dans le
+  Worker (provisoire 731948, l'utilisateur le changera), `GET/POST /pause`, KV `pauses`. Pendant une pause : pas de malus,
+  pas de rappels, série conservée (`streakAlive`) ; pause ajoutée après coup = malus remboursés (sauf semaine faible).
