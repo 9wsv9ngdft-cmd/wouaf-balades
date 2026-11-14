@@ -58,6 +58,8 @@
   #pocketStats .cs{display:block;font-size:34px;font-weight:700;color:#ffd35c;margin-top:4px}
   #walkbar .radar{color:#ffd35c;font-weight:600}
   #walkbar .radar:empty{display:none}
+  .moodBtn{all:unset;display:block;cursor:pointer;color:inherit;font:inherit}
+  .mood .more{font-size:12px;color:var(--green-2);font-weight:600}
   .mood{display:flex;align-items:center;gap:6px;margin-top:4px}
   .mood .mb{flex:1;max-width:120px;height:6px;border-radius:3px;background:#efe9dc;overflow:hidden} .mood .mb i{display:block;height:100%}
   .dash .wk{background:#f6f2ea;border-radius:14px;padding:10px 12px;margin:8px 0}
@@ -408,7 +410,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.152619";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.153123";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -929,7 +931,8 @@
     $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
     if (profile.walker){
       let m = null; try{ m = mood(); }catch(e){}
-      $("#heroSub").innerHTML = m ? `${esc(m.t)}<div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div></div>` : `${DOG} t'attend !`;
+      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="Voir les dernières sorties de ${esc(DOG)}">${esc(m.t)}<div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
+      if ($("#moodBtn")) $("#moodBtn").onclick = sheetOuts;
     } else $("#heroSub").textContent = "Touche « renseigner » pour mettre ton prénom";
     $("#editWho").textContent = profile.walker ? "changer" : "renseigner";
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
@@ -2204,6 +2207,35 @@
     return { e:"😢", t:`${DOG} est triste, elle attend sa balade (dernière sortie ${ago})`, p:8, c:"#c8452f" };
   }
 
+
+  // ---------- 🐾 Dernières sorties de Roxy (tous promeneurs : qui, quand, durée, km, pipi/caca ; pas de trajet) ----------
+  async function sheetOuts(){
+    openSheet(`<h2>🐾 Les dernières sorties de ${DOG}</h2><p>Un instant…</p>`);
+    let list = [];
+    if (PUSH_API){ try{ list = (await (await api("/recent")).json()).walks || []; }catch(e){} }
+    // + mes balades pas encore envoyées (ou hors connexion)
+    for (const e of getLog()){
+      const end = Math.round(new Date(e.date).getTime() / 1000);
+      if (e.min >= 2 && !list.some(x => x.w === profile.walker && Math.abs(x.e - end) < 120))
+        list.push({ w: profile.walker || "Moi", e: end, min: e.min, m: e.m, pp: e.recap && e.recap.pp, cc: e.recap && e.recap.cc });
+    }
+    list.sort((a, b) => b.e - a.e); list = list.slice(0, 25);
+    const dayLabel = t => { const d = new Date(t), k = dayKey(t), td = dayKey(Date.now()), yd = dayKey(Date.now() - DAYMS);
+      return k === td ? "Aujourd'hui" : k === yd ? "Hier" : d.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" }); };
+    let html = "", last = "";
+    for (const x of list){
+      const t = x.e * 1000, lab = dayLabel(t);
+      if (lab !== last){ html += `<div class="flabel">${esc(lab)}</div>`; last = lab; }
+      const start = new Date(t - x.min * 60000);
+      html += `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
+    }
+    $("#sheet").innerHTML = `<h2>🐾 Les dernières sorties de ${DOG}</h2>
+      ${list.length ? `<div class="props">${html}</div>` : `<p>Pas encore de sortie enregistrée.</p>`}
+      <p class="howto">Qui, quand et combien de temps : les trajets restent dans les récaps envoyés sur WhatsApp.</p>
+      <div class="btns"><button id="outClose">Fermer</button></div>`;
+    $("#outClose").onclick = closeSheet;
+  }
+
   // ---------- 📊 Envoi des chiffres de chaque balade au programme (tableau de bord) ----------
   // Seulement des chiffres (durée, distance, clebsous, pipi/caca…), jamais le trajet ni la position.
   function queueWalk(r, res){
@@ -3395,7 +3427,7 @@
     renderHome();
   });
 
-  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive };
+  window.__wouaf = { renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive };
 })();
 </script>
 </body>

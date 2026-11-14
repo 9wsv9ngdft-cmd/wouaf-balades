@@ -171,3 +171,6 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🧾 Récap façon ticket (grosse somme de clebsous, photo de Roxy), « Le détail » en dessous.
 - 🌙 Mode sombre automatique (`prefers-color-scheme: dark`, bloc CSS en fin de `<style>`).
 - Icône = vraie tête de Roxy (photo du 14/11) dans un cercle + pièce de clebsous : icon-180/192/512.png (iOS garde l'ancienne icône tant que l'app n'est pas ré-ajoutée).
+- 🐾 Dernières sorties (décidé le 14/11, option A : sans trajet) : toucher la ligne d'humeur sous « Salut X » ouvre `sheetOuts`
+  (qui, quand, durée, km, 💧💩, tous promeneurs) via `GET /recent` du Worker (fusionné avec le carnet local). Jamais de trajet
+  ni de position envoyés ; les trajets restent dans les liens de récap WhatsApp.

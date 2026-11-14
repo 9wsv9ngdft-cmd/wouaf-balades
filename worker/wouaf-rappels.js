@@ -180,6 +180,13 @@ export default {
       const w = new URL(req.url).searchParams.get("w");
       return json({ list: (w && await env.WOUAF.get("a:" + slug(w), "json")) || [] });
     }
+    // 🐾 dernières sorties de Roxy, tous promeneurs : qui, quand, durée, km, pipi/caca (ni trajet, ni position, ni argent)
+    if (req.method === "GET" && path === "/recent"){
+      const l = await env.WOUAF.list({ prefix:"d:" }), all = [];
+      for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) for (const x of (d.walks || []).slice(0, 20)) all.push({ w: d.walker, s: x.s, e: x.e, min: x.min, m: x.m, pp: x.pp, cc: x.cc }); }
+      all.sort((a, b) => b.e - a.e);
+      return json({ walks: all.slice(0, 25) });
+    }
     if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
