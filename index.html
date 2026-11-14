@@ -518,7 +518,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-14.223319";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-14.224401";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2288,7 +2288,8 @@
   function whenFree(fn){ if ($("#modal").classList.contains("open") || state.walk || document.body.classList.contains("recap")){ setTimeout(() => whenFree(fn), 3000); return; } fn(); }
 
   // ---------- ⚔️ Duels entre promeneurs (v2.1) ----------
-  const DUEL_KEY = "wouaf-duels", DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPE = { walks:"🐾 Balades", streets:"🗺️ Guerre des rues" };
+  const DUEL_KEY = "wouaf-duels", DUEL_STAKES = [25, 50, 100],   // que des paris (décidé le 14/11)
+  DUEL_TYPE = { walks:"🐾 Balades", streets:"🗺️ Guerre des rues" };
   let duelData = store.get(DUEL_KEY, { duels:[], players:[] });
   const duelOK = () => !!(PUSH_API && profile.walker && !isTester());
   const sameN = (a, b) => normName(a) === normName(b);
@@ -2349,7 +2350,7 @@
       h += `<p><b>${inv.counterOf ? `${esc(inv.from)} te répond : d'accord pour le duel, mais avec une mise de ${inv.stake} clebsous (au lieu de ${inv.was})` : `${esc(inv.from)} te lance un défi !`}</b></p>${ficheHTML(inv, true)}
         ${can ? "" : `<p class="howto">Ta tirelire (${myBal()} clebsous) est plus petite que la mise : tu ne peux pas accepter, mais tu peux proposer une autre mise.</p>`}
         <div class="btns" style="flex-direction:row;gap:8px"><button id="dyYes" style="flex:1"${can ? "" : " disabled"}>✅ J'accepte</button><button class="ghost" id="dyNo" style="flex:1">❌ Non merci</button></div>
-        <div class="flabel">Ou propose une autre mise</div><div class="pick" id="dyCounter">${DUEL_STAKES.filter(v => v !== inv.stake).map(v => `<button data-v="${v}"${v > myBal() ? " disabled" : ""}>${v ? v + " 🪙" : "Sans mise"}</button>`).join("")}</div>`;
+        <div class="flabel">Ou propose une autre mise</div><div class="pick" id="dyCounter">${DUEL_STAKES.filter(v => v !== inv.stake).map(v => `<button data-v="${v}"${v > myBal() ? " disabled" : ""}>🎲 ${v} 🪙</button>`).join("")}</div>`;
     }
     if (du){
       const [a, b] = scoreOf(du), mine = (du.cancel || []).some(x => sameN(x, profile.walker)), theirs = (du.cancel || []).some(x => !sameN(x, profile.walker));
@@ -2393,21 +2394,23 @@
   // ⚔️ lancer un défi : qui, combien de temps, quel type, quelle mise → fiche récap → envoyer
   function sheetDuelNew(p){
     if (!isTester()) duelPrev = false;
-    p = Object.assign({ to:"", days:3, type:"walks", stake:0 }, p || {});
+    p = Object.assign({ to:"", days:3, type:"walks", stake:25 }, p || {});
     const pl = (duelData.players || []);
     if (!pl.length){ openSheet(`<h2>⚔️ Lancer un défi</h2><p>Personne à défier pour l'instant : ton adversaire doit avoir fait au moins une balade avec l'app.</p><div class="btns"><button id="dnClose">OK</button></div>`); $("#dnClose").onclick = closeSheet; return; }
     if (!pl.some(x => sameN(x.walker, p.to))) p.to = pl[0].walker;
     const opBal = () => { const o = pl.find(x => sameN(x.walker, p.to)); return o && o.cs != null ? o.cs : Infinity; };
     const maxSt = () => duelPrev ? 100 : Math.min(myBal(), opBal());
-    if (p.stake > maxSt()) p.stake = 0;
+    if (!DUEL_STAKES.includes(p.stake) || p.stake > maxSt()) p.stake = DUEL_STAKES[0];
+    const poor = !duelPrev && maxSt() < DUEL_STAKES[0];   // pas assez dans une tirelire pour le plus petit pari
     const chips = (k, list, lab) => `<div class="pick" data-k="${k}">${list.map(v => `<button data-v="${v}" class="${String(p[k]) === String(v) ? "on" : ""}"${k === "stake" && v > maxSt() ? " disabled" : ""}>${lab(v)}</button>`).join("")}</div>`;
     openSheet(`<h2>⚔️ Lancer un défi</h2>
       <div class="flabel">Qui ?</div>${chips("to", pl.map(x => x.walker), v => esc(v))}
       <div class="flabel">Combien de temps ?</div>${chips("days", [3, 7], v => `${v} jours`)}
       <div class="flabel">Quel duel ?</div>${chips("type", ["walks", "streets"], v => DUEL_TYPE[v])}
       ${duelPrev ? `<p class="howto">🧪 Aperçu superviseur : c'est l'écran que voient les promeneurs. Rien ne sera envoyé.</p>` : ""}
-      <div class="flabel">La mise (ta tirelire : ${myBal()} 🪙)</div>${chips("stake", DUEL_STAKES, v => v ? `${v} 🪙` : "Aucune")}
-      <div class="btns"><button id="dnNext">Voir la fiche →</button><button class="ghost" id="dnBack">Retour</button></div>`);
+      <div class="flabel">La mise (ta tirelire : ${myBal()} 🪙)</div>${chips("stake", DUEL_STAKES, v => `🎲 ${v} 🪙`)}
+      ${poor ? `<p class="howto">Il faut au moins ${DUEL_STAKES[0]} clebsous dans ta tirelire et dans celle de ${esc(p.to)} pour parier. Une balade de plus et c'est bon !</p>` : ""}
+      <div class="btns"><button id="dnNext"${poor ? " disabled" : ""}>Voir la fiche →</button><button class="ghost" id="dnBack">Retour</button></div>`);
     document.querySelectorAll(".pick button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; p[k] = (k === "to" || k === "type") ? b.dataset.v : +b.dataset.v; sheetDuelNew(p); });
     $("#dnBack").onclick = duelPrev ? closeSheet : sheetDuels;
     $("#dnNext").onclick = () => {

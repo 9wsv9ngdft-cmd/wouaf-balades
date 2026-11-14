@@ -17,7 +17,7 @@ test("duel complet « Balades » : défi, acceptation, score, fin, mises transf�
   assert.deepEqual(p.j.players.map(x => x.walker), ["Tom"]);
   const n = await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 3, type: "walks", stake: 50, have: 200 });
   assert.equal(n.status, 200); const id = n.j.duel.id;
-  assert.equal((await api.post("/duel-new", { walker: "Tom", to: "Léa", days: 3, type: "walks", stake: 0, have: 200 })).status, 409);   // 1 seul duel à la fois
+  assert.equal((await api.post("/duel-new", { walker: "Tom", to: "Léa", days: 3, type: "walks", stake: 25, have: 200 })).status, 409);   // 1 seul duel à la fois
   const a = await api.post("/duel-answer", { walker: "Tom", id, ok: true, have: 200 });
   assert.equal(a.j.duel.status, "active"); assert.equal(a.j.duel.start, day(-1));   // commence demain
   await age(env, day(3), day(1));
@@ -47,7 +47,7 @@ test("égalité : mêmes balades et mêmes minutes = personne ne perd sa mise ; 
 test("abandon = défaite ; annulation seulement à deux ; expiration au bout de 24 h ; mise trop grosse refusée ; Éric exclu", async () => {
   const { api, env } = await setup(); await players(api);
   assert.equal((await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 7, type: "walks", stake: 100, have: 50 })).status, 400);   // plus que sa tirelire
-  assert.equal((await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 1, type: "walks", stake: 0, have: 50 })).status, 400);    // 1 jour : n'existe plus
+  assert.equal((await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 1, type: "walks", stake: 25, have: 50 })).status, 400);    // 1 jour : n'existe plus
   let id = (await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 7, type: "walks", stake: 25, have: 200 })).j.duel.id;
   await api.post("/duel-answer", { walker: "Tom", id, ok: true, have: 200 });
   let c = await api.post("/duel-cancel", { walker: "Léa", id }); assert.equal(c.j.duel.status, "active");   // un seul veut annuler
@@ -57,7 +57,7 @@ test("abandon = défaite ; annulation seulement à deux ; expiration au bout de 
   const q = await api.post("/duel-quit", { walker: "Tom", id });
   assert.equal(q.j.duel.res.winner, "Léa"); assert.equal(q.j.duel.res.why, "quit");
   // expiration
-  id = (await api.post("/duel-new", { walker: "Tom", to: "Léa", days: 3, type: "walks", stake: 0, have: 0 })).j.duel.id;
+  id = (await api.post("/duel-new", { walker: "Tom", to: "Léa", days: 3, type: "walks", stake: 25, have: 200 })).j.duel.id;
   const l = await env.WOUAF.get("duels", "json"); l.find(d => d.id === id).created -= 25 * 3600000; await env.WOUAF.put("duels", JSON.stringify(l));
   assert.equal((await api.post("/duels", { walker: "Tom" })).j.duels.find(d => d.id === id).status, "expired");
   // Éric (superviseur) : pas de duel, et n'apparaît pas dans les adversaires
@@ -120,7 +120,12 @@ test("contre-proposition : l'adversaire propose une autre mise, nouveau défi da
   assert.equal((await api.post("/duel-answer", { walker: "Léa", id: c.j.duel.id, ok: true, have: 200 })).j.duel.status, "active");
   // 6 h sans réponse = expiré
   const { api: api2, env: env2 } = await setup(); await players(api2);
-  const id2 = (await api2.post("/duel-new", { walker: "Léa", to: "Tom", days: 3, type: "walks", stake: 0, have: 0 })).j.duel.id;
+  const id2 = (await api2.post("/duel-new", { walker: "Léa", to: "Tom", days: 3, type: "walks", stake: 25, have: 200 })).j.duel.id;
   const d2 = await env2.WOUAF.get("duels", "json"); d2[0].created -= 6.5 * 3600000; await env2.WOUAF.put("duels", JSON.stringify(d2));
   assert.equal((await api2.post("/duels", { walker: "Tom" })).j.duels.find(d => d.id === id2).status, "expired");
+});
+
+test("que des paris : une mise de 0 est refusée", async () => {
+  const { api } = await setup(); await players(api);
+  assert.equal((await api.post("/duel-new", { walker: "Léa", to: "Tom", days: 3, type: "walks", stake: 0, have: 200 })).status, 400);
 });

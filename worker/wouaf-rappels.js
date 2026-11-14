@@ -216,7 +216,7 @@ const cleanState = s => (s && typeof s === "object" && JSON.stringify(s).length 
 // KV « duels » = liste de tous les duels (petite famille). Un duel : { id, from, to, days (3|7), type ("walks"|"streets"), stake (0|25|50|100),
 // status (pending | active | done | declined | expired | cancelled), created, start / end (jours « AAAA-MM-JJ » inclus, la journée commence à 4 h comme l'app),
 // cancel: [prénoms qui veulent annuler], cells: { case: prénom } (guerre des rues, effacées à la fin), lost: { prénom: rues perdues }, res: { a, b, winner, why } }
-const DUEL_TTL = 6 * 3600000, DUEL_DAYS = [3, 7], DUEL_STAKES = [0, 25, 50, 100], DUEL_TYPES = ["walks", "streets"];
+const DUEL_TTL = 6 * 3600000, DUEL_DAYS = [3, 7], DUEL_STAKES = [25, 50, 100], DUEL_TYPES = ["walks", "streets"];
 const addDays = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const same = (a, b) => normName(a) === normName(b);
 const inDuel = (du, w) => same(du.from, w) || same(du.to, w);

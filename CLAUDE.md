@@ -298,3 +298,5 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   → défi reçu (VS, pulse), duel en cours (face-à-face « Toi a – b X » avec barres, phrase « Tu mènes ! » / « X mène… » / « Égalité… »), défi envoyé, ou
   « ⚔️ Défier X » (3 adversaires max). À droite, le pari : « 🎲 ± mise 🪙 » (ou « pour la gloire »). En tête des gros lots pendant un duel ou un défi reçu.
   Éric : arène en aperçu. La ligne importante ne montre plus le duel.
+- 🎲 **Que des paris** (décidé le 14/11, 22 h 40) : mises 25 / 50 / 100 seulement (`DUEL_STAKES` dans l'app et le Worker, 0 refusé) ; il faut ≥ 25 dans les deux
+  tirelires (sinon « Voir la fiche » grisé avec un message) ; contre-proposition parmi les autres mises.

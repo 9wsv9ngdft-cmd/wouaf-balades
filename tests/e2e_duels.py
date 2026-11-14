@@ -16,11 +16,13 @@ errs = []
 with sync_playwright() as pw:
     bL, cL, L = new_phone(pw, errors=errs, init=INIT("Léa")); open_app(L, 3000)
     bT, cT, T = new_phone(pw, errors=errs, init=INIT("Tom")); open_app(T, 3000)
+    GIVE = "(() => { const g = __wouaf.getGame(), d = new Date(), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); g.money = g.money || {}; g.money[k] = 0.3; localStorage.setItem('wouaf-jeu', JSON.stringify(g)); })()"
+    L.evaluate(GIVE); T.evaluate(GIVE)   # 30 clebsous chacun : assez pour parier 25
     home = L.evaluate("document.querySelector('#home').innerText")
     check("accueil : gros lots (trésor, coffre, record, lancer un duel)", "Trésor de la semaine" in home and "Coffre surprise" in home and "Record du mois" in home and "Défier Tom" in home, home[:400])
     L.evaluate("__wouaf.openMenu()"); check("menu : ⚔️ Duels", "Duels" in txt(L)); L.click("#muDuel"); L.wait_for_timeout(1500)
     L.click("#dyNew"); L.wait_for_timeout(400)
-    check("formulaire : Tom proposé, mise trop grosse grisée (tirelire 0)", "Tom" in txt(L) and L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"25\"]').disabled"))
+    check("formulaire : Tom proposé, que des paris (pas de « sans mise »), 50 grisé (tirelire 30)", "Tom" in txt(L) and "Aucune" not in txt(L) and L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"50\"]').disabled") and not L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"25\"]').disabled"))
     L.click(".pick[data-k=days] button[data-v='7']"); L.wait_for_timeout(200); L.click(".pick[data-k=type] button[data-v='streets']"); L.wait_for_timeout(200)
     L.click("#dnNext"); L.wait_for_timeout(300); f = txt(L)
     check("fiche récap : adversaire, durée, type, vie privée", "contre Tom" in f and "7 jours" in f and "Guerre des rues" in f and "Ton adversaire verra" in f, f[:400])
@@ -30,7 +32,7 @@ with sync_playwright() as pw:
     hT = T.evaluate("document.querySelector('#home').innerText")
     check("Tom : l'arène annonce le défi reçu", "Défi reçu" in hT.title() or "DÉFI REÇU" in hT.upper(), hT[:300])
     T.click("[data-arena='duels']"); T.wait_for_timeout(1500); f = txt(T)
-    check("Tom : même fiche + J'accepte / Non merci + autre mise", "lancé par Léa" in f and "J'accepte" in f and "Non merci" in f and "autre mise" in f.lower() and T.locator("#dyCounter button").count() == 3, f[:300])
+    check("Tom : même fiche + J'accepte / Non merci + autre mise", "lancé par Léa" in f and "J'accepte" in f and "Non merci" in f and "autre mise" in f.lower() and T.locator("#dyCounter button").count() == 2, f[:300])
     T.click("#dyYes"); T.wait_for_timeout(1500)
     check("Tom : duel en cours 0 – 0, commence demain", "0 – 0" in txt(T) and "commence demain" in txt(T), txt(T)[:200])
     # 👀 dans l'ombre : Léa passe dans une rue (case 54287:1809) le 1er jour du duel, Tom y entre pendant sa balade
