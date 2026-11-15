@@ -691,7 +691,7 @@
     <div id="heroSay"></div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="gocard" id="goCard">
-      <button class="minimap" id="miniMap" aria-label="Ma carte d'exploration"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span></button>
+      <button class="minimap" id="miniMap" aria-label="Partir avec Roxy"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span></button>
       <button class="gobj" id="goObj" aria-label="Mes objectifs du jour"></button>
       <button id="freeWalk" class="big go"><span class="gl"><span id="goText">▶️ C'est parti</span><span class="glot" id="goLot"></span></span><span class="gain" id="goGain"></span><span class="pcrown" id="goCrown" hidden aria-hidden="true">👑</span></button>
       <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
@@ -781,7 +781,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.103153";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.104445";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -858,6 +858,21 @@
     try{ const cc = chestCloud(); if (cc) z.push({ lat: cc.lat, lon: cc.lon, r: CHEST_CLOUD, k:"silver" }); }catch(e){}
     return z;
   }
+  // 🐾 motif du nuage (v2.8, choix n° 1 d'Éric) : petites pattes éparpillées, très pâles
+  let fogPat = null;
+  function fogPattern(c){
+    if (fogPat) return fogPat;
+    try{
+      const t = document.createElement("canvas"), S = 64 * (window.devicePixelRatio > 1 ? 2 : 1), k = S / 64; t.width = t.height = S;
+      const g = t.getContext("2d"); g.scale(k, k); g.fillStyle = "rgba(150,155,145,.15)";
+      const paw = (x, y, r) => { g.save(); g.translate(x, y); g.rotate(r); g.beginPath(); g.ellipse(0, 3, 4, 3.4, 0, 0, 7); g.fill();
+        [[-4.2, -2.6], [-1.4, -4.6], [1.6, -4.6], [4.3, -2.6]].forEach(([a, b]) => { g.beginPath(); g.arc(a, b, 1.6, 0, 7); g.fill(); }); g.restore(); };
+      paw(14, 16, -0.26); paw(47, 48, 0.35);
+      fogPat = c.createPattern(t, "repeat");
+      if (k !== 1 && fogPat.setTransform && window.DOMMatrix) fogPat.setTransform(new DOMMatrix().scale(1 / k));
+    }catch(e){ fogPat = null; }
+    return fogPat;
+  }
   const FogCanvas = L.Canvas.extend({
     _draw(){   // toujours repeindre tout le nuage avant d'effacer les chemins
       const b = this._redrawBounds || this._bounds;
@@ -867,6 +882,7 @@
           const col = FOG_ZONE[zo.k], g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, rr * 1.15);
           g.addColorStop(0, col[0]); g.addColorStop(.7, col[1]); g.addColorStop(1, col[2]);
           c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, rr * 1.15, 0, 2 * Math.PI); c.fill(); } }catch(e){}
+        const pat = fogPattern(c); if (pat){ c.fillStyle = pat; c.fillRect(b.min.x - 1, b.min.y - 1, z.x + 2, z.y + 2); }
         c.restore(); }
       L.Canvas.prototype._draw.call(this);
     },
@@ -5216,7 +5232,7 @@
     try{ drawMiniMap(); }catch(e){}
   }
   new MutationObserver(setNuit).observe(document.body, { attributes:true, attributeFilter:["class"] }); setNuit();
-  $("#miniMap").addEventListener("click", e => { try{ openExplore(!!(e.target && e.target.closest && e.target.closest("#miniTr") && huntLive())); }catch(err){} });
+  $("#miniMap").addEventListener("click", () => { $("#freeWalk").click(); });   // v2.8 (décidé le 15/11) : la mini-carte = « Encore une ? » (fiche de départ)
 
   // ---------- 🌤️ Météo sur l'accueil (v2.4, Open-Meteo, coordonnées arrondies de la maison) ----------
   var wx = store.get("wouaf-meteo", null);
@@ -5268,7 +5284,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5337,7 +5353,9 @@
       <div class="btns">
         <button id="chFree" class="big" style="text-align:left;padding:16px">🚶 <b>Balade libre</b><br><span style="font-size:14px;font-weight:500;opacity:.9">Tu vas où tu veux. Ça démarre tout de suite.</span></button>
         <button id="chRoute" class="big ghost" style="text-align:left;padding:16px">🗺️ <b>Choisir un parcours</b><br><span style="font-size:14px;font-weight:500">L'app te propose des balades de ${fmtMin(state.dur)} autour de toi.</span></button>
+        <button id="chExplo" class="big ghost" style="text-align:left;padding:16px">☁️ <b>Carte d'exploration</b><br><span style="font-size:14px;font-weight:500">Regarder ton quartier et les nuages, sans partir.</span></button>
         <button class="ghost" id="chNo">Annuler</button></div>`);
+    $("#chExplo").onclick = () => { closeSheet(); setTimeout(() => { try{ openExplore(); }catch(e){} }, 150); };
     $("#chFree").onclick = () => { closeSheet(); const p = FREE(); p.min = state.dur; startWalk(p); };
     $("#chRoute").onclick = () => { closeSheet(); locate(); setTimeout(() => $("#map").scrollIntoView({ behavior:"smooth", block:"start" }), 400); };
     $("#chNo").onclick = closeSheet;
@@ -5382,8 +5400,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 41, APP_LABEL = "2.7";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 42, APP_LABEL = "2.8";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    42: [
+      "👆 Touche la carte de l'accueil pour partir : balade libre, parcours, ou ☁️ carte d'exploration.",
+      "🐾 Les nuages ont maintenant de toutes petites pattes de Roxy."
+    ],
     41: [
       "☁️ La carte est sous les nuages : elle se découvre là où tu marches, et tout ce que tu as déjà fait reste visible.",
       "✨ Nuage doré = le trésor est dessous. Nuage argenté = coffre chaud, tes chances y sont doublées !",

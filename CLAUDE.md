@@ -418,3 +418,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐛 **Appui long sur « Fini »** : plus de texte sélectionné sur le récap (`#walkbar` sans sélection, `body.nosel` pendant que le doigt est posé, sélection effacée).
 - Tests : `tests/e2e_realmap.py` avec la **vraie** carte Leaflet 1.9.4 (construite par `tests/build-leaflet.sh` : clone GitHub + `bun build`) : mini-carte,
   exploration visible, pixels du nuage (blanc, doré, chemin découvert), tuile trésor, Fini en appui long. Les autres tests gardent le faux Leaflet.
+
+## Version 2.8 « Croquette » (APP_NUM 42, décidé le 15/11 entre 10 h 33 et 10 h 39 : PLAN-v42 dans le projet)
+- 👆 **Toucher la mini-carte = « Encore une ? »** (`#miniMap` → `#freeWalk`) : fiche « On part comment ? » avec 3 choix : 🚶 Balade libre · 🗺️ Choisir un parcours ·
+  ☁️ **Carte d'exploration** (`#chExplo`, nouveau). La carte d'exploration reste aussi dans le menu ☰.
+- 🐾 **Motif du nuage** (choix n° 1 d'Éric) : petites pattes très pâles (`fogPattern`, tuile 64 px, 2 pattes, gris 15 %) peintes par `FogCanvas._draw`
+  par-dessus le blanc, le doré et l'argenté ; effacées avec le nuage le long des chemins.
+- « Exploré à 0 % » et mini-carte vide : normal après « Tout remettre à zéro » (plus aucune case vue) ; se remplit dès la 1re balade.

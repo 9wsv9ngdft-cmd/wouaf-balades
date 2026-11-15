@@ -9,7 +9,7 @@ def check(name, cond, extra=""):
     print(("PASS " if cond else "FAIL ") + name + ((" → " + str(extra)) if (extra != "" and not cond) else ""))
     if not cond: FAILS.append(name)
 
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','41');}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');}"
 NOW = datetime.datetime(2026, 11, 17, 12, 0, 0)     # mardi 17/11 : les amendes ont commencé le 16/11
 
 local_api("GET", "/__wipe") if False else None

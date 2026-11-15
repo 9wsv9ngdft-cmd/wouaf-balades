@@ -25,7 +25,7 @@ def phone(pw, init, errs):
     p = ctx.new_page(); p.on("pageerror", lambda e: errs.append(str(e)))
     p.on("console", lambda m: errs.append("console: " + m.text) if m.type == "error" else None)
     return b, p
-INIT = """if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','41');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));
+INIT = """if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));
 localStorage.setItem('wouaf-jeu', JSON.stringify({pts:0,total:300,money:{},bonus:{},streak:{day:'',n:0},seen:{'54285:1809':1,'54286:1809':1},claims:[],home:{lat:48.8566,lon:2.3522},chests:[],firstUse:Date.now()-30*86400000}));}"""
 
 FAILS=[]
@@ -42,9 +42,12 @@ with sync_playwright() as pw:
     p.evaluate("(() => { const pts=[]; for(let i=0;i<30;i++) pts.push({lat:48.8566+i*0.0002, lon:2.3522}); __wouaf.saveTrace(pts); })()")
     if p.locator("#dgNext").count(): p.click("#dgNext"); p.wait_for_timeout(800)
     box = p.locator("#miniMap").bounding_box()
-    p.touchscreen.tap(box["x"]+box["width"]/2, box["y"]+box["height"]/3); p.wait_for_timeout(2500)
+    p.touchscreen.tap(box["x"]+box["width"]/2, box["y"]+box["height"]/3); p.wait_for_timeout(800)
+    t = p.evaluate("document.querySelector('#sheet').innerText")
+    check("toucher la mini-carte = « Encore une ? » : balade libre, parcours, carte d'exploration", "Balade libre" in t and "Choisir un parcours" in t and "Carte d'exploration" in t, t[:200])
+    p.click("#chExplo"); p.wait_for_timeout(2500)
     st = p.evaluate("({explore: document.body.classList.contains('explore'), walking: document.body.classList.contains('walking'), disp: getComputedStyle(document.querySelector('#map')).display, h: document.querySelector('#map').getBoundingClientRect().height})")
-    check("toucher la mini-carte ouvre la carte d'exploration (pas la balade)", st["explore"] and not st["walking"], st)
+    check("3e choix : la carte d'exploration s'ouvre (pas la balade)", st["explore"] and not st["walking"], st)
     check("la carte d'exploration est visible (plus d'écran vide)", st["disp"] != "none" and st["h"] > 500, st)
     p.screenshot(path="/tmp/explore27.png")
     # pixels du nuage : blanc loin, doré sur le trésor
@@ -52,7 +55,7 @@ with sync_playwright() as pw:
        const ctx=cv.getContext('2d'), r=cv.getBoundingClientRect(); const at=(x,y)=>Array.from(ctx.getImageData(Math.round((x-r.left)*cv.width/r.width),Math.round((y-r.top)*cv.height/r.height),1,1).data);
        const m=__wouaf.map, c=m.latLngToContainerPoint([48.8566+15*0.0002,2.3522]), mr=document.querySelector('#map').getBoundingClientRect();
        return { far: at(mr.left+20, mr.top+20), path: at(mr.left+c.x, mr.top+c.y) }; })()""")
-    check("nuage blanc partout", px and px["far"][0] > 230 and px["far"][3] > 240, px)
+    check("nuage blanc partout (avec motif très pâle)", px and px["far"][0] > 215 and px["far"][3] > 240, px)
     check("le vieux chemin (40 jours) reste visible", px and px["path"][3] < 60, px)
     p.click("#exploreClose"); p.wait_for_timeout(600)
     # trésor : nuage doré dans la carte

@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','41');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 WALK = """async (minutes) => {
   const W = window.__wouaf, now = Date.now(), t0 = now - minutes*60000, track = [];
   const g = W.getGame(); g.home = {lat:48.8566, lon:2.3522};
@@ -100,7 +100,7 @@ with sync_playwright() as pw:
         check("réglage des heures de cours visible", "cours" in sheet(P).lower() or "écran d'accueil" in sheet(P), sheet(P)[:200])
     # --- zoom de la page bloqué
     check("la page ne se zoome plus (viewport)", "user-scalable=no" in P.evaluate("document.querySelector('meta[name=viewport]').content"))
-    check("version 2.7 · CROQUETTE", "2.7" in P.evaluate("document.querySelector('#homeFoot').innerText") and "CROQUETTE" in P.evaluate("document.querySelector('#homeFoot').innerText"))
+    check("version 2.8 · CROQUETTE", "2.8" in P.evaluate("document.querySelector('#homeFoot').innerText") and "CROQUETTE" in P.evaluate("document.querySelector('#homeFoot').innerText"))
     b.close()
 check("aucune erreur JavaScript", not errs, errs[:3])
 print("\n" + ("✅ TOUT EST BON" if not FAILS else f"❌ {len(FAILS)} échec(s) : " + ", ".join(FAILS)))
