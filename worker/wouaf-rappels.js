@@ -222,11 +222,11 @@ const same = (a, b) => normName(a) === normName(b);
 const inDuel = (du, w) => same(du.from, w) || same(du.to, w);
 const otherOf = (du, w) => same(du.from, w) ? du.to : du.from;
 const isOpen = du => du.status === "pending" || du.status === "active";
-async function pushTo(env, walker, title, body){   // notification à un promeneur (s'il a activé les rappels)
+async function pushTo(env, walker, title, body, tag){   // notification à un promeneur (s'il a activé les rappels)
   try{
     const v = await vapid(env, false); if (!v) return;
     const l = await env.WOUAF.list({ prefix:"u:" });
-    for (const k of l.keys){ const u = await env.WOUAF.get(k.name, "json"); if (u && same(u.walker, walker)) await push(env, v, u.sub, { title, body, url: APP_URL, tag:"wouaf-duel" }); }
+    for (const k of l.keys){ const u = await env.WOUAF.get(k.name, "json"); if (u && same(u.walker, walker)) await push(env, v, u.sub, { title, body, url: APP_URL, tag: tag || "wouaf-duel" }); }
   }catch(e){}
 }
 async function addAdj(env, walker, cs, why, id){   // les mises passent par les corrections (appliquées par le téléphone, hors plafond)
@@ -305,6 +305,33 @@ async function explorers(env, now){
     return a.map(x => ({ w: x[0], r: a.findIndex(y => y[1] === x[1]) + 1 })); };
   return { wk, rank: rank(sc[wk]), prev: { wk: pwk, rank: rank(sc[pwk]) } };
 }
+// 👃 Flair (v2.4) : pendant une balade, le téléphone dit seulement « commencée » (heure) et « finie » ; le cron (toutes les 15 min)
+// envoie « Roxy a flairé quelque chose ! » à partir de 5 min de balade, jusqu'à 3 h. Jamais de position.
+const FLAIR_MIN = 5 * 60000, LIVE_MAX = 3 * 3600000;
+async function flairs(env, now){
+  const live = (await env.WOUAF.get("live", "json")) || {};
+  let ch = false;
+  for (const k of Object.keys(live)){
+    const x = live[k];
+    if (!x || now - x.s * 1000 > LIVE_MAX){ delete live[k]; ch = true; continue; }
+    if (now - x.s * 1000 >= FLAIR_MIN - 30000 && now - (x.f || 0) > 10 * 60000){
+      x.f = now; ch = true;
+      await pushTo(env, x.w, "👃 Roxy a flairé quelque chose !", "Une piste fraîche tout près… elle disparaît dans 3 min 🐾", "wouaf-flair");
+    }
+  }
+  if (ch) await env.WOUAF.put("live", JSON.stringify(live));
+}
+// 🐾 compteur de la famille (v2.4) : km et rues neuves de toutes les balades depuis la remise à zéro (KV « fam », recalculé si absent)
+async function famGet(env){
+  let f = await env.WOUAF.get("fam", "json");
+  if (!f){
+    f = { m:0, nc:0, n:0 }; const keys = []; let cur;
+    do { const l = await env.WOUAF.list({ prefix:"d:", cursor: cur }); keys.push(...l.keys); cur = l.list_complete ? null : l.cursor; } while (cur);
+    for (const k of keys){ const d = await env.WOUAF.get(k.name, "json"); for (const w of (d && d.walks) || []) if (!w.v){ f.m += w.m || 0; f.nc += w.nc || 0; f.n++; } }
+    await env.WOUAF.put("fam", JSON.stringify(f));
+  }
+  return f;
+}
 // 🏅 record du mois : la plus longue balade valide (≥ 20 min) du mois, tous promeneurs (Éric testeur exclu)
 async function recomputeRecord(env, mk){
   const l = await env.WOUAF.list({ prefix:"d:" }), admin = await env.WOUAF.get("admin");
@@ -336,7 +363,7 @@ export default {
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()) });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env) });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
@@ -396,6 +423,7 @@ export default {
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
         const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:")) + (await wipe(env, "use:"));
+        await env.WOUAF.delete("fam"); await env.WOUAF.delete("live");
         await env.WOUAF.delete("duels");
         await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts");
         const reset = Date.now();
@@ -553,6 +581,14 @@ export default {
       await env.WOUAF.put("use:" + slug(w), JSON.stringify({ walker: w, days: out, at: Date.now() }));
       return json({ ok:true });
     }
+    if (path === "/walk-live"){   // 👃 balade commencée (on:1, heure de départ s) ou finie (on:0) : rien d'autre
+      const w = String(b.walker || "").slice(0, 30); if (!w) return json({ error:"bad" }, 400);
+      const live = (await env.WOUAF.get("live", "json")) || {}, k = slug(w);
+      if (b.on && +b.s > 0 && Date.now() - b.s * 1000 < LIVE_MAX) live[k] = { w, s: Math.round(+b.s), f: (live[k] && live[k].s === Math.round(+b.s)) ? live[k].f || 0 : 0 };
+      else delete live[k];
+      await env.WOUAF.put("live", JSON.stringify(live));
+      return json({ ok:true });
+    }
     if (path === "/walk"){   // une balade terminée : chiffres seulement (durée, distance, clebsous…), jamais le trajet
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
       if (!w || !x.e) return json({ error:"bad" }, 400);
@@ -563,7 +599,9 @@ export default {
       const dk = "d:" + slug(w);
       const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
       const fresh = !d.walks.some(y => y.e === walk.e), out = { ok:true };
-      if (fresh) d.walks.unshift(walk);
+      if (fresh){ d.walks.unshift(walk);
+        const f = await famGet(env); f.m += walk.m; f.nc += walk.nc; f.n++; await env.WOUAF.put("fam", JSON.stringify(f));
+        const live = (await env.WOUAF.get("live", "json")) || {}; if (live[slug(w)]){ delete live[slug(w)]; await env.WOUAF.put("live", JSON.stringify(live)); } }
       d.walks = d.walks.slice(0, 60); d.walker = w; d.sum = cleanState(b.sum); d.at = Date.now();
       await env.WOUAF.put(dk, JSON.stringify(d));
       const last = await env.WOUAF.get("last", "json");
@@ -616,6 +654,6 @@ export default {
     return json({ error:"not found" }, 404);
   },
   async scheduled(event, env, ctx){
-    ctx.waitUntil(Promise.all([run(env, event.scheduledTime || Date.now()), getDuels(env, event.scheduledTime || Date.now())]));
+    ctx.waitUntil(Promise.all([run(env, event.scheduledTime || Date.now()), getDuels(env, event.scheduledTime || Date.now()), flairs(env, event.scheduledTime || Date.now())]));
   }
 };

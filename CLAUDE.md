@@ -327,3 +327,28 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   chez le 1er de la semaine passée, toute la semaine. Pas de clebsous. Test : `tests/explo.test.mjs`, `tests/e2e_explo.py`.
 - Les missions du jour passent dans la bulle de Roxy (`sayMission` : pause, anniversaire, jour bonus, défi du jour) et dans le menu (📋 `#muToday` → `sheetToday`).
   Arène sans duel = une ligne (`.arena.slim`, un seul bouton) ; sur l'accueil, pas de phrase sous le face-à-face (`#home .arena .atag`).
+
+## Version 2.4 « Croquette » (APP_NUM 38, décidé le 15/11 entre 0 h 50 et 2 h 20 ; ⚠️ règle : ne coder que sur demande explicite)
+- 🏠 **Gros bouton** (`#goCard`) : mini-carte du quartier en canvas (`drawMiniMap` : cases vues, chemins `wouaf-traces`, Roxy à la maison, % exploré, flèche du trésor ;
+  toucher = carte d'exploration) qui **prend toute la place restante** (`fitHome`, mesure le bas de `#homeFoot`, jamais de défilement) ; « ▶️ C'est parti ! » / « Encore une ? »
+  + gain (`updateGo`) ; objectifs (`#goObj` : défi, trésor, coffre chaud ou place d'explorateur → `sheetToday`) ; durées dans le bouton (étiquette « ×N » sur la durée conseillée,
+  `.sug`) ; « où j'en suis » (`#goStat` : ma sortie du jour + dernière sortie de Roxy + 🔥 série → `sheetOuts`). Plus de « Combien de temps ? » ni de ligne « Bonus ? ».
+- 🌤️ Météo (`loadWx`, Open-Meteo, coordonnées arrondies de la maison, cache 30 min `wouaf-meteo`) : pastille sous « Salut X » (`wxText`) ; Roxy en parle (`sayWeather`)
+  seulement si elle n'est pas sortie depuis ≥ 3 h. L'humeur courte s'affiche s'il n'y a pas de météo.
+- Classement des explorateurs sur une ligne (`.explo.one`, l'astuce est dans l'aria-label et la bulle) ; gros lots or / **argent** (coffre) / **bronze** (record) + **4e tuile
+  violette « ⚔️ Défier »** quand il n'y a pas de duel en cours (sinon la carte de l'arène complète).
+- 🔢 Ligne du bas `#homeFoot` : « v2.4 « Croquette » » (`CODENAMES`) + compteur de la famille (KV `fam` du Worker, `GET /pause` → `wouaf-fam`).
+- 🤫 **Secret** : 17 touchers à la suite (< 1,5 s entre deux) sur `#homeFoot` (`EGG_N` = lettres de « Wouaf Wouaf Balades ») → `eggOpen` : Roxy 😎, stats cachées,
+  **+500 clebsous hors plafond une seule fois par ado** (`game.egg`, `game.bonus`) ; Éric : pas de gain. Indices dans la bulle (`eggHint`, un par semaine à partir du 16/11).
+- 🗺️ **Écran de balade B** : missions en haut (`#wChips` : objets, rues neuves, photo ; cibles selon la durée `walkTargets`), trésor = flèche au bord (`#wTreasure`),
+  pas 🐾 tous les ~28 m (`addPaw`, ligne du trajet discrète `TRACK_STYLE`), toucher Roxy → `#roxyMenu` (pipi, caca, photo, ⋯ = duo / alerte) ; en bas gros chiffres
+  (`walkNums`), une ligne (`renderWLine` : radar > classement > astuce) et deux boutons : 🌙 Poche et ⏹ **Fini en appui long 1 s** ; la barre se réduit après 10 s
+  (`wakeBar`, classe `.mini`) ; objets qui s'envolent vers le compteur (`flyPlus`) ; fête « Sortie validée » à 20 min. Les anciens boutons existent toujours (cachés).
+- 👃 **Flair** : toutes les 15 min (au quart d'heure, dès 5 min de balade) une piste fraîche à ~100 m pendant 3 min, +5 (`spawnTrail`, `flairTick`, `trailCheck`),
+  bandeau violet `#wFlair`, message en mode poche. Le téléphone envoie `POST /walk-live` (on:1 + heure de départ / on:0), **jamais de position** ; le cron du Worker (`flairs`, KV `live`)
+  envoie la notification « 👃 Roxy a flairé quelque chose ! » (tag `wouaf-flair`) ; `/walk` et la remise à zéro effacent l'entrée.
+- 💡 Bulles d'aide (`coach`, clé `wouaf-tips`, une fois par sujet : toucher Roxy, flair, barre réduite ; « Garde le doigt » à chaque appui trop court).
+- ❓ Menu : « Aide » (`sheetHelp` : tuto complet, bonus et règles, questions fréquentes, revoir les bulles) remplace « Bonus et règles » et l'icône Tuto. Tuto refait (8 + 3 écrans).
+- 🐛 Plus de « Bravo ! 0 min » collé sous l'accueil : `setStatus` passe en bandeau en haut hors carte ; balade < 2 min = « Balade trop courte : pas notée ».
+- Tests : `tests/e2e_balade.py` (écran de balade, flair, Fini), `tests/e2e_accueil.py` (gros bouton, secret, météo, aide), `tests/explo.test.mjs` (walk-live, flair, fam).
+- En attente (idées, pas de feu vert) : échange de balades payé entre ados (règles à trancher), bouton « Signaler un bug » vers un groupe WhatsApp dédié.

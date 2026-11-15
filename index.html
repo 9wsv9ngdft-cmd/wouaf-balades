@@ -490,6 +490,89 @@
   .podium .blk{border-radius:12px 12px 0 0;display:grid;place-items:center;font-size:24px;font-weight:900;color:#fff}
   .podium .s1 .blk{height:100px;background:linear-gradient(180deg,#e8b93a,#a87d16)} .podium .s2 .blk{height:72px;background:linear-gradient(180deg,#b9c3cc,#7d8892)} .podium .s3 .blk{height:52px;background:linear-gradient(180deg,#d08a52,#8c5428)}
   .podium .step.me .blk{box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--green-2)} .podium .off{opacity:.35}
+
+  /* v2.4 « Croquette » : gros bouton avec mini-carte, météo, podium or/argent/bronze, ligne de version */
+  .wxp{display:inline-flex;align-items:center;gap:4px;background:#e5eef6;color:#1f3a52;border-radius:99px;padding:2px 9px;font-size:13px;font-weight:700;margin-top:3px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .gocard{margin-top:10px;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,#4f9a5d,#326e3f);box-shadow:0 12px 26px -14px rgba(0,0,0,.6);color:#fff;padding-bottom:10px}
+  .minimap{all:unset;box-sizing:border-box;display:block;position:relative;width:100%;height:110px;overflow:hidden;cursor:pointer;background:#26302a}
+  .minimap canvas{position:absolute;inset:0;width:100%;height:100%}
+  .minimap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:30px;background:linear-gradient(transparent,#4f9a5d);pointer-events:none}
+  .minimap .mdog{position:absolute;width:30px;height:30px;border-radius:50%;border:2px solid #fff;background-size:cover;background-position:center;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.5);z-index:2}
+  .minimap .mpct,.minimap .mtr{position:absolute;top:8px;z-index:2;border-radius:10px;padding:3px 8px;font-size:12.5px;font-weight:800;white-space:nowrap}
+  .minimap .mpct{left:8px;background:rgba(0,0,0,.55)} .minimap .mtr{right:8px;background:linear-gradient(135deg,#7d5d17,#c39a2c)}
+  .minimap .mpct:empty,.minimap .mtr:empty,.minimap .mnone:empty{display:none}
+  .minimap .mnone{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:0 20px;font-size:14px;font-weight:600;color:#dfe9e0;z-index:2}
+  .gocard button.go{all:unset;box-sizing:border-box;display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;padding:6px 12px 2px;cursor:pointer;color:#fff}
+  .gocard button.go #goText{font-size:25px;font-weight:800;line-height:1.1}
+  .gocard button.go .gain{display:flex;flex-direction:column;align-items:flex-end;background:none;padding:0;margin:0;font-size:12.5px;line-height:1.1}
+  .gocard button.go .gain b{font-size:30px;color:#ffd35c;font-weight:900;display:flex;align-items:center;gap:4px}
+  .gocard button.go .gain .csi{width:26px;height:26px}
+  .gobj{display:flex;gap:6px;padding:6px 12px 0} .gobj:empty{display:none}
+  .gobj span{flex:1;min-width:0;background:rgba(0,0,0,.2);border-radius:10px;padding:5px 4px;text-align:center;font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gobj span.hot{background:rgba(255,190,90,.32)} .gobj span.ok{opacity:.65}
+  .gocard .seg.durs{margin:9px 12px 0;background:none;padding:0;gap:6px}
+  .gocard .seg.durs button{flex:1;border-radius:99px;padding:8px 0;background:rgba(0,0,0,.2);color:#fff;font-weight:600;font-size:14px;position:relative;box-shadow:none}
+  .gocard .seg.durs button.on{background:#fff;color:#1f2a22;font-weight:900}
+  .gocard .seg.durs button.sug::after{content:attr(data-x);position:absolute;top:-9px;right:-3px;background:#f0a53a;color:#3a2000;font-size:10px;font-weight:900;border-radius:6px;padding:0 4px;line-height:1.5}
+  .gostat{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;margin:9px 12px 0;width:calc(100% - 24px);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;background:rgba(0,0,0,.25);cursor:pointer;line-height:1.3}
+  .gostat.ok{background:rgba(160,255,170,.2)} .gostat .st{flex:1;min-width:0} .gostat .fi{white-space:nowrap}
+  body.hasmap .minimap,body.hasmap .gobj,body.hasmap .gostat,body.choosing .minimap{display:none}
+  .lt.silver{background:linear-gradient(135deg,#eef1f4,#c9d0d7 55%,#aab3bc);border-color:#b8c0c8;color:#2a3138} .lt.silver small{color:#4a535c}
+  .lt.bronze{background:linear-gradient(135deg,#f6dcc2,#d9a06c 55%,#b8763f);border-color:#c2864f;color:#3e2410} .lt.bronze small{color:#5a3518}
+  #homeFoot{text-align:center;font-size:12px;color:var(--muted);padding:10px 4px 2px;line-height:1.5;user-select:none;-webkit-user-select:none;cursor:default}
+  #homeFoot b{font-weight:700} #homeFoot:empty{display:none}
+  body.page #homeFoot,body.walking #homeFoot,body.recap #homeFoot,body.choosing #homeFoot,body.hasmap #homeFoot{display:none}
+  .egg{animation:eggPop .5s ease-out} @keyframes eggPop{0%{transform:scale(.6) rotate(-10deg);opacity:0}100%{transform:none;opacity:1}}
+  @media (prefers-color-scheme: dark){
+    .wxp{background:#1f3445;color:#cfe8ff}
+    .lt.silver{background:linear-gradient(135deg,#59616a,#8f99a3 60%,#aeb7c0);border-color:#7c858e;color:#fff} .lt.silver small{color:#eef2f5}
+    .lt.bronze{background:linear-gradient(135deg,#6b3d1c,#a3622f 60%,#c07a43);border-color:#8d5428;color:#fff} .lt.bronze small{color:#fbe2cc}
+  }
+
+  /* v2.4 : écran de balade « la carte d'abord » */
+  #walkbar .needs[hidden],#walkbar .wstats[hidden]{display:none !important}
+  body.walking #walkbar{background:#171c18;border-radius:22px 22px 0 0;padding:12px 14px calc(env(safe-area-inset-bottom) + 12px)}
+  #walkbar .in{display:block}
+  #walkbar .wnums{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  #wGain{font-size:38px;font-weight:900;color:#ffd35c;line-height:1;display:flex;align-items:center;gap:6px} #wGain .csi{width:32px;height:32px}
+  #walkbar .wtm{text-align:right;line-height:1.05} #wTime{font-size:28px;font-weight:900;display:block;font-family:inherit !important} #wDist{font-size:13px;opacity:.75}
+  #walkbar .wline{font-size:14px;color:#bfe3ff;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:18px}
+  #walkbar .wbtns{display:flex;gap:10px;margin-top:10px}
+  #walkbar .wbig{flex:1;border-radius:16px;padding:14px 4px;font-weight:900;font-size:18px;color:#fff;position:relative;overflow:hidden}
+  #walkbar .wbig.moon{background:#232a46} #walkbar .wbig.end{background:#c8452f}
+  #walkbar .wbig.end span{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.1} #walkbar .wbig.end small{font-size:11px;font-weight:600;opacity:.85}
+  #walkbar .wbig.end .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.3)}
+  #walkbar .wbig.end.holding .fill{width:100%;transition:width 1s linear}
+  #walkbar.mini{padding-top:8px} #walkbar.mini .wline,#walkbar.mini .wbtns{display:none} #walkbar.mini #wGain{font-size:26px} #walkbar.mini #wGain .csi{width:22px;height:22px} #walkbar.mini #wTime{font-size:22px}
+  #walkbar.mini::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#555;margin:0 auto 6px}
+  #wChips,#wFlair,#wTreasure,#roxyMenu,#coach{display:none}
+  body.walking #wChips{display:flex;position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:1001;gap:6px}
+  #wChips span{flex:1;background:rgba(23,28,24,.92);color:#eef1ec;border-radius:14px;padding:6px 4px;text-align:center;font-size:19px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.45);line-height:1.15}
+  #wChips span small{display:block;font-size:11px;font-weight:600;opacity:.75} #wChips span.ok{background:rgba(36,64,44,.96);outline:2px solid #4c8a5a}
+  body.walking #wFlair:not([hidden]){display:block;position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 74px);z-index:1001;border-radius:16px;padding:10px 12px;color:#fff;font-weight:800;background:linear-gradient(135deg,#5b2a86,#b03a8b);box-shadow:0 0 0 3px rgba(255,122,217,.35),0 10px 26px rgba(0,0,0,.5)}
+  #wFlair small{display:block;font-weight:500;font-size:13px;color:#f6dcff}
+  body.walking #wTreasure:not([hidden]){display:flex;flex-direction:column;align-items:center;position:fixed;right:0;top:42%;z-index:1001;border-radius:14px 0 0 14px;padding:8px 10px 8px 12px;font-weight:900;color:#fff;background:linear-gradient(135deg,#7d5d17,#c39a2c);box-shadow:0 6px 18px rgba(0,0,0,.5);line-height:1.1}
+  #wTreasure .ar{font-size:24px;display:block} #wTreasure small{font-size:12px;font-weight:800}
+  body.walking #roxyMenu:not([hidden]){display:flex;gap:6px;position:fixed;left:50%;transform:translateX(-50%);z-index:1002;background:#f6f2ea;border-radius:18px;padding:8px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
+  #roxyMenu button{background:#fff;color:#1f2a22;border-radius:12px;padding:8px 10px;font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;min-width:56px;gap:2px;box-shadow:0 1px 3px rgba(0,0,0,.15)} #roxyMenu b{font-size:22px} #roxyMenu button.on{outline:2px solid #4c8a5a}
+  body.walking #coach:not([hidden]){display:block;position:fixed;left:50%;transform:translateX(-50%);z-index:1003;max-width:86vw;background:#ffd35c;color:#3a2a00;font-weight:800;font-size:15px;border-radius:14px;padding:9px 14px;box-shadow:0 8px 22px rgba(0,0,0,.5);text-align:center;animation:pop .25s ease-out}
+  .pawm{font-size:15px;filter:drop-shadow(0 0 4px rgba(255,190,90,.8));opacity:.9;line-height:1}
+  .trailm{font-size:22px;filter:drop-shadow(0 0 7px #7dffb0);line-height:1;animation:aping 1.4s ease-in-out infinite}
+  .trailtag{background:#1f7a4a;color:#fff;font-weight:800;font-size:12.5px;padding:3px 9px;border-radius:99px;white-space:nowrap;box-shadow:0 0 0 3px rgba(125,255,176,.35)}
+  .flyplus{position:fixed;z-index:1004;font-weight:900;color:#ffd35c;font-size:24px;text-shadow:0 2px 6px #000;pointer-events:none;transition:transform .9s cubic-bezier(.5,-0.2,.6,1),opacity .9s}
+  #pocket .pflair{border:2px solid #ff7ad9;border-radius:18px;padding:12px 16px;color:#ffd0f0;font-weight:800;font-size:17px;box-shadow:0 0 30px rgba(255,122,217,.4);margin-top:6px}
+  #pocket .pflair:empty{display:none}
+  body.walking #recenter{bottom:calc(var(--wbh,200px) + 12px)}
+  body.walking .toast{top:calc(env(safe-area-inset-top) + 72px)}
+
+  .explo.one{display:flex;align-items:center;gap:6px;padding:7px 8px}
+  .explo.one .pod{flex:1;margin-top:0} .explo.one .pod span{display:flex;align-items:center;justify-content:center;gap:3px;padding:5px 2px}
+  .explo.one .pod small{display:inline;font-size:15px} .explo.one .lbl{font-size:18px;display:flex;flex-direction:column;align-items:center;line-height:1;min-width:30px}
+  .explo.one .lbl small{font-size:10px;font-weight:700;opacity:.85;margin-top:2px}
+  .ltiles .lt{padding:6px 2px} .ltiles .lt .e{font-size:21px} .ltiles .lt b{font-size:16px}
+  .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#6d2f86 55%,#b03a5b);border-color:transparent;color:#fff} .lt.arena-t small{color:#f0e0ff}
+  .gocard button.go #goText{font-size:23px} .gocard button.go .gain b{font-size:27px}
+  .gostat .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -510,15 +593,20 @@
     </div>
     <div id="heroSay"></div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
-    <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
-      <button data-v="20" aria-label="20 minutes, le minimum">⚡ 20</button>
-      <button data-v="30">30 min</button>
-      <button data-v="45">45 min</button>
-      <button data-v="60">1 h</button>
-      <button data-v="90">1 h 30</button>
+    <div class="gocard" id="goCard">
+      <button class="minimap" id="miniMap" aria-label="Ma carte d'exploration"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span></button>
+      <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><span class="gain" id="goGain"></span></button>
+      <div class="gobj" id="goObj"></div>
+      <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
+        <button data-v="20" aria-label="20 minutes, le minimum">20</button>
+        <button data-v="30">30</button>
+        <button data-v="45">45 min</button>
+        <button data-v="60">1 h</button>
+        <button data-v="90">1 h 30</button>
+      </div>
+      <button class="gostat" id="goStat" aria-label="Où j'en suis aujourd'hui · dernières sorties de Roxy"></button>
     </div>
-    <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><span class="gain" id="goGain"></span></button>
-    <div class="gohint" id="goHint"></div>
+    <div class="gohint" id="goHint" hidden></div>
     <button id="locate" class="ghost" style="display:none">🗺️ Proposer des parcours</button>
     <div id="envies">
     <div class="flabel" id="catLabel">Envie de…</div>
@@ -533,6 +621,7 @@
     </div>
   </div>
   <div id="home"></div>
+  <div id="homeFoot" aria-label="Version de l'app"></div>
   <div id="meteo" aria-live="polite"></div>
   <div id="status" aria-live="polite"></div>
   <div id="map"></div>
@@ -562,23 +651,30 @@
 <div id="walkbar" role="region" aria-label="Balade en cours">
   <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
   <div class="in">
-    <div class="wstats"><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
-    <div class="needs"><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
+    <div class="wnums"><b id="wGain">+0 🪙</b><span class="wtm"><b id="wTime">0 min</b><small id="wDist"></small></span></div>
+    <div class="wline" id="wLine"></div>
+    <div class="wstats" hidden><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
+    <div class="needs" hidden><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wbtns">
-      <button class="photo" id="moreBtn" aria-label="Plus : alerte, balade à deux, mode poche">⋯</button>
+      <button class="photo hid" id="moreBtn" aria-label="Plus : alerte, balade à deux">⋯</button>
       <button class="photo hid" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
       <button class="photo hid" id="duoBtn" aria-label="Balade à deux : on est deux promeneurs avec Roxy">👯</button>
-      <button class="photo hid" id="pocketBtn" aria-label="Mode poche : écran noir, la balade continue">🌙</button>
-      <button class="photo" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
-      <button id="stop">Terminer</button>
+      <button class="photo hid" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
+      <button class="wbig moon" id="pocketBtn" aria-label="Mode poche : écran noir, la balade continue">🌙 Poche</button>
+      <button class="wbig end" id="stop" aria-label="Terminer la balade : garde le doigt une seconde"><i class="fill"></i><span>⏹ Fini<small>garde appuyé</small></span></button>
     </div>
     <input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
   </div>
 </div>
 
 <button id="recenter" aria-label="Recentrer la carte sur moi" hidden>📍</button>
+<div id="wChips" aria-live="polite"></div>
+<div id="wFlair" hidden></div>
+<button id="wTreasure" hidden aria-label="Direction du trésor"></button>
+<div id="roxyMenu" hidden><button id="rmP"><b>💧</b>Pipi</button><button id="rmC"><b>💩</b>Caca</button><button id="rmPh"><b>📷</b>Photo</button><button id="rmMore"><b>⋯</b>Plus</button></div>
+<div id="coach" hidden></div>
 <div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
-<div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
+<div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
 <div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
@@ -587,7 +683,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.003911";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.022731";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -635,7 +731,13 @@
     return m ? `${h} h ${String(m).padStart(2, "0")}` : `${h} h`;
   }
   const fmtHour = d => d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
-  function setStatus(html, err){ const el = $("#status"); el.innerHTML = html; el.classList.toggle("err", !!err); }
+  function setStatus(html, err){
+    const el = $("#status"), b = document.body.classList;
+    if (html && !b.contains("hasmap") && !b.contains("choosing") && !b.contains("walking") && !b.contains("explore")){   // v2.4 : sur l'accueil, en bandeau en haut
+      el.innerHTML = ""; toast(String(html).replace(/<[^>]+>/g, ""), err ? 4500 : 3200); return;
+    }
+    el.innerHTML = html; el.classList.toggle("err", !!err);
+  }
 
   async function getJSON(url, ms){
     const c = new AbortController(); const t = setTimeout(() => c.abort(), ms || 12000);
@@ -700,7 +802,8 @@
   function showStart(p){
     layers.me.clearLayers();
     L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="home">🏠</div>', iconSize:[22,22], iconAnchor:[11,11] }), keyboard:false, interactive:false }).addTo(layers.me);
-    youMarker = L.marker([p.lat, p.lon], { icon: youIcon(), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(layers.me);
+    youMarker = L.marker([p.lat, p.lon], { icon: youIcon(), keyboard:false, interactive:true, zIndexOffset:1000 }).addTo(layers.me);
+    try{ youMarker.on("click", () => { if (state.walk) openRoxyMenu(); }); }catch(e){}
   }
 
   // ---------- Types de lieux ----------
@@ -1162,13 +1265,14 @@
     if (profile.walker){
       let m = null; try{ m = mood(); }catch(e){}
       $("#heroSay").innerHTML = m ? `<button class="say" id="sayBtn" aria-label="${esc(DOG)} dit, toucher pour une autre phrase" aria-live="polite">${esc(sayNow())}</button>` : "";
-      $("#heroSub").innerHTML = m ? `<button class="moodBtn" id="moodBtn" aria-label="${esc(m.t)}. Voir les dernières sorties de ${esc(DOG)}"><div class="mood"><span>${m.e}</span><div class="mb"><i style="width:${m.p}%;background:${m.c}"></i></div><span class="more">voir ›</span></div></button>` : `${DOG} t'attend !`;
-      if ($("#moodBtn")) $("#moodBtn").onclick = sheetOuts;
+      const wt = wxText();   // v2.4 : la météo sous « Salut X » (l'humeur est dans la fiche de Roxy et dans la ligne « où j'en suis »)
+      $("#heroSub").innerHTML = wt ? `<span class="wxp">${esc(wt)}</span>` : m ? `<span class="wxp" style="background:none;padding:0;color:var(--muted)">${m.e} ${esc(m.s)}</span>` : `${DOG} t'attend !`;
       if ($("#sayBtn")) $("#sayBtn").onclick = () => roxySay(sayNext());
     } else { $("#heroSub").textContent = "Dis-nous qui tu es :"; $("#heroSay").innerHTML = ""; }
     $("#editWho").hidden = !!profile.walker;
     try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
+    clearTimeout(renderWho._t); renderWho._t = setTimeout(() => { try{ fitHome(); }catch(e){} }, 60);
   }
   // Fiche : le contenu défile, les boutons du bas restent collés, la page derrière ne bouge plus (iPhone)
   let lockY = null;
@@ -1181,6 +1285,7 @@
     if (lockY == null) return;
     document.body.classList.remove("locked"); document.body.style.top = "";
     window.scrollTo(0, lockY); lockY = null;
+    setTimeout(() => { try{ fitHome(); }catch(e){} }, 30);
   }
   function openSheet(html){
     try{ const m = /<h2[^>]*>([\s\S]*?)<\/h2>/.exec(html); if (m) useTrack(m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()); }catch(e){}
@@ -1369,8 +1474,8 @@
   function collect(k, onNew){
     const v = ITEMS[k].v * (onNew ? 2 : 1);
     gw.itemPts += v; gw.got[k]++;
-    toast(`${ITEMS[k].icon} ${ITEMS[k].name} +${v} 🪙${onNew ? " · rue neuve ×2" : ""}`, 2600);
-    ding();
+    flyPlus(`${ITEMS[k].icon} +${v}`); if (onNew) toast("🆕 Rue neuve : objet ×2 !", 1600);
+    ding(); renderChips();
   }
   function gameFix(q, home){
     if (!gw || q.a > 35) return;
@@ -1385,7 +1490,7 @@
     if (!gw.cells.includes(c)){
       gw.cells.push(c);
       if (onNew && gw.cells.length > 1){
-        if (gw.newCells < MAX_NEW_CELLS){ gw.newCells++; toast("🗺️ Rue neuve +1 🪙", 1800); }
+        if (gw.newCells < MAX_NEW_CELLS){ gw.newCells++; flyPlus("🗺️ +1"); renderChips(); }
         // 💰 coffre : seulement sur une rue jamais faite, au plus un toutes les ~2 semaines
         if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance()){ gw.chest = true; showChest(); }
       }
@@ -2062,7 +2167,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -2092,6 +2197,7 @@
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
       store.set("wouaf-record", j.record || null);
       if (j.explo) store.set("wouaf-explo", j.explo);
+      if (j.fam) store.set("wouaf-fam", j.fam);
       syncHunt();
       return true;
     }
@@ -2287,7 +2393,32 @@
     // v2.3 : le classement des explorateurs remplace la ligne des missions (les missions passent dans la bulle de Roxy et le menu)
     box.innerHTML = exploHTML() + lotsHTML();
     const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
+    renderGoCard(); renderFoot(); loadWx();
+    setTimeout(fitHome, 0);
     bindLots();
+  }
+  // ---------- ❓ Aide (v2.4) : tuto, règles, questions fréquentes, bulles d'aide ----------
+  function sheetHelp(){
+    const q = (t, a) => `<details class="entry" style="display:block"><summary style="font-weight:700;cursor:pointer">${t}</summary><p style="margin:8px 0 2px">${a}</p></details>`;
+    openSheet(`<h2>❓ Aide</h2>
+      <div class="mlist">
+        <button id="muTuto"><span>📖</span>Comment ça marche</button>
+        <button id="muBonus"><span>🎁</span>Bonus et règles</button>
+        <button id="muTips"><span>💡</span>Revoir les bulles d'aide</button>
+      </div>
+      <h3 style="margin:16px 2px 6px">💬 Questions fréquentes</h3>
+      <div class="props">
+        ${q("Je n'ai rien gagné ?", `Il faut au moins 20 min de balade, avec l'app ouverte tout le long. Au-delà, chaque minute rapporte, et les bonus (objets, rues neuves, défi…) comptent dès 20 min.`)}
+        ${q("La balade s'est arrêtée toute seule ?", `Ne verrouille pas l'écran : utilise plutôt 🌙 Poche (écran noir, la balade et le GPS continuent ; deux touchers pour revenir).`)}
+        ${q("Je ne reçois pas le flair 👃 ?", `Installe l'app sur l'écran d'accueil (Partager › Sur l'écran d'accueil), ouvre-la par son icône et active les rappels dans le menu ☰ › 🔔. Le flair arrive toutes les 15 min pendant une balade.`)}
+        ${q("C'est quoi une rue neuve ?", `Un coin d'environ 100 m où tu n'es pas passé depuis ${FRESH_DAYS} jours. Sur la carte, c'est ce qui est encore dans le brouillard. Elles rapportent plus.`)}
+        ${q("Comment marche le classement ?", `Chaque semaine (du lundi au dimanche), les rues neuves et les objets ramassés pendant tes balades de 20 min ou plus te font monter. On ne voit que les places, jamais les points.`)}
+        ${q("Comment gagner la couronne 👑 ?", `Termine 1er explorateur de la semaine : ${DOG} porte la couronne chez toi toute la semaine suivante.`)}
+        ${q("Comment finir une balade ?", `Garde le doigt sur ⏹ Fini une seconde : le bouton se remplit, et c'est fini. Comme ça, pas d'arrêt par erreur dans la poche.`)}
+      </div>`);
+    $("#muTuto").onclick = () => { closeSheet(); setTimeout(() => showTuto(0, true), 120); };
+    $("#muBonus").onclick = () => { closeSheet(); setTimeout(sheetBonus, 120); };
+    $("#muTips").onclick = () => { store.set(TIPS_KEY, {}); toast("💡 Les bulles d'aide reviendront à ta prochaine balade", 2600); closeSheet(); };
   }
   function sheetToday(){
     openSheet(`<h2>📋 Aujourd'hui</h2>
@@ -2318,8 +2449,7 @@
     const tip = isTester() ? "Les ados se classent avec les rues nouvelles et les objets. Aucun chiffre affiché."
       : mine ? (mine.r === 1 ? "👑 Tu es en tête ! Garde ta place jusqu'à dimanche." : `🔥 Encore quelques rues nouvelles et tu passes devant ${esc(above || "")} !`) + (mine.r > 3 ? ` (tu es ${mine.r}e)` : "")
       : "🧭 Fais une balade avec des rues nouvelles pour entrer dans le classement !";
-    return `<button class="explo" id="exploCard"><span class="at"><span>🧭 Explorateurs · ${sun ? "fin ce soir" : "fin dimanche"}</span><span class="prize">🥇 = 👑 sur ${DOG}</span></span>
-      <span class="pod">${pod}</span><span class="tip">${tip}</span></button>`;
+    return `<button class="explo one" id="exploCard" aria-label="Classement des explorateurs, fin ${sun ? "ce soir" : "dimanche"}. ${esc(tip)}"><span class="lbl">🧭<small>${sun ? "ce soir" : "dim."}</small></span><span class="pod">${pod}</span><span class="lbl">👑</span></button>`;
   }
   function sheetExplo(){
     const { ex, rank, mine } = exploMe(), wk = ex.wk ? new Date(ex.wk + "T12:00:00") : null;
@@ -2347,12 +2477,17 @@
     else if (hu && !hu.found && !hu.gone)
       l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor${game.home ? " · " + fmtKm(dist(game.home, hu)) : ""}`));
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(tile("chest", ch > 0 ? " hot" : "", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
+    l.push(tile("chest", ch > 0 ? " silver hot" : " silver", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
     const rec = store.get("wouaf-record", null);
-    l.push(tile("rec", "", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
+    l.push(tile("rec", " bronze", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
     const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
-    const ar = arenaHTML(), live = duelOK() && (myDuel() || myInvite());
-    return `<div class="lots">${live ? ar + lots : lots + ar}</div>`;
+    const live = duelOK() && (myDuel() || myInvite() || mySent());
+    if (!live && (duelOK() || (isTester() && PUSH_API))){   // v2.4 : 4e tuile violette
+      l.push(`<button class="lt arena-t" data-arena="${isTester() ? "prev" : "duels"}"><span class="e">⚔️</span><b>± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</b><small>${isTester() ? "Duels (aperçu)" : "Défier"}</small></button>`);
+      return `<div class="lots"><div class="ltiles" aria-label="Les gros lots">${l.join("")}</div></div>`;
+    }
+    const ar = live ? arenaHTML() : "";
+    return `<div class="lots">${live ? ar + lots : lots}</div>`;
   }
   // ⚔️ l'Arène : le duel en face-à-face, le défi reçu, ou « Défier X » (Éric : aperçu)
   function arenaHTML(){
@@ -2706,7 +2841,7 @@
       ${li("muLog", "📒", "Carnet", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muToday", "📋", "Missions du jour", "")}
-      ${li("muBonus", "🎁", "Bonus et règles", "")}
+      ${li("muHelp", "❓", "Aide", "comment ça marche, règles, questions")}
       ${PUSH_API && supToken() ? li("muSupAll", "🔑", "Superviseur", "") : ""}
       </div>
       <div class="micons">
@@ -2714,7 +2849,6 @@
       ${ic("muShort", "📲", "Raccourci")}
       ${ic("muWho", "👤", "Prénom")}
       ${PUSH_API && !isTester() ? ic("muPriv", "🔒", "Vie privée") : ""}
-      ${ic("muTuto", "📖", "Tuto")}
       </div>
       <div class="mfoot">${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}<button id="muAbout">À propos · version ${APP_LABEL}</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
@@ -2730,6 +2864,7 @@
     go("muShort", sheetShortcut);
     go("muTuto", () => showTuto(0, true));
     go("muToday", sheetToday);
+    go("muHelp", sheetHelp);
     go("muAbout", () => { const d = document.querySelector("footer details"); const h = d ? d.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, "") : "";
       openSheet(`<h2>ℹ️ À propos</h2><p><b>Wouaf Balades, version ${APP_LABEL}.</b></p><p class="howto">${h}</p><div class="btns"><button id="abClose">Fermer</button></div>`); $("#abClose").onclick = closeSheet; });
     go("muWho", () => askProfile());
@@ -2990,28 +3125,29 @@
       <rect width="300" height="170" fill="${FOG_COLOR}" mask="url(#tm)"/>
       <text x="285" y="34" font-size="22" text-anchor="middle">🐕</text></svg>`;
     return [
-      { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle est contente quand tu la sors, et triste quand elle attend trop. Touche sa photo en haut de l'accueil pour voir son humeur, sa forme et ton niveau.` },
-      { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span></div></div>`,
-        h:"La règle", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes, avec l'app ouverte pendant toute la balade. Une balade sans l'app ne compte pas.` },
-      { pic:`<div><div class="big bob">🪙</div><div class="row" style="margin-top:10px"><span class="chip">45 min = ${cs(walkEuros(45))}</span><span class="chip">1 h = ${cs(walkEuros(60))}</span><span class="chip">1 h 30 = ${cs(walkEuros(90))}</span></div></div>`,
-        h:"Les clebsous", t:`Tout ce que tu gagnes, ce sont des 🪙 clebsous. Les 20 premières minutes ne rapportent rien (c'est l'obligation), la durée au-delà oui, et les bonus dès 20 min. À la fin du mois, tes clebsous deviennent de vrais sous 💶.` },
-      { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">🏴‍☠️ trésor +${HUNT_FIRST}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span><span class="chip">💰 coffre ${cs(CHEST_EUR)}</span></div>`,
-        h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, le trésor de la semaine, et parfois un coffre 💰 !` },
-      { pic: fogSvg, h:"La carte se découvre", t:`La carte est cachée sous le brouillard : il se lève là où tu marches, comme une lampe. Pendant la balade, tout ce qui est encore dans le noir, ce sont des rues neuves qui rapportent plus. Ta carte d'exploration est dans le menu ☰.` },
-      { pic:`<div style="width:88%"><div class="mockbar"><b style="flex:1">32 min · 🪙 +21</b><span>💧</span><span>💩</span><span>📷</span><span>⋯</span></div><div class="row" style="margin-top:10px"><span class="chip">🌙 mode poche</span><span class="chip">📡 radar : brûlant !</span><span class="chip">📍 recentrer</span></div></div>`,
-        h:"Pendant la balade", t:`En bas : le temps et les clebsous gagnés. Note 💧 pipi et 💩 caca, prends ${DOG} en photo 📷. Dans ⋯ : le mode poche (écran noir, la balade continue) et la balade à deux. Le radar te dit quand un objet est tout près.` },
-      { pic:`<div><div class="cal"><span>✅</span><span>✅</span><span>⬜</span><span>✅</span><span>✅</span><span>✅</span><span>✅</span></div><div class="row" style="margin-top:10px"><span class="chip">⬜ −${cs(MALUS_DAY)}</span><span class="chip">7/7 = +${cs(PERFECT_WEEK)} 🏆</span></div></div>`,
-        h:"Les amendes", t:`Un jour sans balade d'au moins 20 min : −${cs(MALUS_DAY)} (${JOKERS} joker par mois). Dès la 3e balade trop courte de la semaine : −${cs(MALUS_SHORT)} chacune. Moins de ${WEEK_DAYS} jours dans la semaine : −${cs(MALUS_WEEK)}. Mais 7 jours sur 7 : +${cs(PERFECT_WEEK)} !` },
-      { pic:`<div><div style="font-size:44px">☰</div>${dog}</div>`, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, carnet, rappels, ce tuto) est dans le menu ☰ en haut à droite.` }
+      { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle te parle dans sa bulle (touche-la pour une autre phrase) et elle adore les caresses : glisse ton doigt sur sa photo ❤️. Touche-la pour voir son humeur, sa forme et ton niveau.` },
+      { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(MALUS_DAY)}</span></div></div>`,
+        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous à la fin du mois 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
+      { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">👃 piste +${FLAIR_CS}</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span></div>`,
+        h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
+      { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
+      { pic:`<div style="width:88%"><div class="mockbar"><span>💧</span><span>💩</span><span>📷</span><span>⋯</span></div><div class="row" style="margin-top:10px"><span class="chip">🌙 Poche</span><span class="chip">⏹ Fini : garde appuyé</span></div></div>`,
+        h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo, et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, deux touchers pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
+      { pic:`<div><div class="big bob">👃</div><div class="row" style="margin-top:10px"><span class="chip">toutes les 15 min</span><span class="chip">🐾 3 min</span><span class="chip">+${FLAIR_CS} 🪙</span></div></div>`,
+        h:"Le flair", t:`Toutes les 15 minutes de balade, ${DOG} flaire une piste fraîche : ton téléphone sonne (accepte les notifications : menu ☰ › 🔔), et des pattes 🐾 apparaissent tout près. Rejoins-les avant 3 minutes : +${FLAIR_CS} !` },
+      { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">💰 coffre ${cs(CHEST_EUR)}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
+        h:"Les gros lots", t:`Le trésor de la semaine 🏴‍☠️ (or) : un seul gagnant ! Pendant la balade, la flèche dorée au bord de l'écran t'indique sa direction. Le coffre 💰 (argent) se cache dans les rues neuves, et le record du mois 🏅 (bronze) récompense la plus longue balade.` },
+      { pic:`<div><div class="row"><span class="chip">🥇 Tom</span><span class="chip">🥈 Toi</span><span class="chip">🥉 Zoé</span></div><div style="font-size:44px;margin-top:6px">👑</div></div>`,
+        h:"Les enjeux", t:`Chaque semaine, le classement des explorateurs : les rues neuves et les objets te font monter, le 1er porte la couronne 👑 sur ${DOG}. Défie les autres dans l'arène ⚔️. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide.` }
     ];
   }
   // Tuto court (3 écrans) : premier lancement et remise à zéro. Le tuto complet (8 écrans) : menu ☰ › Tuto et « Les bonus ».
   function tutoShort(){
     const cs = v => Math.round(v * CS), full = tutoPages();
     return [
-      { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte. Elle est contente quand tu la sors, triste quand elle attend trop.` },
-      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (une « rue neuve », c'est un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). À la fin du mois, tes clebsous deviennent de vrais sous 💶. Un jour sans balade : −${cs(MALUS_DAY)}.` },
-      { pic: full[7].pic, h:"C'est parti !", t:`Choisis une durée et touche « C'est parti ». Tout le reste (progrès, tirelire, carte, rappels, le tuto complet) est dans le menu ☰ en haut à droite. Astuce : ☰ › 📲 pour sortir Roxy en un seul geste depuis l'écran d'accueil.` }
+      { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
+      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! À la fin du mois, tes clebsous deviennent de vrais sous 💶.` },
+      { pic: full[4].pic, h:"C'est parti !", t:`Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
   }
   function showTuto(step, replay){
@@ -3186,7 +3322,7 @@
     up(); clearInterval(pocketTick); pocketTick = setInterval(up, 10000);
     keepAwake();
   }
-  function pocketOff(){ $("#pocket").hidden = true; clearInterval(pocketTick); }
+  function pocketOff(){ $("#pocket").hidden = true; clearInterval(pocketTick); $("#pocketFlair").textContent = ""; }
   $("#pocketBtn").addEventListener("click", pocketOn);
   $("#pocket").addEventListener("click", () => {
     pocketTaps++; clearTimeout(pocketTimer);
@@ -3223,6 +3359,8 @@
     p.push(rec ? `Le record du mois, c'est ${fmtMin(rec.min)}. On le bat ? 🏅` : "Personne n'a encore le record du mois… Pourquoi pas toi ? 🏅");
     if (l && h < 8) p.push("Je suis toute contente aujourd'hui ! 😊");
     const sm = sayMission(); if (sm) p.push(sm);
+    const sw = sayWeather(); if (sw) p.push(sw);
+    try{ const eh = eggHint(); if (eh && Math.random() < .5) p.push(eh); }catch(e){}
     try{ const ex = exploMe(); if (ex.mine){ if (ex.mine.r === 1) p.push("Tu es premier explorateur ! On garde la tête jusqu'à dimanche ? 👑");
       else if (ex.above) p.push(`${ex.above} est devant toi… on lui reprend la place ? 😤`); }
       else if (!isTester()) p.push("Des rues nouvelles, et tu entres dans le classement des explorateurs ! 🧭"); }catch(e){}
@@ -3250,11 +3388,10 @@
       if (paused(dIso(Date.now()))) return "🏖️ Pause du superviseur : pas de malus en ce moment !";
       if (isBday()) return "🎂 C'est mon anniversaire ! Tous les bonus comptent triple 🎉";
       if (boosted(dIso(Date.now()))) return "🎉 Jour bonus : tous les bonus comptent double aujourd'hui !";
-      if (game.defiDone !== dayKey(Date.now())) return `🎯 Mon défi du jour : ${defiOf(Date.now()).t} (+${DEFI_PTS} 🪙)`;
     }catch(e){}
     return null;
   }
-  function sayNow(){ if (!sayCur) sayCur = sayHello() || sayMission() || sayNext(); return sayCur; }
+  function sayNow(){ if (!sayCur) sayCur = sayHello() || sayMission() || sayWeather() || sayNext(); return sayCur; }
   function roxySay(t){
     sayCur = t; const b = $("#sayBtn"); if (!b) return;
     b.textContent = t; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
@@ -3620,7 +3757,7 @@
     $("#wbText").textContent = text;
     $("#wbA").textContent = a.label; $("#wbA").onclick = a.fn;
     $("#wbB").textContent = b.label; $("#wbB").onclick = b.fn;
-    el.hidden = false;
+    el.hidden = false; try{ wakeBar(); }catch(e){}
   }
   const hideBanner = () => { $("#walkBanner").hidden = true; clearTimeout(bannerTimer); };
 
@@ -3661,7 +3798,7 @@
       walked = 0;
       drawSelected(p, "#d9792b");
       if (gw){ gw.items = seedItems(p); drawItems(); }
-      trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
+      trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), TRACK_STYLE).addTo(layers.sel);
       document.body.classList.remove("choosing"); document.body.classList.add("walking");
       setFollow(true); hideBanner();
       setTimeout(() => { map.invalidateSize(); map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] }); }, 50);
@@ -3692,7 +3829,7 @@
     weekHunt(); drawItems(); needsUI(); setTimeout(() => drawWalkFog(true), 300); $("#duoBtn").classList.toggle("on", !!(gw.duoPressed || gw.duo));
     $("#photoBtn").textContent = "📷";
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
-    trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), { color:"#2a7de1", weight:4, opacity:.9 }).addTo(layers.sel);
+    trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), TRACK_STYLE).addTo(layers.sel);
     if (free && !resume){
       showBanner("start", `🐾 C'est parti${p.min ? ` pour ${fmtMin(p.min)}` : ""} ! Bonne balade avec ${DOG}.`,
         { label:"👍 OK", fn: hideBanner },
@@ -3700,6 +3837,7 @@
       bannerTimer = setTimeout(hideBanner, 8000);
     }
     persist(true);
+    walkUIStart(!!resume);
     await keepAwake();
     updateWalk(null);
     tick = setInterval(() => updateWalk(null), 15000);
@@ -3730,7 +3868,7 @@
     // on garde les points assez précis, tous les 8 m ou toutes les 30 s
     if (q.a <= 60){
       const last = track[track.length-1];
-      if (!last || dist(last, q) >= 8 || q.t - last.t >= 30000){ track.push(q); if (trackLayer) trackLayer.addLatLng([q.lat, q.lon]); }
+      if (!last || dist(last, q) >= 8 || q.t - last.t >= 30000){ track.push(q); if (trackLayer) trackLayer.addLatLng([q.lat, q.lon]); addPaw(q); }
     }
     if (!walkHome && q.a <= 40) walkHome = { lat:q.lat, lon:q.lon };
     updateWalk(q);
@@ -3738,6 +3876,7 @@
     drawWalkFog(false);
     maybeAskPhoto();
     shadowCheck(q);
+    trailCheck(q); renderTreasure(q); renderWLine();
     if (walkHome) checkHome(q);
     persist(false);
   }
@@ -3772,7 +3911,7 @@
     // 🏴‍☠️ trésor trouvé puis balade annulée : personne n'est payé, on prévient le superviseur (il peut redonner les 500 clebsous)
     if (gw && gw.hunt && !isTester() && PUSH_API && profile.walker && game.hunt) api("/alert", { walker: profile.walker, kind: "hunt", week: game.hunt.wk }).catch(() => {});
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
-    watchId = null; clearInterval(tick); cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog();
+    watchId = null; clearInterval(tick); cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog(); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
     state.walk = null; forgetWalk(); store.set(END_KEY, Date.now());
     gw = null; gameLayer.clearLayers();
@@ -3816,6 +3955,135 @@
     const tot = Math.round(moneyThisMonth() * CS), g = liveGain(el);
     return el < MONEY_MIN ? `🪙 +${g} · minimum dans ${Math.ceil(MONEY_MIN - el)} min` : `🪙 +${g} · ${(tot + g).toLocaleString("fr-FR")} au total`;
   }
+  // ---------- 🗺️ Écran de balade v2.4 : missions en haut, trésor au bord, pattes, Roxy cliquable, barre qui se fait discrète, flair ----------
+  var TRACK_STYLE = { color:"#ffb85a", weight:3, opacity:.35, dashArray:"2 9" };
+  var TIPS_KEY = "wouaf-tips";
+  let pawLayer = null, trailLayer = null, trailTagM = null, lastPaw = null, flairIv = null, miniT = null;
+  function coach(key, text, pos){   // 💡 bulle d'aide : une seule fois par sujet (sauf key vide)
+    if (key){ const t = store.get(TIPS_KEY, {}); if (t[key]) return; t[key] = 1; store.set(TIPS_KEY, t); }
+    const c = $("#coach"); c.textContent = text;
+    c.style.top = pos === "top" ? "calc(env(safe-area-inset-top) + 140px)" : pos === "mid" ? "36%" : "";
+    c.style.bottom = pos === "bottom" ? "calc(var(--wbh,200px) + 16px)" : "";
+    c.hidden = false; clearTimeout(coach._t); coach._t = setTimeout(() => { c.hidden = true; }, 6000);
+  }
+  $("#coach").addEventListener("click", () => { $("#coach").hidden = true; });
+  function walkTargets(){ const m = (state.walk && state.walk.min) || state.dur || 30; return { ob: Math.max(2, Math.round(m / 15)), nc: Math.min(MAX_NEW_CELLS, Math.max(3, Math.round(m / 9))) }; }
+  function renderChips(){
+    if (!gw) return;
+    const T = walkTargets(), ob = Object.values(gw.got || {}).reduce((a, b) => a + (+b || 0), 0), nc = gw.newCells || 0, ph = !!gw.photoTaken;
+    $("#wChips").innerHTML = [[ob >= T.ob, `${ob >= T.ob ? "✅ " : ""}${Math.min(ob, T.ob)}/${T.ob}`, "🦴 objets"], [nc >= T.nc, `${nc >= T.nc ? "✅ " : ""}${Math.min(nc, T.nc)}/${T.nc}`, "🗺️ rues neuves"], [ph, ph ? "✅" : "📸", "photo"]]
+      .map(([ok, b, l]) => `<span class="${ok ? "ok" : ""}">${b}<small>${l}</small></span>`).join("");
+  }
+  function renderTreasure(q){
+    const el = $("#wTreasure"), h = game && game.hunt;
+    if (!q || !h || h.found || h.gone || h.wk !== weekKey(Date.now())){ el.hidden = true; return; }
+    const z = h.zlat != null ? { lat: h.zlat, lon: h.zlon } : h, d = dist(q, z);
+    if (d < (typeof HUNT_ZONE === "number" ? HUNT_ZONE : 200)){ el.innerHTML = `<span class="ar">🏴‍☠️</span><small>c'est ici !</small>`; el.hidden = false; return; }
+    el.innerHTML = `<span class="ar" style="transform:rotate(${Math.round(bearing(q, z))}deg)">⬆</span>🏴‍☠️<small>${fmtKm(d)}</small>`; el.hidden = false;
+  }
+  function renderWLine(){
+    const el = $("#wLine"); if (!el || !state.walk) return;
+    const rd = ($("#radar").textContent || "").trim(), el2 = (Date.now() - t0) / 60000;
+    let t = rd;
+    if (!t && el2 < 2) t = "📱 Garde l'app ouverte · 🌙 Poche pour l'écran noir";
+    if (!t){ try{ const ex = exploMe(); t = ex.mine ? (ex.mine.r === 1 ? "🧭 Tu es 1er explorateur ! 👑" : `🧭 Des rues neuves et tu passes devant ${ex.above || ""} !`) : (PUSH_API && !isTester() ? "🧭 Des rues neuves pour entrer au classement !" : ""); }catch(e){} }
+    if (!t && el2 >= MONEY_MIN) t = "✅ Sortie validée · chaque minute rapporte";
+    el.textContent = t;
+  }
+  function walkNums(el){
+    $("#wGain").innerHTML = `+${liveGain(el)} 🪙`;
+    $("#wTime").textContent = el < 60 ? Math.floor(el) + " min" : fmtMin(el);
+    let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
+    $("#wDist").textContent = fmtKm(m);
+    if (gw && el >= MONEY_MIN && !gw.validTold){ gw.validTold = true; toast(`🎉 Sortie validée ! ${DOG} est ravie. Maintenant chaque minute rapporte en plus`, 5000); haptic(2); try{ confetti(); }catch(e){} }
+    renderChips(); renderWLine();
+  }
+  function addPaw(q){
+    if (!pawLayer) pawLayer = L.layerGroup().addTo(map);
+    if (lastPaw && dist(lastPaw, q) < 28) return;
+    const rot = lastPaw ? Math.round(bearing(lastPaw, q)) : 0; lastPaw = q;
+    L.marker([q.lat, q.lon], { icon: L.divIcon({ className:"", html:`<div class="pawm" style="transform:rotate(${rot}deg)">🐾</div>`, iconSize:[18,18], iconAnchor:[9,9] }), interactive:false, keyboard:false }).addTo(pawLayer);
+  }
+  function flyPlus(txt){
+    if (!state.walk) return;
+    const el = document.createElement("div"); el.className = "flyplus"; el.textContent = txt;
+    let x = innerWidth / 2, y = innerHeight * .42;
+    try{ const pt = map.latLngToContainerPoint(youMarker.getLatLng()); if (pt && +pt.x > 0 && +pt.y > 0){ x = +pt.x; y = +pt.y - 30; } }catch(e){}
+    el.style.left = x + "px"; el.style.top = y + "px"; document.body.appendChild(el);
+    const g = $("#wGain").getBoundingClientRect();
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transform = `translate(${g.left + 30 - x}px,${g.top - y}px) scale(.6)`; el.style.opacity = "0"; }));
+    setTimeout(() => el.remove(), 1000);
+  }
+  function openRoxyMenu(){
+    const m = $("#roxyMenu"); if (!m.hidden){ m.hidden = true; return; }
+    let top = innerHeight * .3;
+    try{ const pt = map.latLngToContainerPoint(youMarker.getLatLng()); if (pt && +pt.y > 120) top = +pt.y - 95; }catch(e){}
+    m.style.top = top + "px";
+    const n = (gw && gw.needs) || { p:0, c:0 };
+    $("#rmP").classList.toggle("on", !!n.p); $("#rmC").classList.toggle("on", !!n.c);
+    m.hidden = false; clearTimeout(openRoxyMenu._t); openRoxyMenu._t = setTimeout(() => { m.hidden = true; }, 7000);
+  }
+  [["#rmP", "#needP"], ["#rmC", "#needC"], ["#rmPh", "#photoBtn"], ["#rmMore", "#moreBtn"]].forEach(([a, b]) => $(a).addEventListener("click", () => { $("#roxyMenu").hidden = true; $(b).click(); }));
+  map.on("click", () => { $("#roxyMenu").hidden = true; });
+  function wakeBar(){
+    const w = $("#walkbar"); w.classList.remove("mini"); clearTimeout(miniT);
+    miniT = setTimeout(() => { if (state.walk && $("#walkBanner").hidden && $("#pocket").hidden){ w.classList.add("mini"); coach("mini", "👆 Touche la barre en bas pour la rouvrir", "bottom"); } }, 10000);
+  }
+  $("#walkbar").addEventListener("pointerdown", wakeBar, true);
+  // 👃 Flair : au quart d'heure (comme le serveur), à partir de 5 min de balade, une piste fraîche à ~100 m pendant 3 min (+5)
+  function flairTick(){
+    if (!gw || !state.walk) return;
+    const now = Date.now(), qs = Math.floor(now / 900000) * 900000;
+    if (gw.flairQ !== qs && qs - t0 >= FLAIR_AFTER && now - qs < 180000){ gw.flairQ = qs; spawnTrail(); }
+    updTrail();
+  }
+  var FLAIR_AFTER = 5 * 60000 - 30000, FLAIR_CS = 5, TRAIL_MS = 180000;
+  function spawnTrail(){
+    const q = lastFix || track[track.length - 1]; if (!q) return;
+    const a = Math.random() * 2 * Math.PI, d = 90 + Math.random() * 30, kx = 111320 * Math.cos(q.lat * Math.PI / 180);
+    const at = f => ({ lat: q.lat + Math.cos(a) * d * f / 110540, lon: q.lon + Math.sin(a) * d * f / kx });
+    gw.trail = { ...at(1), until: Date.now() + TRAIL_MS, pts: [at(.35), at(.65)] };
+    drawTrail(); haptic(2); ding(); persist(true);
+    coach("flair", "👃 Une piste fraîche ! Suis les pattes avant qu'elle disparaisse", "top");
+  }
+  function drawTrail(){
+    if (!trailLayer) trailLayer = L.layerGroup().addTo(map);
+    trailLayer.clearLayers(); const tr = gw && gw.trail; if (!tr) return;
+    for (const p of tr.pts.concat([tr])) L.marker([p.lat, p.lon], { icon: L.divIcon({ className:"", html:'<div class="trailm">🐾</div>', iconSize:[26,26], iconAnchor:[13,13] }), interactive:false, keyboard:false }).addTo(trailLayer);
+    trailTagM = L.marker([tr.lat, tr.lon], { icon: trailTag(tr), interactive:false, keyboard:false, zIndexOffset:900 }).addTo(trailLayer);
+    updTrail();
+  }
+  const trailLeft = tr => Math.max(0, Math.round((tr.until - Date.now()) / 1000));
+  const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  function trailTag(tr){ return L.divIcon({ className:"", html:`<div class="trailtag">Piste fraîche · ${mmss(trailLeft(tr))}</div>`, iconSize:[130,24], iconAnchor:[65,-14] }); }
+  function updTrail(){
+    const tr = gw && gw.trail, f = $("#wFlair");
+    if (!tr){ f.hidden = true; $("#pocketFlair").textContent = ""; return; }
+    if (Date.now() > tr.until){ clearTrail(); toast("💨 La piste s'est envolée… la prochaine dans 15 min", 2600); return; }
+    const l = mmss(trailLeft(tr));
+    f.innerHTML = `👃 ${DOG} a flairé une piste fraîche !<small>Suis les pattes avant qu'elle disparaisse : +${FLAIR_CS} 🪙 · ${l}</small>`; f.hidden = false;
+    $("#pocketFlair").textContent = `👃 ${DOG} a flairé une piste fraîche ! Sors ton téléphone, elle disparaît dans ${l}`;
+    try{ if (trailTagM) trailTagM.setIcon(trailTag(tr)); }catch(e){}
+  }
+  function clearTrail(){ if (gw) gw.trail = null; trailTagM = null; if (trailLayer) trailLayer.clearLayers(); $("#wFlair").hidden = true; $("#pocketFlair").textContent = ""; }
+  function trailCheck(q){
+    const tr = gw && gw.trail; if (!tr || Date.now() > tr.until) return;
+    if (dist(q, tr) < 30){ gw.itemPts += FLAIR_CS; gw.flairGot = (gw.flairGot || 0) + 1; clearTrail(); flyPlus(`👃 +${FLAIR_CS}`); ding(); haptic(2); toast(`🐾 Piste fraîche trouvée ! +${FLAIR_CS} 🪙`, 2600); persist(true); }
+  }
+  function walkUIStart(resume){
+    if (pawLayer) pawLayer.clearLayers(); lastPaw = null; for (const q of track) addPaw(q);
+    $("#roxyMenu").hidden = true; renderChips(); wakeBar();
+    if (gw && gw.trail) drawTrail();
+    clearInterval(flairIv); flairIv = setInterval(flairTick, 1000);
+    if (PUSH_API && profile.walker) api("/walk-live", { walker: profile.walker, s: Math.round(t0 / 1000), on: 1 }).catch(() => {});
+    if (!resume) setTimeout(() => { if (state.walk) coach("roxy", `👆 Touche ${DOG} sur la carte pour pipi, caca ou photo`, "mid"); }, 4000);
+  }
+  function walkUIEnd(){
+    clearInterval(flairIv); flairIv = null; clearTimeout(miniT); $("#walkbar").classList.remove("mini");
+    if (pawLayer) pawLayer.clearLayers(); lastPaw = null; if (trailLayer) trailLayer.clearLayers();
+    ["#wFlair", "#wTreasure", "#roxyMenu", "#coach"].forEach(k => { $(k).hidden = true; });
+    if (PUSH_API && profile.walker) api("/walk-live", { walker: profile.walker, on: 0 }).catch(() => {});
+  }
   function updateWalk(q){
     const p = state.walk; if (!p) return;
     const elapsed = (Date.now() - t0) / 60000;
@@ -3828,6 +4096,7 @@
       if (bd < 120) walked = Math.max(walked, cum[best]);
     }
     const chrono = `<b>${elapsed < 60 ? Math.floor(elapsed) + " min" : fmtMin(elapsed)}</b> · ${liveMoney(elapsed)}`;
+    walkNums(elapsed);
     if (!p.line.length){
       let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
       const home = track.length && (state.start || track[0]);
@@ -3857,6 +4126,7 @@
     if (!f) return;
     photos.push(f); if (photos.length > 3) photos.shift();
     savePhoto(f).catch(() => {});
+    if (gw){ gw.photoTaken = true; renderChips(); }
     if (gw && gw.photoAsk && !gw.photoBonus && Date.now() - gw.photoAsk < 300000){ gw.photoBonus = 5; toast(`📸 Merci ! +5 🪙 pour la photo de ${DOG}`, 2600); ding(); persist(true); }
     $("#photoBtn").textContent = `📷 ${photos.length}`;
   });
@@ -4061,7 +4331,7 @@
     const endTs = Date.now();
     const elapsed = (endTs - t0) / 60000;
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
-    watchId = null; clearInterval(tick);
+    watchId = null; clearInterval(tick); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
     state.walk = null; document.body.classList.remove("walking", "choosing"); pocketOff(); $("#radar").textContent = ""; clearWalkFog();
     cancelHome(); hideBanner(); forgetWalk(); store.set(END_KEY, Date.now());
@@ -4091,7 +4361,7 @@
       if (ms){ r.ms = ms; res && (res.shortMalus = ms); }
     }
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r, res && res.gx);
-    setStatus(`Bravo ! ${fmtMin(elapsed)} de balade 🐶${elapsed >= 2 ? " Elle est notée dans votre carnet." : ""}`);
+    if (elapsed < 2) toast("⏱️ Balade trop courte : pas notée", 3500);   // v2.4 : plus de « Bravo ! 0 min » collé en bas de l'accueil
     if (state.tab === "log") renderLog();
     document.body.classList.remove("hasmap"); renderHome();
     Object.defineProperty(r, "_res", { value: res, enumerable:false });
@@ -4104,7 +4374,15 @@
     });
     backupNow(true);
   }
-  $("#stop").addEventListener("click", stopWalk);
+  // ⏹ Fini en appui long (1 s) : pas d'arrêt par erreur dans la poche
+  let holdT = null;
+  $("#stop").addEventListener("pointerdown", e => {
+    e.preventDefault(); const b = $("#stop"); b.classList.add("holding"); clearTimeout(holdT);
+    holdT = setTimeout(() => { b.classList.remove("holding"); holdT = null; haptic(2); stopWalk(); }, 1000);
+  });
+  const holdEnd = () => { if (holdT){ clearTimeout(holdT); holdT = null; $("#stop").classList.remove("holding"); coach(null, "✋ Garde le doigt sur Fini pour terminer", "bottom"); } };
+  ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("#stop").addEventListener(ev, holdEnd));
+  $("#stop").addEventListener("click", e => { if (e.detail === 0) stopWalk(); });   // clavier / lecteur d'écran
 
   // ---------- Page récapitulatif (lien reçu par le superviseur) ----------
   async function showRecapPage(){
@@ -4418,15 +4696,173 @@
     el.appendChild(b); ding();
     setTimeout(() => { b.remove(); sheetRoxy(); }, 650);
   });
-  function updateGo(){
-    const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur);
-    $("#goText").textContent = `▶️ C'est parti · ${fmtMin(state.dur)}`;
-    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${dur + bon}</b>🪙<span>clebsous</span>`;
+  function updateGo(){   // v2.4 : gros bouton (gain à droite) ; la durée qui rapporte le plus porte une étiquette « ×N »
+    const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur), tot = dur + bon;
+    let done = false; try{ done = !!(game && game.streak && game.streak.day === dayKey(Date.now())); }catch(e){}
+    $("#goText").textContent = done ? "▶️ Encore une ?" : "▶️ C'est parti !";
+    $("#goGain").innerHTML = `<span>jusqu'à</span><b>${tot} 🪙</b>`;
     const next = [20, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
-    $("#goHint").innerHTML = (next ? `<button id="goUp">💡 ${fmtMin(next)} : jusqu'à <b>${gainEst(next)}</b> 🪙 (×${(gainEst(next) / (dur + bon)).toFixed(1).replace(".", ",").replace(",0", "")})</button>` : "") +
-      `<button class="bon" id="goBon">🎁 Bonus ?</button>`;
-    if ($("#goUp")) $("#goUp").onclick = () => { const b = document.querySelector(`#durSeg button[data-v="${next}"]`); if (b) b.click(); };
-    $("#goBon").onclick = sheetBonus;
+    document.querySelectorAll("#durSeg button").forEach(b => {
+      const sug = +b.dataset.v === next; b.classList.toggle("sug", sug);
+      if (sug) b.dataset.x = "×" + (gainEst(next) / Math.max(1, tot)).toFixed(1).replace(".", ",").replace(",0", ""); else delete b.dataset.x;
+    });
+  }
+  // ---------- 🏠 Le gros bouton (v2.4) : mini-carte, objectifs, « où j'en suis » ----------
+  var ARROWS = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+  function bearing(a, b){ const y = (b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180), x = b.lat - a.lat; return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360; }
+  var arrowTo = (a, b) => ARROWS[Math.round(bearing(a, b) / 45) % 8];
+  function huntLive(){ try{ const hu = weekHunt(); return hu && !hu.found && !hu.gone ? hu : null; }catch(e){ return null; } }
+  function renderGoCard(){
+    ensureGame();
+    const today = dayKey(Date.now()), done = game.streak.day === today, n = game.streak.n || 0;
+    const alive = n >= 2 && (done || streakAlive(game.streak.day));
+    const l = lastWalk(); let roxy;
+    if (l){ const d = new Date(l.t), h = (Date.now() - l.t) / 3600000, me = !l.w || normName(l.w) === normName(profile.walker);
+      roxy = dayKey(l.t) === today ? `🐕 ${me ? "toi" : esc(l.w)} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}` : `🐕 attend depuis ${h >= 48 ? Math.floor(h / 24) + " j" : Math.round(h) + " h"}`; }
+    else roxy = "🐕 1re balade !";
+    const st = $("#goStat");
+    if (st){ st.classList.toggle("ok", done);
+      st.innerHTML = `<span class="st">${done ? "✅ Sortie faite" : "⏳ Pas encore sortie"} · ${roxy}</span>${alive ? `<span class="fi">🔥 ${n} j</span>` : ""}`;
+      st.onclick = sheetOuts; }
+    const o = [], df = defiOf(Date.now());
+    o.push(game.defiDone === today ? `<span class="ok">✅ Défi réussi</span>` : `<span>🎯 ${esc(df.t)}</span>`);
+    if (huntLive()) o.push(`<span>🏴‍☠️ Trésor</span>`);
+    let ch = 0; try{ ch = chestChance(); }catch(e){}
+    if (ch > 0) o.push(`<span class="hot">💰 Coffre chaud</span>`);
+    else { try{ const ex = exploMe(); if (ex.mine) o.push(`<span>🧭 ${MEDAL(ex.mine.r)} explorateur</span>`); else if (PUSH_API && !isTester()) o.push(`<span>🧭 Classe-toi !</span>`); }catch(e){} }
+    const go = $("#goObj"); if (go){ go.innerHTML = o.slice(0, 3).join(""); go.onclick = sheetToday; }
+  }
+  // mini-carte du quartier : cases déjà vues (vert pâle), chemins faits (doré), Roxy à la maison, flèche du trésor
+  function drawMiniMap(){
+    const box = $("#miniMap"), cv = $("#miniCv"); if (!box || !cv) return;
+    const W = box.clientWidth, H = box.clientHeight; if (!W || !H) return;
+    let c = game.home;
+    if (!c){ try{ const tr = getTraces(), pts = tr.length ? decPoly(tr[tr.length - 1].s, 5) : []; c = pts[0] || null; }catch(e){} }
+    $("#miniNone").textContent = c ? "" : "🗺️ Ton quartier apparaîtra ici après ta première balade";
+    const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext && cv.getContext("2d"); if (!g) return;
+    g.scale(dpr, dpr); g.fillStyle = "#1e2621"; g.fillRect(0, 0, W, H);
+    const dog = $("#miniDog");
+    if (!c){ dog.style.display = "none"; $("#miniPct").textContent = ""; $("#miniTr").textContent = ""; return; }
+    const mpp = 1700 / W, cx = W / 2, cy = H * .55, kx = 111320 * Math.cos(c.lat * Math.PI / 180);
+    const XY = p => [cx + (p.lon - c.lon) * kx / mpp, cy - (p.lat - c.lat) * 110540 / mpp];
+    g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 1;
+    for (let x = (cx % 26); x < W; x += 26){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+    for (let y = (cy % 26); y < H; y += 26){ g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+    g.fillStyle = "rgba(150,215,160,.16)";
+    for (const k in game.seen || {}){
+      const [i, j] = k.split(":").map(Number), [x1, y1] = XY({ lat: i * 0.0009, lon: j * 0.0013 }), [x2, y2] = XY({ lat: (i + 1) * 0.0009, lon: (j + 1) * 0.0013 });
+      if (x2 < 0 || x1 > W || y1 < 0 || y2 > H) continue; g.fillRect(x1, y2, x2 - x1, y1 - y2);
+    }
+    g.strokeStyle = "rgba(255,206,110,.85)"; g.lineWidth = 2.2; g.lineJoin = g.lineCap = "round";
+    try{ for (const t of getTraces()){ const pts = decPoly(t.s, 5); if (pts.length < 2) continue; g.beginPath(); pts.forEach((p, i) => { const [x, y] = XY(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); } }catch(e){}
+    const hu = huntLive();
+    if (hu && hu.zlat != null){ const [x, y] = XY({ lat: hu.zlat, lon: hu.zlon });
+      if (x > 0 && x < W && y > 0 && y < H){ g.font = "18px system-ui"; g.textAlign = "center"; g.fillText("🏴‍☠️", x, y + 6); } }
+    dog.style.display = ""; dog.style.left = cx + "px"; dog.style.top = cy + "px"; dog.style.backgroundImage = `url(${avatar()})`;
+    try{ $("#miniPct").textContent = game.home ? `🗺️ ${fogStats().pct} % exploré` : ""; }catch(e){}
+    $("#miniTr").textContent = hu && hu.lat != null ? `🏴‍☠️ ${arrowTo(c, hu)} ${fmtKm(dist(c, hu))}` : "";
+  }
+  // la mini-carte prend toute la place qui reste : l'accueil remplit l'écran sans défiler
+  function fitHome(){
+    const b = document.body.classList; if (["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k))) return;
+    const mm = $("#miniMap"); if (!mm) return;
+    mm.style.height = "70px";
+    const last = $("#homeFoot").textContent ? $("#homeFoot") : $("#home");
+    const extra = window.innerHeight - (last.getBoundingClientRect().bottom + window.scrollY) - 12;
+    let h = Math.max(70, Math.min(340, 70 + extra)); mm.style.height = h + "px";
+    const over = document.documentElement.scrollHeight - window.innerHeight;   // sécurité : jamais de défilement à cause de la carte
+    if (over > 0 && h > 70){ h = Math.max(70, h - over); mm.style.height = h + "px"; }
+    drawMiniMap();
+  }
+  window.addEventListener("resize", () => { clearTimeout(fitHome._t); fitHome._t = setTimeout(fitHome, 150); });
+  $("#miniMap").addEventListener("click", () => { try{ openExplore(); }catch(e){} });
+
+  // ---------- 🌤️ Météo sur l'accueil (v2.4, Open-Meteo, coordonnées arrondies de la maison) ----------
+  var wx = store.get("wouaf-meteo", null);
+  var RAINY = c => (c >= 51 && c <= 67) || (c >= 80 && c <= 82) || c >= 95;
+  function wxCode(c, day){
+    if (c === 0) return day ? ["☀️", "grand soleil"] : ["🌙", "nuit claire"];
+    if (c <= 2) return day ? ["🌤️", "quelques nuages"] : ["🌙", "quelques nuages"];
+    if (c === 3) return ["☁️", "nuageux"];
+    if (c === 45 || c === 48) return ["🌫️", "brouillard"];
+    if (c >= 51 && c <= 57) return ["🌦️", "bruine"];
+    if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ["❄️", "neige"];
+    if (c >= 95) return ["⛈️", "orage"];
+    if (RAINY(c)) return ["🌧️", "pluie"];
+    return ["🌡️", ""];
+  }
+  function wxNow(){
+    if (!wx || Date.now() - wx.at > 3 * 3600000) return null;
+    const now = Date.now(), hrs = (wx.hr || []).map(h => ({ t: new Date(h.t).getTime(), p: h.p })).filter(h => h.t > now - 3600000);
+    const rainNow = (wx.p || 0) > 0.05 || RAINY(wx.code);
+    const stop = rainNow ? hrs.find(h => h.t > now && h.p < 0.1) : null, later = !rainNow ? hrs.find(h => h.t > now && h.p >= 0.2) : null;
+    return { rainNow, stop, later, t: wx.t, code: wx.code, day: wx.day };
+  }
+  function wxText(){
+    const w = wxNow(); if (!w) return "";
+    if (w.rainNow) return `🌧️ ${w.t}° · pluie${w.stop ? ` jusqu'à ${new Date(w.stop.t).getHours()} h` : ""}`;
+    const [e, lab] = wxCode(w.code, w.day);
+    return `${e} ${w.t}° · ${w.later ? `pluie vers ${new Date(w.later.t).getHours()} h` : lab}`;
+  }
+  async function loadWx(){
+    const c = game && (game.home || state.start); if (!c) return;
+    if (wx && Date.now() - wx.at < 30 * 60000) return;
+    try{
+      const j = await getJSON(`${METEO}?latitude=${c.lat.toFixed(2)}&longitude=${c.lon.toFixed(2)}&current=temperature_2m,precipitation,weather_code,is_day&hourly=precipitation&forecast_hours=8&timezone=auto`, 8000);
+      if (!j || !j.current) return;
+      const hr = ((j.hourly && j.hourly.time) || []).map((t, i) => ({ t, p: (j.hourly.precipitation || [])[i] || 0 }));
+      wx = { at: Date.now(), t: Math.round(j.current.temperature_2m), p: j.current.precipitation || 0, code: j.current.weather_code, day: j.current.is_day, hr };
+      store.set("wouaf-meteo", wx); sayCur = null; renderWho();
+    }catch(e){}
+  }
+  function sayWeather(){   // le « bon moment » seulement si Roxy attend depuis au moins 3 h
+    const w = wxNow(); if (!w) return null;
+    const l = lastWalk(), h = l ? (Date.now() - l.t) / 3600000 : 99;
+    if (h < 3) return "Je me repose un peu… on ressort plus tard ? 😴";
+    if (w.rainNow) return "🌧️ Il pleut… mais bonus courage ×1,5 ! On y va quand même ?";
+    if (w.later) return `☀️ C'est le moment : pluie vers ${new Date(w.later.t).getHours()} h !`;
+    if (w.t <= 3) return "🥶 Il caille ! Une balade pour se réchauffer ?";
+    if (w.day && w.code <= 2) return `☀️ ${w.t}°, il fait trop beau ! On part longtemps ?`;
+    return null;
+  }
+
+  // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
+  var CODENAMES = { 38: "Croquette" };
+  function renderFoot(){
+    const f = $("#homeFoot"); if (!f) return;
+    const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
+    f.innerHTML = `<b>v${APP_LABEL}${CODENAMES[APP_NUM] ? ` « ${CODENAMES[APP_NUM]} »` : ""}</b>${km >= 0.1 ? `<br>🐾 ${DOG} a parcouru ${km.toFixed(1).replace(".", ",")} km et ${fam.nc || 0} rues neuves depuis le début` : ""}`;
+  }
+  var EGG_WORD = "Wouaf Wouaf Balades", EGG_N = EGG_WORD.replace(/\s/g, "").length, EGG_CS = 500, EGG_START = "2026-11-16";
+  var eggTaps = 0, eggAt = 0;
+  $("#homeFoot").addEventListener("click", () => {
+    const now = Date.now(); eggTaps = now - eggAt < 1500 ? eggTaps + 1 : 1; eggAt = now;
+    if (eggTaps === EGG_N){ eggTaps = 0; eggOpen(); }
+  });
+  function eggHint(){   // un nouvel indice chaque semaine à partir du lundi 16/11 (rarement, dans la bulle de Roxy)
+    if (game.egg) return null;
+    const w = Math.floor((Date.now() - new Date(EGG_START + "T00:00:00").getTime()) / (7 * DAYMS)); if (w < 0) return null;
+    return ["Les meilleurs os sont enterrés là où personne ne regarde jamais… 🦴", "Paraît que mon nom de code cache plus qu'un nom… 🤔", "Toc toc… Qui est là ? 🚪",
+      `Autant de fois que de lettres dans « ${EGG_WORD} »… 🤫`][Math.min(3, w)];
+  }
+  function eggOpen(){
+    ensureGame();
+    const first = !game.egg, test = isTester(), log = getLog().filter(e => !e.void);
+    if (first){ game.egg = Date.now();
+      if (!test){ const k = monthKey(Date.now()); game.bonus[k] = Math.round(((game.bonus[k] || 0) + EGG_CS / CS) * 100) / 100; game.total = (game.total || 0) + EGG_CS; }
+      saveGame(); try{ backupNow(); }catch(e){} }
+    const km = log.reduce((a, e) => a + (e.m || 0), 0) / 1000, longest = log.reduce((a, e) => Math.max(a, e.min || 0), 0);
+    const early = log.reduce((a, e) => { const h = new Date(e.date); const v = h.getHours() * 60 + h.getMinutes() - (e.min || 0); return v >= 0 && (a == null || v < a) ? v : a; }, null);
+    openSheet(`<div class="bigdog egg" style="margin:26px 0 10px">${roxyHTML(["🕶️"])}</div><h2 style="text-align:center">😎 Mode secret débloqué !</h2>
+      <p style="text-align:center">${first && !test ? `Bravo, tu as trouvé le secret de ${DOG} : <b>+${EGG_CS} clebsous</b> 🪙 dans ta tirelire !` : first ? "Bravo, tu as trouvé le secret ! (pas de clebsous pour le superviseur 😉)" : "Tu as déjà trouvé le secret… mais les stats cachées sont toujours là 🤓"}</p>
+      <div class="props"><div class="entry"><div><h4>🥾 Distance totale</h4></div><div class="dur">${km.toFixed(1).replace(".", ",")} km</div></div>
+      <div class="entry"><div><h4>🐾 Balades</h4></div><div class="dur">${log.length}</div></div>
+      <div class="entry"><div><h4>⏱️ Plus longue</h4></div><div class="dur">${fmtMin(longest)}</div></div>
+      ${early != null ? `<div class="entry"><div><h4>🌅 Départ le plus matinal</h4></div><div class="dur">${Math.floor(early / 60)} h ${String(early % 60).padStart(2, "0")}</div></div>` : ""}
+      <div class="entry"><div><h4>🪙 Clebsous gagnés depuis le début</h4></div><div class="dur">${(game.total || 0).toLocaleString("fr-FR")}</div></div></div>
+      <p class="howto" style="text-align:center">Chut… garde le secret 🤫</p><div class="btns"><button id="eggOk">Trop fort 😎</button></div>`);
+    $("#eggOk").onclick = closeSheet; if (first) confetti(); renderHome();
   }
   function sheetBonus(){
     const row = (ic, t, v) => `<div class="entry"><div><h4>${ic} ${t}</h4></div><div class="dur">${v}</div></div>`;
@@ -4506,8 +4942,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 37, APP_LABEL = "2.3";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 38, APP_LABEL = "2.4";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    38: [
+      "🗺️ Nouvelle carte de balade : touche Roxy pour pipi, caca ou photo, et garde le doigt sur Fini pour terminer.",
+      "👃 Toutes les 15 min, Roxy flaire une piste fraîche : attrape-la vite, +5 ! (accepte les notifications)",
+      "🌤️ La météo et ton gros bouton « C'est parti » avec la carte de ton quartier. En cas de doute : ☰ › ❓ Aide."
+    ],
     37: [
       "🐶 Roxy te parle ! Touche sa bulle pour qu'elle te dise autre chose.",
       "❤️ Caresse-la : glisse ton doigt sur sa photo.",
@@ -4692,7 +5133,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; } };
 })();
 </script>
 </body>
