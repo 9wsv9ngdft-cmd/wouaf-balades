@@ -573,12 +573,83 @@
   .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#6d2f86 55%,#b03a5b);border-color:transparent;color:#fff} .lt.arena-t small{color:#f0e0ff}
   .gocard button.go #goText{font-size:23px} .gocard button.go .gain b{font-size:27px}
   .gostat .st{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- 🌙 v2.5 « Caviar » : accueil épuré « nuit » (décidé le 15/11 : le doré seulement pour le gros lot) ---------- */
+  .seg.durs button em{display:none} .dbar{display:none} .crownBtn[hidden],.pcrown[hidden],#goLot:empty{display:none}
+  html:has(body.nuit){background:#0b0e13}
+  body.nuit{background:#0b0e13;color:#f3efe6}
+  body.nuit header{background:#0b0e13;color:#f3efe6;padding-bottom:6px}
+  body.nuit header h1{font-family:Didot,"Bodoni 72",Georgia,serif;font-size:25px;letter-spacing:.2px}
+  body.nuit header h1 .hpaw{display:none}
+  body.nuit #menuBtn{background:#141922;border:1px solid #232a36;color:#f3efe6}
+  body.nuit main.wrap .panel{background:none;border:0;box-shadow:none;padding:4px 2px 0;margin-top:2px;color:#f3efe6;--card:#141922;--line:#232a36;--ink:#f3efe6;--muted:#8e96a3}
+  body.nuit .hero{position:relative;margin-top:12px}
+  body.nuit .hero .hi{font-family:Didot,"Bodoni 72",Georgia,serif;font-size:21px;color:#f3efe6}
+  body.nuit .heroDog .roxy{border-color:#c9c3b6;box-shadow:0 0 0 4px rgba(243,239,230,.08)}
+  .hline{all:unset;display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:3px}
+  .hline b{color:#2a9d78} body.nuit .hline{color:#8e96a3} body.nuit .hline b{color:#7fd1ae;font-weight:900}
+  body.nuit .purse{background:#141922;border:1px solid #232a36;color:#f3efe6;box-shadow:none;padding:7px 12px;min-width:0}
+  body.nuit .purse small{display:none} body.nuit .purse b{font-size:19px}
+  body.nuit .purse .csi{filter:grayscale(1) brightness(1.45)}
+  .crownBtn{all:unset;position:absolute;left:14px;top:-18px;font-size:21px;line-height:1;cursor:pointer;z-index:3}
+  .hero .crownBtn{background:none;border:0;box-shadow:none;padding:0;min-height:0}
+  .crownBtn.ghost{filter:grayscale(1) brightness(1.25);opacity:.38}
+  .crownBtn.real{opacity:0;left:0;top:-24px;width:56px;height:26px}
+  body.nuit #heroSay{position:absolute;left:6px;right:20px;top:66px;z-index:20}
+  #heroSay:empty{display:none}
+  body.nuit .say{background:#1a1f29;color:#f3efe6;border:1px solid #2c3442;box-shadow:0 10px 24px -8px rgba(0,0,0,.7)}
+  body.nuit .say::before{border-bottom-color:#2c3442}
+  body.nuit .gocard{position:relative;background:#121821;border:1px solid #232a36;border-radius:24px;box-shadow:0 20px 40px -24px #000;padding-bottom:12px;color:#f3efe6;margin-top:12px}
+  body.nuit .minimap{background:#10151d}
+  body.nuit .minimap::after{background:linear-gradient(transparent,#121821);height:46px}
+  body.nuit .minimap .mdog{border-color:#c9c3b6;box-shadow:0 0 0 6px rgba(243,239,230,.08)}
+  body.nuit .minimap .mpct,body.nuit .minimap .mtr{background:rgba(0,0,0,.45);color:#f3efe6;border:1px solid rgba(255,255,255,.12);top:10px;left:10px;right:auto;font-weight:700}
+  body.nuit .minimap .mtr{top:44px}
+  body.nuit .minimap .mnone{color:#8e96a3}
+  body.nuit .gobj{all:unset;box-sizing:border-box;position:absolute;right:10px;top:10px;z-index:4;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);cursor:pointer}
+  body.nuit .gobj:empty{display:none}
+  body.nuit .gobj i{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:10px;background:#f3efe6;color:#111;font:900 11.5px/19px system-ui,sans-serif;font-style:normal;text-align:center;padding:0 4px;box-sizing:border-box}
+  body.nuit .gobj.ok{color:#7fd1ae;border-color:rgba(127,209,174,.6);font-weight:900;font-size:20px}
+  body:not(.nuit) .gobj{display:none}
+  body.nuit .gocard button.go{position:relative;display:flex;width:calc(100% - 24px);margin:6px 12px 0;padding:12px 16px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid rgba(127,209,174,.55);box-shadow:0 0 0 4px rgba(127,209,174,.08),inset 0 1px 0 rgba(255,255,255,.15);color:#fff}
+  body.nuit .gocard button.go .gl{display:flex;flex-direction:column;gap:3px;min-width:0}
+  body.nuit .gocard button.go #goText{font-size:23px;font-weight:800;letter-spacing:.2px}
+  body.nuit .gocard button.go .glot{font-size:12.5px;font-weight:800;color:#f0d48a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  body.nuit .gocard button.go .gain{color:#8e96a3;font-size:11.5px;font-weight:600}
+  body.nuit .gocard button.go .gain b{color:#fff;font-size:26px;gap:6px}
+  body.nuit .gocard button.go .gain .csi{width:24px;height:24px}
+  body.nuit .gocard button.go.hot{border-color:rgba(227,191,92,.75);background:linear-gradient(135deg,rgba(227,191,92,.16),rgba(255,255,255,.05));box-shadow:0 0 0 4px rgba(227,191,92,.12),0 0 26px -4px rgba(227,191,92,.55),inset 0 1px 0 rgba(255,255,255,.15)}
+  .pcrown{position:absolute;top:-15px;left:50%;margin-left:-15px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:#1a1f29;border:1.5px solid #e3bf5c;animation:crownPulse 1.6s ease-in-out infinite}
+  @keyframes crownPulse{0%,100%{box-shadow:0 0 0 3px rgba(227,191,92,.15),0 0 10px rgba(227,191,92,.45)}50%{box-shadow:0 0 0 7px rgba(227,191,92,.08),0 0 20px rgba(227,191,92,.8)}}
+  body.nuit .gocard .seg.durs{display:flex;align-items:flex-end;justify-content:space-between;gap:0;margin:16px 14px 0;background:none;padding:0}
+  body.nuit .gocard .seg.durs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;box-shadow:none;border:0;padding:0;border-radius:0;color:#8e96a3;font-size:12px;font-weight:800}
+  body.nuit .seg.durs button em{display:block;font-style:normal;line-height:1;filter:grayscale(1);opacity:.4}
+  body.nuit .seg.durs button.done em{filter:none;opacity:.85}
+  body.nuit .seg.durs button.on{background:none;color:#f3efe6;font-weight:900}
+  body.nuit .seg.durs button.on em{filter:none;opacity:1;text-shadow:0 0 12px rgba(127,209,174,.75)}
+  body.nuit .gocard .seg.durs button.sug::after{top:-15px;left:50%;right:auto;transform:translateX(-50%);background:#2a9d78;color:#fff}
+  body.nuit .dbar{display:block;position:relative;height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin:9px 14px 0}
+  .dbar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:linear-gradient(90deg,#2a9d78,#7fd1ae);transition:width .25s}
+  body.nuit .gostat{display:none !important}
+  body.nuit #home{margin-top:12px}
+  body.nuit .ltiles .lt{border:0;color:#fff;box-shadow:0 8px 18px -12px #000;padding:9px 2px}
+  body.nuit .ltiles .lt small{display:none}
+  body.nuit .ltiles .lt b{color:#fff;font-size:16px;font-weight:800}
+  body.nuit .lt.gold{background:linear-gradient(135deg,#6e5a2a,#a8873e)}
+  body.nuit .lt.silver{background:linear-gradient(135deg,#59616a,#aeb7c0)}
+  body.nuit .lt.silver.hot{box-shadow:0 0 0 2px #f0d48a inset}
+  body.nuit .lt.bronze{background:linear-gradient(135deg,#6b3d1c,#c07a43)}
+  body.nuit .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#b03a5b)}
+  body.nuit #status:empty{display:none} body.nuit #views{margin:0}
+  body.nuit #homeFoot{color:#8e96a3;font-size:11.5px;letter-spacing:.5px}
+  body.nuit #homeFoot b{font-weight:600}
+  body.nuit #homeFoot small{display:block;letter-spacing:0;opacity:.75}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap hdr">
-    <h1>🐾 Wouaf Balades <span id="evDeco"></span></h1>
+    <h1><span class="hpaw">🐾 </span>Wouaf Balades <span id="evDeco"></span></h1>
     <button id="menuBtn" aria-label="Menu : progrès, tirelire, carte, carnet, réglages">☰</button>
   </div>
 </header>
@@ -587,7 +658,8 @@
   <div id="recapbox"></div>
   <div class="panel">
     <div class="hero">
-      <button class="heroDog" id="heroDog" aria-label="Voir Roxy, son niveau et ses accessoires"></button>
+      <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : elle te parle"></button>
+      <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
     </div>
@@ -595,8 +667,8 @@
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="gocard" id="goCard">
       <button class="minimap" id="miniMap" aria-label="Ma carte d'exploration"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span></button>
-      <button id="freeWalk" class="big go"><span id="goText">▶️ C'est parti</span><span class="gain" id="goGain"></span></button>
-      <div class="gobj" id="goObj"></div>
+      <button class="gobj" id="goObj" aria-label="Mes objectifs du jour"></button>
+      <button id="freeWalk" class="big go"><span class="gl"><span id="goText">▶️ C'est parti</span><span class="glot" id="goLot"></span></span><span class="gain" id="goGain"></span><span class="pcrown" id="goCrown" hidden aria-hidden="true">👑</span></button>
       <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
         <button data-v="20" aria-label="20 minutes, le minimum">20</button>
         <button data-v="30">30</button>
@@ -604,6 +676,7 @@
         <button data-v="60">1 h</button>
         <button data-v="90">1 h 30</button>
       </div>
+      <div class="dbar" aria-hidden="true"><i id="durFill"></i></div>
       <button class="gostat" id="goStat" aria-label="Où j'en suis aujourd'hui · dernières sorties de Roxy"></button>
     </div>
     <div class="gohint" id="goHint" hidden></div>
@@ -683,7 +756,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.022731";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.041033";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1261,18 +1334,38 @@
     }catch(e){ return "off"; }
   }
   function renderWho(){
-    $("#whoText").textContent = profile.walker ? `Salut ${profile.walker} 👋` : `Qui promène ${DOG} ?`;
+    $("#whoText").textContent = profile.walker ? `Salut ${profile.walker}` : `Qui promène ${DOG} ?`;
     if (profile.walker){
-      let m = null; try{ m = mood(); }catch(e){}
-      $("#heroSay").innerHTML = m ? `<button class="say" id="sayBtn" aria-label="${esc(DOG)} dit, toucher pour une autre phrase" aria-live="polite">${esc(sayNow())}</button>` : "";
-      const wt = wxText();   // v2.4 : la météo sous « Salut X » (l'humeur est dans la fiche de Roxy et dans la ligne « où j'en suis »)
-      $("#heroSub").innerHTML = wt ? `<span class="wxp">${esc(wt)}</span>` : m ? `<span class="wxp" style="background:none;padding:0;color:var(--muted)">${m.e} ${esc(m.s)}</span>` : `${DOG} t'attend !`;
-      if ($("#sayBtn")) $("#sayBtn").onclick = () => roxySay(sayNext());
-    } else { $("#heroSub").textContent = "Dis-nous qui tu es :"; $("#heroSay").innerHTML = ""; }
+      // v2.5 : une seule petite ligne « météo · où j'en suis · série » ; Roxy ne parle que quand on touche sa photo
+      $("#heroSub").innerHTML = `<button class="hline" id="hLine" aria-label="Où j'en suis · dernières sorties de ${esc(DOG)}">${heroLine()}</button>`;
+      $("#hLine").onclick = sheetOuts;
+    } else { $("#heroSub").textContent = "Dis-nous qui tu es :"; hideSay(); }
+    const cb = $("#crownBtn");
+    if (cb) try{ const real = wearCrown(); cb.hidden = !(PUSH_API && profile.walker);
+      cb.className = "crownBtn " + (real ? "real" : "ghost");
+      cb.setAttribute("aria-label", real ? "Tu as la couronne ! Classement des explorateurs" : "Couronne à aller chercher : classement des explorateurs");
+      cb.onclick = e => { e.stopPropagation(); sheetExplo(); }; }catch(e){}   // (PUSH_API pas encore prêt au tout début)
     $("#editWho").hidden = !!profile.walker;
     try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
     clearTimeout(renderWho._t); renderWho._t = setTimeout(() => { try{ fitHome(); }catch(e){} }, 60);
+  }
+  // v2.5 : « ☀️ 14° · ✓ sortie ce matin · 🔥 5 » ou « ☀️ 14° · attend depuis 6 h · 🔥 4 »
+  function heroLine(){
+    const p = [];
+    try{ const w = wxNow(); if (w) p.push(`${w.rainNow ? "🌧️" : wxCode(w.code, w.day)[0]} ${w.t}°`); }catch(e){}
+    try{
+      ensureGame();
+      const today = dayKey(Date.now()), done = game.streak.day === today, n = game.streak.n || 0, l = lastWalk();
+      const when = t => { const h = new Date(t).getHours(); return h < 12 ? "ce matin" : h < 18 ? "cet après-midi" : "ce soir"; };
+      const mine = l && (!l.w || normName(l.w) === normName(profile.walker));
+      if (done) p.push(`<b>✓</b> sortie ${l && mine && dayKey(l.t) === today ? when(l.t) : "aujourd'hui"}`);
+      else if (l && dayKey(l.t) === today){ const d = new Date(l.t); p.push(`<b>✓</b> ${esc(l.w || "sortie")} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}`); }
+      else if (l){ const h = (Date.now() - l.t) / 3600000; p.push(`attend depuis ${h >= 48 ? Math.floor(h / 24) + " j" : Math.max(1, Math.round(h)) + " h"}`); }
+      else p.push("1re balade !");
+      if (n >= 1 && (done || streakAlive(game.streak.day))) p.push(`🔥 ${n}`);
+    }catch(e){ p.push(`${esc(DOG)} t'attend !`); }
+    return p.join(" · ");
   }
   // Fiche : le contenu défile, les boutons du bas restent collés, la page derrière ne bouge plus (iPhone)
   let lockY = null;
@@ -2391,7 +2484,7 @@
     const box = $("#home"); if (!box) return;
     ensureGame(); renderWho(); updateGo();
     // v2.3 : le classement des explorateurs remplace la ligne des missions (les missions passent dans la bulle de Roxy et le menu)
-    box.innerHTML = exploHTML() + lotsHTML();
+    box.innerHTML = lotsHTML();   // v2.5 : le classement = la couronne 👑 (ou fantôme) sur Roxy
     const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
     renderGoCard(); renderFoot(); loadWx();
     setTimeout(fitHome, 0);
@@ -2471,7 +2564,7 @@
   function lotsHTML(){   // v2.2 : trois petites tuiles côte à côte (toucher = l'explication)
     const l = [], hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
     const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));   // déjà trouvé cette semaine (par quelqu'un)
-    const tile = (k, cls, e, v, t) => `<button class="lt${cls}" data-lot="${k}"><span class="e">${e}</span><b>${v} 🪙</b><small>${t}</small></button>`;
+    const tile = (k, cls, e, v, t) => `<button class="lt${cls}" data-lot="${k}" aria-label="${esc(t)} : ${v} clebsous"><span class="e">${e}</span><b>${v}</b><small>${t}</small></button>`;
     if (!game.home && !gone)   // pas encore de maison (1re balade, ou après la remise à zéro) : le trésor est quand même annoncé
       l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor"));
     else if (hu && !hu.found && !hu.gone)
@@ -2483,7 +2576,7 @@
     const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
     const live = duelOK() && (myDuel() || myInvite() || mySent());
     if (!live && (duelOK() || (isTester() && PUSH_API))){   // v2.4 : 4e tuile violette
-      l.push(`<button class="lt arena-t" data-arena="${isTester() ? "prev" : "duels"}"><span class="e">⚔️</span><b>± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</b><small>${isTester() ? "Duels (aperçu)" : "Défier"}</small></button>`);
+      l.push(`<button class="lt arena-t" data-arena="${isTester() ? "prev" : "duels"}"><span class="e">⚔️</span><b>±${DUEL_STAKES[DUEL_STAKES.length - 1]}</b><small>${isTester() ? "Duels (aperçu)" : "Défier"}</small></button>`);
       return `<div class="lots"><div class="ltiles" aria-label="Les gros lots">${l.join("")}</div></div>`;
     }
     const ar = live ? arenaHTML() : "";
@@ -3393,10 +3486,21 @@
   }
   function sayNow(){ if (!sayCur) sayCur = sayHello() || sayMission() || sayWeather() || sayNext(); return sayCur; }
   function roxySay(t){
-    sayCur = t; const b = $("#sayBtn"); if (!b) return;
+    sayCur = t; const b = $("#sayBtn"); if (!b){ showSay(t); return; }
     b.textContent = t; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop");
+    clearTimeout(showSay._t); showSay._t = setTimeout(hideSay, 6000);
   }
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !state.walk){ sayCur = null; try{ renderWho(); }catch(e){} } });
+  // v2.5 : la bulle n'apparaît que quand on touche Roxy (6 s) ; toucher la bulle = sa fiche
+  function showSay(t){
+    const box = $("#heroSay"); if (!box || state.walk) return;
+    sayCur = t;
+    box.innerHTML = `<button class="say pop" id="sayBtn" aria-live="polite" aria-label="${esc(DOG)} dit : ${esc(t)}. Toucher pour voir sa fiche">${esc(t)}</button>`;
+    $("#sayBtn").onclick = () => { hideSay(); sheetRoxy(); };
+    clearTimeout(showSay._t); showSay._t = setTimeout(hideSay, 6000);
+  }
+  function hideSay(){ const b = $("#heroSay"); if (b) b.innerHTML = ""; }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !state.walk){ sayCur = null; sayTaps = 0; try{ renderWho(); }catch(e){} } });
+  var sayTaps = 0;
   // ❤️ Caresser Roxy : glisser le doigt sur sa photo (accueil et fiche Roxy)
   function bindPet(el){
     if (!el || el.dataset.pet) return; el.dataset.pet = "1";
@@ -4691,21 +4795,24 @@
   $("#heroDog").addEventListener("click", () => {
     if (Date.now() - petAt < 600) return;   // c'était une caresse, pas un toucher
     const el = $("#heroDog");
-    el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump");
-    const b = document.createElement("span"); b.className = "bark"; b.textContent = ["Wouaf ! 🐾", "On sort ? 🥺", "Wouaf wouaf !"][Math.floor(Math.random() * 3)];
-    el.appendChild(b); ding();
-    setTimeout(() => { b.remove(); sheetRoxy(); }, 650);
+    el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump"); ding();
+    showSay(sayTaps++ ? sayNext() : sayNow());
   });
   function updateGo(){   // v2.4 : gros bouton (gain à droite) ; la durée qui rapporte le plus porte une étiquette « ×N »
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur), tot = dur + bon;
     let done = false; try{ done = !!(game && game.streak && game.streak.day === dayKey(Date.now())); }catch(e){}
-    $("#goText").textContent = done ? "▶️ Encore une ?" : "▶️ C'est parti !";
+    $("#goText").textContent = done ? "Encore une ?" : "C'est parti";
     $("#goGain").innerHTML = `<span>jusqu'à</span><b>${tot} 🪙</b>`;
-    const next = [20, 30, 45, 60, 90].find(v => v > state.dur && v >= 45) || null;
+    const VALS = [20, 30, 45, 60, 90], PAW = [16, 20, 25, 31, 37], idx = VALS.indexOf(state.dur);
+    const next = VALS.find(v => v > state.dur && v >= 45) || null;
     document.querySelectorAll("#durSeg button").forEach(b => {
-      const sug = +b.dataset.v === next; b.classList.toggle("sug", sug);
+      const v = +b.dataset.v;   // v2.5 : des pattes 🐾 qui grossissent avec la durée
+      if (!b.querySelector("em")) b.innerHTML = `<em style="font-size:${PAW[VALS.indexOf(v)] || 20}px">🐾</em><span>${esc(b.textContent)}</span>`;
+      b.classList.toggle("done", v < state.dur);
+      const sug = v === next; b.classList.toggle("sug", sug);
       if (sug) b.dataset.x = "×" + (gainEst(next) / Math.max(1, tot)).toFixed(1).replace(".", ",").replace(",0", ""); else delete b.dataset.x;
     });
+    const f = $("#durFill"); if (f) f.style.width = idx < 0 ? "0" : ((idx + .5) / VALS.length * 100).toFixed(1) + "%";
   }
   // ---------- 🏠 Le gros bouton (v2.4) : mini-carte, objectifs, « où j'en suis » ----------
   var ARROWS = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
@@ -4724,13 +4831,24 @@
     if (st){ st.classList.toggle("ok", done);
       st.innerHTML = `<span class="st">${done ? "✅ Sortie faite" : "⏳ Pas encore sortie"} · ${roxy}</span>${alive ? `<span class="fi">🔥 ${n} j</span>` : ""}`;
       st.onclick = sheetOuts; }
-    const o = [], df = defiOf(Date.now());
-    o.push(game.defiDone === today ? `<span class="ok">✅ Défi réussi</span>` : `<span>🎯 ${esc(df.t)}</span>`);
-    if (huntLive()) o.push(`<span>🏴‍☠️ Trésor</span>`);
+    // v2.5 : une seule icône 🎯 (pastille = ce qui reste à faire aujourd'hui, ✓ quand tout est fait)
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    if (ch > 0) o.push(`<span class="hot">💰 Coffre chaud</span>`);
-    else { try{ const ex = exploMe(); if (ex.mine) o.push(`<span>🧭 ${MEDAL(ex.mine.r)} explorateur</span>`); else if (PUSH_API && !isTester()) o.push(`<span>🧭 Classe-toi !</span>`); }catch(e){} }
-    const go = $("#goObj"); if (go){ go.innerHTML = o.slice(0, 3).join(""); go.onclick = sheetToday; }
+    const open = huntOpen(), left = (game.defiDone === today ? 0 : 1) + (open ? 1 : 0) + (ch > 0 ? 1 : 0);
+    const go = $("#goObj");
+    if (go){ go.classList.toggle("ok", !left); go.innerHTML = left ? `🎯<i>${left}</i>` : "✓";
+      go.setAttribute("aria-label", left ? `Objectifs du jour : encore ${left}` : "Objectifs du jour : tout est fait !");
+      go.onclick = e => { e.stopPropagation(); sheetToday(); }; }
+    // l'enjeu dans le bouton : le gros lot du moment (doré) et la couronne 👑 qui pulse si cette balade peut te mettre 1er
+    const fw = $("#freeWalk"), lot = open ? `✨ Trésor ${HUNT_FIRST} encore libre` : ch > 0 ? `✨ Coffre chaud : ${Math.round(CHEST_EUR * CS)} à gagner` : "";
+    if (fw) fw.classList.toggle("hot", !!lot);
+    if ($("#goLot")) $("#goLot").textContent = lot;
+    let crown = false;
+    try{ if (PUSH_API && profile.walker && !isTester()){ const { rank, mine } = exploMe(); crown = mine ? mine.r === 2 : rank.length === 0; } }catch(e){}
+    if ($("#goCrown")) $("#goCrown").hidden = !crown;
+  }
+  function huntOpen(){   // trésor encore à prendre (même avant la 1re balade : il est annoncé)
+    const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));
+    return (!game.home && !gone) || !!huntLive();
   }
   // mini-carte du quartier : cases déjà vues (vert pâle), chemins faits (doré), Roxy à la maison, flèche du trésor
   function drawMiniMap(){
@@ -4741,27 +4859,28 @@
     $("#miniNone").textContent = c ? "" : "🗺️ Ton quartier apparaîtra ici après ta première balade";
     const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const g = cv.getContext && cv.getContext("2d"); if (!g) return;
-    g.scale(dpr, dpr); g.fillStyle = "#1e2621"; g.fillRect(0, 0, W, H);
+    const nuit = document.body.classList.contains("nuit");
+    g.scale(dpr, dpr); g.fillStyle = nuit ? "#10151d" : "#1e2621"; g.fillRect(0, 0, W, H);
     const dog = $("#miniDog");
     if (!c){ dog.style.display = "none"; $("#miniPct").textContent = ""; $("#miniTr").textContent = ""; return; }
     const mpp = 1700 / W, cx = W / 2, cy = H * .55, kx = 111320 * Math.cos(c.lat * Math.PI / 180);
     const XY = p => [cx + (p.lon - c.lon) * kx / mpp, cy - (p.lat - c.lat) * 110540 / mpp];
-    g.strokeStyle = "rgba(255,255,255,.05)"; g.lineWidth = 1;
+    g.strokeStyle = nuit ? "rgba(255,255,255,.035)" : "rgba(255,255,255,.05)"; g.lineWidth = 1;
     for (let x = (cx % 26); x < W; x += 26){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
     for (let y = (cy % 26); y < H; y += 26){ g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-    g.fillStyle = "rgba(150,215,160,.16)";
+    g.fillStyle = nuit ? "rgba(243,239,230,.06)" : "rgba(150,215,160,.16)";
     for (const k in game.seen || {}){
       const [i, j] = k.split(":").map(Number), [x1, y1] = XY({ lat: i * 0.0009, lon: j * 0.0013 }), [x2, y2] = XY({ lat: (i + 1) * 0.0009, lon: (j + 1) * 0.0013 });
       if (x2 < 0 || x1 > W || y1 < 0 || y2 > H) continue; g.fillRect(x1, y2, x2 - x1, y1 - y2);
     }
-    g.strokeStyle = "rgba(255,206,110,.85)"; g.lineWidth = 2.2; g.lineJoin = g.lineCap = "round";
+    g.strokeStyle = nuit ? "rgba(243,239,230,.55)" : "rgba(255,206,110,.85)"; g.lineWidth = 2.2; g.lineJoin = g.lineCap = "round";
     try{ for (const t of getTraces()){ const pts = decPoly(t.s, 5); if (pts.length < 2) continue; g.beginPath(); pts.forEach((p, i) => { const [x, y] = XY(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); } }catch(e){}
     const hu = huntLive();
     if (hu && hu.zlat != null){ const [x, y] = XY({ lat: hu.zlat, lon: hu.zlon });
       if (x > 0 && x < W && y > 0 && y < H){ g.font = "18px system-ui"; g.textAlign = "center"; g.fillText("🏴‍☠️", x, y + 6); } }
     dog.style.display = ""; dog.style.left = cx + "px"; dog.style.top = cy + "px"; dog.style.backgroundImage = `url(${avatar()})`;
-    try{ $("#miniPct").textContent = game.home ? `🗺️ ${fogStats().pct} % exploré` : ""; }catch(e){}
-    $("#miniTr").textContent = hu && hu.lat != null ? `🏴‍☠️ ${arrowTo(c, hu)} ${fmtKm(dist(c, hu))}` : "";
+    try{ $("#miniPct").textContent = game.home ? `${fogStats().pct} %` : ""; }catch(e){}
+    $("#miniTr").textContent = hu && hu.lat != null ? `${arrowTo(c, hu)} 🏴‍☠️ ${fmtKm(dist(c, hu))}` : "";
   }
   // la mini-carte prend toute la place qui reste : l'accueil remplit l'écran sans défiler
   function fitHome(){
@@ -4770,12 +4889,21 @@
     mm.style.height = "70px";
     const last = $("#homeFoot").textContent ? $("#homeFoot") : $("#home");
     const extra = window.innerHeight - (last.getBoundingClientRect().bottom + window.scrollY) - 12;
-    let h = Math.max(70, Math.min(340, 70 + extra)); mm.style.height = h + "px";
+    let h = Math.max(70, Math.min(420, 70 + extra)); mm.style.height = h + "px";
     const over = document.documentElement.scrollHeight - window.innerHeight;   // sécurité : jamais de défilement à cause de la carte
     if (over > 0 && h > 70){ h = Math.max(70, h - over); mm.style.height = h + "px"; }
     drawMiniMap();
   }
   window.addEventListener("resize", () => { clearTimeout(fitHome._t); fitHome._t = setTimeout(fitHome, 150); });
+  // 🌙 v2.5 : l'accueil est « nuit » (bleu nuit, ivoire) ; la balade, la carte et les pages gardent leurs couleurs
+  function setNuit(){
+    const b = document.body.classList, on = !["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k));
+    if (b.contains("nuit") === on) return;
+    b.toggle("nuit", on); if (!on) hideSay();
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = on ? "#0b0e13" : "#2f5d3a";
+    try{ drawMiniMap(); }catch(e){}
+  }
+  new MutationObserver(setNuit).observe(document.body, { attributes:true, attributeFilter:["class"] }); setNuit();
   $("#miniMap").addEventListener("click", () => { try{ openExplore(); }catch(e){} });
 
   // ---------- 🌤️ Météo sur l'accueil (v2.4, Open-Meteo, coordonnées arrondies de la maison) ----------
@@ -4828,11 +4956,11 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette" };
+  var CODENAMES = { 38: "Croquette", 39: "Caviar" };
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
-    f.innerHTML = `<b>v${APP_LABEL}${CODENAMES[APP_NUM] ? ` « ${CODENAMES[APP_NUM]} »` : ""}</b>${km >= 0.1 ? `<br>🐾 ${DOG} a parcouru ${km.toFixed(1).replace(".", ",")} km et ${fam.nc || 0} rues neuves depuis le début` : ""}`;
+    f.innerHTML = `<b>v${APP_LABEL}${CODENAMES[APP_NUM] ? ` · ${CODENAMES[APP_NUM].toUpperCase()}` : ""}</b>${km >= 0.1 ? `<small>🐾 ${km.toFixed(1).replace(".", ",")} km · ${fam.nc || 0} rues neuves en famille</small>` : ""}`;
   }
   var EGG_WORD = "Wouaf Wouaf Balades", EGG_N = EGG_WORD.replace(/\s/g, "").length, EGG_CS = 500, EGG_START = "2026-11-16";
   var eggTaps = 0, eggAt = 0;
@@ -4942,8 +5070,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 38, APP_LABEL = "2.4";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 39, APP_LABEL = "2.5";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    39: [
+      "🌙 Nouvel accueil, plus sobre : le doré n'apparaît que quand il y a un gros lot à prendre.",
+      "👑 La couronne grise sur Roxy, c'est celle à aller chercher : touche-la pour le classement. 🎯 = tes objectifs du jour.",
+      "🐶 Roxy ne parle plus toute seule : touche sa photo pour l'entendre (et caresse-la !)."
+    ],
     38: [
       "🗺️ Nouvelle carte de balade : touche Roxy pour pipi, caca ou photo, et garde le doigt sur Fini pour terminer.",
       "👃 Toutes les 15 min, Roxy flaire une piste fraîche : attrape-la vite, +5 ! (accepte les notifications)",

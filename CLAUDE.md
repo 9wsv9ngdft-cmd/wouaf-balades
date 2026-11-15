@@ -352,3 +352,17 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐛 Plus de « Bravo ! 0 min » collé sous l'accueil : `setStatus` passe en bandeau en haut hors carte ; balade < 2 min = « Balade trop courte : pas notée ».
 - Tests : `tests/e2e_balade.py` (écran de balade, flair, Fini), `tests/e2e_accueil.py` (gros bouton, secret, météo, aide), `tests/explo.test.mjs` (walk-live, flair, fam).
 - En attente (idées, pas de feu vert) : échange de balades payé entre ados (règles à trancher), bouton « Signaler un bug » vers un groupe WhatsApp dédié.
+
+## Version 2.5 « Caviar » (APP_NUM 39, décidé le 15/11 entre 2 h 38 et 3 h 09, codé à 3 h 52 sur demande)
+- 🌙 **Accueil « nuit » épuré** : classe `body.nuit` (posée par `setNuit`, MutationObserver sur les classes du body) quand on n'est ni en balade, ni sur une page,
+  un récap, la carte ou l'exploration ; fond #0b0e13, cartes #141922, ivoire #f3efe6, titres Didot ; `theme-color` suit. Les fiches, la balade et les pages gardent leurs couleurs.
+- **Doré seulement pour le gros lot** (choix « B ») : tracés de la mini-carte, contour de Roxy, tirelire et flèche du trésor en ivoire/gris. Le bouton « C'est parti »
+  (verre, liseré émeraude) devient doré (`.hot`, ligne `#goLot`) quand le trésor est libre (`huntOpen`) ou que le coffre est chaud.
+- 👑 **Couronne** : vraie couronne sur Roxy (`wearCrown`, 1er la semaine passée), sinon **couronne fantôme** grise (`#crownBtn.ghost`) ; toucher = `sheetExplo`.
+  Plus de barre de classement sur l'accueil. Petite 👑 qui pulse dans le bouton (`#goCrown`) quand cette balade peut te mettre 1er (2e, ou personne classé). Pas de médaille.
+- 🎯 **Une seule icône d'objectifs** en haut à droite de la mini-carte (`#goObj`, pastille = défi + trésor + coffre chaud restants, ✓ quand tout est fait) → `sheetToday`.
+- **Petite ligne sous le prénom** (`heroLine`, `#hLine` → `sheetOuts`) : « ☀️ 14° · ✓ sortie ce matin · 🔥 5 » / « attend depuis 6 h » (pas de 🔥 à 0). `#goStat` caché.
+- 🐶 **Roxy ne parle que quand on touche sa photo** (`showSay`, bulle 6 s par-dessus la carte ; toucher la bulle = `sheetRoxy`) ; plus de bulle permanente.
+- Durées en **pattes 🐾 qui grossissent** (`updateGo` ajoute `<em>`, `.done` / `.on`, étiquette verte « ×N ») + barre émeraude `#durFill`.
+- Tuiles du bas pleines, chiffres seuls (or sourd, argent, bronze, violet). Ligne du bas « v2.5 · CAVIAR » + petite ligne famille.
+- Tests : `tests/e2e_accueil.py` (nuit, ligne, couronne fantôme, bouton doré, bulle au toucher), `tests/e2e_explo.py` (vraie couronne, 👑 qui pulse).

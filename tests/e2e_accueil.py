@@ -31,7 +31,7 @@ with sync_playwright() as pw:
     n = B.evaluate("document.querySelector('.dotsT').textContent.length")
     check("menu ☰ › Tuto : tuto complet (8 écrans)", n == 8, n)
     # 📈 choix des statistiques au démarrage, avec le rappel de ce qui reste privé
-    b3, c3, Cc = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','38');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}")
+    b3, c3, Cc = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','39');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}")
     open_app(Cc, 4000); t = txt(Cc)
     check("démarrage : choix des statistiques + rappel « privé »", "améliorer l'app" in t and "reste privé" in t and Cc.locator("[data-st]").count() == 2, t[:300])
     check("démarrage : carte « Sors Roxy en un seul geste » avec « Je l'installe »", "un seul geste" in t and Cc.locator("[data-go='sc']").count() == 1, t[:400])
@@ -46,10 +46,17 @@ with sync_playwright() as pw:
     check("accueil sans défilement (393 × 760)", h[0] <= h[1], h)
     check("gros lots en tuiles : trésor or, coffre argent, record bronze, arène", Cc.locator(".ltiles .lt").count() == 4 and Cc.locator(".lt.silver").count() == 1 and Cc.locator(".lt.bronze").count() == 1 and Cc.locator(".lt.arena-t").count() == 1, Cc.locator(".ltiles .lt").count())
     # v2.4 : gros bouton, ligne du bas, secret, aide
-    check("gros bouton : mini-carte, objectifs, durées, où j'en suis", Cc.locator("#goCard #miniMap").count() == 1 and "Pas encore sortie" in Cc.evaluate("document.querySelector('#goStat').innerText") and Cc.locator("#goObj span").count() >= 1)
+    check("gros bouton : mini-carte, 🎯 objectifs, durées en pattes", Cc.locator("#goCard #miniMap").count() == 1 and "🎯" in Cc.evaluate("document.querySelector('#goObj').textContent") and Cc.locator("#durSeg button em").count() == 5)
+    # v2.5 « Caviar » : accueil nuit épuré
+    check("accueil nuit (classe nuit, fond bleu nuit)", Cc.evaluate("document.body.classList.contains('nuit')") and Cc.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(11, 14, 19)")
+    check("où j'en suis dans la petite ligne sous le prénom", "1re balade" in Cc.evaluate("document.querySelector('#hLine').innerText"), Cc.evaluate("document.querySelector('#heroSub').innerText"))
+    check("couronne fantôme (pas 1er la semaine passée)", Cc.evaluate("!document.querySelector('#crownBtn').hidden && document.querySelector('#crownBtn').classList.contains('ghost')"))
+    check("bouton doré : trésor encore libre", Cc.evaluate("document.querySelector('#freeWalk').classList.contains('hot')") and "Trésor 500" in Cc.evaluate("document.querySelector('#goLot').textContent"))
+    check("couronne qui pulse : personne n'est classé, cette balade peut te mettre 1er", not Cc.evaluate("document.querySelector('#goCrown').hidden"))
+    check("pas de bulle de Roxy tant qu'on ne la touche pas", Cc.locator("#sayBtn").count() == 0)
     check("plus de « Combien de temps ? » ni de ligne Bonus", Cc.evaluate("getComputedStyle(document.querySelector('#durLabel')).display") == "none" and Cc.locator("#goBon").count() == 0)
     foot = Cc.evaluate("document.querySelector('#homeFoot').innerText")
-    check("ligne du bas : version et nom de code", "Croquette" in foot and "v2.4" in foot, foot)
+    check("ligne du bas : version et nom de code", "CAVIAR" in foot and "v2.5" in foot, foot)
     check("pas de « Bravo » collé en bas", "Bravo" not in Cc.evaluate("document.querySelector('#status').innerText"))
     t0 = Cc.evaluate("JSON.parse(localStorage.getItem('wouaf-jeu')).bonus")
     for i in range(16): Cc.click("#homeFoot")
@@ -72,10 +79,14 @@ with sync_playwright() as pw:
     Cc.click("#sheetX"); Cc.wait_for_timeout(400)
     # v2.3 : Roxy parle et se laisse caresser
     say = lambda: Cc.evaluate("document.querySelector('#sayBtn') ? document.querySelector('#sayBtn').textContent : ''")
+    Cc.click("#heroDog"); Cc.wait_for_timeout(300)
     s1 = say()
-    check("bulle de Roxy : accueil « première balade » (aucune sortie)", "première balade" in s1, s1)
-    Cc.click("#sayBtn"); Cc.wait_for_timeout(200)
-    check("toucher la bulle : autre phrase", say() and say() != s1, say())
+    check("toucher Roxy : bulle « première balade » (aucune sortie)", "première balade" in s1, s1)
+    Cc.wait_for_timeout(700); Cc.click("#heroDog"); Cc.wait_for_timeout(300)
+    check("toucher encore : autre phrase", say() and say() != s1, say())
+    Cc.click("#sayBtn"); Cc.wait_for_timeout(400)
+    check("toucher la bulle : la fiche de Roxy", Cc.evaluate("document.querySelector('#modal').classList.contains('open')"))
+    Cc.click("#sheetX"); Cc.wait_for_timeout(400)
     r = Cc.locator("#heroDog").bounding_box(); x = r["x"] + r["width"] / 2; y = r["y"] + r["height"] / 2
     Cc.mouse.move(x - 15, y); Cc.mouse.down()
     for i in range(10): Cc.mouse.move(x - 15 + (i % 2) * 30, y + (i % 3) * 4); Cc.wait_for_timeout(40)
@@ -85,7 +96,10 @@ with sync_playwright() as pw:
     import json as _j, time as _t
     e = int(_t.time()) - 3600
     local_api("POST", "/walk", _j.dumps({"walker": "Tom", "walk": {"s": e - 1800, "e": e, "min": 30, "m": 2000, "cs": 10}, "sum": {}}).encode())
-    Cc.evaluate("document.dispatchEvent(new Event('visibilitychange'))"); Cc.wait_for_timeout(1500); Cc.evaluate("__wouaf.renderHome && __wouaf.renderHome()"); Cc.wait_for_timeout(200)
+    Cc.evaluate("document.dispatchEvent(new Event('visibilitychange'))"); Cc.wait_for_timeout(1500); Cc.evaluate("__wouaf.renderHome && __wouaf.renderHome()"); Cc.wait_for_timeout(700)
+    Cc.evaluate("(()=>{ if (document.querySelector('#modal').classList.contains('open')){ const b = document.querySelector('#dgNext') || document.querySelector('#sheetX'); b && b.click(); } })()"); Cc.wait_for_timeout(600)
+    Cc.evaluate("(()=>{ if (document.querySelector('#modal').classList.contains('open')){ const b = document.querySelector('#dgNext') || document.querySelector('#sheetX'); b && b.click(); } })()"); Cc.wait_for_timeout(600)
+    Cc.click("#heroDog"); Cc.wait_for_timeout(300)
     check("retour dans l'app : « Tom m'a sortie tout à l'heure »", "Tom m'a sortie" in say(), say())
     h = Cc.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     check("accueil toujours sans défilement avec la bulle", h[0] <= h[1], h)
