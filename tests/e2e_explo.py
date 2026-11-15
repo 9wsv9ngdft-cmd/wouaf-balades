@@ -12,7 +12,7 @@ def walk(w, e, nc, ob, mn=30):
     local_api("POST", "/walk", json.dumps({"walker": w, "walk": {"s": e - mn * 60, "e": e, "min": mn, "m": 2000, "cs": 50, "nc": nc, "ob": ob}, "sum": {"cs": 100}}).encode())
 walk("Tom", now - 3600, 8, 6); walk("Léa", now - 7200, 5, 4); walk("Zoé", now - 9000, 2, 1)
 walk("Léa", now - 8 * 86400, 9, 9); walk("Tom", now - 8 * 86400 - 3600, 3, 2)
-INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','39');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
+INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','40');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
 txt = lambda p: p.evaluate("document.querySelector('#sheet').innerText")
 errs = []
 with sync_playwright() as pw:

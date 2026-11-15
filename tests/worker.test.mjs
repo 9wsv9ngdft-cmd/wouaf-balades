@@ -155,3 +155,45 @@ test("statistiques d'utilisation : gardées 14 jours, visibles dans le tableau d
   const u = (await api.post("/dash", { token: tok })).j.usage;
   assert.equal(u.length, 1); assert.equal(u[0].walker, "Léa"); assert.deepEqual(Object.keys(u[0].days), ["2026-11-14"]); assert.equal(u[0].days["2026-11-14"].p["🪙 Tirelire"], 2);
 });
+
+test("🎒 heures de cours (v2.6) : pas de rappel pendant un cours, il part à la fin du cours ; vacances = comme d'habitude", async () => {
+  const { api, env, worker } = await setup();
+  await api.get("/key");
+  const paris = t => { const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone:"Europe/Paris", hour:"2-digit", minute:"2-digit", weekday:"short", hour12:false }).formatToParts(new Date(t)).map(x => [x.type, x.value]));
+    return { dow: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday), hm: `${p.hour === "24" ? "00" : p.hour}:${p.minute}` }; };
+  const T = Date.UTC(2026, 10, 17, 9, 0);   // mardi 17/11, 10 h à Paris
+  const { dow, hm } = paris(T);
+  const sub = { endpoint:"https://fcm.googleapis.com/fcm/send/abc", keys:{ p256dh:"x", auth:"y" } };
+  const sched = Array.from({ length:7 }, () => ["", ""]); sched[dow] = [hm, ""];
+  const cours = Array.from({ length:7 }, () => ["", ""]); cours[dow] = ["08:00", "10:30"];
+  const id = "a".repeat(22);
+  const reg = await api.post("/register", { id, sub, sched, cours, vac:false, walker:"Léa", state:{} });
+  assert.equal(reg.status, 200);
+  const u = JSON.parse(await env.WOUAF.get("u:" + id));
+  assert.deepEqual(u.cours[dow], ["08:00", "10:30"]); assert.equal(u.vac, false);
+  const realFetch = globalThis.fetch; globalThis.fetch = async () => new Response("", { status: 201 });
+  try{
+    await worker.scheduled({ scheduledTime: T }, env, { waitUntil: p => p }); await new Promise(r => setTimeout(r, 30));
+    assert.equal(await env.WOUAF.get("s:" + id), null, "rien pendant le cours");
+    await worker.scheduled({ scheduledTime: T + 31 * 60000 }, env, { waitUntil: p => p }); await new Promise(r => setTimeout(r, 30));
+    assert.ok(await env.WOUAF.get("s:" + id), "le rappel part à la fin du cours (10 h 30)");
+    await env.WOUAF.delete("s:" + id);
+    await api.post("/register", { id, sub, sched, cours, vac:true, walker:"Léa", state:{} });
+    await worker.scheduled({ scheduledTime: T }, env, { waitUntil: p => p }); await new Promise(r => setTimeout(r, 30));
+    assert.ok(await env.WOUAF.get("s:" + id), "vacances : le rappel part à l'heure");
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test("💶 paie de la semaine (v2.6) : le téléphone l'annonce, le superviseur la marque versée, /pause le dit au téléphone", async () => {
+  const { api } = await setup();
+  assert.equal((await api.post("/week-pay", { walker:"Léa", wk:"2026-11-16", eur: 3.4 })).status, 200);
+  assert.equal((await api.post("/week-pay", { walker:"Léa", wk:"pas une date", eur: 1 })).j.ok, false);
+  const d = await api.post("/dash", { code:"1234" });
+  assert.deepEqual(d.j.pays.map(x => [x.walker, x.w["2026-11-16"].eur]), [["Léa", 3.4]]);
+  assert.equal((await api.post("/pay-mark", { code:"0000", walker:"Léa", wk:"2026-11-16" })).status, 403);
+  assert.equal((await api.post("/pay-mark", { code:"1234", walker:"Léa", wk:"2026-11-16" })).status, 200);
+  const p = await api.get("/pause");
+  assert.ok(p.j.paid["léa"]["2026-11-16"] > 0);
+  await api.post("/reset", { code:"1234" });
+  assert.deepEqual((await api.get("/pause")).j.paid, {});
+});

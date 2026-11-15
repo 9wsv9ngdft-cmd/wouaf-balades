@@ -366,3 +366,44 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Durées en **pattes 🐾 qui grossissent** (`updateGo` ajoute `<em>`, `.done` / `.on`, étiquette verte « ×N ») + barre émeraude `#durFill`.
 - Tuiles du bas pleines, chiffres seuls (or sourd, argent, bronze, violet). Ligne du bas « v2.5 · CAVIAR » + petite ligne famille.
 - Tests : `tests/e2e_accueil.py` (nuit, ligne, couronne fantôme, bouton doré, bulle au toucher), `tests/e2e_explo.py` (vraie couronne, 👑 qui pulse).
+
+## Version 2.6 « Croquette » (APP_NUM 40, décidé le 15/11 entre 9 h 09 et 9 h 50 : PLAN-v40-croquette dans le projet)
+- 🏷️ Nom de code **toujours « Croquette »** (`CODENAMES`), seul le numéro change.
+- 🔍 **Lisibilité** : `--muted` foncé (#4d5549 clair, #bcc6bd sombre, #b6becb sur l'accueil nuit), plus de texte < 12,5 px (12 px → 13 px), moins de textes
+  estompés (`opacity`). **Bug corrigé** : les fiches ouvertes depuis l'accueil « nuit » héritaient du texte ivoire (`body.nuit .sheet{color:var(--ink)}`).
+  Carte verte de Progrès plus foncée. Audit de contraste automatique (Playwright) sur 13 écrans, clair et sombre.
+- 🔍 **La page ne se zoome plus** (bug du 15/11 : pincer zoomait aussi la barre du bas) : viewport `maximum-scale=1, user-scalable=no`, `gesturestart`/
+  `touchmove` à 2 doigts bloqués **hors** `.leaflet-container`, `touch-action:manipulation`. Pas de blocage du double-toucher (mode poche, secret).
+- 🗺️ Cartes un cran plus loin : balade zoom 16 (au lieu de 17), exploration 15 ; l'exploration ne se recentre plus toute seule quand la position GPS
+  arrive si on a déjà touché la carte (`exploreTouched`).
+- ☁️ **Trésor = grand nuage doré flou** (`huntCloud`, `HUNT_CLOUD` = 600 m, centre décalé de 150–450 m du trésor, le même pour tous) à la place du cercle
+  orange de 200 m. Flèche au bord (`#wTreasure`) = direction et distance du **nuage** (« fouille ! » dedans) ; la toucher = la carte va sur le nuage
+  (`cloudBounds`, 📍 pour revenir). Mini-carte : halo doré + « ☁️🏴‍☠️ x km » ; toucher la flèche ou la tuile Trésor = exploration centrée sur le nuage
+  (`openExplore(true)`). Le radar (< 150 m) prend le relais.
+- ☁️ **Nuage argenté du coffre chaud** (`chestCloud`, `CHEST_CLOUD` = 350 m, `CHEST_CLOUD_X` = ×2) : quand `chestChance() > 0`, un coin peu exploré
+  (cases `game.seen` absentes) à 0,7–1,8 km de la maison, tiré chaque jour (`game.chestCloud`) ; chance de coffre doublée dedans. Carte de balade (💰 pâle),
+  exploration, mini-carte ; tuile Coffre chaud = exploration centrée dessus (`openExplore("chest")`). Calculé sur le téléphone, rien n'est envoyé.
+- 🥣 Rappels de soin sur le récap (`careBox`, sans clebsous, à cocher) : eau (« Il fait X° » si ≥ 25°, `HOT_C`), 🦴 friandise si ≥ 45 min (`TREAT_MIN`).
+  Pas de goutte d'eau (ça fait penser au pipi).
+- 🐕 **Copains chiens** (`wouaf-copains` sur le téléphone : id, n, c, last, note) : bouton 🐕 dans le menu de Roxy en balade (`sheetCopWalk`, position gardée),
+  « Tu as croisé un copain ? » sur le récap (`copRecapBox`), ☰ › Copains (`sheetCopains`, fiche : renommer, note, supprimer).
+- 📍 Repères de balade (`addPin` → `gw.pins` : p pipi, c caca, d copain, t trésor) gardés **avec le chemin** (`wouaf-traces` : `w` prénom, `t`, `p`), jamais envoyés.
+  Récap : « 💧 Roxy a marqué N territoires ».
+- 🔥 **Carte de chaleur** (☰ › Carte de chaleur, `sheetHeat`, carte Leaflet dans la fiche) : seulement les chemins du promeneur (`myTraces` : `w` = prénom,
+  ou sans prénom = anciens chemins de ce téléphone), calques 🐾 💧 💩 🐕 🏴‍☠️, période 7 j / 30 j / tout, territoire en km² (cases × 0,0095).
+- 🔊 **Sons** (WebAudio) : « cling » (`ding`), aboiement en fin de balade (`bark`), fanfare trésor/coffre (`fanfare`). Bouton pour couper : ☰ › 🔊 Sons et
+  ⋯ pendant la balade (`wouaf-son`, 0 = coupé). Le mode silencieux de l'iPhone coupe déjà les sons de la page.
+- 💶 **Paie à la semaine** (remplace la paie du mois ; `offerPayday` neutralisé) : `weekPayRoll` à la 1re ouverture d'une nouvelle semaine (journée de l'app) :
+  paie = `moneyAll()` (somme des `moneyOf` de tous les mois) − `game.wkBase.cum` ; `game.weeks[AAAA-MM-JJ du lundi]` (clés complétées par `padK`).
+  1re fois : base = total − balades de la semaine en cours du carnet. Carte « Jour de paie » dans le « Quoi de neuf » ; **révélation 100 clebsous = 1 €**
+  à la 1re paie (`game.reveal`). Envoi `POST /week-pay` → KV `pays` (12 semaines par promeneur) ; tableau de bord : « 💶 Paies de la semaine » avec
+  « Versé ✓ » (`POST /pay-mark`, superviseur) ; `/pause` renvoie `paid` → `wouaf-paid` ; Tirelire : « Paies des semaines ». Plafond toujours mensuel.
+  Notification du dimanche soir : « Demain, c'est jour de paie ». La remise à zéro efface `pays`.
+- 🎒 **Heures de cours** (☰ › Mes rappels : début/fin du lundi au samedi + « 🏖️ Vacances scolaires ») : `rap.cours`, `rap.vac` envoyés avec `/register`
+  (`cleanCours`). Worker : aucune notification pendant un cours (`classEnd` dans `run` et `pushTo`, donc flair et duels aussi) ; un rappel prévu pendant
+  un cours part à la fin du cours.
+- 📊 **Roxy en chiffres** (`roxyNumbers`, en haut de Progrès) : km et « pas de chien » depuis le début (carnet du téléphone), cap atteint (`KM_PLACES`),
+  et pour le promeneur : heure préférée, jour le plus actif, mois record.
+- ☰ Menu : liste sur deux colonnes (tient sur un écran avec Carte de chaleur et Copains), icône 🔊 Sons.
+- Pas dans cette version (décidé le 15/11) : planning et « je ne peux pas » (chaque ado doit sortir Roxy chaque jour : le relais n'a pas de sens).
+- Tests : `tests/e2e_v26.py` (navigateur), `tests/worker.test.mjs` (cours, paies). Les tests ouvrent l'app avec `wouaf-vu` = 40.

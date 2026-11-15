@@ -31,7 +31,7 @@ with sync_playwright() as pw:
     n = B.evaluate("document.querySelector('.dotsT').textContent.length")
     check("menu ☰ › Tuto : tuto complet (8 écrans)", n == 8, n)
     # 📈 choix des statistiques au démarrage, avec le rappel de ce qui reste privé
-    b3, c3, Cc = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','39');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}")
+    b3, c3, Cc = new_phone(pw, errors=errs, init="if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','40');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}")
     open_app(Cc, 4000); t = txt(Cc)
     check("démarrage : choix des statistiques + rappel « privé »", "améliorer l'app" in t and "reste privé" in t and Cc.locator("[data-st]").count() == 2, t[:300])
     check("démarrage : carte « Sors Roxy en un seul geste » avec « Je l'installe »", "un seul geste" in t and Cc.locator("[data-go='sc']").count() == 1, t[:400])
@@ -56,7 +56,7 @@ with sync_playwright() as pw:
     check("pas de bulle de Roxy tant qu'on ne la touche pas", Cc.locator("#sayBtn").count() == 0)
     check("plus de « Combien de temps ? » ni de ligne Bonus", Cc.evaluate("getComputedStyle(document.querySelector('#durLabel')).display") == "none" and Cc.locator("#goBon").count() == 0)
     foot = Cc.evaluate("document.querySelector('#homeFoot').innerText")
-    check("ligne du bas : version et nom de code", "CAVIAR" in foot and "v2.5" in foot, foot)
+    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v2.6" in foot, foot)
     check("pas de « Bravo » collé en bas", "Bravo" not in Cc.evaluate("document.querySelector('#status').innerText"))
     t0 = Cc.evaluate("JSON.parse(localStorage.getItem('wouaf-jeu')).bonus")
     for i in range(16): Cc.click("#homeFoot")

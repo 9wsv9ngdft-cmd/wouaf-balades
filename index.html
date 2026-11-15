@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#2f5d3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wouaf Balades">
@@ -17,7 +17,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f2ea; --card:#fffdf8; --ink:#1f2a22; --muted:#6b7366; --line:#e5dfd2;
+    --bg:#f6f2ea; --card:#fffdf8; --ink:#1f2a22; --muted:#4d5549; --line:#e5dfd2;
     --green:#2f5d3a; --green-2:#4c8a5a; --sand:#e9dcc3; --accent:#d9792b; --warn:#b4452f;
   }
   *{box-sizing:border-box}
@@ -30,9 +30,9 @@
   .menu{display:grid;gap:6px;margin-top:8px}
   .menu button{justify-content:flex-start;background:#f3ecdf;color:var(--ink);font-weight:600;padding:13px 14px;font-size:16px;text-align:left}
   .menu button small{margin-left:auto;font-weight:500;color:var(--muted);font-size:13px}
-  .menu .sup{background:none;color:var(--muted);font-size:13px;font-weight:500;justify-content:center;margin-top:10px;opacity:.7}
+  .menu .sup{background:none;color:var(--muted);font-size:13px;font-weight:500;justify-content:center;margin-top:10px}
   .purse{flex:none;display:flex;flex-direction:column;align-items:center;gap:0;background:linear-gradient(135deg,#d9792b,#e9a23b);color:#fff;border-radius:14px;padding:8px 10px;min-width:78px;box-shadow:0 6px 14px -8px rgba(0,0,0,.4)}
-  .purse b{font-size:19px;line-height:1.1;white-space:nowrap} .purse small{font-size:11px;font-weight:500;opacity:.95}
+  .purse b{font-size:19px;line-height:1.1;white-space:nowrap} .purse small{font-size:12.5px;font-weight:500;opacity:.95}
   .oneline{width:100%;margin-top:10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:11px 12px;font-weight:500;font-size:14px;justify-content:flex-start;text-align:left;gap:10px}
   .oneline .ic{font-size:20px;flex:none} .oneline .more{margin-left:auto;color:var(--muted);font-size:13px;flex:none}
   #backHome{display:none} body.page #backHome{display:flex}
@@ -68,8 +68,8 @@
   button.big{width:100%;font-size:17px;padding:16px;border-radius:14px}
   button:disabled{opacity:.55}
   button:focus-visible,.prop:focus-visible,.entry:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-  .entry.void{opacity:.6} .entry.void h4{text-decoration:line-through}
-  .flabel{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
+  .entry.void{opacity:.75} .entry.void h4{text-decoration:line-through}
+  .flabel{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px}
   .seg{display:flex;background:#efe9dc;border-radius:12px;padding:3px}
   .seg button{flex:1;background:transparent;color:var(--ink);font-weight:500;padding:10px 2px;border-radius:10px;font-size:14px;white-space:nowrap}
   .seg button.on{background:#fff;color:var(--green);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.12)}
@@ -122,13 +122,13 @@
   body:not(.walking) #recenter{display:none}
   #pocket{position:fixed;inset:0;background:#000;z-index:5000;display:flex;align-items:center;justify-content:center;text-align:center;color:#b5b5b5;user-select:none;-webkit-user-select:none}
   #pocket[hidden]{display:none}
-  #pocket .pk{display:flex;flex-direction:column;gap:10px;font-size:17px;padding:0 24px} #pocket b{font-size:22px;color:#d0d0d0} #pocket small{font-size:15px;line-height:1.5;color:#9a9a9a}
+  #pocket .pk{display:flex;flex-direction:column;gap:10px;font-size:17px;padding:0 24px} #pocket b{font-size:22px;color:#d0d0d0} #pocket small{font-size:15px;line-height:1.5;color:#c4c4c4}
   #pocketStats{color:#e8e8e8;line-height:1.3} #pocketStats .big{display:block;font-size:64px;font-weight:800;color:#fff}
   #pocketStats .cs{display:block;font-size:34px;font-weight:700;color:#ffd35c;margin-top:4px}
   #walkbar .radar{color:#ffd35c;font-weight:600}
   #walkbar .radar:empty{display:none}
   .moodBtn{all:unset;display:block;cursor:pointer;color:inherit;font:inherit}
-  .mood .more{font-size:12px;color:var(--green-2);font-weight:600}
+  .mood .more{font-size:13px;color:var(--green-2);font-weight:600}
   .mood{display:flex;align-items:center;gap:6px;margin-top:4px}
   .mood .mb{flex:1;max-width:120px;height:6px;border-radius:3px;background:#efe9dc;overflow:hidden} .mood .mb i{display:block;height:100%}
   .dash .wk{background:#f6f2ea;border-radius:14px;padding:10px 12px;margin:8px 0}
@@ -149,7 +149,7 @@
   button.go .gain{display:flex;align-items:center;gap:8px;margin-top:6px;background:rgba(255,255,255,.16);border-radius:12px;padding:6px 14px}
   button.go .gain b{font-size:38px;line-height:1;font-weight:800;color:#ffd35c}
   button.go .gain .csi{width:34px;height:34px}
-  button.go .gain small{display:block;font-size:12px;opacity:.85}
+  button.go .gain small{display:block;font-size:13px;opacity:.85}
   .gohint{display:flex;gap:8px;margin-top:8px}
   .gohint button{display:block;flex:1;font:inherit;font-size:13px;padding:9px 10px;border-radius:12px;border:1px dashed #e0a21f;background:#fff8e6;color:#6b3f00;text-align:left;line-height:1.3}
   .gohint button.bon{flex:none;border-style:solid;background:#fff;text-align:center}
@@ -158,7 +158,7 @@
   #envies{display:none} body.hasmap #envies{display:block}
   .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
   .tiles button{border:0;border-radius:16px;padding:12px 8px;color:#fff;text-align:left;display:flex;flex-direction:column;gap:2px;font:inherit;min-height:96px;box-shadow:0 6px 14px -8px rgba(0,0,0,.45)}
-  .tiles small{font-size:11px;opacity:.9;text-transform:uppercase;letter-spacing:.04em} .tiles b{font-size:19px;line-height:1.15} .tiles span{font-size:12px;opacity:.92}
+  .tiles small{font-size:12.5px;opacity:.9;text-transform:uppercase;letter-spacing:.04em} .tiles b{font-size:19px;line-height:1.15} .tiles span{font-size:13px;opacity:.92}
   .tiles .t1{background:linear-gradient(135deg,#d9792b,#e9a23b)} .tiles .t2{background:linear-gradient(135deg,#c8452f,#e0703a)} .tiles .t3{background:linear-gradient(135deg,#2f5d3a,#5b9b6a)}
   .tbar{height:6px;border-radius:3px;background:rgba(255,255,255,.35);margin-top:auto;overflow:hidden} .tbar i{display:block;height:100%;background:#fff}
   .missions{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 12px}
@@ -167,16 +167,16 @@
   .missions .m.done{color:var(--muted)} .missions .m.done .ic{background:#e3efe2} .missions .m .ok{margin-left:auto;font-weight:700;color:var(--green-2)}
   .homefoot{font-size:13px;color:var(--muted);margin:10px 4px 0;line-height:1.5}
   .dots{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0}
-  .dots div{text-align:center;font-size:20px;background:#f6f2ea;border-radius:10px;padding:6px 0} .dots small{display:block;font-size:10px;color:var(--muted)}
+  .dots div{text-align:center;font-size:20px;background:#f6f2ea;border-radius:10px;padding:6px 0} .dots small{display:block;font-size:12.5px;color:var(--muted)}
   .bigdog{display:flex;justify-content:center;margin:8px 0 18px} .bigdog .roxy{width:84px;height:84px;font-size:50px;border-color:var(--accent)}
   .bigdog .roxy .a-bow{top:-10px;left:-6px;font-size:30px} .bigdog .roxy .a-scarf{bottom:-18px;font-size:30px} .bigdog .roxy .a-glasses{top:20px;left:12px;font-size:26px} .bigdog .roxy .a-hat{top:-38px;font-size:36px}
   body.walking #home,body.recap #home,body.choosing #home{display:none}
   .homecard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 6px 20px -12px rgba(0,0,0,.25)}
   .homecard .hrow{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
   .homecard .hrow button{background:#f6f2ea;border:0;border-radius:12px;padding:8px 6px;text-align:left;color:var(--ink);display:flex;flex-direction:column;gap:2px;font:inherit}
-  .homecard .hrow small{font-size:11px;color:var(--muted)}
+  .homecard .hrow small{font-size:12.5px;color:var(--muted)}
   .homecard .hrow b{font-size:16px;line-height:1.2}
-  .homecard .hrow span{font-size:12px;color:var(--muted)}
+  .homecard .hrow span{font-size:13px;color:var(--muted)}
   .homecard .hl{font-size:14px;line-height:1.55;margin-top:10px}
   .homecard .ho{font-size:13px;color:var(--muted);margin-top:8px}
   #map{height:44vh;min-height:270px;border-radius:16px;border:1px solid var(--line);z-index:0}
@@ -189,20 +189,20 @@
   .prop .ico{width:42px;height:42px;border-radius:12px;background:#eef3ec;display:flex;align-items:center;justify-content:center;font-size:22px}
   .prop h3{margin:0;font-family:Fraunces,Georgia,serif;font-size:17px;font-weight:600;line-height:1.25}
   .prop .sub{font-size:13px;color:var(--muted);margin-top:2px}
-  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;background:#f1ece1;color:#4a4a3f;margin-right:4px;vertical-align:1px}
+  .tag{display:inline-block;font-size:12.5px;font-weight:600;padding:2px 7px;border-radius:999px;background:#f1ece1;color:#4a4a3f;margin-right:4px;vertical-align:1px}
   .prop .time{font-weight:700;color:var(--green);font-size:16px;text-align:right;white-space:nowrap}
-  .prop .time small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+  .prop .time small{display:block;font-weight:500;color:var(--muted);font-size:13px}
   .go{grid-column:1/-1;display:none}
   .prop.sel .go{display:flex}
   .empty{color:var(--muted);text-align:center;padding:18px 10px}
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
   .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
   .stat b{display:block;font-family:Fraunces,Georgia,serif;font-size:22px;color:var(--green)}
-  .stat span{font-size:12px;color:var(--muted)}
+  .stat span{font-size:13px;color:var(--muted)}
   .entry{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px 13px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;cursor:pointer}
   .entry.sel{border-color:var(--accent)}
   .entry h4{margin:0;font-size:15px;font-weight:600}
-  .entry .when{font-size:12px;color:var(--muted)}
+  .entry .when{font-size:13px;color:var(--muted)}
   .entry .dur{font-weight:700;color:var(--green);text-align:right}
   .entry .acts{grid-column:1/-1;display:none;gap:8px;margin-top:6px}
   .entry.sel .acts{display:flex}
@@ -225,7 +225,7 @@
   body.walking .leaflet-top{top:env(safe-area-inset-top)}
   .who{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);margin-bottom:10px}
   .linkish{background:none;color:var(--green);padding:4px 0;font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px}
-  #walkbar .tip{font-size:12px;opacity:.85}
+  #walkbar .tip{font-size:13px;opacity:.85}
   #walkbar .wbtns{display:flex;gap:6px}
   #walkbar .in{flex-wrap:wrap}
   #walkbar .needs{display:flex;gap:6px;width:100%;order:-1;margin-bottom:8px}
@@ -258,9 +258,9 @@
   .tama-bars{margin:14px 2px 6px}
   .tb{display:grid;grid-template-columns:120px 1fr;gap:2px 10px;align-items:center;margin:9px 0}
   .tbl{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .tbb{height:12px;border-radius:6px;background:#efe9dc;overflow:hidden} .tbb i{display:block;height:100%;border-radius:6px}
-  .tbv{grid-column:2;font-size:12px;color:var(--muted);margin-top:-2px}
+  .tbv{grid-column:2;font-size:13px;color:var(--muted);margin-top:-2px}
   .tama-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
-  .tama-grid div{background:#f6f2ea;border-radius:12px;padding:9px 8px;text-align:center} .tama-grid b{display:block;font-size:17px} .tama-grid span{font-size:11px;color:var(--muted)}
+  .tama-grid div{background:#f6f2ea;border-radius:12px;padding:9px 8px;text-align:center} .tama-grid b{display:block;font-size:17px} .tama-grid span{font-size:12.5px;color:var(--muted)}
   @media (prefers-color-scheme: dark){ .tama-screen{background:radial-gradient(circle at 50% 40%,#2c2718,#1b211d);border-color:#5a4a28} .tama-screen.sad{background:radial-gradient(circle at 50% 40%,#23272b,#1a1d20);border-color:#3a4048} .tbb{background:#2d3630} .tama-grid div{background:#242b26} }
   .subnav{display:flex;gap:8px;margin:4px 0 12px} .subnav button{flex:1;padding:12px 8px}
   .backp{width:100%;margin:12px 0 12px}
@@ -292,7 +292,7 @@
   .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
   .rgrid div{background:#f6f2ea;border-radius:12px;padding:9px 11px}
   .rgrid b{display:block;font-family:Fraunces,Georgia,serif;font-size:19px;color:var(--green)}
-  .rgrid span{font-size:12px;color:var(--muted)}
+  .rgrid span{font-size:13px;color:var(--muted)}
   .thumbs{display:flex;gap:8px;margin:8px 0}
   .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:10px}
   .warnline{font-size:13px;color:#7a3d10;background:#fbebdc;border-radius:10px;padding:7px 10px;margin:6px 0}
@@ -325,7 +325,7 @@
   body.choosing #chooseBar{display:flex}
   #chooseBar span{flex:1}
   #chooseBar button{background:#fff;color:var(--green);padding:8px 12px;font-size:14px}
-  footer{font-size:12px;color:var(--muted);margin-top:22px;line-height:1.5}
+  footer{font-size:13px;color:var(--muted);margin-top:22px;line-height:1.5}
   footer a{color:var(--muted)}
   .toast{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 14px);background:#1f2a22;color:#fff;padding:10px 16px;border-radius:999px;font-size:15px;font-weight:600;z-index:3500;max-width:92vw;box-shadow:0 6px 20px -6px rgba(0,0,0,.45);animation:pop .25s ease-out}
   @keyframes pop{from{transform:translate(-50%,-8px) scale(.9);opacity:0}to{transform:translate(-50%,0) scale(1);opacity:1}}
@@ -334,7 +334,7 @@
   .gamebox{background:linear-gradient(135deg,#2f5d3a,#4c8a5a);color:#fff;border-radius:14px;padding:12px 14px;margin:10px 0}
   .gamebox b{font-family:Fraunces,Georgia,serif;font-size:22px}
   .gamebox small{display:block;opacity:.9;margin-top:4px;line-height:1.5}
-  .wallet{background:linear-gradient(135deg,#2f5d3a,#4c8a5a);color:#fff;border-radius:16px;padding:16px;margin-top:12px}
+  .wallet{background:linear-gradient(135deg,#25502f,#3d7449);color:#fff;border-radius:16px;padding:16px;margin-top:12px}
   .wallet .big{font-family:Fraunces,Georgia,serif;font-size:40px;font-weight:700;line-height:1}
   .wallet .lvl{margin-top:8px;font-weight:600}
   .bar{height:8px;background:rgba(255,255,255,.25);border-radius:99px;margin-top:6px;overflow:hidden}
@@ -352,17 +352,21 @@
   .roxy i{position:absolute;font-style:normal;line-height:1;pointer-events:none}
   .roxy .a-bow{top:-9px;left:-7px;font-size:15px}
   .roxy .a-scarf{bottom:-10px;left:50%;transform:translateX(-50%);font-size:15px}
-  .roxy .a-glasses{top:7px;left:3px;font-size:12px}
+  .roxy .a-glasses{top:7px;left:3px;font-size:13px}
   .roxy .a-hat{top:-19px;left:50%;transform:translateX(-50%);font-size:17px}
   .accs .roxy{margin:2px auto 0;border-color:var(--line);box-shadow:none}
-  .accs button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;min-width:74px;padding:14px 8px 8px}
+  .accs button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;min-width:74px;padding:14px 8px 8px}
   .phgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
   .phgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
   .phgrid button{padding:0;background:none;border:0}
   .phgrid .howto{grid-column:1/-1}
   .rap{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;margin:10px 0}
   .rap input{width:100%;padding:8px;font-size:16px}
-  .rap .h{font-size:12px;color:var(--muted);text-align:center}
+  .rap .h{font-size:13px;color:var(--muted);text-align:center}
+  .nums{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px} .nums p{margin:8px 0 0;font-size:15px}
+  .ngrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;margin-top:6px} .ngrid b{display:block;font-size:20px;color:var(--green)} .ngrid span{font-size:13px;color:var(--muted)}
+  @media (prefers-color-scheme: dark){ .ngrid b{color:#a9d4b2} }
+  .vacsw{display:flex;align-items:center;gap:10px;font-size:16px;margin:8px 0 4px} .vacsw input{width:22px;height:22px}
   .chest{position:fixed;inset:0;z-index:4000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(20,30,22,.82);color:#fff;text-align:center;animation:pop .3s ease-out}
   .chest .ce{font-size:96px;animation:bounce 1s ease-in-out infinite}
   .chest b{font-family:Fraunces,Georgia,serif;font-size:32px;margin-top:10px}
@@ -373,9 +377,9 @@
   .album div b{display:block;font-size:24px}
   .album div.full{border-color:var(--green-2);background:#e3f0e3;color:#25502f}
   .tro{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-  .tro div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;font-size:12px;line-height:1.3}
+  .tro div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center;font-size:13px;line-height:1.3}
   .tro div b{display:block;font-size:26px}
-  .tro div.off{opacity:.35;filter:grayscale(1)}
+  .tro div.off{opacity:.6;filter:grayscale(1)}
   .accs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .accs button{background:#fff;color:var(--ink);border:1px solid var(--line);font-size:22px;padding:8px 10px}
   .accs button.on{border-color:var(--green);box-shadow:0 0 0 2px rgba(76,138,90,.35)}
@@ -389,7 +393,7 @@
 
   /* 🌙 Mode sombre automatique (quand l'iPhone est en mode sombre) */
   @media (prefers-color-scheme: dark){
-    :root{ --bg:#121614; --card:#1b211d; --ink:#e7ece6; --muted:#9ba69c; --line:#2d3630; --sand:#2a312c; --green:#3c7a4a; --green-2:#6fae7c }
+    :root{ --bg:#121614; --card:#1b211d; --ink:#e7ece6; --muted:#bcc6bd; --line:#2d3630; --sand:#2a312c; --green:#3c7a4a; --green-2:#6fae7c }
     html,body{background:var(--bg);color:var(--ink)}
     header{background:#1d3a25}
     input,select,textarea,.sheet input{background:#232a25;color:var(--ink);border-color:var(--line)}
@@ -435,10 +439,10 @@
   .gohint{margin-top:8px} .gohint button{padding:8px 10px}
   #home{margin-top:9px} body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) #home{gap:9px}
   #home .oneline{margin-top:0;padding:9px 12px} #home .oneline>span:nth-child(2){flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lotsL{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--green-2);margin:1px 2px -4px}
+  .lotsL{font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--green-2);margin:1px 2px -4px}
   .ltiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
   .lt{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;border-radius:16px;padding:8px 4px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-weight:500;box-shadow:0 6px 16px -12px rgba(0,0,0,.4)}
-  .lt .e{font-size:25px;line-height:1.1} .lt b{font-size:19px;font-weight:800;white-space:nowrap} .lt small{font-size:11.5px;line-height:1.25;color:var(--muted);text-align:center}
+  .lt .e{font-size:25px;line-height:1.1} .lt b{font-size:19px;font-weight:800;white-space:nowrap} .lt small{font-size:12.5px;line-height:1.25;color:var(--muted);text-align:center}
   .lt.gold{background:linear-gradient(135deg,#fff4cf,#ffd96b 55%,#f1b93c);border-color:#e3b13d;color:#4a3405} .lt.gold small{color:#6b4c0b}
   .lt.hot{border-color:#e0703a}
   .lots{gap:9px} .arena{padding:11px 13px} .arena .atag{font-size:14px;margin-top:5px} .arena .chal{margin-top:8px} .arena .chal button{padding:9px 12px}
@@ -453,9 +457,27 @@
   .mlist{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
   .mlist button{display:flex;width:100%;justify-content:flex-start;gap:12px;background:none;color:var(--ink);border-radius:0;border-top:1px solid var(--line);padding:11px 14px;font-weight:500;font-size:16px;text-align:left}
   .mlist button:first-child{border-top:0} .mlist button::after{content:"›";margin-left:auto;color:var(--muted)} .mlist button small{margin-left:auto;color:var(--muted);font-size:13px}
+  /* v2.6 : liste sur deux colonnes (le menu tient toujours sur un écran) */
+  .mlist{display:grid;grid-template-columns:1fr 1fr} .mlist button{gap:8px;padding:12px 10px;font-size:15px;border-top:1px solid var(--line);align-items:center;line-height:1.2}
+  .mlist button:nth-child(2){border-top:0} .mlist button:nth-child(odd){border-right:1px solid var(--line)} .mlist button::after,.mlist button small{display:none}
+  html,body{touch-action:manipulation} #walkbar,#exploreBar,header,.gocard{touch-action:manipulation}
   .micons{display:flex;gap:7px;margin-top:10px}
+  .care{display:flex;flex-direction:column;gap:8px;margin:12px 0}
+  .terr{margin:6px 0;font-size:15px}
+  .copbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+  .copl{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .copl button{padding:8px 12px;font-size:15px;border-radius:999px} .copl button.on{background:var(--green);color:#fff}
+  .copnew{display:flex;gap:6px;margin:6px 0} .copnew input{flex:1;min-width:0}
+  .copfiche{display:flex;flex-direction:column;gap:6px} .copfiche button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  .copfiche span{font-size:14px;color:var(--muted);font-weight:500}
+  .heatc{margin:6px 0;flex-wrap:wrap;overflow:visible} .heatT{font-size:15px;margin:10px 0 0}
+  .hpin{font-size:18px;line-height:22px;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .care button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#eef3ec;color:var(--ink);border:1px solid #cfe0cf;border-radius:14px;padding:12px 14px;font-size:16px;font-weight:600;box-shadow:none}
+  .care button span{font-size:24px} .care button i{margin-left:auto;font-style:normal;font-size:20px;color:var(--green)}
+  .care button.ok{opacity:1;background:#e3f0e3} .care button:disabled{opacity:1}
+  @media (prefers-color-scheme: dark){ .care button{background:#1f2a22;border-color:#2d3630} .care button.ok{background:#24362a} .care button i{color:#7fd1ae} }
   .micons button{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:9px 2px;font-size:22px;line-height:1}
-  .micons small{font-size:10.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .micons small{font-size:12.5px;font-weight:500;color:var(--muted);white-space:nowrap}
   .mfoot{display:flex;justify-content:center;gap:16px;margin-top:12px} .mfoot button{background:none;color:var(--muted);font-size:13px;font-weight:500;padding:6px 8px;opacity:.8}
   @media (prefers-color-scheme: dark){
     .lt.gold{background:linear-gradient(135deg,#5a4512,#a7801f 60%,#c99a2c);color:#fff7dc;border-color:#8a6a1c} .lt.gold small{color:#fbe9b5}
@@ -476,8 +498,8 @@
 
   /* v2.3 : classement des explorateurs */
   .explo{display:block;width:100%;text-align:left;border-radius:18px;padding:10px 12px;color:#fff;background:linear-gradient(135deg,#1f4c66,#2f7a8a 60%,#3a9a7a);box-shadow:0 8px 20px -14px rgba(0,0,0,.6);font-weight:600}
-  .explo .at{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-  .explo .prize{background:#ffd25e;color:#4a3405;border-radius:99px;padding:2px 8px;font-size:12px;text-transform:none;letter-spacing:0;white-space:nowrap}
+  .explo .at{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:12.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+  .explo .prize{background:#ffd25e;color:#4a3405;border-radius:99px;padding:2px 8px;font-size:13px;text-transform:none;letter-spacing:0;white-space:nowrap}
   .explo .pod{display:flex;gap:6px;margin-top:8px}
   .explo .pod span{flex:1;min-width:0;border-radius:11px;background:rgba(255,255,255,.15);text-align:center;padding:4px 2px;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .explo .pod span.me{background:#fff;color:#1f4c66} .explo .pod small{display:block;font-size:18px;line-height:1.1} .explo .pod .empty{font-weight:500;font-size:13px;padding:8px 4px;white-space:normal}
@@ -513,13 +535,13 @@
   .gocard .seg.durs{margin:9px 12px 0;background:none;padding:0;gap:6px}
   .gocard .seg.durs button{flex:1;border-radius:99px;padding:8px 0;background:rgba(0,0,0,.2);color:#fff;font-weight:600;font-size:14px;position:relative;box-shadow:none}
   .gocard .seg.durs button.on{background:#fff;color:#1f2a22;font-weight:900}
-  .gocard .seg.durs button.sug::after{content:attr(data-x);position:absolute;top:-9px;right:-3px;background:#f0a53a;color:#3a2000;font-size:10px;font-weight:900;border-radius:6px;padding:0 4px;line-height:1.5}
+  .gocard .seg.durs button.sug::after{content:attr(data-x);position:absolute;top:-9px;right:-3px;background:#f0a53a;color:#3a2000;font-size:12.5px;font-weight:900;border-radius:6px;padding:0 4px;line-height:1.5}
   .gostat{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;margin:9px 12px 0;width:calc(100% - 24px);border-radius:12px;padding:6px 10px;font-size:13px;font-weight:700;background:rgba(0,0,0,.25);cursor:pointer;line-height:1.3}
   .gostat.ok{background:rgba(160,255,170,.2)} .gostat .st{flex:1;min-width:0} .gostat .fi{white-space:nowrap}
   body.hasmap .minimap,body.hasmap .gobj,body.hasmap .gostat,body.choosing .minimap{display:none}
   .lt.silver{background:linear-gradient(135deg,#eef1f4,#c9d0d7 55%,#aab3bc);border-color:#b8c0c8;color:#2a3138} .lt.silver small{color:#4a535c}
   .lt.bronze{background:linear-gradient(135deg,#f6dcc2,#d9a06c 55%,#b8763f);border-color:#c2864f;color:#3e2410} .lt.bronze small{color:#5a3518}
-  #homeFoot{text-align:center;font-size:12px;color:var(--muted);padding:10px 4px 2px;line-height:1.5;user-select:none;-webkit-user-select:none;cursor:default}
+  #homeFoot{text-align:center;font-size:13px;color:var(--muted);padding:10px 4px 2px;line-height:1.5;user-select:none;-webkit-user-select:none;cursor:default}
   #homeFoot b{font-weight:700} #homeFoot:empty{display:none}
   body.page #homeFoot,body.walking #homeFoot,body.recap #homeFoot,body.choosing #homeFoot,body.hasmap #homeFoot{display:none}
   .egg{animation:eggPop .5s ease-out} @keyframes eggPop{0%{transform:scale(.6) rotate(-10deg);opacity:0}100%{transform:none;opacity:1}}
@@ -535,12 +557,12 @@
   #walkbar .in{display:block}
   #walkbar .wnums{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
   #wGain{font-size:38px;font-weight:900;color:#ffd35c;line-height:1;display:flex;align-items:center;gap:6px} #wGain .csi{width:32px;height:32px}
-  #walkbar .wtm{text-align:right;line-height:1.05} #wTime{font-size:28px;font-weight:900;display:block;font-family:inherit !important} #wDist{font-size:13px;opacity:.75}
+  #walkbar .wtm{text-align:right;line-height:1.05} #wTime{font-size:28px;font-weight:900;display:block;font-family:inherit !important} #wDist{font-size:13px;opacity:.95}
   #walkbar .wline{font-size:14px;color:#bfe3ff;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:18px}
   #walkbar .wbtns{display:flex;gap:10px;margin-top:10px}
   #walkbar .wbig{flex:1;border-radius:16px;padding:14px 4px;font-weight:900;font-size:18px;color:#fff;position:relative;overflow:hidden}
   #walkbar .wbig.moon{background:#232a46} #walkbar .wbig.end{background:#c8452f}
-  #walkbar .wbig.end span{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.1} #walkbar .wbig.end small{font-size:11px;font-weight:600;opacity:.85}
+  #walkbar .wbig.end span{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.1} #walkbar .wbig.end small{font-size:12.5px;font-weight:600;opacity:.85}
   #walkbar .wbig.end .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.3)}
   #walkbar .wbig.end.holding .fill{width:100%;transition:width 1s linear}
   #walkbar.mini{padding-top:8px} #walkbar.mini .wline,#walkbar.mini .wbtns{display:none} #walkbar.mini #wGain{font-size:26px} #walkbar.mini #wGain .csi{width:22px;height:22px} #walkbar.mini #wTime{font-size:22px}
@@ -548,11 +570,11 @@
   #wChips,#wFlair,#wTreasure,#roxyMenu,#coach{display:none}
   body.walking #wChips{display:flex;position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:1001;gap:6px}
   #wChips span{flex:1;background:rgba(23,28,24,.92);color:#eef1ec;border-radius:14px;padding:6px 4px;text-align:center;font-size:19px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.45);line-height:1.15}
-  #wChips span small{display:block;font-size:11px;font-weight:600;opacity:.75} #wChips span.ok{background:rgba(36,64,44,.96);outline:2px solid #4c8a5a}
+  #wChips span small{display:block;font-size:13px;font-weight:700;opacity:.95} #wChips span.ok{background:rgba(36,64,44,.96);outline:2px solid #4c8a5a}
   body.walking #wFlair:not([hidden]){display:block;position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 74px);z-index:1001;border-radius:16px;padding:10px 12px;color:#fff;font-weight:800;background:linear-gradient(135deg,#5b2a86,#b03a8b);box-shadow:0 0 0 3px rgba(255,122,217,.35),0 10px 26px rgba(0,0,0,.5)}
   #wFlair small{display:block;font-weight:500;font-size:13px;color:#f6dcff}
   body.walking #wTreasure:not([hidden]){display:flex;flex-direction:column;align-items:center;position:fixed;right:0;top:42%;z-index:1001;border-radius:14px 0 0 14px;padding:8px 10px 8px 12px;font-weight:900;color:#fff;background:linear-gradient(135deg,#7d5d17,#c39a2c);box-shadow:0 6px 18px rgba(0,0,0,.5);line-height:1.1}
-  #wTreasure .ar{font-size:24px;display:block} #wTreasure small{font-size:12px;font-weight:800}
+  #wTreasure .ar{font-size:24px;display:block} #wTreasure small{font-size:13px;font-weight:800}
   body.walking #roxyMenu:not([hidden]){display:flex;gap:6px;position:fixed;left:50%;transform:translateX(-50%);z-index:1002;background:#f6f2ea;border-radius:18px;padding:8px;box-shadow:0 10px 28px rgba(0,0,0,.6)}
   #roxyMenu button{background:#fff;color:#1f2a22;border-radius:12px;padding:8px 10px;font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;min-width:56px;gap:2px;box-shadow:0 1px 3px rgba(0,0,0,.15)} #roxyMenu b{font-size:22px} #roxyMenu button.on{outline:2px solid #4c8a5a}
   body.walking #coach:not([hidden]){display:block;position:fixed;left:50%;transform:translateX(-50%);z-index:1003;max-width:86vw;background:#ffd35c;color:#3a2a00;font-weight:800;font-size:15px;border-radius:14px;padding:9px 14px;box-shadow:0 8px 22px rgba(0,0,0,.5);text-align:center;animation:pop .25s ease-out}
@@ -568,7 +590,7 @@
   .explo.one{display:flex;align-items:center;gap:6px;padding:7px 8px}
   .explo.one .pod{flex:1;margin-top:0} .explo.one .pod span{display:flex;align-items:center;justify-content:center;gap:3px;padding:5px 2px}
   .explo.one .pod small{display:inline;font-size:15px} .explo.one .lbl{font-size:18px;display:flex;flex-direction:column;align-items:center;line-height:1;min-width:30px}
-  .explo.one .lbl small{font-size:10px;font-weight:700;opacity:.85;margin-top:2px}
+  .explo.one .lbl small{font-size:12.5px;font-weight:700;opacity:.85;margin-top:2px}
   .ltiles .lt{padding:6px 2px} .ltiles .lt .e{font-size:21px} .ltiles .lt b{font-size:16px}
   .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#6d2f86 55%,#b03a5b);border-color:transparent;color:#fff} .lt.arena-t small{color:#f0e0ff}
   .gocard button.go #goText{font-size:23px} .gocard button.go .gain b{font-size:27px}
@@ -578,16 +600,17 @@
   .seg.durs button em{display:none} .dbar{display:none} .crownBtn[hidden],.pcrown[hidden],#goLot:empty{display:none}
   html:has(body.nuit){background:#0b0e13}
   body.nuit{background:#0b0e13;color:#f3efe6}
+  body.nuit .sheet,body.nuit #modal .sheet{color:var(--ink)}   /* v2.6 : les fiches ouvertes depuis l'accueil « nuit » gardaient le texte ivoire sur fond blanc */
   body.nuit header{background:#0b0e13;color:#f3efe6;padding-bottom:6px}
   body.nuit header h1{font-family:Didot,"Bodoni 72",Georgia,serif;font-size:25px;letter-spacing:.2px}
   body.nuit header h1 .hpaw{display:none}
   body.nuit #menuBtn{background:#141922;border:1px solid #232a36;color:#f3efe6}
-  body.nuit main.wrap .panel{background:none;border:0;box-shadow:none;padding:4px 2px 0;margin-top:2px;color:#f3efe6;--card:#141922;--line:#232a36;--ink:#f3efe6;--muted:#8e96a3}
+  body.nuit main.wrap .panel{background:none;border:0;box-shadow:none;padding:4px 2px 0;margin-top:2px;color:#f3efe6;--card:#141922;--line:#232a36;--ink:#f3efe6;--muted:#b6becb}
   body.nuit .hero{position:relative;margin-top:12px}
   body.nuit .hero .hi{font-family:Didot,"Bodoni 72",Georgia,serif;font-size:21px;color:#f3efe6}
   body.nuit .heroDog .roxy{border-color:#c9c3b6;box-shadow:0 0 0 4px rgba(243,239,230,.08)}
   .hline{all:unset;display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;margin-top:3px}
-  .hline b{color:#2a9d78} body.nuit .hline{color:#8e96a3} body.nuit .hline b{color:#7fd1ae;font-weight:900}
+  .hline b{color:#2a9d78} body.nuit .hline{color:#b6becb} body.nuit .hline b{color:#7fd1ae;font-weight:900}
   body.nuit .purse{background:#141922;border:1px solid #232a36;color:#f3efe6;box-shadow:none;padding:7px 12px;min-width:0}
   body.nuit .purse small{display:none} body.nuit .purse b{font-size:19px}
   body.nuit .purse .csi{filter:grayscale(1) brightness(1.45)}
@@ -605,7 +628,7 @@
   body.nuit .minimap .mdog{border-color:#c9c3b6;box-shadow:0 0 0 6px rgba(243,239,230,.08)}
   body.nuit .minimap .mpct,body.nuit .minimap .mtr{background:rgba(0,0,0,.45);color:#f3efe6;border:1px solid rgba(255,255,255,.12);top:10px;left:10px;right:auto;font-weight:700}
   body.nuit .minimap .mtr{top:44px}
-  body.nuit .minimap .mnone{color:#8e96a3}
+  body.nuit .minimap .mnone{color:#b6becb}
   body.nuit .gobj{all:unset;box-sizing:border-box;position:absolute;right:10px;top:10px;z-index:4;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);cursor:pointer}
   body.nuit .gobj:empty{display:none}
   body.nuit .gobj i{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:10px;background:#f3efe6;color:#111;font:900 11.5px/19px system-ui,sans-serif;font-style:normal;text-align:center;padding:0 4px;box-sizing:border-box}
@@ -615,14 +638,14 @@
   body.nuit .gocard button.go .gl{display:flex;flex-direction:column;gap:3px;min-width:0}
   body.nuit .gocard button.go #goText{font-size:23px;font-weight:800;letter-spacing:.2px}
   body.nuit .gocard button.go .glot{font-size:12.5px;font-weight:800;color:#f0d48a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  body.nuit .gocard button.go .gain{color:#8e96a3;font-size:11.5px;font-weight:600}
+  body.nuit .gocard button.go .gain{color:#b6becb;font-size:12.5px;font-weight:600}
   body.nuit .gocard button.go .gain b{color:#fff;font-size:26px;gap:6px}
   body.nuit .gocard button.go .gain .csi{width:24px;height:24px}
   body.nuit .gocard button.go.hot{border-color:rgba(227,191,92,.75);background:linear-gradient(135deg,rgba(227,191,92,.16),rgba(255,255,255,.05));box-shadow:0 0 0 4px rgba(227,191,92,.12),0 0 26px -4px rgba(227,191,92,.55),inset 0 1px 0 rgba(255,255,255,.15)}
   .pcrown{position:absolute;top:-15px;left:50%;margin-left:-15px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:#1a1f29;border:1.5px solid #e3bf5c;animation:crownPulse 1.6s ease-in-out infinite}
   @keyframes crownPulse{0%,100%{box-shadow:0 0 0 3px rgba(227,191,92,.15),0 0 10px rgba(227,191,92,.45)}50%{box-shadow:0 0 0 7px rgba(227,191,92,.08),0 0 20px rgba(227,191,92,.8)}}
   body.nuit .gocard .seg.durs{display:flex;align-items:flex-end;justify-content:space-between;gap:0;margin:16px 14px 0;background:none;padding:0}
-  body.nuit .gocard .seg.durs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;box-shadow:none;border:0;padding:0;border-radius:0;color:#8e96a3;font-size:12px;font-weight:800}
+  body.nuit .gocard .seg.durs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;box-shadow:none;border:0;padding:0;border-radius:0;color:#b6becb;font-size:13px;font-weight:800}
   body.nuit .seg.durs button em{display:block;font-style:normal;line-height:1;filter:grayscale(1);opacity:.4}
   body.nuit .seg.durs button.done em{filter:none;opacity:.85}
   body.nuit .seg.durs button.on{background:none;color:#f3efe6;font-weight:900}
@@ -641,9 +664,9 @@
   body.nuit .lt.bronze{background:linear-gradient(135deg,#6b3d1c,#c07a43)}
   body.nuit .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#b03a5b)}
   body.nuit #status:empty{display:none} body.nuit #views{margin:0}
-  body.nuit #homeFoot{color:#8e96a3;font-size:11.5px;letter-spacing:.5px}
+  body.nuit #homeFoot{color:#b6becb;font-size:12.5px;letter-spacing:.5px}
   body.nuit #homeFoot b{font-weight:600}
-  body.nuit #homeFoot small{display:block;letter-spacing:0;opacity:.75}
+  body.nuit #homeFoot small{display:block;letter-spacing:0;opacity:.95}
 </style>
 </head>
 <body>
@@ -729,7 +752,7 @@
     <div class="wstats" hidden><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
     <div class="needs" hidden><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wbtns">
-      <button class="photo hid" id="moreBtn" aria-label="Plus : alerte, balade à deux">⋯</button>
+      <button class="photo hid" id="moreBtn" aria-label="Plus : alerte, balade à deux, sons">⋯</button>
       <button class="photo hid" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
       <button class="photo hid" id="duoBtn" aria-label="Balade à deux : on est deux promeneurs avec Roxy">👯</button>
       <button class="photo hid" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
@@ -744,7 +767,7 @@
 <div id="wChips" aria-live="polite"></div>
 <div id="wFlair" hidden></div>
 <button id="wTreasure" hidden aria-label="Direction du trésor"></button>
-<div id="roxyMenu" hidden><button id="rmP"><b>💧</b>Pipi</button><button id="rmC"><b>💩</b>Caca</button><button id="rmPh"><b>📷</b>Photo</button><button id="rmMore"><b>⋯</b>Plus</button></div>
+<div id="roxyMenu" hidden><button id="rmP"><b>💧</b>Pipi</button><button id="rmC"><b>💩</b>Caca</button><button id="rmPh"><b>📷</b>Photo</button><button id="rmD"><b>🐕</b>Copain</button><button id="rmMore"><b>⋯</b>Plus</button></div>
 <div id="coach" hidden></div>
 <div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
 <div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
@@ -756,7 +779,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.041033";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-15.101120";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1519,17 +1542,45 @@
       for (let k = 0; k < n; k++) setTimeout(() => { try{ hapLabel.click(); }catch(e){} }, k * 130);
     }catch(e){}
   }
+  // 🔊 Petits sons (v2.6) : « cling » (objets), aboiement (fin de balade), fanfare (trésor, coffre). Bouton pour les couper : clé wouaf-son (0 = coupé).
+  // Sur iPhone, le mode silencieux coupe déjà les sons de la page.
   let actx = null;
+  const soundOn = () => store.get("wouaf-son", 1) !== 0;
+  function setSound(on){ store.set("wouaf-son", on ? 1 : 0); if (on) setTimeout(ding, 50); }
+  function audio(){ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); return actx; }
+  function tone(f1, f2, at, len, type, vol){
+    const a = audio(), o = a.createOscillator(), g = a.createGain(), n = a.currentTime + at;
+    o.type = type || "sine"; o.frequency.setValueAtTime(f1, n); o.frequency.exponentialRampToValueAtTime(f2, n + len * .5);
+    g.gain.setValueAtTime(.0001, n); g.gain.exponentialRampToValueAtTime(vol || .15, n + .015); g.gain.exponentialRampToValueAtTime(.001, n + len);
+    o.connect(g); g.connect(a.destination); o.start(n); o.stop(n + len + .02);
+  }
   function ding(){
     haptic(1);
+    if (!soundOn()) return;
+    try{ tone(880, 1320, 0, .25, "sine", .15); }catch(e){}
+  }
+  function fanfare(){
+    haptic(3);
+    if (!soundOn()) return;
+    try{ [[523, 0], [659, .14], [784, .28], [1047, .44]].forEach(([f, t], i) => tone(f, f * 1.01, t, i === 3 ? .7 : .16, "triangle", .2)); }catch(e){}
+  }
+  function bark(){
+    if (!soundOn()) return;
     try{
-      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = actx.createOscillator(), g = actx.createGain(), n = actx.currentTime;
-      o.type = "sine"; o.frequency.setValueAtTime(880, n); o.frequency.exponentialRampToValueAtTime(1320, n + .12);
-      g.gain.setValueAtTime(.15, n); g.gain.exponentialRampToValueAtTime(.001, n + .25);
-      o.connect(g); g.connect(actx.destination); o.start(); o.stop(n + .26);
+      const a = audio();
+      [0, .32].forEach(at => {
+        const n = a.currentTime + at, o = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain();
+        o.type = "sawtooth"; o.frequency.setValueAtTime(520, n); o.frequency.exponentialRampToValueAtTime(230, n + .16);
+        f.type = "bandpass"; f.frequency.value = 900; f.Q.value = 1.4;
+        g.gain.setValueAtTime(.0001, n); g.gain.exponentialRampToValueAtTime(.35, n + .02); g.gain.exponentialRampToValueAtTime(.001, n + .2);
+        o.connect(f); f.connect(g); g.connect(a.destination); o.start(n); o.stop(n + .22);
+      });
     }catch(e){}
   }
+  // 🔍 v2.6 : la page ne se zoome plus (bug du 15/11 : pincer zoomait aussi la barre du bas) ; seules les cartes se zooment
+  ["gesturestart", "gesturechange"].forEach(t => document.addEventListener(t, e => { if (!(e.target && e.target.closest && e.target.closest(".leaflet-container"))) e.preventDefault(); }, { passive:false }));
+  document.addEventListener("touchmove", e => { if (e.touches && e.touches.length > 1 && !(e.target && e.target.closest && e.target.closest(".leaflet-container"))) e.preventDefault(); }, { passive:false });
+  // (pas de blocage du double-toucher : touch-action:manipulation suffit, et le mode poche / le secret en ont besoin)
   // l'iPhone n'autorise le son qu'après un premier toucher
   document.addEventListener("touchstart", () => { try{ actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === "suspended") actx.resume(); }catch(e){} }, { once:true, passive:true });
 
@@ -1559,8 +1610,12 @@
     gameLayer.clearLayers();
     if (!gw) return;
     const h = game.hunt;
-    if (h && h.wk === weekKey(Date.now()) && !h.found && !h.gone)
-      L.circle([h.zlat, h.zlon], { radius: HUNT_ZONE, color:"#d9792b", weight:2, dashArray:"6 6", fillColor:"#ffd35c", fillOpacity:.15, interactive:false }).addTo(gameLayer);
+    if (h && h.wk === weekKey(Date.now()) && !h.found && !h.gone){   // ☁️ grand nuage doré flou (v2.6) : le coin où chercher, pas l'endroit
+      const z = huntCloud(h);
+      [1, .78, .56, .34].forEach(f => L.circle([z.lat, z.lon], { radius: HUNT_CLOUD * f, stroke:false, fillColor:"#e3b13d", fillOpacity:.09, interactive:false }).addTo(gameLayer));
+    }
+    { const cc = !gw.chest && chestCloud(); if (cc){ silverCloud(gameLayer, cc);
+      L.marker([cc.lat, cc.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem" style="opacity:.85">💰</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer); } }
     for (const it of gw.items) if (!it.got)
       L.marker([it.lat, it.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem">${ITEMS[it.k].icon}</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer);
   }
@@ -1585,7 +1640,7 @@
       if (onNew && gw.cells.length > 1){
         if (gw.newCells < MAX_NEW_CELLS){ gw.newCells++; flyPlus("🗺️ +1"); renderChips(); }
         // 💰 coffre : seulement sur une rue jamais faite, au plus un toutes les ~2 semaines
-        if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance()){ gw.chest = true; showChest(); }
+        if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance() * (inChestCloud(q) ? CHEST_CLOUD_X : 1)){ gw.chest = true; showChest(); }
       }
     }
     if (!gw.rainChecked){
@@ -1623,7 +1678,8 @@
     const ok = pts.filter(q => !q.a || q.a <= 40);
     if (ok.length < 2) return;
     const tr = getTraces();
-    tr.push({ d: dayNum(), s: encPoly(simplify(ok, 12), 5) });
+    const pins = (gw && gw.pins || []).slice(0, 60);
+    tr.push({ d: dayNum(), s: encPoly(simplify(ok, 12), 5), w: profile.walker || "", t: Date.now(), ...(pins.length ? { p: pins } : {}) });
     while (tr.length > 1 && JSON.stringify(tr).length > TRACE_MAX) tr.shift();
     while (!store.set(TRACE_KEY, tr) && tr.length > 1) tr.shift();
   }
@@ -1805,7 +1861,7 @@
     const lv = levelOf(game.total);
     const coins = Object.keys(game.seen).length;
     $("#v-shop").innerHTML = `<div class="wallet">
-        <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
+        <div style="font-size:14px">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
         <div class="big">🪙 ${fmtCs(eur)}</div>
         <div class="lvl">Rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
         ${bonusThisMonth() ? `<div class="lvl">💰 dont ${fmtCs(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""}</div>` : ""}
@@ -1846,6 +1902,30 @@
     return last + CHEST_GAP_DAYS * 86400000;
   }
   const regular = () => { let n = 0; for (let i = 1; i <= 7; i++) if (walkedOn(dIso(Date.now() - i * DAYMS))) n++; return n >= 4; };
+  // ☁️ Nuage argenté du coffre chaud (v2.6, décidé le 15/11) : quand le coffre est chaud, un coin jamais exploré à 0,7–1,8 km de la maison
+  // (change chaque jour) ; dans le nuage, la chance de coffre est doublée. Rien n'est envoyé : calculé sur le téléphone.
+  const CHEST_CLOUD = 350, CHEST_CLOUD_X = 2;
+  function chestCloud(){
+    try{
+      if (!game || !game.home || chestChance() <= 0) return null;
+      const day = dayKey(Date.now());
+      if (game.chestCloud && game.chestCloud.day === day) return game.chestCloud;
+      let x = 5; for (const c of "coffre" + day + (profile.walker || "")) x = (x * 31 + c.charCodeAt(0)) >>> 0;
+      const r = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296, h = game.home, cos = Math.cos(h.lat * Math.PI / 180);
+      const at = (p, d, a) => ({ lat: p.lat + d * Math.cos(a) / 111320, lon: p.lon + d * Math.sin(a) / (111320 * cos) });
+      let best = null, bestN = -1;
+      for (let i = 0; i < 30; i++){
+        const c = at(h, 700 + r() * 1100, r() * 2 * Math.PI); let n = 0;
+        for (let k = 0; k < 8; k++) if (!game.seen[cellOf(at(c, 220, k * Math.PI / 4))]) n++;
+        if (!game.seen[cellOf(c)]) n += 2;
+        if (n > bestN){ best = c; bestN = n; }
+      }
+      game.chestCloud = { day, lat: +best.lat.toFixed(5), lon: +best.lon.toFixed(5) }; saveGame();
+      return game.chestCloud;
+    }catch(e){ return null; }
+  }
+  const inChestCloud = q => { const c = chestCloud(); return !!(c && q && dist(q, c) < CHEST_CLOUD); };
+  const silverCloud = (layer, c, op) => [1, .75, .5].forEach(f => L.circle([c.lat, c.lon], { radius: CHEST_CLOUD * f, stroke:false, fillColor:"#b9c4cf", fillOpacity: op || .14, interactive:false }).addTo(layer));
   function chestChance(){
     if (!regular()) return 0;
     const d = (Date.now() - chestFrom()) / 86400000;
@@ -1870,7 +1950,7 @@
     el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir changé de chemin 🗺️</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el);
-    ding(); setTimeout(ding, 250); setTimeout(ding, 500);
+    fanfare();
     setTimeout(() => el.remove(), 6000);
   }
   const bonusThisMonth = () => (game.bonus && game.bonus[monthKey(Date.now())]) || 0;
@@ -1913,19 +1993,23 @@
     for (const c in game.seen){ const [i, j] = c.split(":").map(Number); if (inside(i, j)) seen++; }
     return { pct: Math.round(100 * seen / fogTotalCache.n), seen, total: fogTotalCache.n };
   }
-  let exploreFog = null, exploreMe = null;
-  function exploreCenter(fly){
+  let exploreFog = null, exploreMe = null, exploreCloud = null;
+  // v2.6 : un cran plus loin (zoom 15) ; la position GPS qui arrive ensuite ne recentre plus si on a déjà touché la carte (bug du 15/11)
+  let exploreTouched = false;
+  $("#map").addEventListener("pointerdown", () => { if (document.body.classList.contains("explore")) exploreTouched = true; }, true);
+  function exploreCenter(fly, markerOnly){
     const fallback = () => { const tr = getTraces(), last = tr.length ? decPoly(tr[tr.length - 1].s, 5) : []; return game.home || last[last.length - 1] || state.start; };
-    const put = (p, z) => {
+    exploreTouched = false;
+    const put = (p, move, z) => {
       if (!document.body.classList.contains("explore") || !p) return;
       if (exploreMe) exploreMe.setLatLng([p.lat, p.lon]);
       else exploreMe = L.marker([p.lat, p.lon], { icon: youIcon(), keyboard:false, interactive:false, zIndexOffset:1000 }).addTo(map);
-      map.setView([p.lat, p.lon], z || Math.max(map.getZoom(), 16), { animate: !!fly });
+      if (move && !markerOnly) map.setView([p.lat, p.lon], z || Math.max(map.getZoom(), 15), { animate: !!fly });
     };
-    put(fallback(), 16);
-    if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => put({ lat: pos.coords.latitude, lon: pos.coords.longitude }), () => {}, { enableHighAccuracy:true, maximumAge:30000, timeout:10000 });
+    put(fallback(), true, 15);
+    if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => put({ lat: pos.coords.latitude, lon: pos.coords.longitude }, !exploreTouched), () => {}, { enableHighAccuracy:true, maximumAge:30000, timeout:10000 });
   }
-  function openExplore(){
+  function openExplore(toHunt){
     try{ useTrack("🗺️ Carte d'exploration"); }catch(e){}
     ensureGame();
     if (!game.home && !getTraces().length){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
@@ -1936,11 +2020,18 @@
     setTimeout(() => {
       map.invalidateSize();
       const d = fogData(false); exploreFog = fogMake(d.lines, d.cells); fogs.add(exploreFog);
-      exploreCenter(false);
+      const hu = huntLive(), hz = hu && hu.lat != null ? huntCloud(hu) : null;
+      if (hz){ exploreCloud = L.layerGroup().addTo(map);
+        [1, .78, .56, .34].forEach(f => L.circle([hz.lat, hz.lon], { radius: HUNT_CLOUD * f, stroke:false, fillColor:"#e3b13d", fillOpacity:.12, interactive:false }).addTo(exploreCloud)); }
+      const cc = chestCloud(); if (cc){ exploreCloud = exploreCloud || L.layerGroup().addTo(map); silverCloud(exploreCloud, cc, .18); }
+      if (toHunt === "chest" && cc){ exploreCenter(false, true); try{ map.fitBounds(L.latLng(cc.lat, cc.lon).toBounds(CHEST_CLOUD * 2.4), { padding:[30, 30] }); }catch(e){} }
+      else if (toHunt === true && hz){ exploreCenter(false, true); try{ map.fitBounds(cloudBounds(hz), { padding:[30, 30] }); }catch(e){} }
+      else exploreCenter(false);
     }, 60);
   }
   function closeExplore(quiet){
     if (exploreFog){ fogs.delete(exploreFog); fogKill(exploreFog); exploreFog = null; }
+    if (exploreCloud){ map.removeLayer(exploreCloud); exploreCloud = null; }
     if (exploreMe){ map.removeLayer(exploreMe); exploreMe = null; }
     if (!document.body.classList.contains("explore")) return;
     document.body.classList.remove("explore"); map.options.touchZoom = map.options.scrollWheelZoom = map.options.doubleClickZoom = true;
@@ -1985,6 +2076,23 @@
     if (!o[r.w] || (o[r.w].date || 0) < r.e){ o[r.w] = Object.assign({ date: r.e }, r.g); store.set(OTHERS_KEY, o); }
   }
 
+  // 📊 Roxy en chiffres (v2.6) : carnet de ce téléphone (balades non annulées), « pas de chien » ≈ 4 pattes, ~0,4 m par pas
+  const KM_PLACES = [[1, "le tour d'un stade… 2 fois et demie"], [5, "la traversée de Paris"], [20, "un marathon à moitié"], [42, "un marathon"], [100, "Paris – Chartres"], [200, "Paris – Reims… et retour"], [465, "Paris – Lyon"], [775, "Paris – Marseille"], [1000, "Paris – Barcelone"], [1500, "Paris – Rome"]];
+  function roxyNumbers(){
+    const all = getLog().filter(e => !e.void && e.min >= 2), me = (profile.walker || "").toLowerCase(), mine = all.filter(e => (e.walker || "").toLowerCase() === me);
+    if (!all.length) return "";
+    const km = all.reduce((n, e) => n + (e.m || 0), 0) / 1000, pas = Math.round(km * 1000 / 0.4 * 4);
+    const near = KM_PLACES.filter(x => x[0] <= km).pop(), nxt = KM_PLACES.find(x => x[0] > km);
+    const by = (f) => { const c = {}; mine.forEach(e => { const k = f(new Date(e.date)); c[k] = (c[k] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1])[0]; };
+    const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+    const hr = by(d => d.getHours()), dy = by(d => d.getDay());
+    const mo = (() => { const c = {}; mine.forEach(e => { const k = e.date.slice(0, 7); c[k] = (c[k] || 0) + (e.m || 0); }); const t = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; return t ? [new Date(+t[0].slice(0, 4), +t[0].slice(5, 7) - 1, 15).toLocaleDateString("fr-FR", { month:"long", year:"numeric" }), t[1] / 1000] : null; })();
+    const f1 = v => v.toFixed(v < 10 ? 1 : 0).replace(".", ",");
+    return `<div class="nums"><div class="flabel" style="margin-top:0">📊 ${DOG} en chiffres</div>
+      <div class="ngrid"><div><b>${f1(km)} km</b><span>depuis le début</span></div><div><b>${pas.toLocaleString("fr-FR")}</b><span>pas de chien 🐾</span></div><div><b>${all.length}</b><span>balade${all.length > 1 ? "s" : ""}</span></div></div>
+      <p>${near ? `🗺️ C'est déjà <b>${esc(near[1])}</b> !` : "🗺️ Les premiers kilomètres…"}${nxt ? ` Prochain cap : ${esc(nxt[1])} (${nxt[0]} km).` : ""}</p>
+      ${mine.length ? `<p>🙋 <b>Toi</b> : ${hr ? `heure préférée <b>${hr[0]} h</b>` : ""}${dy ? ` · jour le plus actif : <b>${DAYS[dy[0]]}</b>` : ""}${mo ? ` · mois record : <b>${esc(mo[0])}</b> (${f1(mo[1])} km)` : ""}</p>` : ""}</div>`;
+  }
   function renderProg(){
     ensureGame();
     const sea = ensureSeason(), lv = levelOf(game.total), fog = fogStats();
@@ -1993,9 +2101,10 @@
     const lineOf = (name, g, when) => `<div class="entry"><div><h4>${esc(name)} · ${LEVELS[g.l] ? LEVELS[g.l][1] : ""}</h4><div class="when">📖 album ${g.a} % · 🏆 ${g.tr} trophée${g.tr > 1 ? "s" : ""} · 🗺️ ${g.c} coins${g.f ? ` · 🌫️ ${g.f} %` : ""}${when ? ` · ${when}` : ""}</div></div><div class="dur">${LEVELS[g.l] ? LEVELS[g.l][1].split(" ")[0] : ""}</div></div>`;
     const recP = store.get("wouaf-record", null);
     $("#v-prog").innerHTML = `<h2 class="ptitle">🏆 Mes progrès</h2>
+      ${roxyNumbers()}
       <div class="entry" style="margin-bottom:10px"><div><h4>🏅 Record du mois : ${recP ? `${fmtMin(recP.min)} par ${esc(recP.walker)}` : "pas encore"}</h4><div class="when">Battre le record = +${RECORD_CS} clebsous · repart de zéro le 1er du mois</div></div></div>
       <div class="wallet">
-        <div style="font-size:13px;opacity:.9">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
+        <div style="font-size:14px">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
         <div class="big" style="font-size:30px">${lv.name}</div>
         <div class="bar"><i style="width:${lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100}%"></i></div>
         <div class="lvl">🪙 ${fmtCs(game.total / CS)} gagnés depuis le début${lv.next ? ` · encore ${fmtCs((lv.next[0] - game.total) / CS)} pour ${lv.next[1]} 🎁` : " · niveau max !"}</div>
@@ -2145,7 +2254,8 @@
   const PUSH_API = "https://wouaf-notifs.6fgbcr2vtp.workers.dev";
   const RAP_KEY = "wouaf-rappels";
   const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9-]/g, "");
-  let rap = Object.assign({ id: newId(), on:false, sched: [0,1,2,3,4,5,6].map(i => i === 0 || i === 6 ? ["10:00", "18:00"] : ["07:30", "17:30"]) }, store.get(RAP_KEY, {}));
+  let rap = Object.assign({ id: newId(), on:false, sched: [0,1,2,3,4,5,6].map(i => i === 0 || i === 6 ? ["10:00", "18:00"] : ["07:30", "17:30"]), cours: [0,1,2,3,4,5,6].map(() => ["", ""]), vac:false }, store.get(RAP_KEY, {}));
+  if (!Array.isArray(rap.cours) || rap.cours.length !== 7) rap.cours = [0,1,2,3,4,5,6].map(() => ["", ""]);
   store.set(RAP_KEY, rap);
   const isHomeScreen = () => !!(navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches));
   const b64ToBytes = s => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), c => c.charCodeAt(0)); };
@@ -2165,7 +2275,7 @@
     let sub = await reg.pushManager.getSubscription();
     try{ if (sub && sub.options && sub.options.applicationServerKey && bytesTo64(sub.options.applicationServerKey) !== key){ await sub.unsubscribe(); sub = null; } }catch(e){}
     if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey: b64ToBytes(key) });
-    const r = await api("/register", { id: rap.id, sub: sub.toJSON(), sched: rap.sched, walker: profile.walker || "", state: pushStateData() });
+    const r = await api("/register", { id: rap.id, sub: sub.toJSON(), sched: rap.sched, cours: rap.cours, vac: !!rap.vac, walker: profile.walker || "", state: pushStateData() });
     if (!r.ok) throw new Error("register " + r.status);
   }
   let lastPush = 0;
@@ -2192,11 +2302,21 @@
       <div class="rap"><span></span><span class="h">Matin</span><span class="h">Après-midi / soir</span>
         ${days.map(d => `<b>${names[d]}</b><input type="time" data-d="${d}" data-s="0" value="${rap.sched[d][0]}" aria-label="${names[d]} matin"><input type="time" data-d="${d}" data-s="1" value="${rap.sched[d][1]}" aria-label="${names[d]} soir">`).join("")}
       </div>
+      <div class="flabel" style="margin-top:14px">🎒 Mes heures de cours</div>
+      <p class="howto" style="margin-top:2px">Aucune notification pendant les cours. Un rappel prévu pendant un cours arrive à la fin du cours.</p>
+      <div class="rap"><span></span><span class="h">Début</span><span class="h">Fin</span>
+        ${[1, 2, 3, 4, 5, 6].map(d => `<b>${names[d]}</b><input type="time" data-c="${d}" data-s="0" value="${rap.cours[d][0]}" aria-label="${names[d]} début des cours"><input type="time" data-c="${d}" data-s="1" value="${rap.cours[d][1]}" aria-label="${names[d]} fin des cours">`).join("")}
+      </div>
+      <label class="vacsw"><input type="checkbox" id="rapVac" ${rap.vac ? "checked" : ""}> 🏖️ Vacances scolaires : pas de cours</label>
       <div class="btns"><button id="rapOn">${rap.on ? "Enregistrer" : "🔔 Activer les rappels"}</button>
         ${rap.on ? `<button class="ghost" id="rapTest">Envoyer un essai</button><button class="ghost" id="rapOff">Couper les rappels</button>` : ""}
         <button class="ghost" id="rapClose">Fermer</button></div><p id="rapMsg" role="status"></p>`);
     const msg = t => { $("#rapMsg").textContent = t; };
-    const read = () => document.querySelectorAll(".rap input").forEach(i => { rap.sched[+i.dataset.d][+i.dataset.s] = i.value || ""; });
+    const read = () => {
+      document.querySelectorAll(".rap input[data-d]").forEach(i => { rap.sched[+i.dataset.d][+i.dataset.s] = i.value || ""; });
+      document.querySelectorAll(".rap input[data-c]").forEach(i => { rap.cours[+i.dataset.c][+i.dataset.s] = i.value || ""; });
+      rap.vac = !!($("#rapVac") && $("#rapVac").checked); store.set(RAP_KEY, rap);
+    };
     $("#rapClose").onclick = closeSheet;
     $("#rapOn").onclick = async () => {
       read();
@@ -2291,6 +2411,7 @@
       store.set("wouaf-record", j.record || null);
       if (j.explo) store.set("wouaf-explo", j.explo);
       if (j.fam) store.set("wouaf-fam", j.fam);
+      if (j.paid && profile.walker){ const mine = j.paid[String(profile.walker).toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30)]; store.set("wouaf-paid", mine || {}); }
       syncHunt();
       return true;
     }
@@ -2609,6 +2730,8 @@
     document.querySelectorAll("[data-lot]").forEach(b => b.onclick = () => {
       const k = b.dataset.lot;
       if (k === "duel") return sheetDuels();
+      if (k === "chest" && chestCloud()){ toast("☁️ Le coffre est chaud : va vers le nuage argenté, tes chances y sont doublées !", 4000); return openExplore("chest"); }
+      if (k === "hunt" && huntLive() && game.home){ return openExplore(true); }
       if (k === "hunt" || k === "chest") return sheetBonus();
       const rec = store.get("wouaf-record", null);
       openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${esc(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
@@ -2777,6 +2900,43 @@
 
   // 🗺️ carte de la guerre des rues : mes rues, ses rues, sans brouillard
   let duelMap = null;
+  // 🔥 Carte de chaleur (v2.6) : seulement les balades de ce promeneur, seulement sur ce téléphone (rien n'est envoyé)
+  let heatMap = null, heatOpt = { per:"all", lay:{ tr:1, p:1, c:1, d:1, t:1 } };
+  const HEAT_PIN = { p:["💧", "Pipi"], c:["💩", "Caca"], d:["🐕", "Copains"], t:["🏴‍☠️", "Trésors"] };
+  function myTraces(){
+    const me = (profile.walker || "").toLowerCase(), all = getTraces();
+    return all.filter(t => !t.w || t.w.toLowerCase() === me);   // les anciens chemins (sans prénom) comptent pour ce téléphone
+  }
+  function heatData(per){
+    const today = dayNum(), lim = per === "wk" ? 7 : per === "mo" ? 30 : 1e9;
+    const tr = myTraces().filter(t => today - t.d < lim), cells = new Set(), lines = [], pins = [];
+    for (const t of tr){ const pts = decPoly(t.s, 5); if (pts.length < 2) continue; lines.push(pts.map(q => [q.lat, q.lon])); pts.forEach(q => cells.add(cellOf(q))); (t.p || []).forEach(x => pins.push(x)); }
+    return { n: tr.length, lines, pins, km2: cells.size * 0.0095 };
+  }
+  function sheetHeat(){
+    try{ useTrack("🔥 Carte de chaleur"); }catch(e){}
+    const o = heatOpt, d = heatData(o.per);
+    const chip = (k, on, txt) => `<button type="button" class="${on ? "on" : ""}" data-h="${k}">${txt}</button>`;
+    openSheet(`<h2>🔥 Ma carte de chaleur</h2>
+      <p class="howto" style="margin-top:0">Seulement tes balades, seulement sur ce téléphone : personne d'autre ne la voit.</p>
+      <div class="chips heatc">${chip("per:wk", o.per === "wk", "7 jours")}${chip("per:mo", o.per === "mo", "30 jours")}${chip("per:all", o.per === "all", "Depuis le début")}</div>
+      <div class="chips heatc">${chip("lay:tr", o.lay.tr, "🐾 Chemins")}${Object.entries(HEAT_PIN).map(([k, [ic, n]]) => chip("lay:" + k, o.lay[k], ic + " " + n)).join("")}</div>
+      <div id="hmap" style="height:50vh;border-radius:14px;overflow:hidden"></div>
+      <p class="heatT">🗺️ Ton territoire : <b>${d.km2 < 1 ? d.km2.toFixed(2).replace(".", ",") : d.km2.toFixed(1).replace(".", ",")} km²</b> · ${d.n} balade${d.n > 1 ? "s" : ""}</p>
+      <div class="btns"><button class="ghost" id="hmX">Fermer</button></div>`);
+    document.querySelectorAll("#sheet [data-h]").forEach(b => b.onclick = () => { const [g, v] = b.dataset.h.split(":"); if (g === "per") o.per = v; else o.lay[v] = o.lay[v] ? 0 : 1; sheetHeat(); });
+    $("#hmX").onclick = closeSheet;
+    try{ if (heatMap) heatMap.remove(); }catch(e){} heatMap = null;
+    if (!$("#hmap") || typeof L === "undefined") return;
+    heatMap = L.map("hmap", { zoomControl:true });
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", { maxZoom: 19, subdomains:"abc", attribution:"© OpenStreetMap" }).addTo(heatMap);
+    const all = [];
+    if (o.lay.tr) for (const ln of d.lines){ L.polyline(ln, { color:"#ff5a1f", weight:10, opacity:.16, lineCap:"round", lineJoin:"round", interactive:false }).addTo(heatMap); all.push(...ln); }
+    for (const x of d.pins){ if (!o.lay[x.k] || !HEAT_PIN[x.k]) continue;
+      L.marker([x.a, x.o], { icon: L.divIcon({ className:"hpin", html: HEAT_PIN[x.k][0], iconSize:[22, 22] }), interactive:false, keyboard:false }).addTo(heatMap); all.push([x.a, x.o]); }
+    if (all.length) heatMap.fitBounds(L.latLngBounds(all), { padding:[16, 16], maxZoom:16 }); else heatMap.setView(game.home ? [game.home.lat, game.home.lon] : [48.8566, 2.3522], 15);
+    setTimeout(() => { try{ heatMap.invalidateSize(); }catch(e){} }, 350);
+  }
   async function sheetDuelMap(du){
     const [a, b] = scoreOf(du);
     openSheet(`<h2>🗺️ Guerre des rues</h2><div class="dsc" id="dmSc">${a} – ${b}</div><p style="text-align:center;margin-top:0">🟧 tes rues · 🟪 celles de ${esc(otherN(du))}</p>
@@ -2932,6 +3092,8 @@
       <div class="mlist">
       ${li("muOuts", "🐾", "Dernières sorties", "")}
       ${li("muLog", "📒", "Carnet", "")}
+      ${li("muHeat", "🔥", "Carte de chaleur", "")}
+      ${li("muCop", "🐕", "Copains", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muToday", "📋", "Missions du jour", "")}
       ${li("muHelp", "❓", "Aide", "comment ça marche, règles, questions")}
@@ -2939,6 +3101,7 @@
       </div>
       <div class="micons">
       ${PUSH_API && !isTester() ? ic("muRap", "🔔", rap.on ? "Rappels ✓" : "Rappels") : ""}
+      ${ic("muSon", soundOn() ? "🔊" : "🔇", soundOn() ? "Sons" : "Sons coupés")}
       ${ic("muShort", "📲", "Raccourci")}
       ${ic("muWho", "👤", "Prénom")}
       ${PUSH_API && !isTester() ? ic("muPriv", "🔒", "Vie privée") : ""}
@@ -2950,11 +3113,14 @@
     go("muFog", openExplore);
     go("muDuel", () => isTester() ? duelPreview() : sheetDuels());
     go("muOuts", sheetOuts);
+    go("muHeat", sheetHeat);
+    go("muCop", sheetCopains);
     go("muLog", () => switchTab("log"));
     go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
     go("muRap", openRappels);
     go("muBonus", sheetBonus);
     go("muShort", sheetShortcut);
+    { const b = $("#muSon"); if (b) b.onclick = () => { setSound(!soundOn()); openMenu(); toast(soundOn() ? "🔊 Sons activés" : "🔇 Sons coupés"); }; }
     go("muTuto", () => showTuto(0, true));
     go("muToday", sheetToday);
     go("muHelp", sheetHelp);
@@ -3063,21 +3229,40 @@
       ${wm.eur ? `<div class="warnline">⚠️ Malus de la semaine : <b>−${fmtCs(wm.eur)}</b> (${esc(wm.text)})</div>` : ""}
       ${(game.perfect || {})[isoOf(new Date(ws0))] ? `<div class="party">🏆 <b>Semaine parfaite : 7 jours sur 7 !</b> +${Math.round(PERFECT_WEEK * CS)} 🪙</div>` : ""}`, party: !!(game.perfect || {})[isoOf(new Date(ws0))] || !!(rec && best) };
   }
+  // 💶 Paie à la semaine (v2.6, décidé le 15/11 ; remplace la paie du mois) : à la 1re ouverture d'une nouvelle semaine (lundi, journée de l'app),
+  // paie = ce que la tirelire a gagné depuis la paie d'avant (gains − malus + bonus + corrections, tous mois confondus). Le plafond reste mensuel.
+  // game.wkBase = { wk, cum } (total au début de la semaine) ; game.weeks[wk] = euros de la semaine ; game.reveal = « 100 clebsous = 1 € » déjà dévoilé.
+  function moneyAll(){
+    const ks = new Set([...Object.keys(game.money || {}), ...Object.keys(game.bonus || {}), ...Object.keys(game.adj || {}), ...Object.keys(game.malusEur || {})]);
+    let t = 0; ks.forEach(k => { t += moneyOf(k); }); return Math.round(t * 100) / 100;
+  }
+  const padK = k => String(k).split("-").map((x, i) => i ? x.padStart(2, "0") : x).join("-");   // « 2026-11-9 » → « 2026-11-09 » (tri et serveur)
+  const payWk = t => padK(weekKey(t));
+  const prevWeekKey = () => payWk(weekStart(Date.now()).getTime() - 3 * 86400000);
+  const weekLabel = wk => { const [y, mo, da] = padK(wk).split("-").map(Number), d = new Date(y, mo - 1, da, 12), e = new Date(d.getTime() + 6 * 86400000), o = { day:"numeric", month:"short" };
+    return `semaine du ${d.toLocaleDateString("fr-FR", o)} au ${e.toLocaleDateString("fr-FR", o)}`; };
+  function weekPayRoll(){
+    ensureGame(); if (isTester()) return null;
+    const cur = payWk(Date.now());
+    if (!game.wkBase){   // 1re fois : la semaine en cours démarre avec ce qu'elle a déjà gagné (balades du carnet de cette semaine)
+      const wk0 = weekStart(Date.now()).getTime(), mine = getLog().filter(e => !e.void && e.recap && e.recap.eu && new Date(e.date).getTime() >= wk0);
+      game.wkBase = { wk: cur, cum: Math.round((moneyAll() - mine.reduce((n, e) => n + e.recap.eu, 0)) * 100) / 100 }; saveGame(); return null;
+    }
+    if (game.wkBase.wk === cur) return null;
+    const wk = prevWeekKey(), all = moneyAll(), eur = Math.max(0, Math.round((all - game.wkBase.cum) * 100) / 100);
+    game.weeks = game.weeks || {}; game.weeks[wk] = eur; game.wkBase = { wk: cur, cum: all }; saveGame();
+    if (PUSH_API && profile.walker) api("/week-pay", { walker: profile.walker, wk, eur }).catch(() => {});
+    return { wk, eur };
+  }
   function paydayCardData(){
-    ensureGame();
-    if (isTester()) return null;
-    const k = prevMonthKey();
-    if (game.payShown === k) return null;
-    game.payShown = k; saveGame();
-    const eur = moneyOf(k);
-    if (!eur) return null;
+    const r = weekPayRoll(); if (!r || !r.eur) return null;
+    const first = !game.reveal; game.reveal = 1; saveGame();
+    const k = r.wk;
     return { party:true, html: `<div class="dc-ic">💶</div><h2>Jour de paie !</h2>
-      <p>En ${monthLabel(k)}, tu as gagné</p><div style="font-size:44px;font-weight:800;color:var(--accent)">${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</div>
-      <p style="margin-top:12px">🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>Ça te fait donc <b style="font-size:22px">${fmtEur(eur)}</b> ! 🎉</p>
-      <div class="btns"><button data-dg="payShare">📩 Envoyer au superviseur</button><button class="ghost" data-dg="payImg">📱 Mon mois avec ${DOG} en image</button></div>`,
-      bind: el => { const q = x => el.querySelector(`[data-dg="${x}"]`);
-        q("payShare").onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} };
-        q("payImg").onclick = () => monthCard(k); } };
+      <p>Cette ${esc(weekLabel(k))}, tu as gagné</p><div style="font-size:44px;font-weight:800;color:var(--accent)">${Math.round(r.eur * CS).toLocaleString("fr-FR")} 🪙</div>
+      <p style="margin-top:12px">${first ? "🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>" : ""}Ça te fait <b style="font-size:22px">${fmtEur(r.eur)}</b> ! 🎉</p>
+      <div class="btns"><button data-dg="payShare">📩 Envoyer au superviseur</button></div>`,
+      bind: el => { el.querySelector('[data-dg="payShare"]').onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} }; } };
   }
   // ❌ Balade annulée par le superviseur (POST /void) : le téléphone retire tous les gains de la balade (durée, bonus, défi, trésor, coffre),
   // la marque « annulée » dans le carnet et les sorties, ne la compte plus pour la série ni la semaine parfaite.
@@ -3220,7 +3405,7 @@
     return [
       { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle te parle dans sa bulle (touche-la pour une autre phrase) et elle adore les caresses : glisse ton doigt sur sa photo ❤️. Touche-la pour voir son humeur, sa forme et ton niveau.` },
       { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(MALUS_DAY)}</span></div></div>`,
-        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous à la fin du mois 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
+        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque lundi 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
       { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">👃 piste +${FLAIR_CS}</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span></div>`,
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
@@ -3239,7 +3424,7 @@
     const cs = v => Math.round(v * CS), full = tutoPages();
     return [
       { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
-      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! À la fin du mois, tes clebsous deviennent de vrais sous 💶.` },
+      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque lundi, tes clebsous de la semaine deviennent de vrais sous 💶.` },
       { pic: full[4].pic, h:"C'est parti !", t:`Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
   }
@@ -3268,10 +3453,12 @@
   const prevMonthKey = () => { const d = new Date(); return monthKey(new Date(d.getFullYear(), d.getMonth() - 1, 15).getTime()); };
   const monthLabel = k => { const [y, m] = k.split("-").map(Number); return new Date(y, m - 1, 15).toLocaleDateString("fr-FR", { month:"long", year:"numeric" }); };
   function payText(k){
+    if (k.length > 7){ const eur = (game.weeks || {})[k] || 0; return `💶 Paie de ${profile.walker || "Promeneur"} · ${weekLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}`; }
     const eur = moneyOf(k), cb = (game.bonus || {})[k] || 0;
     return `💶 Paie de ${profile.walker || "Promeneur"} · ${monthLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}${cb ? ` (dont ${fmtEur(cb)} de coffre${cb > CHEST_EUR ? "s" : ""})` : ""}`;
   }
   function offerPayday(then){
+    return false;   // v2.6 : paie à la semaine dans le « Quoi de neuf » (paydayCardData)
     ensureGame();
     const k = prevMonthKey();
     if (game.payShown === k || $("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;
@@ -3289,25 +3476,25 @@
     $("#payImg").onclick = () => monthCard(k);
     return true;
   }
-  // mois précédents dans la tirelire, avec « payé ✓ » marqué par le superviseur (code)
+  // semaines précédentes dans la tirelire (v2.6), avec « payé ✓ » : marqué par le superviseur (ici ou dans le tableau de bord), gardé sur le serveur
+  const paidW = wk => (game.paid || {})[wk] || ((store.get("wouaf-paid", {}) || {})[wk]);
   function payBox(){
-    const cur = monthKey(Date.now());
-    const ks = Object.keys(game.money || {}).concat(Object.keys(game.bonus || {})).filter((k, i, a) => k < cur && a.indexOf(k) === i).sort().reverse().slice(0, 6);
+    const ks = Object.keys(game.weeks || {}).sort().reverse().slice(0, 8);
     if (!ks.length) return "";
-    game.paid = game.paid || {};
-    return `<div class="flabel">Mois précédents</div><div class="props">${ks.map(k => `<div class="entry"><div><h4>${esc(monthLabel(k))} · ${Math.round(moneyOf(k) * CS).toLocaleString("fr-FR")} 🪙</h4><div class="when">${fmtEur(moneyOf(k))} · ${game.paid[k] ? "✓ payé le " + new Date(game.paid[k]).toLocaleDateString("fr-FR") : "⏳ à payer"}</div></div>${game.paid[k] || !PUSH_API ? "" : `<button class="ghost" data-pay="${k}">Payé ✓</button>`}</div>`).join("")}</div>`;
+    return `<div class="flabel">Paies des semaines</div><div class="props">${ks.map(k => { const eur = game.weeks[k], pd = paidW(k);
+      return `<div class="entry"><div><h4>${esc(weekLabel(k))} · ${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</h4><div class="when">${fmtEur(eur)} · ${pd ? "✓ payé le " + new Date(pd).toLocaleDateString("fr-FR") : eur ? "⏳ à payer" : "rien à payer"}</div></div>${pd || !eur || !PUSH_API ? "" : `<button class="ghost" data-pay="${k}">Payé ✓</button>`}</div>`; }).join("")}</div>`;
   }
   function bindPay(rerender){
     document.querySelectorAll("[data-pay]").forEach(b => b.onclick = () => {
       const k = b.dataset.pay;
-      openSheet(`<h2>Superviseur : paie de ${esc(monthLabel(k))}</h2><p>${esc(payText(k))}</p>
+      openSheet(`<h2>Superviseur : paie de la ${esc(weekLabel(k))}</h2><p>${esc(payText(k))}</p>
         ${supToken() ? "" : `<label for="payCode">Code superviseur</label><input id="payCode" type="password" inputmode="numeric" autocomplete="off">`}
         <div class="btns"><button id="payDo">✓ Marquer comme payé</button><button class="ghost" id="payNo">Annuler</button></div><p id="payMsg" role="status"></p>`);
       $("#payNo").onclick = closeSheet;
       $("#payDo").onclick = async () => {
         $("#payMsg").textContent = "Un instant…";
         try{
-          const r = await api("/check", supAuth($("#payCode") ? $("#payCode").value.trim() : ""));
+          const r = await api("/pay-mark", Object.assign(supAuth($("#payCode") ? $("#payCode").value.trim() : ""), { walker: profile.walker, wk: k, eur: (game.weeks || {})[k] || 0 }));
           if (!r.ok){ $("#payMsg").textContent = r.status === 403 ? "Code incorrect." : "Ça n'a pas marché, réessaie."; return; }
           game.paid = game.paid || {}; game.paid[k] = Date.now(); saveGame(); closeSheet(); rerender();
         }catch(e){ $("#payMsg").textContent = "Pas de connexion pour l'instant."; }
@@ -3315,12 +3502,18 @@
     });
   }
 
-
   // ---------- 🏴‍☠️ Trésor de la semaine ----------
   // Chaque lundi, un trésor caché à 2–3 km de la maison (le même pour toute la maison : tiré au sort avec la semaine).
   // On ne voit qu'une zone de 200 m ; UN SEUL gagnant : le premier de la maison à l'atteindre gagne 500 clebsous, en plus du plafond
   // (comme les coffres), puis le trésor disparaît pour tout le monde (Worker POST /treasure : « déjà trouvé »).
-  const HUNT_ZONE = 200, HUNT_FIRST = 500;
+  const HUNT_ZONE = 200, HUNT_FIRST = 500, HUNT_CLOUD = 600;
+  // ☁️ centre du nuage du trésor : décalé de 150 à 450 m du trésor, le même sur tous les téléphones (tiré avec la semaine)
+  function huntCloud(h){
+    let x = 11; for (const c of "nuage" + h.wk) x = (x * 31 + c.charCodeAt(0)) >>> 0;
+    const r = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const a = r() * 2 * Math.PI, d = 150 + r() * 300, cos = Math.cos(h.lat * Math.PI / 180);
+    return { lat: h.lat + d * Math.cos(a) / 111320, lon: h.lon + d * Math.sin(a) / (111320 * cos) };
+  }
   function weekHunt(){
     if (!game.home) return null;
     const wk = weekKey(Date.now());
@@ -3373,14 +3566,14 @@
       hu.gone = by || "Quelqu'un"; saveGame(); drawItems(); toast(`🏴‍☠️ ${hu.gone} a trouvé le trésor juste avant toi !`, 5000);
       return;
     }
-    hu.found = Date.now(); saveGame();
+    hu.found = Date.now(); saveGame(); addPin("t");
     gw.hunt = test ? 0 : HUNT_FIRST; persist(true); drawItems();
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
     el.innerHTML = `<div class="ce">🏴‍☠️</div><b>TRÉSOR DE LA SEMAINE !</b><span>${test ? "🧪 test : rien n'est compté" : `+${HUNT_FIRST} 🪙 en bonus dans ta tirelire`}</span><p style="opacity:.8;font-size:14px;margin-top:14px">Tu es le seul à l'avoir trouvé : il disparaît pour les autres !</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el); pocketOff(); confetti();
-    ding(); setTimeout(ding, 250); setTimeout(ding, 500);
+    fanfare();
     setTimeout(() => el.remove(), 6000);
   }
 
@@ -3630,8 +3823,13 @@
     };
     const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé le trésor de la semaine puis annulé sa balade : personne n'a été payé.
         <div class="btns" style="flex-direction:row;gap:8px;margin-top:6px"><button data-al="${a.id}" data-give="1" style="flex:1">Redonner ${HUNT_FIRST}</button><button class="ghost" data-al="${a.id}" style="flex:1">Ignorer</button></div></div>`).join("");
+    // 💶 paies de la semaine à verser (v2.6)
+    const toPay = []; for (const pw of j.pays || []) for (const wk in pw.w || {}){ const x = pw.w[wk]; if (x.eur > 0) toPay.push({ walker: pw.walker, wk, eur: x.eur, paid: x.paid }); }
+    toPay.sort((a, b) => (a.paid ? 1 : 0) - (b.paid ? 1 : 0) || b.wk.localeCompare(a.wk));
+    const payHTML = voidMode ? "" : `<div class="flabel">💶 Paies de la semaine</div>${toPay.length ? `<div class="props">${toPay.slice(0, 12).map(x => `<div class="entry"><div><h4>${esc(x.walker)} · ${fmtEur(x.eur)}</h4><div class="when">${esc(weekLabel(x.wk))} · ${Math.round(x.eur * CS).toLocaleString("fr-FR")} clebsous · ${x.paid ? "✓ versé le " + new Date(x.paid).toLocaleDateString("fr-FR") : "⏳ à verser"}</div></div>${x.paid ? "" : `<button data-pw="${esc(x.walker)}" data-wk="${x.wk}" data-eur="${x.eur}">Versé ✓</button>`}</div>`).join("")}</div>` : `<p class="howto">La paie de chaque semaine arrive ici le lundi, quand le promeneur ouvre l'app.</p>`}`;
     openSheet(`<h2>${voidMode ? "❌ Annuler une balade" : "📊 Tableau de bord"}</h2>
       ${alerts}
+      ${payHTML}
       ${voidMode ? `<p class="howto">Choisis la balade à annuler (bouton ❌). Le téléphone du promeneur retirera ses gains à sa prochaine ouverture.</p>` : ""}
       ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
       ${(j.duels || []).length ? `<div class="flabel">⚔️ Duels</div><div class="props">${j.duels.map(d => `<div class="entry"><div><h4>${esc(d.from)} contre ${esc(d.to)} · ${d.score ? `${d.score.a} – ${d.score.b}` : "en attente"}</h4><div class="when">${DUEL_TYPE[d.type]} · ${d.days} j${d.stake ? ` · mise ${d.stake}` : ""}${d.end ? ` · fin le ${new Date(d.end + "T12:00:00").toLocaleDateString("fr-FR")}` : ""}</div></div><button class="ghost" data-dcan="${d.id}">Annuler</button></div>`).join("")}</div>` : ""}
@@ -3641,6 +3839,9 @@
     $("#dsClose").onclick = closeSheet;
     document.querySelectorAll("[data-al]").forEach(b => b.onclick = async () => {
       try{ const r = await api("/alert-resolve", Object.assign({}, auth, { id: b.dataset.al, give: !!b.dataset.give })); if (r.ok) openDash(auth, voidMode); }catch(e){}
+    });
+    document.querySelectorAll("[data-pw]").forEach(b => b.onclick = async () => {
+      b.disabled = true; try{ const r = await api("/pay-mark", Object.assign({}, auth, { walker: b.dataset.pw, wk: b.dataset.wk, eur: +b.dataset.eur })); if (r.ok){ toast("💶 Noté : versé ✓"); openDash(auth, voidMode); } else b.disabled = false; }catch(e){ b.disabled = false; }
     });
     document.querySelectorAll("[data-dcan]").forEach(b => b.onclick = async () => { try{ const r = await api("/duel-admin", Object.assign({}, auth, { id: b.dataset.dcan })); if (r.ok) openDash(auth, voidMode); }catch(e){} });
     document.querySelectorAll("[data-void]").forEach(b => b.onclick = () => openVoidForm(auth, b.dataset.w, +b.dataset.void, b.parentElement.textContent.replace("❌ Annuler", "").trim(), voidMode));
@@ -3746,8 +3947,10 @@
     openSheet(`<h2>Pendant la balade</h2><div class="btns">
       <button id="mPocket" style="padding:16px;font-size:16px">🌙 Mode poche (écran noir, la balade continue)</button>
       <button class="ghost" id="mDuo" style="padding:16px;font-size:16px">👯 On est à deux (+${DUO_PTS} 🪙 chacun)${gw && (gw.duo || gw.duoPressed) ? " ✓" : ""}</button>
+      <button class="ghost" id="mSon" style="padding:16px;font-size:16px">${soundOn() ? "🔇 Couper les sons" : "🔊 Remettre les sons"}</button>
       <button class="ghost" id="mSos" style="padding:16px;font-size:16px;color:#c8452f">🆘 Alerte : envoyer ma position</button>
       <button class="ghost" id="mClose">Fermer</button></div>`);
+    $("#mSon").onclick = () => { setSound(!soundOn()); closeSheet(); toast(soundOn() ? "🔊 Sons activés" : "🔇 Sons coupés"); };
     $("#mPocket").onclick = () => { closeSheet(); $("#pocketBtn").click(); };
     $("#mDuo").onclick = () => { closeSheet(); $("#duoBtn").click(); };
     $("#mSos").onclick = () => { closeSheet(); setTimeout(() => $("#sosBtn").click(), 350); };
@@ -3918,7 +4121,7 @@
     setTimeout(() => {
       map.invalidateSize();
       if (!free) map.fitBounds(L.latLngBounds(p.line.map(q => [q.lat, q.lon])), { padding:[24,24] });
-      else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { if (state.walk && firstFix) map.setView([pos.coords.latitude, pos.coords.longitude], 17); }, () => {}, { enableHighAccuracy:true, maximumAge:60000, timeout:8000 });
+      else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { if (state.walk && firstFix) map.setView([pos.coords.latitude, pos.coords.longitude], 16); }, () => {}, { enableHighAccuracy:true, maximumAge:60000, timeout:8000 });
     }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
     t0 = Date.now(); walked = 0; setFollow(true); firstFix = !p.line.length; lastFix = null;
@@ -3965,7 +4168,7 @@
     if (!state.walk) return;
     const q = { lat: pos.coords.latitude, lon: pos.coords.longitude, t: Date.now(), a: pos.coords.accuracy || 0 };
     if (!youMarker || (firstFix && !state.walk.line.length)) showStart(q);
-    if (firstFix){ firstFix = false; map.setView([q.lat, q.lon], 17, { animate:false }); }
+    if (firstFix){ firstFix = false; map.setView([q.lat, q.lon], 16, { animate:false }); }
     if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
     if (followMap) map.panTo([q.lat, q.lon], { animate:true });
     lastFix = q;
@@ -4048,9 +4251,17 @@
   }
   map.on("zoomend", () => { if (state.walk && followMap && lastFix) map.panTo([lastFix.lat, lastFix.lon], { animate:false }); });
   map.on("dragstart", () => { if (state.walk){ setFollow(false); $("#recenter").hidden = false; } });
+  // ☁️ toucher la flèche du trésor = la carte montre le nuage doré (📍 pour revenir sur soi)
+  const cloudBounds = z => { const dy = HUNT_CLOUD / 111320, dx = HUNT_CLOUD / (111320 * Math.cos(z.lat * Math.PI / 180)); return L.latLngBounds([[z.lat - dy, z.lon - dx], [z.lat + dy, z.lon + dx]]); };
+  $("#wTreasure").addEventListener("click", () => {
+    const h = game && game.hunt; if (!h || h.found || h.gone || !state.walk) return;
+    setFollow(false); $("#recenter").hidden = false;
+    try{ map.flyToBounds(cloudBounds(huntCloud(h)), { padding:[30, 30], duration:.8 }); }catch(e){ try{ map.fitBounds(cloudBounds(huntCloud(h))); }catch(e2){} }
+    toast("☁️ Le trésor est quelque part sous le nuage doré. 📍 pour revenir sur toi.", 3500);
+  });
   $("#recenter").addEventListener("click", () => {
     setFollow(true); $("#recenter").hidden = true;
-    const t = lastFix || track[track.length - 1]; if (t) map.setView([t.lat, t.lon], Math.max(map.getZoom(), 16));
+    const t = lastFix || track[track.length - 1]; if (t) map.setView([t.lat, t.lon], Math.max(map.getZoom(), 15));
   });
 
   // 🪙 « +12 · 447 au total » : gagné pendant la balade (si elle dure 20 min) + la tirelire du mois
@@ -4081,9 +4292,9 @@
   function renderTreasure(q){
     const el = $("#wTreasure"), h = game && game.hunt;
     if (!q || !h || h.found || h.gone || h.wk !== weekKey(Date.now())){ el.hidden = true; return; }
-    const z = h.zlat != null ? { lat: h.zlat, lon: h.zlon } : h, d = dist(q, z);
-    if (d < (typeof HUNT_ZONE === "number" ? HUNT_ZONE : 200)){ el.innerHTML = `<span class="ar">🏴‍☠️</span><small>c'est ici !</small>`; el.hidden = false; return; }
-    el.innerHTML = `<span class="ar" style="transform:rotate(${Math.round(bearing(q, z))}deg)">⬆</span>🏴‍☠️<small>${fmtKm(d)}</small>`; el.hidden = false;
+    const z = huntCloud(h), d = dist(q, z);
+    if (d < HUNT_CLOUD){ el.innerHTML = `<span class="ar">☁️</span><small>il est dans le coin : fouille !</small>`; el.hidden = false; return; }
+    el.innerHTML = `<span class="ar" style="transform:rotate(${Math.round(bearing(q, z))}deg)">⬆</span>☁️🏴‍☠️<small>${fmtKm(d - HUNT_CLOUD)}</small>`; el.hidden = false;
   }
   function renderWLine(){
     const el = $("#wLine"); if (!el || !state.walk) return;
@@ -4128,6 +4339,7 @@
     m.hidden = false; clearTimeout(openRoxyMenu._t); openRoxyMenu._t = setTimeout(() => { m.hidden = true; }, 7000);
   }
   [["#rmP", "#needP"], ["#rmC", "#needC"], ["#rmPh", "#photoBtn"], ["#rmMore", "#moreBtn"]].forEach(([a, b]) => $(a).addEventListener("click", () => { $("#roxyMenu").hidden = true; $(b).click(); }));
+  $("#rmD").addEventListener("click", () => { $("#roxyMenu").hidden = true; sheetCopWalk(); });
   map.on("click", () => { $("#roxyMenu").hidden = true; });
   function wakeBar(){
     const w = $("#walkbar"); w.classList.remove("mini"); clearTimeout(miniT);
@@ -4213,6 +4425,70 @@
     $("#walkstats").innerHTML = `${chrono}<br>${left < 60 ? "Vous êtes presque arrivés 🐶" : `Reste ≈ ${fmtKm(left)} · ${fmtMin(left / M_PER_MIN)}`}`;
   }
 
+  // 📍 Repères de la balade (v2.6), gardés seulement sur ce téléphone avec le chemin : p pipi, c caca, d copain (n = id), t trésor
+  function addPin(k, extra){
+    if (!gw) return; const q = lastFix || track[track.length - 1]; if (!q) return;
+    gw.pins = gw.pins || []; gw.pins.push({ k, a: +q.lat.toFixed(5), o: +q.lon.toFixed(5), ...(extra || {}) });
+  }
+  // 🐕 Copains chiens (v2.6) : liste sur ce téléphone, un toucher pour noter une rencontre
+  const COP_KEY = "wouaf-copains";
+  const copains = () => store.get(COP_KEY, []);
+  function copMeet(id, withPin){
+    const l = copains(), c = l.find(x => x.id === id); if (!c) return;
+    c.c = (c.c || 0) + 1; c.last = Date.now(); store.set(COP_KEY, l);
+    if (withPin) addPin("d", { n: id });
+  }
+  function copAdd(name){
+    name = String(name || "").trim().slice(0, 30); if (!name) return null;
+    const l = copains(), old = l.find(x => x.n.toLowerCase() === name.toLowerCase()); if (old) return old.id;
+    const id = Date.now().toString(36); l.push({ id, n: name, c: 0, last: 0, note: "" }); store.set(COP_KEY, l); return id;
+  }
+  const copBtns = (cls) => copains().slice().sort((a, b) => (b.last || 0) - (a.last || 0)).map(c => `<button type="button" class="${cls}" data-cop="${c.id}">🐕 ${esc(c.n)}</button>`).join("");
+  // pendant la balade (menu de Roxy) : rencontre notée avec l'endroit
+  function sheetCopWalk(){
+    openSheet(`<h2>🐕 Un copain croisé ?</h2><div class="copl">${copBtns("ghost")}</div>
+      <form id="copF" class="copnew"><input id="copN" maxlength="30" placeholder="Nouveau copain : son nom" autocomplete="off"><button type="submit">Ajouter</button></form>
+      <div class="btns"><button class="ghost" id="copX">Fermer</button></div>`);
+    const done = (id, n) => { copMeet(id, true); persist(true); closeSheet(); ding(); toast(`🐕 ${n} noté !`, 1800); };
+    document.querySelectorAll("#sheet [data-cop]").forEach(b => b.onclick = () => done(b.dataset.cop, b.textContent.replace("🐕 ", "")));
+    $("#copF").onsubmit = e => { e.preventDefault(); const n = $("#copN").value.trim(); const id = copAdd(n); if (id) done(id, n); };
+    $("#copX").onclick = closeSheet;
+  }
+  // sur le récap : « Tu as croisé un copain ? » (sans endroit)
+  function copRecapBox(){
+    return `<div class="copbox"><b>🐕 Tu as croisé un copain ?</b><div class="copl">${copBtns("ghost")}</div>
+      <div class="copnew"><input id="copN2" maxlength="30" placeholder="Nouveau copain : son nom" autocomplete="off"><button type="button" id="copA2">Ajouter</button></div></div>`;
+  }
+  function bindCopRecap(){
+    const mark = b => { if (b.classList.contains("on")) return; b.classList.add("on"); copMeet(b.dataset.cop, false); b.textContent += " ✓"; };
+    document.querySelectorAll("#sheet .copbox [data-cop]").forEach(b => b.onclick = () => mark(b));
+    const a = $("#copA2"); if (a) a.onclick = () => { const n = $("#copN2").value.trim(), id = copAdd(n); if (!id) return;
+      $("#copN2").value = ""; const box = document.querySelector("#sheet .copbox .copl"); const ex = box.querySelector(`[data-cop="${id}"]`);
+      if (ex) return mark(ex);
+      const b = document.createElement("button"); b.type = "button"; b.className = "ghost"; b.dataset.cop = id; b.textContent = "🐕 " + n; box.prepend(b); b.onclick = () => mark(b); mark(b); };
+  }
+  // fiche des copains (menu ☰)
+  function sheetCopains(){
+    const l = copains().slice().sort((a, b) => (b.c || 0) - (a.c || 0));
+    openSheet(`<h2>🐕 Les copains de Roxy</h2>${l.length ? `<div class="copfiche">${l.map(c => `<button type="button" data-cop="${c.id}"><b>🐕 ${esc(c.n)}</b><span>${c.c || 0} rencontre${(c.c || 0) > 1 ? "s" : ""}${c.last ? " · vu " + new Date(c.last).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }) : ""}${c.note ? " · " + esc(c.note) : ""}</span></button>`).join("")}</div>` : `<p class="howto">Pas encore de copain. Pendant la balade, touche Roxy puis 🐕, ou note-le à la fin de la balade.</p>`}
+      <form id="copF" class="copnew"><input id="copN" maxlength="30" placeholder="Ajouter un copain" autocomplete="off"><button type="submit">Ajouter</button></form>
+      <div class="btns"><button class="ghost" id="copX">Fermer</button></div>`);
+    $("#copF").onsubmit = e => { e.preventDefault(); if (copAdd($("#copN").value)) sheetCopains(); };
+    document.querySelectorAll("#sheet .copfiche [data-cop]").forEach(b => b.onclick = () => sheetCopain(b.dataset.cop));
+    $("#copX").onclick = closeSheet;
+  }
+  function sheetCopain(id){
+    const c = copains().find(x => x.id === id); if (!c) return sheetCopains();
+    openSheet(`<h2>🐕 ${esc(c.n)}</h2><p>${c.c || 0} rencontre${(c.c || 0) > 1 ? "s" : ""}${c.last ? ` · dernière fois le ${new Date(c.last).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}` : ""}</p>
+      <form id="cpF"><label class="flabel" for="cpN">Nom</label><input id="cpN" maxlength="30" value="${esc(c.n)}">
+      <label class="flabel" for="cpT">Petite note</label><input id="cpT" maxlength="60" placeholder="ex. joue bien, grogne, berger du n° 12" value="${esc(c.note || "")}">
+      <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="cpDel" style="color:#c8452f">Supprimer</button><button type="button" class="ghost" id="cpBack">← Retour</button></div></form>`);
+    const save = l => store.set(COP_KEY, l);
+    $("#cpF").onsubmit = e => { e.preventDefault(); const l = copains(), x = l.find(y => y.id === id); if (x){ x.n = $("#cpN").value.trim().slice(0, 30) || x.n; x.note = $("#cpT").value.trim().slice(0, 60); save(l); } sheetCopains(); };
+    $("#cpDel").onclick = () => { if (!$("#cpDel").dataset.sure){ $("#cpDel").dataset.sure = 1; $("#cpDel").textContent = "Sûr ? Toucher encore"; return; } save(copains().filter(y => y.id !== id)); sheetCopains(); };
+    $("#cpBack").onclick = sheetCopains;
+  }
+
   // 💧 💩 Roxy a fait ses besoins (affiché dans le récap)
   function needsUI(){
     const n = (gw && gw.needs) || { p:0, c:0 };
@@ -4220,7 +4496,7 @@
     $("#needC").textContent = `💩 Caca${n.c ? " ✓" + (n.c > 1 ? n.c : "") : ""}`; $("#needC").classList.toggle("on", !!n.c);
   }
   [["#needP", "p", "💧 Pipi noté"], ["#needC", "c", "💩 Caca noté, pense au sac 😉"]].forEach(([id, k, msg]) => $(id).addEventListener("click", () => {
-    if (!gw) return; gw.needs = gw.needs || { p:0, c:0 }; gw.needs[k]++; needsUI(); toast(msg, 1800); persist(true);
+    if (!gw) return; gw.needs = gw.needs || { p:0, c:0 }; gw.needs[k]++; addPin(k); needsUI(); toast(msg, 1800); persist(true);
   }));
 
   // Photo du chien pendant la balade
@@ -4405,6 +4681,15 @@
     return `<div class="warnline">🪙 Moins de 15 min de vraie balade : celle-ci ne rapporte rien. Vise au moins 15 min, et plus c'est long, plus ça rapporte.</div>`;
   }
 
+  // 🥣 Rappels de soin (v2.6) : sans clebsous, on les touche pour les cocher. Pas de goutte d'eau (ça fait penser au pipi).
+  var TREAT_MIN = 45, HOT_C = 25;
+  function careBox(dur){
+    if (dur < 2) return "";
+    const l = [`<button type="button"><span>🥣</span>Elle a de l'eau dans sa gamelle ?<i>○</i></button>`];
+    if (wx && wx.t != null && wx.t >= HOT_C && Date.now() - (wx.at || 0) < 6 * 3600000) l[0] = `<button type="button"><span>🥣</span>Il fait ${wx.t}° : vérifie bien son eau !<i>○</i></button>`;
+    if (dur >= TREAT_MIN) l.push(`<button type="button"><span>🦴</span>Grosse balade : une petite friandise, elle l'a méritée !<i>○</i></button>`);
+    return `<div class="care">${l.join("")}</div>`;
+  }
   function showRecapSheet(r, files, title, res, moneyMin){
     const dur = (r.e - r.s) / 60;
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
@@ -4419,12 +4704,17 @@
         ${r.f ? `<div><b>${res && !res.short ? res.cells : "—"}</b><span>rue${res && res.cells > 1 ? "s" : ""} neuve${res && res.cells > 1 ? "s" : ""}</span></div>` : `<div><b>${r.cov != null ? r.cov + " %" : "—"}</b><span>du parcours suivi</span></div>`}
         <div><b>${fmtMin(Math.max(0, dur - r.gm))}</b><span>de suivi GPS</span></div>
       </div>
+      ${careBox(dur)}
+      ${res && res.needs && res.needs.p ? `<p class="terr">💧 Roxy a marqué <b>${res.needs.p} territoire${res.needs.p > 1 ? "s" : ""}</b> aujourd'hui !</p>` : ""}
+      ${dur >= 2 ? copRecapBox() : ""}
       ${r.gm > 1 ? `<div class="warnline">📡 Le GPS a été en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé).</div>` : ""}
       ${partyBox(r, res)}
       ${moneyBox(r, moneyMin)}
       ${(files || []).length > 1 ? `<div class="thumbs">${thumbs}</div>` : !(files || []).length ? `<p class="howto">Pas de photo cette fois. La prochaine fois, touche 📷 pendant la balade.</p>` : ""}
       <div class="btns"><button id="sendRecap">📩 Envoyer au superviseur</button><button class="ghost" id="closeRecap">Fermer</button></div>`);
     $("#sendRecap").onclick = async () => { await shareRecap(r, files); };
+    document.querySelectorAll("#sheet .care button").forEach(b => b.onclick = () => { b.classList.add("ok"); b.disabled = true; b.querySelector("i").textContent = "✓"; });
+    if (dur >= 2){ setTimeout(bark, 250); bindCopRecap(); }
     if (res && (res.levelUp || res.album || res.chest || (res.trophies || []).length)) setTimeout(confetti, 300);
     $("#closeRecap").onclick = closeSheet;
   }
@@ -4513,7 +4803,7 @@
         </div>
         ${r.gm > 1 ? `<div class="warnline">📡 GPS en pause ${fmtMin(r.gm)} (app quittée ou écran verrouillé) : le trajet peut avoir des trous.</div>` : ""}
         <p style="margin:8px 0 0">${r.pp ? "💧 Pipi ✓" : "💧 Pipi : pas noté"} · ${r.cc ? "💩 Caca ✓" : "💩 Caca : pas noté"}</p>
-        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : (r.t ? esc(r.t) : "Parcours guidé")} · <span style="color:#2a7de1">━ trajet réel</span>${r.pl ? ` · <span style="color:#999">┅ parcours prévu</span>` : ""}</p>
+        <p style="font-size:13px;color:var(--muted);margin:8px 0 0">${r.f ? "Sans parcours prévu" : (r.t ? esc(r.t) : "Parcours guidé")} · <span style="color:#2a7de1">━ trajet réel</span>${r.pl ? ` · <span style="color:var(--muted)">┅ parcours prévu</span>` : ""}</p>
         <button class="ghost" id="backApp" style="margin-top:12px;width:100%">🐾 Ouvrir Wouaf Balades</button>
       </div>`;
     $("#backApp").onclick = () => { history.replaceState(null, "", location.pathname); showRecapPage(); layers.sel.clearLayers(); if (state.start) showStart(state.start); };
@@ -4876,11 +5166,21 @@
     g.strokeStyle = nuit ? "rgba(243,239,230,.55)" : "rgba(255,206,110,.85)"; g.lineWidth = 2.2; g.lineJoin = g.lineCap = "round";
     try{ for (const t of getTraces()){ const pts = decPoly(t.s, 5); if (pts.length < 2) continue; g.beginPath(); pts.forEach((p, i) => { const [x, y] = XY(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); } }catch(e){}
     const hu = huntLive();
-    if (hu && hu.zlat != null){ const [x, y] = XY({ lat: hu.zlat, lon: hu.zlon });
-      if (x > 0 && x < W && y > 0 && y < H){ g.font = "18px system-ui"; g.textAlign = "center"; g.fillText("🏴‍☠️", x, y + 6); } }
+    const hz = hu && hu.lat != null ? huntCloud(hu) : null, cc = chestCloud();
+    if (cc){ const [x, y] = XY(cc);
+      if (x > -40 && x < W + 40 && y > -40 && y < H + 40){
+        const [x2] = XY({ lat: cc.lat, lon: cc.lon + CHEST_CLOUD / (111320 * Math.cos(cc.lat * Math.PI / 180)) }), rr = Math.max(12, Math.abs(x2 - x));
+        const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(200,210,220,.45)"); gr.addColorStop(1, "rgba(200,210,220,0)");
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 2 * Math.PI); g.fill(); g.font = "16px system-ui"; g.textAlign = "center"; g.fillText("💰", x, y + 5); } }
+    if (hz){ const [x, y] = XY(hz);
+      if (x > -40 && x < W + 40 && y > -40 && y < H + 40){
+        const [x2] = XY({ lat: hz.lat, lon: hz.lon + HUNT_CLOUD / (111320 * Math.cos(hz.lat * Math.PI / 180)) }), rr = Math.max(14, Math.abs(x2 - x));
+        const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(227,177,61,.42)"); gr.addColorStop(1, "rgba(227,177,61,0)");
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 2 * Math.PI); g.fill();
+        g.font = "18px system-ui"; g.textAlign = "center"; g.fillText("🏴‍☠️", x, y + 6); } }
     dog.style.display = ""; dog.style.left = cx + "px"; dog.style.top = cy + "px"; dog.style.backgroundImage = `url(${avatar()})`;
     try{ $("#miniPct").textContent = game.home ? `${fogStats().pct} %` : ""; }catch(e){}
-    $("#miniTr").textContent = hu && hu.lat != null ? `${arrowTo(c, hu)} 🏴‍☠️ ${fmtKm(dist(c, hu))}` : "";
+    $("#miniTr").textContent = hz ? `${arrowTo(c, hz)} ☁️🏴‍☠️ ${fmtKm(Math.max(0, dist(c, hz) - HUNT_CLOUD))}` : "";
   }
   // la mini-carte prend toute la place qui reste : l'accueil remplit l'écran sans défiler
   function fitHome(){
@@ -4904,7 +5204,7 @@
     try{ drawMiniMap(); }catch(e){}
   }
   new MutationObserver(setNuit).observe(document.body, { attributes:true, attributeFilter:["class"] }); setNuit();
-  $("#miniMap").addEventListener("click", () => { try{ openExplore(); }catch(e){} });
+  $("#miniMap").addEventListener("click", e => { try{ openExplore(!!(e.target && e.target.closest && e.target.closest("#miniTr") && huntLive())); }catch(err){} });
 
   // ---------- 🌤️ Météo sur l'accueil (v2.4, Open-Meteo, coordonnées arrondies de la maison) ----------
   var wx = store.get("wouaf-meteo", null);
@@ -4956,7 +5256,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Caviar" };
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5070,8 +5370,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 39, APP_LABEL = "2.5";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 40, APP_LABEL = "2.6";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    40: [
+      "💶 La paie tombe maintenant chaque lundi ! Et à la fin d'une balade : 🥣 de l'eau pour Roxy, 🐕 tes copains chiens, et des petits sons (🔇 dans le menu).",
+      "☁️ Le trésor est caché sous un nuage doré, et quand le coffre est chaud, un nuage argenté te montre où tes chances sont doublées.",
+      "🔥 Ta carte de chaleur et 📊 Roxy en chiffres (menu ☰ et Progrès). 🎒 Mets tes heures de cours dans Mes rappels : pas de notification en classe."
+    ],
     39: [
       "🌙 Nouvel accueil, plus sobre : le doré n'apparaît que quand il y a un gros lot à prendre.",
       "👑 La couronne grise sur Roxy, c'est celle à aller chercher : touche-la pour le classement. 🎯 = tes objectifs du jour.",
@@ -5136,7 +5441,7 @@
     26: [
       "💧 💩 Pendant la balade, note quand Roxy a fait ses besoins : ça apparaît dans le récap.",
       "📸 « Montre-moi Roxy ! » : une photo demandée pendant la balade rapporte +5 🪙. Et sous la pluie, bonus courage ×1,5 🌧️.",
-      "💶 Le 1er du mois, c'est jour de paie : surprise !"
+      "💶 Chaque lundi, c'est jour de paie : surprise !"
     ],
     25: [
       "🎁 Le bouton « C'est parti » montre maintenant ce que tu peux gagner avec les bonus, et combien de fois plus en marchant plus longtemps.",
@@ -5157,7 +5462,7 @@
     ],
     21: [
       "🪙 Une seule monnaie : les clebsous. La durée de la balade, les objets ramassés 🦴 🎾 🍖 ⭐, les rues jamais faites et le défi du jour : tout rapporte des clebsous.",
-      "💶 À la fin du mois, tes clebsous deviennent de vrais sous.",
+      "💶 Chaque lundi, tes clebsous de la semaine deviennent de vrais sous.",
       "🎁 Les niveaux de Roxy, l'album et les accessoires avancent avec les clebsous gagnés."
     ],
     20: [
@@ -5266,7 +5571,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; } };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

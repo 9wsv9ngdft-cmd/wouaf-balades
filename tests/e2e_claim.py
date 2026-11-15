@@ -7,7 +7,7 @@ FAILS = []
 def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','39');localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Éric'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','40');localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Éric'}));}"
 local_api("GET", "/__wipe")
 errs = []
 with sync_playwright() as pw:
@@ -26,7 +26,7 @@ with sync_playwright() as pw:
     r = local_api("POST", "/dash", json.dumps({"token": A.evaluate("__wouaf.supToken()")}).encode())
     check("l'ancien téléphone perd la main", r[0] == 403 if isinstance(r, tuple) else True, r)
     # 3e téléphone : tape « Éric » → refusé → champ code dans la même fiche
-    bC, cC, C = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','39');")
+    bC, cC, C = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','40');")
     C.emulate_media(color_scheme="dark"); open_app(C, 2000)
     C.evaluate("__wouaf.askProfile()"); C.fill("#wName", "Éric")
     col = C.evaluate("(()=>{const s=getComputedStyle(document.querySelector('#wName'));return [s.color,s.backgroundColor]})()")
