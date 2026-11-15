@@ -407,3 +407,14 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - ☰ Menu : liste sur deux colonnes (tient sur un écran avec Carte de chaleur et Copains), icône 🔊 Sons.
 - Pas dans cette version (décidé le 15/11) : planning et « je ne peux pas » (chaque ado doit sortir Roxy chaque jour : le relais n'a pas de sens).
 - Tests : `tests/e2e_v26.py` (navigateur), `tests/worker.test.mjs` (cours, paies). Les tests ouvrent l'app avec `wouaf-vu` = 40.
+
+## Version 2.7 « Croquette » (APP_NUM 41, décidé le 15/11 entre 10 h 17 et 10 h 24 : PLAN-v41-nuages dans le projet)
+- 🐛 **Carte d'exploration vide** (écran blanc + barre verte : on croyait que la balade démarrait) : la règle `body:not(.hasmap)… #map{display:none}` la cachait ;
+  corrigé par `body.explore #map{display:block !important}`. Touchers mini-carte, Roxy de la mini-carte, tuiles trésor/coffre → exploration visible.
+- ☁️ **Nuages** sur les deux cartes (balade et exploration) : `FOG_COLOR` = blanc doux #f3f4f1 ; zones peintes dans la même toile (`FogCanvas._draw`, `fogZones`) :
+  **doré** = trésor (`huntCloud`, 600 m), **argenté** = coffre chaud (`chestCloud`, 350 m), dégradé radial ; tout s'efface le long des chemins.
+  Plus de cercles à part (halos de la 2.6 retirés). **En balade, tout ce qui a déjà été fait reste visible** (`fogData(false, …)`), comme en exploration.
+  Pattes 🐾 avec ombre foncée, trajet en pointillés bruns (lisibles sur le blanc).
+- 🐛 **Appui long sur « Fini »** : plus de texte sélectionné sur le récap (`#walkbar` sans sélection, `body.nosel` pendant que le doigt est posé, sélection effacée).
+- Tests : `tests/e2e_realmap.py` avec la **vraie** carte Leaflet 1.9.4 (construite par `tests/build-leaflet.sh` : clone GitHub + `bun build`) : mini-carte,
+  exploration visible, pixels du nuage (blanc, doré, chemin découvert), tuile trésor, Fini en appui long. Les autres tests gardent le faux Leaflet.
