@@ -197,3 +197,19 @@ test("💶 paie de la semaine (v2.6) : le téléphone l'annonce, le superviseur 
   await api.post("/reset", { code:"1234" });
   assert.deepEqual((await api.get("/pause")).j.paid, {});
 });
+
+test("trésor placé à la main (v43) : superviseur seulement, renvoyé par /pause, effacé par « automatique » et par la remise à zéro", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  assert.equal((await api.post("/hunt-move", { wk: "2026-11-16", lat: 48.85, lon: 2.35 })).status, 403);          // pas superviseur
+  assert.equal((await api.post("/hunt-move", { token: j.token, wk: "lundi", lat: 48.85, lon: 2.35 })).status, 400);
+  assert.equal((await api.post("/hunt-move", { token: j.token, wk: "2026-11-16", lat: 91, lon: 2.35 })).status, 400);
+  const m = await api.post("/hunt-move", { token: j.token, wk: "2026-11-16", lat: 48.8512345678, lon: 2.35 });
+  assert.equal(m.status, 200); assert.equal(m.j.hpos.lat, 48.851235);
+  assert.equal((await api.get("/pause")).j.hpos.wk, "2026-11-16");
+  assert.equal((await api.post("/hunt-move", { code: "1234", clear: 1 })).j.hpos, null);
+  assert.equal((await api.get("/pause")).j.hpos, null);
+  await api.post("/hunt-move", { token: j.token, wk: "2026-11-16", lat: 48.85, lon: 2.35 });
+  await api.post("/reset", { token: j.token });
+  assert.equal((await api.get("/pause")).j.hpos, null);
+});

@@ -781,7 +781,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-15.104445";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.130345";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2404,7 +2404,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-hpos", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -2432,10 +2432,12 @@
       store.set("wouaf-last", j.last || null);   // null = plus aucune sortie valable (remise à zéro, balade annulée)
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
+      store.set("wouaf-hpos", j.hpos || null);   // 🏴‍☠️ trésor placé à la main par Éric (ou null = automatique)
       store.set("wouaf-record", j.record || null);
       if (j.explo) store.set("wouaf-explo", j.explo);
       if (j.fam) store.set("wouaf-fam", j.fam);
       if (j.paid && profile.walker){ const mine = j.paid[String(profile.walker).toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30)]; store.set("wouaf-paid", mine || {}); }
+      try{ weekHunt(); snapHunt(); }catch(e){}
       syncHunt();
       return true;
     }
@@ -3092,11 +3094,57 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🏴‍☠️", "Carte du trésor", "voir et déplacer")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
-    go("muSupV", () => openDash(supAuth(), true)); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupT", openHuntAdmin); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+  }
+
+  // 🏴‍☠️ Superviseur › Carte du trésor (v43) : voir où est le trésor de la semaine et le déplacer à la main.
+  // Placé à la main = le même endroit pour tout le monde (Worker POST /hunt-move, KV « hpos », renvoyé par GET /pause).
+  let huntMap = null;
+  function openHuntAdmin(){
+    const wk = weekKey(Date.now()), hp = store.get("wouaf-hpos", null), fixed = !!(hp && hp.wk === wk && hp.lat != null);
+    const hu = weekHunt(), t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === wk);
+    openSheet(`<h2>🏴‍☠️ Carte du trésor</h2>
+      <p class="howto" style="margin-top:0">${t ? `✅ Déjà trouvé cette semaine par <b>${esc(t.by)}</b>. Le prochain arrive lundi.` : "Pas encore trouvé cette semaine."}
+        ${fixed ? "📌 Placé à la main : le même pour tout le monde." : "Placé tout seul sur une rue ou un chemin ouvert, à 0,8–1,5 km de la maison."}</p>
+      ${t ? "" : `<p class="howto">Touche la carte (ou fais glisser 🏴‍☠️) pour choisir un endroit sur une rue ou un chemin ouvert à tous, puis « Mettre le trésor ici ».</p>`}
+      <div id="tmap" style="height:48vh;border-radius:14px;overflow:hidden"></div>
+      <p id="tmS" role="status" class="howto" style="text-align:center">🏴‍☠️ trésor · ☁️ nuage que voient les promeneurs · 🏠 maison</p>
+      <div class="btns"><button id="tmOk" disabled>📌 Mettre le trésor ici</button>${fixed ? `<button class="ghost" id="tmAuto">↩️ Placement automatique</button>` : ""}<button class="ghost" id="tmBack">← Superviseur</button></div>`);
+    $("#tmBack").onclick = sheetSupMenu;
+    try{ if (huntMap) huntMap.remove(); }catch(e){} huntMap = null;
+    if (!$("#tmap") || typeof L === "undefined") return;
+    huntMap = L.map("tmap", { zoomControl:true });
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", { maxZoom: 19, subdomains:"abc", attribution:"© OpenStreetMap" }).addTo(huntMap);
+    const ic = h => L.divIcon({ className:"hpin", html: h, iconSize:[30, 30] }), pts = [];
+    if (game.home){ L.marker([game.home.lat, game.home.lon], { icon: ic("🏠"), interactive:false, keyboard:false }).addTo(huntMap); pts.push([game.home.lat, game.home.lon]); }
+    let pick = null, mk = null;
+    const setPick = ll => { pick = { lat: ll.lat, lon: ll.lng }; const b = $("#tmOk"); if (b && !t) b.disabled = false; $("#tmS").textContent = "📍 Nouvel endroit choisi : touche « Mettre le trésor ici »."; };
+    if (hu){
+      const c = huntCloud(hu);
+      L.circle([c.lat, c.lon], { radius: HUNT_CLOUD, color:"#c9a227", weight:2, dashArray:"6 6", fillColor:"#f2d36b", fillOpacity:.18, interactive:false }).addTo(huntMap);
+      mk = L.marker([hu.lat, hu.lon], { icon: ic("🏴‍☠️"), draggable: !t, keyboard:false }).addTo(huntMap);
+      mk.on("dragend", () => setPick(mk.getLatLng()));
+      pts.push([hu.lat, hu.lon], [c.lat, c.lon]);
+    }
+    if (!t) huntMap.on("click", e => { if (mk) mk.setLatLng(e.latlng); else mk = L.marker(e.latlng, { icon: ic("🏴‍☠️"), keyboard:false }).addTo(huntMap); setPick(e.latlng); });
+    if (pts.length > 1) huntMap.fitBounds(L.latLngBounds(pts), { padding:[30, 30], maxZoom:16 }); else huntMap.setView(pts[0] || [48.8566, 2.3522], 15);
+    setTimeout(() => { try{ huntMap.invalidateSize(); }catch(e){} }, 350);
+    const send = async body => {
+      $("#tmS").textContent = "⏳ Envoi…";
+      try{
+        const r = await api("/hunt-move", Object.assign(supAuth(), body)), j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.error || "erreur");
+        store.set("wouaf-hpos", j.hpos || null); weekHunt(); snapHunt(); try{ drawItems(); }catch(e){}
+        toast(j.hpos ? "📌 Trésor déplacé : le même pour tout le monde." : "↩️ Trésor replacé automatiquement.", 4000);
+        openHuntAdmin();
+      }catch(e){ $("#tmS").textContent = "❌ Pas envoyé (réseau ?). Réessaie."; }
+    };
+    $("#tmOk").onclick = () => { if (pick) send({ wk, lat: pick.lat, lon: pick.lon }); };
+    if ($("#tmAuto")) $("#tmAuto").onclick = () => send({ clear: 1 });
   }
 
   // ---------- ☰ Menu ----------
@@ -3527,41 +3575,71 @@
   }
 
   // ---------- 🏴‍☠️ Trésor de la semaine ----------
-  // Chaque lundi, un trésor caché à 2–3 km de la maison (le même pour toute la maison : tiré au sort avec la semaine).
-  // On ne voit qu'une zone de 200 m ; UN SEUL gagnant : le premier de la maison à l'atteindre gagne 500 clebsous, en plus du plafond
-  // (comme les coffres), puis le trésor disparaît pour tout le monde (Worker POST /treasure : « déjà trouvé »).
-  const HUNT_ZONE = 200, HUNT_FIRST = 500, HUNT_CLOUD = 600;
-  // ☁️ centre du nuage du trésor : décalé de 150 à 450 m du trésor, le même sur tous les téléphones (tiré avec la semaine)
+  // Chaque lundi, un trésor caché à 0,8–1,5 km de la maison (v43, avant 2–3 km : trop loin pour les balades du quotidien),
+  // tiré au sort avec la semaine, puis posé sur une rue ou un chemin ouvert à tous (Overpass : pas de voie privée, pas de résidence).
+  // Éric peut le placer à la main (Superviseur › Carte du trésor, Worker « hpos ») : il est alors le même pour tout le monde.
+  // UN SEUL gagnant : le premier de la maison à l'atteindre gagne 500 clebsous, en plus du plafond (Worker POST /treasure).
+  const HUNT_ZONE = 200, HUNT_FIRST = 500, HUNT_CLOUD = 400, HUNT_MIN = 800, HUNT_MAX = 1500;
+  const OVERPASS = "https://overpass-api.de/api/interpreter";
+  // ☁️ centre du nuage du trésor : décalé de 100 à 300 m du trésor, le même sur tous les téléphones (tiré avec la semaine)
   function huntCloud(h){
     let x = 11; for (const c of "nuage" + h.wk) x = (x * 31 + c.charCodeAt(0)) >>> 0;
     const r = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
-    const a = r() * 2 * Math.PI, d = 150 + r() * 300, cos = Math.cos(h.lat * Math.PI / 180);
+    const a = r() * 2 * Math.PI, d = 100 + r() * 200, cos = Math.cos(h.lat * Math.PI / 180);
     return { lat: h.lat + d * Math.cos(a) / 111320, lon: h.lon + d * Math.sin(a) / (111320 * cos) };
   }
   function weekHunt(){
-    if (!game.home) return null;
-    const wk = weekKey(Date.now());
-    if (game.hunt && game.hunt.wk === wk) return game.hunt;
-    let h = 7; for (const c of "tresor" + wk) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const rnd = () => (h = (h * 1664525 + 1013904223) >>> 0) / 4294967296;
-    const home = game.home, ang = rnd() * 2 * Math.PI, d = 2000 + rnd() * 1000;
-    const cos = Math.cos(home.lat * Math.PI / 180);
-    const lat = home.lat + d * Math.cos(ang) / 111320, lon = home.lon + d * Math.sin(ang) / (111320 * cos);
-    const za = rnd() * 2 * Math.PI, zd = rnd() * 140;
-    game.hunt = { wk, lat, lon, zlat: lat + zd * Math.cos(za) / 111320, zlon: lon + zd * Math.sin(za) / (111320 * cos), found:false, snapped:false };
+    const wk = weekKey(Date.now()), hp = store.get("wouaf-hpos", null), fix = hp && hp.wk === wk && hp.lat != null ? hp : null;
+    const cur = game.hunt && game.hunt.wk === wk ? game.hunt : null;
+    if (cur && (cur.v === 2 || cur.found || cur.gone) && (fix ? cur.moved === fix.at : !cur.moved)) return cur;
+    if (!game.home && !fix) return null;
+    let lat, lon;
+    if (fix){ lat = fix.lat; lon = fix.lon; }
+    else {
+      let h = 7; for (const c of "tresor" + wk) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+      const rnd = () => (h = (h * 1664525 + 1013904223) >>> 0) / 4294967296;
+      const home = game.home, ang = rnd() * 2 * Math.PI, d = HUNT_MIN + rnd() * (HUNT_MAX - HUNT_MIN);
+      const cos = Math.cos(home.lat * Math.PI / 180);
+      lat = home.lat + d * Math.cos(ang) / 111320; lon = home.lon + d * Math.sin(ang) / (111320 * cos);
+    }
+    game.hunt = { wk, v:2, lat, lon, zlat: lat, zlon: lon, found: cur ? cur.found || false : false, snapped: !!fix, moved: fix ? fix.at : 0 };
+    if (cur && cur.gone) game.hunt.gone = cur.gone;
     saveGame();
     snapHunt();
     return game.hunt;
   }
-  // on recale le trésor sur la rue ou le lieu le plus proche (pour qu'il soit atteignable)
+  // on pose le trésor sur la rue ou le chemin OUVERT À TOUS le plus proche (retour du 16/11 : un trésor dans une résidence privée).
+  // Pas de voies de service (allées de résidence, parkings), rien d'interdit aux piétons ; sinon on réessaie à la prochaine ouverture.
+  const HUNT_WAYS = "residential|living_street|pedestrian|footway|path|unclassified|tertiary|secondary|cycleway|steps";
+  let snapBusy = false;
   async function snapHunt(){
-    const hu = game.hunt; if (!hu || hu.snapped) return;
+    const hu = game.hunt; if (!hu || hu.snapped || hu.moved || snapBusy) return;
+    snapBusy = true;
     try{
-      const j = await getJSON(`${PHOTON}?lat=${hu.lat.toFixed(5)}&lon=${hu.lon.toFixed(5)}&limit=1`, 8000);
-      const c = j.features && j.features[0] && j.features[0].geometry.coordinates;
-      if (c && dist({ lat:c[1], lon:c[0] }, hu) < 300){ hu.lat = c[1]; hu.lon = c[0]; }
-      hu.snapped = true; saveGame();
+      for (const r of [250, 600]){
+        const q = `[out:json][timeout:20];way(around:${r},${hu.lat.toFixed(6)},${hu.lon.toFixed(6)})[highway~"^(${HUNT_WAYS})$"][access!~"^(private|no|customers|permit|delivery|destination)$"][foot!~"^(no|private)$"][footway!="private"];out geom;`;
+        const j = await getJSON(`${OVERPASS}?data=${encodeURIComponent(q)}`, 20000);
+        const p = nearestOnWays(hu, (j && j.elements) || []);
+        if (p){ if (game.hunt !== hu) return; hu.lat = p.lat; hu.lon = p.lon; hu.zlat = p.lat; hu.zlon = p.lon; hu.snapped = true; saveGame(); try{ drawItems(); }catch(e){} return; }
+      }
     }catch(e){}
+    finally{ snapBusy = false; }
+  }
+  // point le plus proche de q sur les segments des chemins (calcul à plat, en mètres autour de q)
+  function nearestOnWays(q, ways){
+    const ky = 111320, kx = 111320 * Math.cos(q.lat * Math.PI / 180);
+    let best = null, bd = Infinity;
+    for (const w of ways){
+      const g = w.geometry || [];
+      for (let i = 1; i < g.length; i++){
+        const ax = (g[i-1].lon - q.lon) * kx, ay = (g[i-1].lat - q.lat) * ky, bx = (g[i].lon - q.lon) * kx, by = (g[i].lat - q.lat) * ky;
+        const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
+        const t = l2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / l2)) : 0;
+        const px = ax + t * dx, py = ay + t * dy, d = px * px + py * py;
+        if (d < bd){ bd = d; best = { lat: q.lat + py / ky, lon: q.lon + px / kx }; }
+      }
+    }
+    return best;
   }
   const compass = (a, b) => {
     const dy = b.lat - a.lat, dx = (b.lon - a.lon) * Math.cos(a.lat * Math.PI / 180);
@@ -5284,7 +5362,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5333,7 +5411,7 @@
         ${row("🎉", "Jour bonus décidé par le superviseur", "×2")}
         ${row("🎂", `Anniversaire de ${DOG}`, "×3")}
         ${row("👯", "Balade à deux (les deux touchent 👯)", `+${DUO_PTS} 🪙`)}
-        ${row("🏴‍☠️", "Trésor de la semaine, à 2–3 km (un seul gagnant dans la maison, en plus du plafond)", `+${HUNT_FIRST} 🪙`)}
+        ${row("🏴‍☠️", "Trésor de la semaine, à 0,8–1,5 km (un seul gagnant dans la maison, en plus du plafond)", `+${HUNT_FIRST} 🪙`)}
         ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
@@ -5400,8 +5478,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 42, APP_LABEL = "2.8";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 43, APP_LABEL = "2.9";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    43: [
+      "🏴‍☠️ Le trésor de la semaine est plus près : entre 800 m et 1,5 km de la maison.",
+      "🛣️ Il est toujours sur une rue ou un chemin ouvert à tous, plus dans une résidence privée."
+    ],
     42: [
       "👆 Touche la carte de l'accueil pour partir : balade libre, parcours, ou ☁️ carte d'exploration.",
       "🐾 Les nuages ont maintenant de toutes petites pattes de Roxy."

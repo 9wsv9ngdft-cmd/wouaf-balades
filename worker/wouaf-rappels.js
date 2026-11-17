@@ -381,7 +381,7 @@ export default {
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env) });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
@@ -417,12 +417,20 @@ export default {
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
       if (!(await supOk(env, b))){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
       if (path === "/check") return json({ ok:true });   // vérifie seulement le code
+      if (path === "/hunt-move"){   // 🏴‍☠️ Éric place le trésor de la semaine à la main (le même pour tout le monde) ; clear = placement automatique
+        if (b.clear){ await env.WOUAF.delete("hpos"); return json({ ok:true, hpos:null }); }
+        const lat = +b.lat, lon = +b.lon;
+        if (typeof b.wk !== "string" || !/^\d{4}-\d\d-\d\d$/.test(b.wk) || !isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return json({ error:"bad position" }, 400);
+        const hpos = { wk: b.wk, lat: Math.round(lat * 1e6) / 1e6, lon: Math.round(lon * 1e6) / 1e6, at: Date.now() };
+        await env.WOUAF.put("hpos", JSON.stringify(hpos));
+        return json({ ok:true, hpos });
+      }
       if (path === "/pay-mark"){   // 💶 le superviseur a versé la paie d'une semaine (depuis la tirelire du promeneur ou le tableau de bord)
         const patch = { paid: b.undo ? 0 : Date.now() }; if (b.eur != null && !b.undo) patch.eur = Math.round(Math.max(0, +b.eur || 0) * 100) / 100;
         return json({ ok: await payPut(env, b.walker, b.wk, patch) });
@@ -450,7 +458,7 @@ export default {
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
         const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:")) + (await wipe(env, "use:"));
-        await env.WOUAF.delete("fam"); await env.WOUAF.delete("live");
+        await env.WOUAF.delete("fam"); await env.WOUAF.delete("live"); await env.WOUAF.delete("hpos");
         await env.WOUAF.delete("duels");
         await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts"); await env.WOUAF.delete("pays");
         const reset = Date.now();

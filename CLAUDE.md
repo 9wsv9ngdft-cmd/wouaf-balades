@@ -425,3 +425,15 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐾 **Motif du nuage** (choix n° 1 d'Éric) : petites pattes très pâles (`fogPattern`, tuile 64 px, 2 pattes, gris 15 %) peintes par `FogCanvas._draw`
   par-dessus le blanc, le doré et l'argenté ; effacées avec le nuage le long des chemins.
 - « Exploré à 0 % » et mini-carte vide : normal après « Tout remettre à zéro » (plus aucune case vue) ; se remplit dès la 1re balade.
+
+## Version 2.9 « Croquette » (APP_NUM 43, décidé le 17/11 en Wouaf 6 : lot 1 = trésor accessible + carte du superviseur)
+- 🏴‍☠️ **Trésor plus près** : 0,8–1,5 km de la maison (`HUNT_MIN`, `HUNT_MAX` ; avant 2–3 km, trop loin pour les balades du quotidien).
+  Nuage plus petit : `HUNT_CLOUD` = 400 m, centre décalé de 100–300 m. Les anciens trésors de la semaine (sans `v:2`) sont recalculés, sauf s'ils sont déjà trouvés.
+- 🛣️ **Toujours sur une voie ouverte** (retour du 16/11 : trésor dans une résidence privée) : `snapHunt` interroge **Overpass** (`OVERPASS`, `HUNT_WAYS`) à 250 puis 600 m
+  et pose le trésor sur le point le plus proche (`nearestOnWays`) d'une rue / chemin piéton ; exclus : voies de service (allées, parkings), `access` privé / interdit,
+  `foot=no|private`. Photon n'est plus utilisé pour le trésor. Pas de réponse = nouvel essai à la prochaine synchro (`loadPauses`).
+- 📌 **Superviseur › 🏴‍☠️ Carte du trésor** (`openHuntAdmin`, carte Leaflet dans la fiche) : maison, trésor, nuage vu par les promeneurs ; toucher la carte ou faire glisser 🏴‍☠️
+  puis « Mettre le trésor ici » → `POST /hunt-move` (superviseur, KV `hpos` = { wk, lat, lon, at }) ; « Placement automatique » = `clear`. `GET /pause` renvoie `hpos`
+  (→ `wouaf-hpos`) ; `weekHunt` le prend tel quel pour la semaine `wk` (même endroit pour tout le monde, pas recalé, `hunt.moved = at`). Déplacement impossible une fois trouvé.
+  La remise à zéro efface `hpos`.
+- Tests : `tests/e2e_v43.py` (vraie carte, Overpass simulé), `tests/worker.test.mjs` (/hunt-move).
