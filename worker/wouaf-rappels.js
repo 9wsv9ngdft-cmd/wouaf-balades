@@ -438,7 +438,10 @@ export default {
       const l = (await env.WOUAF.get("bugs", "json")) || [];
       const day = isoDay(Date.now());
       if (l.filter(x => x.walker === w && x.day === day).length >= 10) return json({ error:"too many" }, 429);
-      l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), walker: w, text: t, v: String(b.v || "").slice(0, 12), day, t: Date.now(), done: false });
+      const img = typeof b.img === "string" && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(b.img) && b.img.length <= 400000 ? b.img : "";   // capture facultative, réduite par le téléphone
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      if (img) await env.WOUAF.put("bugimg:" + id, img, { expirationTtl: 60 * 86400 });   // gardée 60 jours, lue seulement par le superviseur
+      l.push({ id, walker: w, text: t, v: String(b.v || "").slice(0, 12), day, t: Date.now(), done: false, img: !!img });
       await env.WOUAF.put("bugs", JSON.stringify(l.slice(-100)));
       return json({ ok:true });
     }
@@ -447,7 +450,7 @@ export default {
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -515,9 +518,11 @@ export default {
         return json({ ok:true, reset, deleted: n });
       }
       if (path === "/bugs") return json({ ok:true, bugs: ((await env.WOUAF.get("bugs", "json")) || []).slice().reverse() });   // 🐛 liste pour le superviseur (récents d'abord)
+      if (path === "/bug-img") return json({ ok:true, img: (await env.WOUAF.get("bugimg:" + String(b.id || "").replace(/[^a-z0-9]/gi, ""))) || "" });
       if (path === "/bug-done"){   // 🐛 « Réglé ✓ » (b.done = false pour rouvrir) ou suppression (b.del)
         const l = (await env.WOUAF.get("bugs", "json")) || [], x = l.find(y => y.id === b.id);
         if (!x) return json({ error:"not found" }, 404);
+        if (b.del && x.img) await env.WOUAF.delete("bugimg:" + x.id);
         const out = b.del ? l.filter(y => y.id !== x.id) : l.map(y => y.id === x.id ? { ...y, done: b.done !== false } : y);
         await env.WOUAF.put("bugs", JSON.stringify(out));
         return json({ ok:true });

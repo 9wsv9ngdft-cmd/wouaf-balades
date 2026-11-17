@@ -805,7 +805,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.185318";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.191029";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3260,16 +3260,31 @@
   function sheetBug(){
     openSheet(`<h2>${bugIcon(26)} Signaler un bug</h2><p class="howto" style="margin-top:0">Quelque chose ne marche pas, ou t'a gêné ? Écris-le ici, Éric le verra.</p>
       <form id="bugF"><label class="flabel" for="bugT">Qu'est-ce qui s'est passé ?</label><textarea id="bugT" maxlength="500" placeholder="ex. le bouton Photo ne répond pas pendant la balade"></textarea>
+      <input type="file" id="bugFile" accept="image/*" hidden>
+      <button type="button" class="ghost" id="bugPick">📎 Ajouter une capture d'écran (facultatif)</button>
+      <div id="bugPrev" class="howto" style="display:none;align-items:center;gap:10px;margin:8px 0"><img id="bugImg" alt="" style="height:64px;border-radius:8px;border:1px solid var(--line)"><button type="button" class="ghost" id="bugNo">Retirer</button></div>
+      <p class="howto" style="margin:6px 0 0">Choisis ta capture dans tes photos. Évite celles où on voit ta rue ou ta maison.</p>
       <p id="bugS" role="status" class="howto"></p>
       <div class="btns"><button type="submit" id="bugGo">Envoyer</button><button type="button" class="ghost" id="bugX">Annuler</button></div></form>`);
     $("#bugX").onclick = closeSheet;
+    let shot = "";   // capture réduite (data URL JPEG), facultative
+    $("#bugPick").onclick = () => $("#bugFile").click();
+    $("#bugNo").onclick = () => { shot = ""; $("#bugFile").value = ""; $("#bugPrev").style.display = "none"; };
+    $("#bugFile").onchange = async () => {
+      const f = $("#bugFile").files[0], st = $("#bugS"); if (!f) return;
+      try{
+        const blob = await shrink(f), url = await new Promise((ok, ko) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = ko; r.readAsDataURL(blob); });
+        if (url.length > 390000) throw new Error("trop lourde");
+        shot = url; $("#bugImg").src = url; $("#bugPrev").style.display = "flex"; st.textContent = "";
+      }catch(e){ shot = ""; st.textContent = "Cette image ne passe pas. Essaie une autre capture, ou envoie sans."; }
+    };
     $("#bugF").onsubmit = async e => {
       e.preventDefault();
       const t = $("#bugT").value.trim(), st = $("#bugS");
       if (t.length < 3){ st.textContent = "Écris quelques mots pour expliquer."; return; }
       $("#bugGo").disabled = true; st.textContent = "Envoi…";
       try{
-        const r = await api("/bug", { walker: profile.walker || "?", text: t, v: APP_LABEL });
+        const r = await api("/bug", { walker: profile.walker || "?", text: t, v: APP_LABEL, img: shot || undefined });
         if (!r.ok) throw new Error(r.status);
         closeSheet(); toast("Merci, c'est envoyé à Éric !");
       }catch(err){ $("#bugGo").disabled = false; st.textContent = "Envoi impossible pour l'instant (réseau ?). Ton texte est gardé, réessaie."; }
@@ -3284,11 +3299,19 @@
       const box = $("#bgL"), s = $("#bgS"); if (!box) return;
       const open = l.filter(b => !b.done).length;
       s.textContent = l.length ? `${open} à regarder · ${l.length - open} réglé${l.length - open > 1 ? "s" : ""}` : "Aucun bug signalé pour l'instant. 🎉";
-      box.innerHTML = l.map(b => `<div class="entry" data-id="${esc(b.id)}" style="grid-template-columns:1fr;cursor:default;margin-bottom:8px;${b.done ? "opacity:.6" : ""}"><b>${esc(b.walker)}</b> · ${new Date(b.t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${new Date(b.t).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}${b.v ? " · v" + esc(b.v) : ""}<br>${esc(b.text)}
+      box.innerHTML = l.map(b => `<div class="entry" data-id="${esc(b.id)}" style="grid-template-columns:1fr;cursor:default;margin-bottom:8px;${b.done ? "opacity:.6" : ""}"><b>${esc(b.walker)}</b> · ${new Date(b.t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${new Date(b.t).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}${b.v ? " · v" + esc(b.v) : ""}<br>${esc(b.text)}${b.img ? `<div><button type="button" class="ghost" data-img="${esc(b.id)}">📎 Voir la capture</button></div>` : ""}
         <div class="btns"><button class="${b.done ? "ghost" : ""}" data-done="${esc(b.id)}">${b.done ? "↩️ Rouvrir" : "Réglé ✓"}</button><button class="ghost" data-del="${esc(b.id)}" style="color:#c8452f">Supprimer</button></div></div>`).join("");
       box.querySelectorAll("[data-done]").forEach(btn => btn.onclick = async () => {
         const b = l.find(x => x.id === btn.dataset.done); if (!b) return;
         try{ const r = await api("/bug-done", Object.assign(supAuth(), { id: b.id, done: !b.done })); if (r.ok){ b.done = !b.done; draw(); } }catch(e){ toast("Pas de réseau, réessaie."); }
+      });
+      box.querySelectorAll("[data-img]").forEach(btn => btn.onclick = async () => {
+        btn.disabled = true; btn.textContent = "Chargement…";
+        try{
+          const r = await api("/bug-img", Object.assign(supAuth(), { id: btn.dataset.img })), j = await r.json();
+          if (!j.img) throw 0;
+          btn.outerHTML = `<img src="${j.img}" alt="Capture" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-top:6px">`;
+        }catch(e){ btn.disabled = false; btn.textContent = "📎 Capture introuvable (effacée ?)"; }
       });
       box.querySelectorAll("[data-del]").forEach(btn => btn.onclick = async () => {
         if (!confirm("Supprimer ce signalement ?")) return;

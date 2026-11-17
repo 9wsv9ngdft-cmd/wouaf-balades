@@ -287,3 +287,18 @@ test("bugs : un promeneur signale, seul le superviseur lit, « Réglé ✓ », r
   for (let i = 0; i < 12; i++) await api.post("/bug", { walker: "Zoé", text: "encore un" });
   assert.equal((await api.post("/bug", { walker: "Zoé", text: "trop" })).status, 429);   // 10 par jour au plus
 });
+
+test("bugs avec capture : image gardée à part, lue seulement par le superviseur, effacée avec le bug", async () => {
+  const { api, env } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  const img = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+  await api.post("/bug", { walker: "Léa", text: "Voilà ce que je vois", img });
+  await api.post("/bug", { walker: "Tom", text: "Image bizarre", img: "data:text/html;base64,PHNjcmlwdD4=" });
+  const l = (await api.post("/bugs", { token: j.token })).j.bugs;
+  const lea = l.find(x => x.walker === "Léa"), tom = l.find(x => x.walker === "Tom");
+  assert.equal(lea.img, true); assert.equal(tom.img, false);                              // seul un JPEG est accepté
+  assert.equal((await api.post("/bug-img", { id: lea.id })).status, 403);                  // les ados ne lisent pas
+  assert.equal((await api.post("/bug-img", { token: j.token, id: lea.id })).j.img, img);
+  await api.post("/bug-done", { token: j.token, id: lea.id, del: true });
+  assert.equal((await api.post("/bug-img", { token: j.token, id: lea.id })).j.img, "");
+});
