@@ -103,7 +103,7 @@ function pickMessage(u, slot, now){
   // dimanche soir : le résumé de la semaine
   if (slot === 1 && l.dow === 0){
     const w = s.wk && s.wk.k === weekKey(now) ? s.wk : { n:0, min:0, eur:0 };
-    if (walked) return { title:`🏅 Ta semaine avec ${DOG}`, body:`${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 🪙 ${fmtEur(w.eur)}. Bravo ${n} ! 💶 Demain, c'est jour de paie.` };
+    if (walked) return { title:`🏅 Ta semaine avec ${DOG}`, body:`${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 🪙 ${fmtEur(w.eur)}. Bravo ${n} ! 💶 C'est jour de paie : ouvre l'app !` };
     return { title:`🏅 Ta semaine avec ${DOG}`, body: w.n
       ? `${w.n} balade${w.n > 1 ? "s" : ""} · ${fmtMin(w.min)} · 🪙 ${fmtEur(w.eur)}. Une dernière ce soir pour finir en beauté ?`
       : `Pas encore de balade cette semaine. ${DOG} compte sur toi ce soir 🐾` };

@@ -483,3 +483,17 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   le carnet (toucher une balade ; avant : tracé sur la carte cachée), les dernières sorties (seulement **mes** balades, classe `.entry.tap`) et Tirelire › Paies des semaines
   (`sheetWeekWalks(wk)` : balades de la semaine). Les trajets ne quittent jamais le téléphone ; Éric voit ceux des autres via les liens des récaps WhatsApp.
 - Tests : `tests/e2e_v47.py` (vraie carte), `tests/worker.test.mjs` (/journal) ; `e2e_accueil.py` adapté (toucher Roxy = journal).
+
+## Version 3.4 « Croquette » (APP_NUM 48, décidé le 17/11 en Wouaf 6 : gains du quotidien, express, paie du dimanche)
+- 💶 **Budget du mois réparti** : `paceAllowed()` = `MONEY_SOFT` (15 €) × jour / jours du mois + `PACE_SLACK` (2 €) ; si les gains du mois (`game.money`) dépassent ce rythme,
+  `addMoney` divise le gain par 2 (`PACE_CUT`), jamais zéro ; puis plafond doux / final comme avant.
+- 💰 **Coffres plus fréquents, moins chers** : `CHEST_EUR` = 2 (200 clebsous, avant 5), `CHEST_GAP_DAYS` = 3 (avant 10), chance 8 % + 3 %/jour (max 30 %) ;
+  budget coffres `CHEST_MONTH` = 6 €/mois (`game.chestM[mois]`) : au-delà, petits coffres `CHEST_SMALL` = 0,50 € (`chestValue()`), jamais plus de coffre « vide ».
+  Toujours hors plafond (`game.bonus`) ; `applyVoid` retire aussi de `game.chestM`.
+- 🛣️ **Trajets du quotidien** : `FRESH_DAYS` = 7 (avant 15 : une rue redevient « neuve » au bout d'une semaine) ; objets tous les 260–350 m (avant 350–450).
+- ⚡ **Balade express 10 min** (`EXPRESS()`, `p.express`, `isExpress()`) : « On part comment ? » › ⚡ ; pas de jeu (`gameFix`, `huntCheck`, `flairTick` ignorés, pas d'objets),
+  pas de clebsous (moins de 20 min), **pas d'amende « balade courte »** (et les express ne comptent pas parmi les courtes), notée dans le carnet (`express:1`) et envoyée
+  au serveur ; `body.express` cache missions, trésor, flair, radar. Ne remplace pas la sortie de 20 min du jour.
+- 💶 **Paie le dimanche** (`weekPayRoll`) : dès le dimanche `PAY_HOUR` (18 h), la semaine en cours est payée (`wkBase.done`) ; ce qui est gagné ensuite compte pour la semaine
+  suivante ; app pas ouverte le dimanche soir = paie à la 1re ouverture suivante. Notification du dimanche soir : « C'est jour de paie : ouvre l'app ! ».
+- Tests : `tests/e2e_v48.py` ; `e2e.py` (coffre à 2 €).

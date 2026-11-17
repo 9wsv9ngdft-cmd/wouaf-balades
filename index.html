@@ -475,6 +475,7 @@
   .heatc{margin:6px 0;flex-wrap:wrap;overflow:visible} .heatT{font-size:15px;margin:10px 0 0}
   .waHint{width:100%;margin:0 0 4px;padding:10px 12px;border-radius:14px;background:#e7f8ee;border:2px solid #25d366;color:#0b4d26;font-size:17px;line-height:1.3;text-align:center}
   .waHint b{font-size:19px;white-space:nowrap}
+  body.express #wChips,body.express #wTreasure,body.express #wFlair,body.express #radar{display:none!important}
   .entry.tap{cursor:pointer} .entry.tap:active{transform:scale(.98)}
   .jhead{display:flex;align-items:center;gap:12px;margin:0 0 6px} .jdog{width:72px;height:72px;flex:none} .jdog>*{width:72px!important;height:72px!important}
   .jsay{position:relative;background:#fff6d8;border:2px solid #f2d36b;border-radius:16px;padding:8px 12px;font-size:15px;line-height:1.3;color:#3d2c00}
@@ -803,7 +804,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.164016";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.170526";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1559,7 +1560,7 @@
   const cellOf = p => Math.floor(p.lat / 0.0009) + ":" + Math.floor(p.lon / 0.0013);   // ≈ 100 m × 95 m
   // « rue neuve » = case pas visitée depuis 15 jours (game.seen[c] = jour de la dernière visite) : il y a toujours des bonus
   // à aller chercher en variant les trajets, même quand tout le quartier est connu. La carte du brouillard compte, elle, toutes les cases déjà vues.
-  const FRESH_DAYS = 15, MAX_NEW_CELLS = 10;
+  const FRESH_DAYS = 7, MAX_NEW_CELLS = 10;   // v48 : 7 jours (avant 15) : les trajets du quotidien redeviennent « neufs » chaque semaine
   const dayNum = t => Math.floor(((t || Date.now()) - new Date(t || Date.now()).getTimezoneOffset() * 60000) / 86400000);
   for (const c in game.seen) if (game.seen[c] === 1) game.seen[c] = dayNum();   // anciennes données : « vue aujourd'hui »
   const isNewCell = c => !game.seen[c] || dayNum() - game.seen[c] >= FRESH_DAYS;
@@ -1649,7 +1650,7 @@
     const total = p.m || 0;
     for (let i = 1; i < p.line.length; i++){
       acc += dist(p.line[i-1], p.line[i]);
-      if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 350 + Math.random()*100; }
+      if (acc >= next && (!total || acc < total - 80)){ out.push({ lat:p.line[i].lat, lon:p.line[i].lon, k:pickKind() }); next = acc + 260 + Math.random()*90; }
     }
     // trésor : sur le tracé, au plus près du lieu sympa du parcours (sinon au point le plus éloigné du départ)
     let best = null;
@@ -1675,6 +1676,7 @@
     ding(); renderChips();
   }
   function gameFix(q, home){
+    if (isExpress()) return;   // ⚡ express : pas de jeu
     if (!gw || q.a > 35) return;
     const last = gw.last;
     if (last){
@@ -1704,7 +1706,7 @@
     drawWalkFog(false);
     if (hit) drawItems();
     if (!gw.items.length){   // balade libre : objets trouvés en chemin
-      if (gw.acc >= gw.next){ gw.next = gw.acc + 350 + Math.random()*100; collect(pickKind(), onNew); }
+      if (gw.acc >= gw.next){ gw.next = gw.acc + 260 + Math.random()*90; collect(pickKind(), onNew); }   // v48 : un objet tous les ~300 m (avant ~400)
       if (!gw.treasure && home && dist(home, q) >= 400){ gw.treasure = true; collect("s", onNew); }
     }
   }
@@ -1790,10 +1792,11 @@
     const test = isTester(), gx = res.gx = { c:0, h:0 };   // gx = ce que la balade a rapporté (pour pouvoir l'annuler plus tard)
     gw = null; gameLayer.clearLayers();
     if (chest){
-      res.chest = CHEST_EUR;
+      const cv = chestValue(); res.chest = cv;
       if (!test){   // 🧪 testeur : rien dans la tirelire
         game.chests.push(new Date().toISOString());
-        const k = monthKey(Date.now()); game.bonus[k] = (game.bonus[k] || 0) + CHEST_EUR; gx.c = CHEST_EUR;
+        const k = monthKey(Date.now()); game.bonus[k] = round2((game.bonus[k] || 0) + cv); gx.c = cv;
+        game.chestM = game.chestM || {}; game.chestM[k] = round2((game.chestM[k] || 0) + cv);
       }
     }
     if (huntPts){   // 🏴‍☠️ trésor de la semaine : en plus du plafond, comme un coffre (un seul gagnant)
@@ -1843,9 +1846,14 @@
 
   // ---------- Tirelire ----------
   // ajoute l'argent d'une balade à la tirelire du mois (15 € maximum) ; renvoie ce qui a vraiment été ajouté
+  // v48 : budget du mois réparti sur le mois (décidé le 17/11) : si on est en avance sur « MONEY_SOFT × jour / jours du mois » (+ PACE_SLACK),
+  // les gains sont divisés par 2 (jamais zéro) ; puis plafond doux et plafond final comme avant. Garde de quoi gagner jusqu'au bout du mois.
+  const PACE_SLACK = 2, PACE_CUT = 0.5;
+  function paceAllowed(t){ const d = new Date(t || Date.now()), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); return MONEY_SOFT * d.getDate() / days + PACE_SLACK; }
   function addMoney(eur){
     const k = monthKey(Date.now());
     const before = game.money[k] || 0;
+    if (before >= paceAllowed()) eur = eur * PACE_CUT;
     const full = Math.max(0, Math.min(eur, MONEY_SOFT - before));
     const soft = Math.max(0, Math.min((eur - full) / 4, MONEY_MAX - before - full));
     const added = Math.round((full + soft) * 100) / 100;
@@ -1918,7 +1926,7 @@
       <div class="wallet" style="background:#fffdf8;color:var(--ink);border:1px solid var(--line)">
         <div style="font-weight:600">Ce que rapporte une balade</div>
         <div style="font-size:14px;margin-top:6px;line-height:1.7">${[20, 30, 45, 60, 90].map(n => `${n === 60 ? "1 h" : n === 90 ? "1 h 30" : n + " min"} → <b>${n === MONEY_MIN ? "0 (le minimum)" : fmtCs(walkEuros(n))}</b>`).join(" · ")} · + les bonus</div>
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(CHEST_EUR)} se cache sur une rue que tu n'as pas prise depuis longtemps. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">💰 De temps en temps, un coffre de ${fmtCs(chestValue())} se cache sur une rue que tu n'as pas prise depuis longtemps. Moins de 15 min : rien. Une longue balade rapporte plus que plusieurs courtes : 2 × 15 min = ${fmtCs(2 * walkEuros(15))}, 1 × 30 min = ${fmtCs(walkEuros(30))}. Environ ${REF_MIN} min par jour ≈ ${fmtCs(10)} par mois.</div>
       </div>
       ${malusBox()}
       ${payBox()}
@@ -1932,7 +1940,9 @@
   }
 
   // ---------- Progrès : coffre, saisons, trophées, niveaux, brouillard, accessoires, les autres ----------
-  const CHEST_EUR = 5, CHEST_GAP_DAYS = 10;
+  const CHEST_EUR = 2, CHEST_GAP_DAYS = 3, CHEST_MONTH = 6, CHEST_SMALL = 0.5;   // v48 : plus souvent, moins cher ; au-delà de 6 €/mois, petits coffres de 50
+  const chestMonth = k => ((game.chestM || {})[k || monthKey(Date.now())] || 0);
+  const chestValue = () => chestMonth() + CHEST_EUR <= CHEST_MONTH ? CHEST_EUR : CHEST_SMALL;
   function ensureGame(){
     game.chests = game.chests || []; game.bonus = game.bonus || {}; game.money = game.money || {};
     game.stats = Object.assign({ walks:0, km:0, early:0, rain:0, long:0, bestStreak:0 }, game.stats || {});
@@ -1978,7 +1988,7 @@
   function chestChance(){
     if (!regular()) return 0;
     const d = (Date.now() - chestFrom()) / 86400000;
-    return d < 0 ? 0 : Math.min(0.2, 0.05 + 0.015 * d);
+    return d < 0 ? 0 : Math.min(0.3, 0.08 + 0.03 * d);
   }
   // les petites phrases qui donnent envie : série en danger, coffre chaud, défi du jour
   function motivLines(){
@@ -1996,7 +2006,7 @@
     pocketOff(); setTimeout(confetti, 50);
     const el = document.createElement("div");
     el.className = "chest"; el.setAttribute("role", "alert");
-    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(CHEST_EUR)} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir changé de chemin 🗺️</p>`;
+    el.innerHTML = `<div class="ce">💰</div><b>COFFRE TROUVÉ !</b><span>+${fmtCs(chestValue())} en bonus dans ta tirelire</span><p style="opacity:.8;font-size:14px;margin-top:14px">Récompense pour avoir changé de chemin 🗺️</p>`;
     el.onclick = () => el.remove();
     document.body.appendChild(el);
     fanfare();
@@ -2505,7 +2515,7 @@
     const today = dIso(Date.now());
     if (today < MALUS_START || paused(today)) return 0;
     const a = weekStart(Date.now()).getTime();
-    const shorts = walksBetween(a, a + 7*DAYMS).filter(e => e.min >= 2 && e.min < MONEY_MIN).length + 1;   // + celle-ci
+    const shorts = walksBetween(a, a + 7*DAYMS).filter(e => e.min >= 2 && e.min < MONEY_MIN && !e.express).length + 1;   // + celle-ci
     if (shorts < 3) return 0;
     addMalus({ k:"short", d: today, eur: MALUS_SHORT }); saveGame();
     return MALUS_SHORT;
@@ -2742,7 +2752,7 @@
     else if (hu && !hu.found && !hu.gone)
       l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor${game.home ? " · " + fmtKm(dist(game.home, hu)) : ""}`));
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(tile("chest", ch > 0 ? " silver hot" : " silver", "💰", Math.round(CHEST_EUR * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
+    l.push(tile("chest", ch > 0 ? " silver hot" : " silver", "💰", Math.round(chestValue() * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
     const rec = store.get("wouaf-record", null);
     l.push(tile("rec", " bronze", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
     const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
@@ -2815,11 +2825,11 @@
     const st = ch > 0 ? `🔥 <b>Le coffre est chaud !</b> À chaque rue neuve, <b>${Math.round(ch * 100)}&nbsp;%</b> de chances qu'il tombe${cc ? `, et <b>${Math.round(Math.min(1, ch * CHEST_CLOUD_X) * 100)}&nbsp;%</b> dans le nuage argenté` : ""}. Plus tu attends, plus ça monte !`
       : !reg ? "❄️ <b>Le coffre dort.</b> Pour le réveiller : sors Roxy au moins <b>4 jours sur les 7 derniers</b>."
       : `⏳ <b>Le coffre se réveille dans ${Math.max(1, wait)} jour${wait > 1 ? "s" : ""}.</b> Continue de sortir Roxy !`;
-    openSheet(`<div class="trez silver${ch > 0 ? "" : " off"}"><div class="tz-ic">💰</div><h2>Le coffre</h2><div class="tz-v">🪙 ${Math.round(CHEST_EUR * CS)}</div>
-        <p>En plus de tout le reste : il ne compte pas dans le plafond.</p></div>
+    openSheet(`<div class="trez silver${ch > 0 ? "" : " off"}"><div class="tz-ic">💰</div><h2>Le coffre</h2><div class="tz-v">🪙 ${Math.round(chestValue() * CS)}</div>
+        <p>En plus de tout le reste. Il revient souvent : sors ${DOG} régulièrement !</p></div>
       <p class="howto" style="font-size:15px">${st}</p>
-      <ul class="tz-l"><li>🛣️ Il tombe au hasard quand tu entres dans une <b>rue neuve</b> (pas faite depuis 15 jours), après 5 min de balade.</li>
-        <li>📅 Il faut sortir Roxy <b>au moins 4 jours sur 7</b>. Après un coffre, il se rendort 10 jours.</li>
+      <ul class="tz-l"><li>🛣️ Il tombe au hasard quand tu entres dans une <b>rue neuve</b> (pas faite depuis ${FRESH_DAYS} jours), après 5 min de balade.</li>
+        <li>📅 Il faut sortir Roxy <b>au moins 4 jours sur 7</b>. Après un coffre, il se rendort ${CHEST_GAP_DAYS} jours.</li>
         ${cc ? `<li>☁️ Aujourd'hui, le <b>nuage argenté</b> double tes chances.</li>` : ""}</ul>
       <div class="btns">${cc ? `<button id="cfMap">☁️ Voir le nuage argenté</button>` : ""}<button class="ghost" id="cfBonus">🎁 Ce que vaut chaque bonus (os, balle…)</button><button class="ghost" id="cfX">Fermer</button></div>`);
     if ($("#cfMap")) $("#cfMap").onclick = () => { closeSheet(); setTimeout(() => openExplore("chest"), 200); };
@@ -3408,6 +3418,7 @@
   const prevWeekKey = () => payWk(weekStart(Date.now()).getTime() - 3 * 86400000);
   const weekLabel = wk => { const [y, mo, da] = padK(wk).split("-").map(Number), d = new Date(y, mo - 1, da, 12), e = new Date(d.getTime() + 6 * 86400000), o = { day:"numeric", month:"short" };
     return `semaine du ${d.toLocaleDateString("fr-FR", o)} au ${e.toLocaleDateString("fr-FR", o)}`; };
+  const PAY_HOUR = 18;
   function weekPayRoll(){
     ensureGame(); if (isTester()) return null;
     const cur = payWk(Date.now());
@@ -3415,9 +3426,15 @@
       const wk0 = weekStart(Date.now()).getTime(), mine = getLog().filter(e => !e.void && e.recap && e.recap.eu && new Date(e.date).getTime() >= wk0);
       game.wkBase = { wk: cur, cum: Math.round((moneyAll() - mine.reduce((n, e) => n + e.recap.eu, 0)) * 100) / 100 }; saveGame(); return null;
     }
-    if (game.wkBase.wk === cur) return null;
-    const wk = prevWeekKey(), all = moneyAll(), eur = Math.max(0, Math.round((all - game.wkBase.cum) * 100) / 100);
-    game.weeks = game.weeks || {}; game.weeks[wk] = eur; game.wkBase = { wk: cur, cum: all }; saveGame();
+    // v48 : paie le DIMANCHE (décidé le 17/11) : dès le dimanche 18 h, la semaine en cours est payée ; ce qui est gagné ensuite compte pour la semaine suivante.
+    // Si l'app n'est pas ouverte le dimanche soir, la paie arrive à la 1re ouverture de la semaine suivante (comme avant).
+    const nd = new Date(), sunEve = nd.getDay() === 0 && nd.getHours() >= PAY_HOUR;
+    let wk;
+    if (game.wkBase.wk === cur){ if (!sunEve || game.wkBase.done) return null; wk = cur; }
+    else if (game.wkBase.done){ game.wkBase = { wk: cur, cum: game.wkBase.cum }; saveGame(); return sunEve ? weekPayRoll() : null; }   // déjà payée dimanche : on passe juste à la semaine
+    else wk = prevWeekKey();
+    const all = moneyAll(), eur = Math.max(0, Math.round((all - game.wkBase.cum) * 100) / 100);
+    game.weeks = game.weeks || {}; game.weeks[wk] = eur; game.wkBase = { wk: cur, cum: all, done: wk === cur ? 1 : 0 }; saveGame();
     if (PUSH_API && profile.walker) api("/week-pay", { walker: profile.walker, wk, eur }).catch(() => {});
     return { wk, eur };
   }
@@ -3449,7 +3466,7 @@
     const rw = (game.recWins || {})[a.e];   // 🏅 record gagné avec cette balade : retiré aussi
     if (rw){ less(game.bonus, rw, RECORD_CS / CS); lost += RECORD_CS; delete game.recWins[a.e]; }
     if (g.c){
-      less(game.bonus, mk, g.c); lost += Math.round(g.c * CS);
+      less(game.bonus, mk, g.c); lost += Math.round(g.c * CS); if (game.chestM) less(game.chestM, mk, g.c);
       let bi = -1, bd = Infinity; (game.chests || []).forEach((c, i) => { const d = Math.abs(new Date(c).getTime() - end); if (d < bd){ bd = d; bi = i; } });
       if (bi >= 0 && bd < 6 * 3600000) game.chests.splice(bi, 1);
     }
@@ -3572,7 +3589,7 @@
     return [
       { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle te parle dans sa bulle (touche-la pour une autre phrase) et elle adore les caresses : glisse ton doigt sur sa photo ❤️. Touche-la pour voir son humeur, sa forme et ton niveau.` },
       { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(MALUS_DAY)}</span></div></div>`,
-        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque lundi 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
+        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque dimanche 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
       { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">👃 piste +${FLAIR_CS}</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span></div>`,
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
@@ -3580,7 +3597,7 @@
         h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo (aussi en bas : 📷 Photo), et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, glisse la patte pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
       { pic:`<div><div class="big bob">👃</div><div class="row" style="margin-top:10px"><span class="chip">toutes les 15 min</span><span class="chip">🐾 3 min</span><span class="chip">+${FLAIR_CS} 🪙</span></div></div>`,
         h:"Le flair", t:`Toutes les 15 minutes de balade, ${DOG} flaire une piste fraîche : ton téléphone sonne (accepte les notifications : menu ☰ › 🔔), et des pattes 🐾 apparaissent tout près. Rejoins-les avant 3 minutes : +${FLAIR_CS} !` },
-      { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">💰 coffre ${cs(CHEST_EUR)}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
+      { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">💰 coffre ${cs(chestValue())}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
         h:"Les gros lots", t:`Le trésor de la semaine 🏴‍☠️ (or) : un seul gagnant ! Pendant la balade, la flèche dorée au bord de l'écran t'indique sa direction. Le coffre 💰 (argent) se cache dans les rues neuves, et le record du mois 🏅 (bronze) récompense la plus longue balade.` },
       { pic:`<div><div class="row"><span class="chip">🥇 Tom</span><span class="chip">🥈 Toi</span><span class="chip">🥉 Zoé</span></div><div style="font-size:44px;margin-top:6px">👑</div></div>`,
         h:"Les enjeux", t:`Chaque semaine, le classement des explorateurs : les rues neuves et les objets te font monter, le 1er porte la couronne 👑 sur ${DOG}. Défie les autres dans l'arène ⚔️. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide.` }
@@ -3591,7 +3608,7 @@
     const cs = v => Math.round(v * CS), full = tutoPages();
     return [
       { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
-      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 15 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque lundi, tes clebsous de la semaine deviennent de vrais sous 💶.` },
+      { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 7 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque dimanche soir, tes clebsous de la semaine deviennent de vrais sous 💶.` },
       { pic: full[4].pic, h:"C'est parti !", t:`Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
   }
@@ -3783,6 +3800,7 @@
   }
   let huntBusy = false, huntRetry = 0;
   async function huntCheck(q){
+    if (isExpress()) return;
     const hu = game.hunt;
     if (!gw || !hu || hu.found || hu.gone || hu.wk !== weekKey(Date.now()) || huntBusy || Date.now() < huntRetry || dist(q, hu) > 40) return;
     const test = isTester();
@@ -4141,7 +4159,7 @@
     // 💶 paies de la semaine à verser (v2.6)
     const toPay = []; for (const pw of j.pays || []) for (const wk in pw.w || {}){ const x = pw.w[wk]; if (x.eur > 0) toPay.push({ walker: pw.walker, wk, eur: x.eur, paid: x.paid }); }
     toPay.sort((a, b) => (a.paid ? 1 : 0) - (b.paid ? 1 : 0) || b.wk.localeCompare(a.wk));
-    const payHTML = voidMode ? "" : `<div class="flabel">💶 Paies de la semaine</div>${toPay.length ? `<div class="props">${toPay.slice(0, 12).map(x => `<div class="entry"><div><h4>${esc(x.walker)} · ${fmtEur(x.eur)}</h4><div class="when">${esc(weekLabel(x.wk))} · ${Math.round(x.eur * CS).toLocaleString("fr-FR")} clebsous · ${x.paid ? "✓ versé le " + new Date(x.paid).toLocaleDateString("fr-FR") : "⏳ à verser"}</div></div>${x.paid ? "" : `<button data-pw="${esc(x.walker)}" data-wk="${x.wk}" data-eur="${x.eur}">Versé ✓</button>`}</div>`).join("")}</div>` : `<p class="howto">La paie de chaque semaine arrive ici le lundi, quand le promeneur ouvre l'app.</p>`}`;
+    const payHTML = voidMode ? "" : `<div class="flabel">💶 Paies de la semaine</div>${toPay.length ? `<div class="props">${toPay.slice(0, 12).map(x => `<div class="entry"><div><h4>${esc(x.walker)} · ${fmtEur(x.eur)}</h4><div class="when">${esc(weekLabel(x.wk))} · ${Math.round(x.eur * CS).toLocaleString("fr-FR")} clebsous · ${x.paid ? "✓ versé le " + new Date(x.paid).toLocaleDateString("fr-FR") : "⏳ à verser"}</div></div>${x.paid ? "" : `<button data-pw="${esc(x.walker)}" data-wk="${x.wk}" data-eur="${x.eur}">Versé ✓</button>`}</div>`).join("")}</div>` : `<p class="howto">La paie de chaque semaine arrive ici le dimanche soir, quand le promeneur ouvre l'app.</p>`}`;
     openSheet(`<h2>${voidMode ? "❌ Annuler une balade" : "📊 Tableau de bord"}</h2>
       ${alerts}
       ${payHTML}
@@ -4450,7 +4468,8 @@
       pausedMs = (resume.pausedMs || 0) + Math.max(0, Date.now() - (resume.saved || Date.now()));
     }
     gw = (resume && resume.gw) || newGameWalk(p);
-    weekHunt(); drawItems(); needsUI(); setTimeout(() => drawWalkFog(true), 300); $("#duoBtn").classList.toggle("on", !!(gw.duoPressed || gw.duo));
+    document.body.classList.toggle("express", !!p.express);
+    weekHunt(); if (p.express) gw.items = []; drawItems(); needsUI(); setTimeout(() => drawWalkFog(true), 300); $("#duoBtn").classList.toggle("on", !!(gw.duoPressed || gw.duo));
     $("#photoBtn").textContent = "📷";
     $("#walktip").textContent = resume ? "🔁 Balade reprise là où elle en était. Garde l'app ouverte 🙏" : "📱 Garde l'app ouverte, ne verrouille pas l'écran";
     trackLayer = L.polyline(track.map(q => [q.lat, q.lon]), TRACK_STYLE).addTo(layers.sel);
@@ -4566,7 +4585,7 @@
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
     state.walk = null; forgetWalk(); store.set(END_KEY, Date.now());
     gw = null; gameLayer.clearLayers();
-    document.body.classList.remove("walking", "choosing");
+    document.body.classList.remove("walking", "choosing", "express");
     layers.sel.clearLayers();
     setTimeout(() => map.invalidateSize(), 50);
     document.body.classList.remove("hasmap"); renderHome();
@@ -4693,7 +4712,7 @@
   $("#walkbar").addEventListener("pointerdown", wakeBar, true);
   // 👃 Flair : au quart d'heure (comme le serveur), à partir de 5 min de balade, une piste fraîche à ~100 m pendant 3 min (+5)
   function flairTick(){
-    if (!gw || !state.walk) return;
+    if (!gw || !state.walk || isExpress()) return;
     const now = Date.now(), qs = Math.floor(now / 900000) * 900000;
     if (gw.flairQ !== qs && qs - t0 >= FLAIR_AFTER && now - qs < 180000){ gw.flairQ = qs; spawnTrail(); }
     updTrail();
@@ -5083,7 +5102,7 @@
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null; clearInterval(tick); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
-    state.walk = null; document.body.classList.remove("walking", "choosing"); pocketOff(); $("#radar").textContent = ""; clearWalkFog();
+    state.walk = null; document.body.classList.remove("walking", "choosing", "express"); pocketOff(); $("#radar").textContent = ""; clearWalkFog();
     cancelHome(); hideBanner(); forgetWalk(); store.set(END_KEY, Date.now());
     if (state.start && youMarker) youMarker.setLatLng([state.start.lat, state.start.lon]);
     setTimeout(() => map.invalidateSize(), 50);
@@ -5106,7 +5125,7 @@
     const eu = isTester() ? 0 : addMoney(res && !res.short ? (res.dur + res.total) / CS : 0);   // 🧪 testeur : pas de tirelire
     if (eu) r.eu = eu;
     if (!p.line.length){ p.routeM = r.m; }
-    if (elapsed >= 2 && elapsed < MONEY_MIN){
+    if (elapsed >= 2 && elapsed < MONEY_MIN && !p.express){   // ⚡ express : jamais d'amende « balade courte »
       const ms = shortMalus(elapsed);
       if (ms){ r.ms = ms; res && (res.shortMalus = ms); }
     }
@@ -5209,7 +5228,7 @@
     const log = getLog();
     log.unshift({ gx: gx || undefined,
       id: Date.now(), date: new Date().toISOString(), title: titleOf(p), cat: p.cat, icon: iconOf(p),
-      min: Math.round(elapsed), plannedMin: Math.round(p.min), m: Math.round(meters), routeM: Math.round(p.routeM || p.m), walker: profile.walker, recap,
+      min: Math.round(elapsed), plannedMin: Math.round(p.min), ...(p.express ? { express: 1 } : {}), m: Math.round(meters), routeM: Math.round(p.routeM || p.m), walker: profile.walker, recap,
       line: (p.line.length ? p.line : track).filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 300)) === 0 || i === a.length - 1).map(q => [+q.lat.toFixed(5), +q.lon.toFixed(5)])
     });
     while (log.length > 200) log.pop();
@@ -5486,7 +5505,7 @@
       go.setAttribute("aria-label", left ? `Objectifs du jour : encore ${left}` : "Objectifs du jour : tout est fait !");
       go.onclick = e => { e.stopPropagation(); sheetToday(); }; }
     // l'enjeu dans le bouton : le gros lot du moment (doré) et la couronne 👑 qui pulse si cette balade peut te mettre 1er
-    const fw = $("#freeWalk"), lot = open ? `✨ Trésor ${HUNT_FIRST} encore libre` : ch > 0 ? `✨ Coffre chaud : ${Math.round(CHEST_EUR * CS)} à gagner` : "";
+    const fw = $("#freeWalk"), lot = open ? `✨ Trésor ${HUNT_FIRST} encore libre` : ch > 0 ? `✨ Coffre chaud : ${Math.round(chestValue() * CS)} à gagner` : "";
     if (fw) fw.classList.toggle("hot", !!lot);
     if ($("#goLot")) $("#goLot").textContent = lot;
     let crown = false;
@@ -5613,7 +5632,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5666,7 +5685,7 @@
         ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
-        ${row("💰", "Coffre surprise, sur une rue pas faite depuis longtemps (si tu es sorti au moins 4 jours sur les 7 derniers)", `+${Math.round(CHEST_EUR * CS)} 🪙`)}
+        ${row("💰", "Coffre surprise, sur une rue pas faite depuis une semaine (si tu es sorti au moins 4 jours sur les 7 derniers ; il revient tous les quelques jours)", `+${Math.round(chestValue() * CS)} 🪙`)}
         ${row("🏆", "Semaine parfaite : Roxy sortie 7 jours sur 7", `+${Math.round(PERFECT_WEEK * CS)} 🪙`)}
       </div>
       <p class="howto">Plus tu marches longtemps et plus tu changes de rues, plus tu ramasses. Exemple : 20 min ≈ ${gainEst(20)} 🪙, 45 min ≈ ${gainEst(45)} 🪙, 1 h ≈ ${gainEst(60)} 🪙 (au maximum, sans coffre).</p>
@@ -5681,11 +5700,13 @@
     openSheet(`<h2>On part comment ?</h2>
       <div class="btns">
         <button id="chFree" class="big" style="text-align:left;padding:16px">🚶 <b>Balade libre</b><br><span style="font-size:14px;font-weight:500;opacity:.9">Tu vas où tu veux. Ça démarre tout de suite.</span></button>
+        <button id="chExpress" class="big ghost" style="text-align:left;padding:16px">⚡ <b>Balade express · 10 min</b><br><span style="font-size:14px;font-weight:500">Juste un petit tour pour ${DOG}. Notée dans le carnet, sans jeu ni clebsous, sans amende.</span></button>
         <button id="chRoute" class="big ghost" style="text-align:left;padding:16px">🗺️ <b>Choisir un parcours</b><br><span style="font-size:14px;font-weight:500">L'app te propose des balades de ${fmtMin(state.dur)} autour de toi.</span></button>
         <button id="chExplo" class="big ghost" style="text-align:left;padding:16px">☁️ <b>Carte d'exploration</b><br><span style="font-size:14px;font-weight:500">Regarder ton quartier et les nuages, sans partir.</span></button>
         <button class="ghost" id="chNo">Annuler</button></div>`);
     $("#chExplo").onclick = () => { closeSheet(); setTimeout(() => { try{ openExplore(); }catch(e){} }, 150); };
     $("#chFree").onclick = () => { closeSheet(); const p = FREE(); p.min = state.dur; startWalk(p); };
+    $("#chExpress").onclick = () => { closeSheet(); startWalk(EXPRESS()); };
     $("#chRoute").onclick = () => { closeSheet(); locate(); setTimeout(() => $("#map").scrollIntoView({ behavior:"smooth", block:"start" }), 400); };
     $("#chNo").onclick = closeSheet;
   });
@@ -5729,8 +5750,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 47, APP_LABEL = "3.3";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 48, APP_LABEL = "3.4";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    48: [
+      "💶 La paie tombe maintenant le dimanche soir !",
+      "💰 Les coffres reviennent plus souvent, et tes trajets habituels redeviennent « neufs » au bout d'une semaine.",
+      "⚡ Nouveau : la balade express de 10 min (sans jeu, sans amende) dans « On part comment ? »."
+    ],
     47: [
       "📖 Touche Roxy sur l'accueil : son journal de bord, avec toutes ses balades en famille.",
       "🗺️ Touche une de tes balades (journal, carnet, tirelire) pour revoir ton trajet sur la carte."
@@ -5938,6 +5964,11 @@
   // 1) lien de récap → page du superviseur ; 2) balade interrompue → reprise ;
   // 3) sinon balade libre automatique (pas dans l'heure qui suit une balade terminée)
   const FREE = () => ({ type:"free", line:[], m:0, min:0, cat:"free", via:[], _title:"Balade libre", _icon:"🚶" });
+  // ⚡ v48 : balade express (10 min) : pas de jeu (objets, rues neuves, coffre, trésor, flair), pas de clebsous, pas d'amende « balade courte » ;
+  // notée dans le carnet et envoyée au serveur (historique, humeur de Roxy). Ne remplace pas la sortie de 20 min du jour.
+  const EXPRESS_MIN = 10;
+  const EXPRESS = () => ({ type:"free", line:[], m:0, min:EXPRESS_MIN, cat:"free", via:[], express:1, _title:"Balade express", _icon:"⚡" });
+  const isExpress = () => !!(state.walk && state.walk.express);
   showRecapPage().then(async isRecap => {
     if (isRecap) return;
     await Promise.race([firstCheck, new Promise(r => setTimeout(r, 3000))]);
@@ -5962,7 +5993,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

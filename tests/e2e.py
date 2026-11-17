@@ -81,9 +81,9 @@ with sync_playwright() as pw:
     start_walk(B, 35, chest=True, hunt=500); stop_walk(B); close_sheet(B)
     gB = game(B); mk = month(B)
     check("Léa : balade payée (tirelire > 0)", gB["money"].get(mk, 0) > 0, gB.get("money"))
-    check("Léa : coffre 5 € + trésor 5 € hors plafond (bonus = 10)", abs(gB["bonus"].get(mk, 0) - 10) < 0.001, gB.get("bonus"))
+    check("Léa : coffre 2 € (v48) + trésor 5 € hors plafond (bonus = 7)", abs(gB["bonus"].get(mk, 0) - 7) < 0.001, gB.get("bonus"))
     eB = log(B)[0]
-    check("Léa : la balade garde ce qu'elle a rapporté (gx)", eB["gx"]["c"] == 5 and eB["gx"]["h"] == 500 and eB["gx"]["w"] == 1, eB.get("gx"))
+    check("Léa : la balade garde ce qu'elle a rapporté (gx)", eB["gx"]["c"] == 2 and eB["gx"]["h"] == 500 and eB["gx"]["w"] == 1, eB.get("gx"))
     start_walk(C, 25); stop_walk(C); close_sheet(C)
     start_walk(A, 35, chest=True, hunt=500); stop_walk(A)
     check("Éric : l'écran de fin indique le mode testeur", "test" in sheet_text(A).lower() and "Mode testeur" in sheet_text(A))
