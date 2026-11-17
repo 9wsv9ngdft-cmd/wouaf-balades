@@ -455,3 +455,11 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   dort / se réveille dans N jours, % de chances, règles, « Voir le nuage argenté », « 🎁 Ce que vaut chaque bonus » → `sheetBonus`). Classes `.trez`, `.tz-l`.
 - 🐛 Dates sans zéro (`dayKey` / `weekKey` : « 2026-12-7 ») acceptées par `/hunt-move` et `/cloud` (bug de la 2.9 en décembre).
 - Tests : `tests/e2e_v44.py`, `tests/worker.test.mjs` (home-set, auto, clouds) ; `e2e.py`, `e2e_realmap.py`, `e2e_duels.py` adaptés.
+
+## Version 3.1 « Croquette » (APP_NUM 45, décidé le 17/11 en Wouaf 6 : lot 3, retours des promeneurs)
+- 📷 **Bouton Photo visible** : 3 gros boutons en bas de la balade, `#camBtn` « 📷 Photo » (clique `#photoBtn`) · 🌙 Poche · ⏹ Fini (retour : une personne âgée ne trouvait pas la photo,
+  cachée dans le menu de Roxy, qui reste aussi).
+- 🌙 **Mode poche : glisser la patte** (`#pkSlide`, `#pkKnob`, pointer events) jusqu'à 85 % du rail pour revenir ; le double toucher est supprimé (il se déclenchait dans la poche).
+- 📲 **Groupe WhatsApp « Roxy »** (`WA_GROUP`, `waHint()`) : consigne verte juste au-dessus du bouton « 📩 Envoyer au groupe « Roxy » » du récap et des paies (retour : récap envoyé au
+  mauvais contact). Le partage reste le menu Partager de l'iPhone (choix d'Éric).
+- Tests : `tests/e2e_v45.py` ; `e2e.py` : la balade de référence de Zoé suit l'horloge du test (`NOW`), plus l'heure réelle (le test échouait après 15 h).

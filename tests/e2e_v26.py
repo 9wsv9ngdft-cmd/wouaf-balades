@@ -100,7 +100,7 @@ with sync_playwright() as pw:
         check("réglage des heures de cours visible", "cours" in sheet(P).lower() or "écran d'accueil" in sheet(P), sheet(P)[:200])
     # --- zoom de la page bloqué
     check("la page ne se zoome plus (viewport)", "user-scalable=no" in P.evaluate("document.querySelector('meta[name=viewport]').content"))
-    check("version 3.0 · CROQUETTE", "3.0" in P.evaluate("document.querySelector('#homeFoot').innerText") and "CROQUETTE" in P.evaluate("document.querySelector('#homeFoot').innerText"))
+    check("version 3.1 · CROQUETTE", "3.1" in P.evaluate("document.querySelector('#homeFoot').innerText") and "CROQUETTE" in P.evaluate("document.querySelector('#homeFoot').innerText"))
     b.close()
 check("aucune erreur JavaScript", not errs, errs[:3])
 print("\n" + ("✅ TOUT EST BON" if not FAILS else f"❌ {len(FAILS)} échec(s) : " + ", ".join(FAILS)))

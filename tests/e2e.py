@@ -50,7 +50,7 @@ def close_sheet(page):
 
 local_api("GET", "/__wipe")
 # un record du mois très long (Zoé, 4 h) pour que les balades de test ne battent pas le record (+50 testé dans e2e_duels.py)
-_e = int(__import__("time").time()) - 3 * 3600
+_e = int(NOW.timestamp()) - 3 * 3600   # même horloge que les téléphones du test (NOW), pas l'heure réelle
 local_api("POST", "/walk", json.dumps({"walker": "Zoé", "walk": {"s": _e - 14400, "e": _e, "min": 240, "m": 15000, "cs": 0}, "sum": {}}).encode())
 errs = []
 with sync_playwright() as pw:
@@ -94,7 +94,7 @@ with sync_playwright() as pw:
     B.wait_for_timeout(800)
     d = kv()
     check("serveur : balades de Léa, Tom et Éric reçues (Éric à 0 clebsou, marqué testeur)", all(k in d for k in ["d:léa", "d:tom", "d:éric"]) and json.loads(d["d:éric"])["walks"][0]["cs"] == 0 and json.loads(d["d:éric"])["sum"]["test"] == 1, [k for k in d if k.startswith("d:")])
-    check("serveur : les sorties d'Éric comptent pour l'humeur de Roxy (last)", json.loads(d["last"])["walker"] in ("Éric", "Léa", "Tom"))
+    check("serveur : les sorties d'Éric comptent pour l'humeur de Roxy (last)", json.loads(d["last"])["walker"] in ("Éric", "Léa", "Tom"), (d.get("last"), [json.loads(d[k])["walks"][0]["e"] for k in ("d:léa","d:tom","d:éric") if k in d]))
     check("serveur : Éric n'est pas inscrit aux rappels", not any(k.startswith("u:") for k in d))
 
     # ---------- 4. annuler la balade de Léa ----------

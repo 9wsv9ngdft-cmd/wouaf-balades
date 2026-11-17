@@ -28,7 +28,7 @@ with sync_playwright() as pw:
     check("missions en haut : objets, rues neuves, photo", "objets" in ch and "rues neuves" in ch and "photo" in ch, ch)
     check("plus de compte à rebours « minimum dans »", "minimum dans" not in P.evaluate("document.querySelector('#walkbar').innerText"))
     check("gros chiffres : clebsous et temps", "+" in P.evaluate("document.querySelector('#wGain').innerText") and "12 min" in P.evaluate("document.querySelector('#wTime').innerText"))
-    check("deux gros boutons visibles : Poche et Fini", P.locator("#pocketBtn").is_visible() and P.locator("#stop").is_visible() and not P.locator("#photoBtn").is_visible() and not P.locator("#needP").is_visible())
+    check("gros boutons visibles : Photo, Poche et Fini", P.locator("#camBtn").is_visible() and P.locator("#pocketBtn").is_visible() and P.locator("#stop").is_visible() and not P.locator("#photoBtn").is_visible() and not P.locator("#needP").is_visible())
     check("flèche du trésor au bord de l'écran", not P.evaluate("document.querySelector('#wTreasure').hidden") and "km" in P.evaluate("document.querySelector('#wTreasure').innerText"), P.evaluate("document.querySelector('#wTreasure').innerText"))
     P.evaluate("__wouaf.openRoxyMenu()"); P.wait_for_timeout(200)
     check("toucher Roxy : Pipi, Caca, Photo, Plus", P.locator("#roxyMenu").is_visible() and "Pipi" in P.evaluate("document.querySelector('#roxyMenu').innerText"))

@@ -473,6 +473,8 @@
   .copfiche{display:flex;flex-direction:column;gap:6px} .copfiche button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
   .copfiche span{font-size:14px;color:var(--muted);font-weight:500}
   .heatc{margin:6px 0;flex-wrap:wrap;overflow:visible} .heatT{font-size:15px;margin:10px 0 0}
+  .waHint{width:100%;margin:0 0 4px;padding:10px 12px;border-radius:14px;background:#e7f8ee;border:2px solid #25d366;color:#0b4d26;font-size:17px;line-height:1.3;text-align:center}
+  .waHint b{font-size:19px;white-space:nowrap}
   .trez{text-align:center;border-radius:22px;padding:18px 14px 12px;margin:-4px 0 12px;background:linear-gradient(160deg,#fff6d8,#f6dc84 60%,#e9bf4a);color:#3d2c00;box-shadow:0 6px 20px rgba(201,162,39,.35)}
   .trez.silver{background:linear-gradient(160deg,#f7f9fb,#dfe5ec 60%,#c3ccd6);color:#26313c;box-shadow:0 6px 20px rgba(120,135,150,.3)}
   .trez.off{filter:saturate(.45)}
@@ -574,7 +576,8 @@
   #walkbar .wline{font-size:14px;color:#bfe3ff;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:18px}
   #walkbar .wbtns{display:flex;gap:10px;margin-top:10px}
   #walkbar .wbig{flex:1;border-radius:16px;padding:14px 4px;font-weight:900;font-size:18px;color:#fff;position:relative;overflow:hidden}
-  #walkbar .wbig.moon{background:#232a46} #walkbar .wbig.end{background:#c8452f}
+  #walkbar .wbig.moon{background:#232a46} #walkbar .wbig.end{background:#c8452f} #walkbar .wbig.cam{background:#1f6f8b}
+  #walkbar .wbtns .wbig{font-size:17px;padding:14px 2px}
   #walkbar .wbig.end span{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.1} #walkbar .wbig.end small{font-size:12.5px;font-weight:600;opacity:.85}
   #walkbar .wbig.end .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.3)}
   #walkbar .wbig.end.holding .fill{width:100%;transition:width 1s linear}
@@ -595,6 +598,10 @@
   .trailm{font-size:22px;filter:drop-shadow(0 0 7px #7dffb0);line-height:1;animation:aping 1.4s ease-in-out infinite}
   .trailtag{background:#1f7a4a;color:#fff;font-weight:800;font-size:12.5px;padding:3px 9px;border-radius:99px;white-space:nowrap;box-shadow:0 0 0 3px rgba(125,255,176,.35)}
   .flyplus{position:fixed;z-index:1004;font-weight:900;color:#ffd35c;font-size:24px;text-shadow:0 2px 6px #000;pointer-events:none;transition:transform .9s cubic-bezier(.5,-0.2,.6,1),opacity .9s}
+  #pocket .pkSlide{position:relative;width:min(300px,80vw);height:62px;border-radius:31px;background:#1b1b1b;border:1px solid #333;margin:22px auto 0;touch-action:none}
+  #pocket .pkSlide span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-left:50px;font-size:15px;color:#9a9a9a;pointer-events:none}
+  #pocket .pkKnob{position:absolute;left:4px;top:4px;width:54px;height:54px;border-radius:50%;background:#3a3a3a;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:26px;touch-action:none;z-index:1}
+  #pocket .pkKnob.back{transition:transform .25s}
   #pocket .pflair{border:2px solid #ff7ad9;border-radius:18px;padding:12px 16px;color:#ffd0f0;font-weight:800;font-size:17px;box-shadow:0 0 30px rgba(255,122,217,.4);margin-top:6px}
   #pocket .pflair:empty{display:none}
   body.walking #recenter{bottom:calc(var(--wbh,200px) + 12px)}
@@ -769,6 +776,7 @@
       <button class="photo hid" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
       <button class="photo hid" id="duoBtn" aria-label="Balade à deux : on est deux promeneurs avec Roxy">👯</button>
       <button class="photo hid" id="photoBtn" aria-label="Prendre une photo du chien">📷</button>
+      <button class="wbig cam" id="camBtn" aria-label="Prendre Roxy en photo">📷 Photo</button>
       <button class="wbig moon" id="pocketBtn" aria-label="Mode poche : écran noir, la balade continue">🌙 Poche</button>
       <button class="wbig end" id="stop" aria-label="Terminer la balade : garde le doigt une seconde"><i class="fill"></i><span>⏹ Fini<small>garde appuyé</small></span></button>
     </div>
@@ -783,7 +791,7 @@
 <div id="roxyMenu" hidden><button id="rmP"><b>💧</b>Pipi</button><button id="rmC"><b>💩</b>Caca</button><button id="rmPh"><b>📷</b>Photo</button><button id="rmD"><b>🐕</b>Copain</button><button id="rmMore"><b>⋯</b>Plus</button></div>
 <div id="coach" hidden></div>
 <div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
-<div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.<br>Touche deux fois l'écran pour revenir.</small></div></div>
+<div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.</small><div class="pkSlide" id="pkSlide"><i class="pkKnob" id="pkKnob">🐾</i><span>Glisse la patte pour revenir</span></div></div></div>
 <div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
@@ -792,7 +800,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.144826";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.153922";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2663,7 +2671,7 @@
       <h3 style="margin:16px 2px 6px">💬 Questions fréquentes</h3>
       <div class="props">
         ${q("Je n'ai rien gagné ?", `Il faut au moins 20 min de balade, avec l'app ouverte tout le long. Au-delà, chaque minute rapporte, et les bonus (objets, rues neuves, défi…) comptent dès 20 min.`)}
-        ${q("La balade s'est arrêtée toute seule ?", `Ne verrouille pas l'écran : utilise plutôt 🌙 Poche (écran noir, la balade et le GPS continuent ; deux touchers pour revenir).`)}
+        ${q("La balade s'est arrêtée toute seule ?", `Ne verrouille pas l'écran : utilise plutôt 🌙 Poche (écran noir, la balade et le GPS continuent ; glisse la patte pour revenir).`)}
         ${q("Je ne reçois pas le flair 👃 ?", `Installe l'app sur l'écran d'accueil (Partager › Sur l'écran d'accueil), ouvre-la par son icône et active les rappels dans le menu ☰ › 🔔. Le flair arrive toutes les 15 min pendant une balade.`)}
         ${q("C'est quoi une rue neuve ?", `Un coin d'environ 100 m où tu n'es pas passé depuis ${FRESH_DAYS} jours. Sur la carte, c'est ce qui est encore dans le brouillard. Elles rapportent plus.`)}
         ${q("Comment marche le classement ?", `Chaque semaine (du lundi au dimanche), les rues neuves et les objets ramassés pendant tes balades de 20 min ou plus te font monter. On ne voit que les places, jamais les points.`)}
@@ -3417,7 +3425,7 @@
     return { party:true, html: `<div class="dc-ic">💶</div><h2>Jour de paie !</h2>
       <p>Cette ${esc(weekLabel(k))}, tu as gagné</p><div style="font-size:44px;font-weight:800;color:var(--accent)">${Math.round(r.eur * CS).toLocaleString("fr-FR")} 🪙</div>
       <p style="margin-top:12px">${first ? "🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>" : ""}Ça te fait <b style="font-size:22px">${fmtEur(r.eur)}</b> ! 🎉</p>
-      <div class="btns"><button data-dg="payShare">📩 Envoyer au superviseur</button></div>`,
+      <div class="btns">${waHint()}<button data-dg="payShare">📩 Envoyer au groupe « ${WA_GROUP} »</button></div>`,
       bind: el => { el.querySelector('[data-dg="payShare"]').onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} }; } };
   }
   // ❌ Balade annulée par le superviseur (POST /void) : le téléphone retire tous les gains de la balade (durée, bonus, défi, trésor, coffre),
@@ -3566,7 +3574,7 @@
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
       { pic:`<div style="width:88%"><div class="mockbar"><span>💧</span><span>💩</span><span>📷</span><span>⋯</span></div><div class="row" style="margin-top:10px"><span class="chip">🌙 Poche</span><span class="chip">⏹ Fini : garde appuyé</span></div></div>`,
-        h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo, et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, deux touchers pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
+        h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo (aussi en bas : 📷 Photo), et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, glisse la patte pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
       { pic:`<div><div class="big bob">👃</div><div class="row" style="margin-top:10px"><span class="chip">toutes les 15 min</span><span class="chip">🐾 3 min</span><span class="chip">+${FLAIR_CS} 🪙</span></div></div>`,
         h:"Le flair", t:`Toutes les 15 minutes de balade, ${DOG} flaire une piste fraîche : ton téléphone sonne (accepte les notifications : menu ☰ › 🔔), et des pattes 🐾 apparaissent tout près. Rejoins-les avant 3 minutes : +${FLAIR_CS} !` },
       { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">💰 coffre ${cs(CHEST_EUR)}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
@@ -3625,7 +3633,7 @@
       <p style="text-align:center">En ${monthLabel(k)}, tu as gagné</p>
       <div style="text-align:center;font-size:44px;font-weight:800;color:var(--accent)">${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</div>
       <p style="text-align:center;margin-top:12px">🤫 Le secret des clebsous : <b>100 clebsous = 1 €</b>.<br>Ça te fait donc <b style="font-size:22px">${fmtEur(eur)}</b> ! 🎉</p>
-      <div class="btns"><button id="payShare">📩 Envoyer au superviseur</button><button class="ghost" id="payImg">📱 Mon mois avec ${DOG} en image</button><button class="ghost" id="payOk">Super !</button></div>`);
+      <div class="btns">${waHint()}<button id="payShare">📩 Envoyer au groupe « ${WA_GROUP} »</button><button class="ghost" id="payImg">📱 Mon mois avec ${DOG} en image</button><button class="ghost" id="payOk">Super !</button></div>`);
     ding(); setTimeout(ding, 250); setTimeout(ding, 500);
     $("#payShare").onclick = async () => { try{ if (navigator.share) await navigator.share({ text: payText(k) }); else location.href = "sms:&body=" + encodeURIComponent(payText(k)); }catch(e){} };
     $("#payOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 400); };
@@ -3816,7 +3824,7 @@
   }
 
   // ---------- 🌙 Mode poche ----------
-  let pocketTaps = 0, pocketTimer = null, pocketTick = null;
+  let pocketTick = null;
   function pocketOn(){
     $("#pocket").hidden = false;
     const up = () => {
@@ -3830,11 +3838,19 @@
   }
   function pocketOff(){ $("#pocket").hidden = true; clearInterval(pocketTick); $("#pocketFlair").textContent = ""; }
   $("#pocketBtn").addEventListener("click", pocketOn);
-  $("#pocket").addEventListener("click", () => {
-    pocketTaps++; clearTimeout(pocketTimer);
-    if (pocketTaps >= 2){ pocketTaps = 0; pocketOff(); return; }
-    pocketTimer = setTimeout(() => { pocketTaps = 0; }, 450);
-  });
+  // v45 : on revient en GLISSANT la patte jusqu'au bout (retour du 16/11 : le double toucher se déclenchait tout seul dans la poche)
+  (() => {
+    const knob = $("#pkKnob"), track = $("#pkSlide"); let x0 = null, dx = 0;
+    const max = () => track.clientWidth - knob.offsetWidth - 8;
+    knob.addEventListener("pointerdown", e => { x0 = e.clientX; dx = 0; knob.classList.remove("back"); try{ knob.setPointerCapture(e.pointerId); }catch(_){} e.preventDefault(); });
+    knob.addEventListener("pointermove", e => { if (x0 == null) return; dx = Math.max(0, Math.min(max(), e.clientX - x0)); knob.style.transform = `translateX(${dx}px)`; });
+    const end = () => {
+      if (x0 == null) return; x0 = null;
+      if (dx >= max() * 0.85){ pocketOff(); haptic(1); }
+      knob.classList.add("back"); knob.style.transform = ""; dx = 0;
+    };
+    knob.addEventListener("pointerup", end); knob.addEventListener("pointercancel", end);
+  })();
 
   // ---------- 🥺 Humeur de Roxy (heures depuis sa dernière vraie balade, tous promeneurs) ----------
   function lastWalk(){
@@ -4560,6 +4576,7 @@
   }
   [["#rmP", "#needP"], ["#rmC", "#needC"], ["#rmPh", "#photoBtn"], ["#rmMore", "#moreBtn"]].forEach(([a, b]) => $(a).addEventListener("click", () => { $("#roxyMenu").hidden = true; $(b).click(); }));
   $("#rmD").addEventListener("click", () => { $("#roxyMenu").hidden = true; sheetCopWalk(); });
+  $("#camBtn").addEventListener("click", () => $("#photoBtn").click());   // v45 : 📷 bien visible en bas (avant : caché dans le menu de Roxy)
   map.on("click", () => { $("#roxyMenu").hidden = true; });
   function wakeBar(){
     const w = $("#walkbar"); w.classList.remove("mini"); clearTimeout(miniT);
@@ -4861,6 +4878,9 @@
     return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${needs}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
+  // 📲 v45 : les récaps partent dans le groupe WhatsApp « Roxy » (retour du 16/11 : récap envoyé au mauvais contact par erreur)
+  const WA_GROUP = "Roxy";
+  const waHint = () => `<p class="waHint">📲 Dans WhatsApp, choisis le groupe <b>« ${WA_GROUP} »</b></p>`;
   async function shareRecap(r, files){
     const url = location.origin + location.pathname + "#r=" + await packRecap(r);
     const text = recapText(r) + "\n" + url;
@@ -4931,7 +4951,7 @@
       ${partyBox(r, res)}
       ${moneyBox(r, moneyMin)}
       ${(files || []).length > 1 ? `<div class="thumbs">${thumbs}</div>` : !(files || []).length ? `<p class="howto">Pas de photo cette fois. La prochaine fois, touche 📷 pendant la balade.</p>` : ""}
-      <div class="btns"><button id="sendRecap">📩 Envoyer au superviseur</button><button class="ghost" id="closeRecap">Fermer</button></div>`);
+      <div class="btns">${waHint()}<button id="sendRecap">📩 Envoyer au groupe « ${WA_GROUP} »</button><button class="ghost" id="closeRecap">Fermer</button></div>`);
     $("#sendRecap").onclick = async () => { await shareRecap(r, files); };
     document.querySelectorAll("#sheet .care button").forEach(b => b.onclick = () => { b.classList.add("ok"); b.disabled = true; b.querySelector("i").textContent = "✓"; });
     if (dur >= 2){ setTimeout(bark, 250); bindCopRecap(); }
@@ -5480,7 +5500,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5596,8 +5616,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 44, APP_LABEL = "3.0";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 45, APP_LABEL = "3.1";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    45: [
+      "📷 Le bouton Photo est maintenant en bas pendant la balade.",
+      "🌙 Mode poche : glisse la patte 🐾 pour revenir (fini les retours par erreur dans la poche).",
+      "📲 Pour envoyer ta balade, choisis le groupe WhatsApp « Roxy »."
+    ],
     44: [
       "🏴‍☠️ Touche la tuile du trésor : où il est caché, combien de temps il reste… et fonce !",
       "💰 Touche la tuile du coffre : est-il chaud ? comment l'attraper ? ce que vaut chaque bonus.",
