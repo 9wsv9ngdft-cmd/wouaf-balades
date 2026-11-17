@@ -497,3 +497,11 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 💶 **Paie le dimanche** (`weekPayRoll`) : dès le dimanche `PAY_HOUR` (18 h), la semaine en cours est payée (`wkBase.done`) ; ce qui est gagné ensuite compte pour la semaine
   suivante ; app pas ouverte le dimanche soir = paie à la 1re ouverture suivante. Notification du dimanche soir : « C'est jour de paie : ouvre l'app ! ».
 - Tests : `tests/e2e_v48.py` ; `e2e.py` (coffre à 2 €).
+
+## Version 3.5 « Croquette » (APP_NUM 49, décidé le 17/11 en Wouaf 6 : signaler un bug)
+- 🐞 **Signaler un bug** (☰ › « Signaler un bug », `sheetBug`, icône coccinelle dessinée `bugIcon`) : une ligne de texte (500 caractères) + **capture d'écran facultative** (`#bugFile`,
+  réduite à ~800 px par `shrink`, JPEG < 390 Ko) → `POST /bug` (prénom, texte, version ; **ni position ni notification**). Worker : KV `bugs` (100 derniers, 10 par jour et par promeneur),
+  image à part `bugimg:<id>` (JPEG seulement, **gardée 60 jours**, lue seulement par le superviseur).
+- 🔑 **Superviseur › 🐞 Bugs signalés** (`sheetBugs`) : liste récente d'abord, « Réglé ✓ » / « Rouvrir » / « Supprimer » (efface aussi l'image), « 📎 Voir la capture » (`POST /bugs`, `/bug-done`, `/bug-img`, jeton ou code).
+- Tests : `tests/e2e_v49.py` (navigateur, avec image), `tests/worker.test.mjs` (bugs, captures).
+- Prochaines étapes décidées : signalements de la communauté (route barrée, chien agressif…), puis design plus doux et joyeux.
