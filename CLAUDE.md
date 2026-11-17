@@ -472,3 +472,14 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Dans les deux cas **`stopWalk(cutAt)` coupe la balade au moment où on s'est arrêté (+1 min)** : trajet tronqué, durée, argent et carnet recalculés ; toast « le temps
   immobile ne compte pas ». Balade de plus de `LONG_MIN` (2 h 30) → même question une fois, sans coupe. La fin automatique près de la maison est inchangée.
 - Tests : `tests/e2e_v46.py`.
+
+## Version 3.3 « Croquette » (APP_NUM 47, décidé le 17/11 en Wouaf 6 : historique)
+- 📖 **Journal de bord** (`sheetJournal`) : **toucher Roxy sur l'accueil** (`#heroDog`, après le saut ; avant : bulle) ; Roxy parle en haut (`.jhead`, `.jsay`, `sayNow`/`sayNext`) ;
+  « Depuis le début, en famille » (balades, km, temps dehors, rues neuves : `fam` du Worker, `fam.min` ajouté) ; pipis / cacas ; « Qui sort Roxy ? » par promeneur
+  (cette semaine, 30 jours, dernière, record, km) ; « Mes balades » (carnet du téléphone, cliquables) ; boutons Dernières sorties / Fiche de Roxy.
+  Worker **`GET /journal`** (public, chiffres seulement : par promeneur sur ses 60 dernières balades non annulées + `fam`). La bulle (`showSay`) reste pour les autres cas.
+- 🗺️ **Revoir une balade** (`sheetWalk(id, back)`) : carte Leaflet du trajet du carnet (`e.line`), 🟢 départ, 🏁 arrivée, repères 💧💩🐕🏴‍☠️ de `wouaf-traces` (trace dont `t` est à
+  moins de 20 s de `e.id`), durée, distance, vitesse, clebsous (`recap.eu`), « Refaire ce trajet », « Renvoyer au groupe Roxy », « ← Retour ». Ouvert depuis le journal,
+  le carnet (toucher une balade ; avant : tracé sur la carte cachée), les dernières sorties (seulement **mes** balades, classe `.entry.tap`) et Tirelire › Paies des semaines
+  (`sheetWeekWalks(wk)` : balades de la semaine). Les trajets ne quittent jamais le téléphone ; Éric voit ceux des autres via les liens des récaps WhatsApp.
+- Tests : `tests/e2e_v47.py` (vraie carte), `tests/worker.test.mjs` (/journal) ; `e2e_accueil.py` adapté (toucher Roxy = journal).

@@ -343,9 +343,9 @@ async function flairs(env, now){
 async function famGet(env){
   let f = await env.WOUAF.get("fam", "json");
   if (!f){
-    f = { m:0, nc:0, n:0 }; const keys = []; let cur;
+    f = { m:0, nc:0, n:0, min:0 }; const keys = []; let cur;
     do { const l = await env.WOUAF.list({ prefix:"d:", cursor: cur }); keys.push(...l.keys); cur = l.list_complete ? null : l.cursor; } while (cur);
-    for (const k of keys){ const d = await env.WOUAF.get(k.name, "json"); for (const w of (d && d.walks) || []) if (!w.v){ f.m += w.m || 0; f.nc += w.nc || 0; f.n++; } }
+    for (const k of keys){ const d = await env.WOUAF.get(k.name, "json"); for (const w of (d && d.walks) || []) if (!w.v){ f.m += w.m || 0; f.nc += w.nc || 0; f.n++; f.min += w.min || 0; } }
     await env.WOUAF.put("fam", JSON.stringify(f));
   }
   return f;
@@ -380,6 +380,26 @@ export default {
       for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); if (d) for (const x of (d.walks || []).slice(0, 20)) all.push({ w: d.walker, s: x.s, e: x.e, min: x.min, m: x.m, pp: x.pp, cc: x.cc, v: x.v ? 1 : 0 }); }
       all.sort((a, b) => b.e - a.e);
       return json({ walks: all.slice(0, 25) });
+    }
+    // 📖 journal de bord de Roxy (v47) : chiffres par promeneur (60 dernières balades de chacun) + totaux de la famille. Ni trajet, ni position, ni argent.
+    if (req.method === "GET" && path === "/journal"){
+      const l = await env.WOUAF.list({ prefix:"d:" }), now = Date.now() / 1000, out = [];
+      let famMin = 0;
+      for (const k of l.keys){
+        const d = await env.WOUAF.get(k.name, "json"); if (!d) continue;
+        const ws = (d.walks || []).filter(x => !x.v), r = { w: d.walker, n:0, min:0, m:0, pp:0, cc:0, n7:0, min7:0, n30:0, min30:0, first:0, last:0, best:0 };
+        for (const x of ws){
+          r.n++; r.min += x.min || 0; r.m += x.m || 0; r.pp += x.pp ? 1 : 0; r.cc += x.cc ? 1 : 0; r.best = Math.max(r.best, x.min || 0);
+          if (now - x.e < 7 * 86400){ r.n7++; r.min7 += x.min || 0; }
+          if (now - x.e < 30 * 86400){ r.n30++; r.min30 += x.min || 0; }
+          r.first = r.first ? Math.min(r.first, x.e) : x.e; r.last = Math.max(r.last, x.e);
+        }
+        famMin += r.min; if (r.n) out.push(r);
+      }
+      out.sort((a, b) => b.n30 - a.n30 || b.min30 - a.min30);
+      const f = await famGet(env);
+      if (f.min == null){ f.min = famMin; await env.WOUAF.put("fam", JSON.stringify(f)); }
+      return json({ walkers: out, fam: { n: f.n, m: f.m, nc: f.nc, min: f.min } });
     }
     if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json") });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
@@ -663,7 +683,7 @@ export default {
       const d = (await env.WOUAF.get(dk, "json")) || { walker: w, walks: [] };
       const fresh = !d.walks.some(y => y.e === walk.e), out = { ok:true };
       if (fresh){ d.walks.unshift(walk);
-        const f = await famGet(env); f.m += walk.m; f.nc += walk.nc; f.n++; await env.WOUAF.put("fam", JSON.stringify(f));
+        const f = await famGet(env); f.m += walk.m; f.nc += walk.nc; f.n++; if (f.min != null) f.min += walk.min || 0; await env.WOUAF.put("fam", JSON.stringify(f));
         const live = (await env.WOUAF.get("live", "json")) || {}; if (live[slug(w)]){ delete live[slug(w)]; await env.WOUAF.put("live", JSON.stringify(live)); } }
       d.walks = d.walks.slice(0, 60); d.walker = w; d.sum = cleanState(b.sum); d.at = Date.now();
       await env.WOUAF.put(dk, JSON.stringify(d));

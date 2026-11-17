@@ -475,6 +475,9 @@
   .heatc{margin:6px 0;flex-wrap:wrap;overflow:visible} .heatT{font-size:15px;margin:10px 0 0}
   .waHint{width:100%;margin:0 0 4px;padding:10px 12px;border-radius:14px;background:#e7f8ee;border:2px solid #25d366;color:#0b4d26;font-size:17px;line-height:1.3;text-align:center}
   .waHint b{font-size:19px;white-space:nowrap}
+  .entry.tap{cursor:pointer} .entry.tap:active{transform:scale(.98)}
+  .jhead{display:flex;align-items:center;gap:12px;margin:0 0 6px} .jdog{width:72px;height:72px;flex:none} .jdog>*{width:72px!important;height:72px!important}
+  .jsay{position:relative;background:#fff6d8;border:2px solid #f2d36b;border-radius:16px;padding:8px 12px;font-size:15px;line-height:1.3;color:#3d2c00}
   .trez{text-align:center;border-radius:22px;padding:18px 14px 12px;margin:-4px 0 12px;background:linear-gradient(160deg,#fff6d8,#f6dc84 60%,#e9bf4a);color:#3d2c00;box-shadow:0 6px 20px rgba(201,162,39,.35)}
   .trez.silver{background:linear-gradient(160deg,#f7f9fb,#dfe5ec 60%,#c3ccd6);color:#26313c;box-shadow:0 6px 20px rgba(120,135,150,.3)}
   .trez.off{filter:saturate(.45)}
@@ -701,7 +704,7 @@
   <div id="recapbox"></div>
   <div class="panel">
     <div class="hero">
-      <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : elle te parle"></button>
+      <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : son journal de bord"></button>
       <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
@@ -800,7 +803,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.155717";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.164016";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3646,9 +3649,10 @@
     const ks = Object.keys(game.weeks || {}).sort().reverse().slice(0, 8);
     if (!ks.length) return "";
     return `<div class="flabel">Paies des semaines</div><div class="props">${ks.map(k => { const eur = game.weeks[k], pd = paidW(k);
-      return `<div class="entry"><div><h4>${esc(weekLabel(k))} · ${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙</h4><div class="when">${fmtEur(eur)} · ${pd ? "✓ payé le " + new Date(pd).toLocaleDateString("fr-FR") : eur ? "⏳ à payer" : "rien à payer"}</div></div>${pd || !eur || !PUSH_API ? "" : `<button class="ghost" data-pay="${k}">Payé ✓</button>`}</div>`; }).join("")}</div>`;
+      return `<div class="entry tap" data-wkw="${k}"><div><h4>${esc(weekLabel(k))} · ${Math.round(eur * CS).toLocaleString("fr-FR")} 🪙 ›</h4><div class="when">${fmtEur(eur)} · ${pd ? "✓ payé le " + new Date(pd).toLocaleDateString("fr-FR") : eur ? "⏳ à payer" : "rien à payer"}</div></div>${pd || !eur || !PUSH_API ? "" : `<button class="ghost" data-pay="${k}">Payé ✓</button>`}</div>`; }).join("")}</div>`;
   }
   function bindPay(rerender){
+    document.querySelectorAll("[data-wkw]").forEach(n => n.addEventListener("click", ev => { if (!ev.target.closest("[data-pay]")) sheetWeekWalks(n.dataset.wkw); }));   // v47 : revoir les balades de la semaine
     document.querySelectorAll("[data-pay]").forEach(b => b.onclick = () => {
       const k = b.dataset.pay;
       openSheet(`<h2>Superviseur : paie de la ${esc(weekLabel(k))}</h2><p>${esc(payText(k))}</p>
@@ -3986,13 +3990,88 @@
       const t = x.e * 1000, lab = dayLabel(t);
       if (lab !== last){ html += `<div class="flabel">${esc(lab)}</div>`; last = lab; }
       const start = new Date(t - x.min * 60000);
-      html += `<div class="entry${x.v ? " void" : ""}"><div><h4>${x.v ? "❌ " : ""}${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.v ? " · annulée" : x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
+      const own = x.w === profile.walker && getLog().find(e => Math.abs(Math.round(new Date(e.date).getTime() / 1000) - x.e) < 180);
+      html += `<div class="entry${x.v ? " void" : ""}${own ? " tap" : ""}"${own ? ` data-wk="${own.id}"` : ""}><div><h4>${x.v ? "❌ " : ""}${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.v ? " · annulée" : x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
     }
     openSheet(`<h2>🐾 Les dernières sorties de ${DOG}</h2>
       ${list.length ? `<div class="props">${html}</div>` : `<p>Pas encore de sortie enregistrée.</p>`}
-      <p class="howto">Qui, quand et combien de temps : les trajets restent dans les récaps envoyés sur WhatsApp.</p>
+      <p class="howto">Qui, quand et combien de temps. Touche une de tes balades pour revoir ton trajet ; ceux des autres restent dans les récaps WhatsApp.</p>
       <div class="btns"><button id="outClose">Fermer</button></div>`);
     $("#outClose").onclick = closeSheet;
+    document.querySelectorAll("#sheet [data-wk]").forEach(n => n.onclick = () => sheetWalk(n.dataset.wk, sheetOuts));
+  }
+
+  // ---------- 📖 Journal de bord de Roxy et 🗺️ revoir une balade (v47, retours du 16–17/11) ----------
+  // Journal = toucher Roxy sur l'accueil : chiffres de toute la famille (Worker GET /journal, sans trajet) + mes balades à revoir.
+  // Revoir une balade = carte du trajet (gardé sur CE téléphone : carnet + repères de wouaf-traces) et le détail. Les autres ne voient jamais mes trajets.
+  let walkMap = null;
+  const logById = id => getLog().find(x => x.id === +id);
+  function sheetWalk(id, back){
+    const e = logById(id); if (!e) return toast("Balade introuvable sur ce téléphone.", 3000);
+    try{ useTrack("🗺️ Revoir une balade"); }catch(_){}
+    const r = e.recap || {}, end = new Date(e.date), start = new Date(end.getTime() - e.min * 60000);
+    const tr = getTraces().find(t => Math.abs((t.t || 0) - e.id) < 20000), pins = (tr && tr.p) || [];
+    const kmh = e.min ? (e.m / 1000) / (e.min / 60) : 0;
+    const cell = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
+    openSheet(`<h2>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${esc(e.title || "Balade")}</h2>
+      <p style="margin-top:0">${e.walker ? "🧑 " + esc(e.walker) + " · " : ""}${end.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} · ${hm(start)} → ${hm(end)}</p>
+      ${e.line && e.line.length > 1 ? `<div id="wkmap" style="height:38vh;border-radius:14px;overflow:hidden"></div>` : `<p class="howto">Pas de trajet enregistré pour cette balade.</p>`}
+      <div class="rgrid" style="margin-top:10px">${cell(fmtMin(e.min), "de balade")}${cell(fmtKm(e.m), "parcourus")}${cell(kmh ? kmh.toFixed(1).replace(".", ",") + " km/h" : "—", "en moyenne")}${cell(r.eu ? "🪙 +" + Math.round(r.eu * CS) : "—", e.void ? "annulée" : "gagnés")}</div>
+      <p class="howto" style="text-align:center">${[r.pp || pins.some(x => x.k === "p") ? "💧 pipi" : "", r.cc || pins.some(x => x.k === "c") ? "💩 caca" : "", pins.some(x => x.k === "d") ? "🐕 copain" : "", r.cb ? "💰 coffre !" : "", pins.some(x => x.k === "t") ? "🏴‍☠️ trésor !" : "", r.df ? "🎯 défi réussi" : ""].filter(Boolean).join(" · ") || "Une belle balade avec " + DOG + " 🐾"}</p>
+      <div class="btns">${e.line && e.line.length > 1 ? `<button id="wkRedo">🐾 Refaire ce trajet</button>` : ""}${e.recap ? `<button class="ghost" id="wkSend">📩 Renvoyer au groupe « ${WA_GROUP} »</button>` : ""}<button class="ghost" id="wkBack">${back ? "← Retour" : "Fermer"}</button></div>`);
+    $("#wkBack").onclick = () => back ? back() : closeSheet();
+    if ($("#wkSend")) $("#wkSend").onclick = () => shareRecap(e.recap, []);
+    if ($("#wkRedo")) $("#wkRedo").onclick = () => {
+      const line = e.line.map(([lat, lon]) => ({ lat, lon }));
+      closeSheet(); startWalk({ line, m: e.routeM || e.m, min: e.plannedMin || e.min, cat: e.cat === "free" ? "discover" : e.cat, type: "log", via: [], _title: e.cat === "free" ? "Mon trajet du " + end.toLocaleDateString("fr-FR", { day:"numeric", month:"long" }) : e.title, _icon: e.icon });
+    };
+    try{ if (walkMap) walkMap.remove(); }catch(_){} walkMap = null;
+    if (!$("#wkmap") || typeof L === "undefined") return;
+    walkMap = L.map("wkmap", { zoomControl:true });
+    L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", { maxZoom: 19, subdomains:"abc", attribution:"© OpenStreetMap" }).addTo(walkMap);
+    const ln = L.polyline(e.line, { color:"#d9792b", weight:5, opacity:.9 }).addTo(walkMap);
+    const ic = h => L.divIcon({ className:"hpin", html: h, iconSize:[24, 24] });
+    L.marker(e.line[0], { icon: ic("🟢"), interactive:false, keyboard:false }).addTo(walkMap);
+    L.marker(e.line[e.line.length - 1], { icon: ic("🏁"), interactive:false, keyboard:false }).addTo(walkMap);
+    for (const x of pins) if (HEAT_PIN[x.k]) L.marker([x.a, x.o], { icon: ic(HEAT_PIN[x.k][0]), interactive:false, keyboard:false }).addTo(walkMap);
+    walkMap.fitBounds(ln.getBounds(), { padding:[20, 20], maxZoom:17 });
+    setTimeout(() => { try{ walkMap.invalidateSize(); walkMap.fitBounds(ln.getBounds(), { padding:[20, 20], maxZoom:17 }); }catch(_){} }, 350);
+  }
+  // balades du carnet d'une semaine (Tirelire › Paies des semaines)
+  function sheetWeekWalks(wk){
+    const list = getLog().filter(e => weekKey(new Date(e.date).getTime()) === wk || padK(weekKey(new Date(e.date).getTime())) === padK(wk));
+    openSheet(`<h2>🐾 ${esc(weekLabel(wk))}</h2>
+      ${list.length ? `<div class="props">${list.map(e => `<div class="entry tap" data-wk="${e.id}"><div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${fmtHour(new Date(e.date))}</h4><div class="when">⏱️ ${fmtMin(e.min)} · 📏 ${fmtKm(e.m)}${e.recap && e.recap.eu ? ` · 🪙 +${Math.round(e.recap.eu * CS)}` : ""}</div></div><div class="dur">›</div></div>`).join("")}</div>` : `<p>Aucune balade de cette semaine sur ce téléphone.</p>`}
+      <div class="btns"><button class="ghost" id="wwX">Fermer</button></div>`);
+    document.querySelectorAll("#sheet [data-wk]").forEach(n => n.onclick = () => sheetWalk(n.dataset.wk, () => sheetWeekWalks(wk)));
+    $("#wwX").onclick = closeSheet;
+  }
+  // 📖 Journal de bord (toucher Roxy sur l'accueil)
+  async function sheetJournal(){
+    try{ useTrack("📖 Journal de bord"); }catch(_){}
+    let said = ""; try{ said = sayTaps++ ? sayNext() : sayNow(); }catch(_){}
+    const head = `<div class="jhead"><div class="jdog">${roxyHTML(accList(game.acc))}</div>${said ? `<div class="jsay">${esc(said)}</div>` : ""}</div>`;
+    openSheet(`<h2>📖 Le journal de ${DOG}</h2>${head}<p>Un instant…</p>`);
+    let j = null; if (PUSH_API){ try{ j = await (await api("/journal")).json(); }catch(_){} }
+    const mine = getLog().filter(e => e.min >= 2), fam = j && j.fam;
+    const famMin = fam && fam.min != null ? fam.min : mine.reduce((s, e) => s + e.min, 0);
+    const famN = fam ? fam.n : mine.length, famM = fam ? fam.m : mine.reduce((s, e) => s + e.m, 0);
+    const big = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
+    const ws = (j && j.walkers) || [];
+    const pp = ws.reduce((s, x) => s + x.pp, 0), cc = ws.reduce((s, x) => s + x.cc, 0);
+    const wRows = ws.map(x => `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)}</h4><div class="when">Cette semaine : ${x.n7} balade${x.n7 > 1 ? "s" : ""} (${fmtMin(x.min7)})<br>30 jours : ${x.n30} balade${x.n30 > 1 ? "s" : ""} (${fmtMin(x.min30)})${x.last ? ` · dernière ${new Date(x.last * 1000).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}` : ""}</div></div><div class="dur">${fmtKm(x.m)}<div class="when">record ${fmtMin(x.best)}</div></div></div>`).join("");
+    const mRows = mine.slice(0, 30).map(e => `<div class="entry tap" data-wk="${e.id}"><div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric", month:"short" })} · ${fmtHour(new Date(e.date))}</h4><div class="when">⏱️ ${fmtMin(e.min)} · 📏 ${fmtKm(e.m)}${e.recap && e.recap.pp ? " · 💧" : ""}${e.recap && e.recap.cc ? " · 💩" : ""}</div></div><div class="dur">🗺️ ›</div></div>`).join("");
+    openSheet(`<h2>📖 Le journal de ${DOG}</h2>${head}
+      <div class="flabel">Depuis le début, en famille</div>
+      <div class="rgrid">${big(famN, "balades")}${big(fmtKm(famM), "parcourus")}${big(fmtMin(famMin), "dehors")}${big(fam ? fam.nc : "—", "rues neuves")}</div>
+      ${pp || cc ? `<p class="howto" style="text-align:center">💧 ${pp} pipi${pp > 1 ? "s" : ""} · 💩 ${cc} caca${cc > 1 ? "s" : ""} notés (sur les dernières balades)</p>` : ""}
+      ${ws.length ? `<div class="flabel">Qui sort ${DOG} ?</div><div class="props">${wRows}</div>` : ""}
+      <div class="flabel">Mes balades : touche pour revoir le trajet</div>
+      ${mRows ? `<div class="props">${mRows}</div>` : `<p class="howto">Pas encore de balade sur ce téléphone.</p>`}
+      <p class="howto">Tu revois seulement tes trajets à toi (gardés sur ce téléphone). Les autres voient le résumé, jamais ton trajet.</p>
+      <div class="btns"><button class="ghost" id="jOuts">🐾 Toutes les dernières sorties</button><button class="ghost" id="jRoxy">🐶 La fiche de ${DOG}</button><button class="ghost" id="jX">Fermer</button></div>`);
+    document.querySelectorAll("#sheet [data-wk]").forEach(n => n.onclick = () => sheetWalk(n.dataset.wk, sheetJournal));
+    $("#jOuts").onclick = sheetOuts; $("#jRoxy").onclick = sheetRoxy; $("#jX").onclick = closeSheet;
   }
 
   // ---------- 📊 Envoi des chiffres de chaque balade au programme (tableau de bord) ----------
@@ -5263,7 +5342,7 @@
       if (ev.target.closest("[data-send]") && e.recap){ shareRecap(e.recap, []); return; }
       const p = { line, m: e.routeM || e.m, min: e.plannedMin || e.min, cat: e.cat === "free" ? "discover" : e.cat, type: "log", via: [], _title: e.cat === "free" ? "Mon trajet du " + new Date(e.date).toLocaleDateString("fr-FR", { day:"numeric", month:"long" }) : e.title, _icon: e.icon };
       if (redo){ startWalk(p); return; }
-      logSel = id; renderLog(); if (line.length > 1) drawSelected(p, "#d9792b");
+      sheetWalk(id);   // v47 : revoir la balade (carte, trajet, détail)
     }));
   }
   cleanLeftovers();
@@ -5364,7 +5443,7 @@
     if (Date.now() - petAt < 600) return;   // c'était une caresse, pas un toucher
     const el = $("#heroDog");
     el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump"); ding();
-    showSay(sayTaps++ ? sayNext() : sayNow());
+    setTimeout(sheetJournal, 250);   // v47 : toucher Roxy ouvre son journal de bord (elle parle en haut du journal)
   });
   function updateGo(){   // v2.4 : gros bouton (gain à droite) ; la durée qui rapporte le plus porte une étiquette « ×N »
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur), tot = dur + bon;
@@ -5534,7 +5613,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5650,8 +5729,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 46, APP_LABEL = "3.2";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 47, APP_LABEL = "3.3";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    47: [
+      "📖 Touche Roxy sur l'accueil : son journal de bord, avec toutes ses balades en famille.",
+      "🗺️ Touche une de tes balades (journal, carnet, tirelire) pour revoir ton trajet sur la carte."
+    ],
     46: [
       "📷 Le bouton Photo est en bas pendant la balade, et en mode poche on revient en glissant la patte 🐾.",
       "😴 Balade oubliée ? Si tu ne bouges plus, l'app te demande si c'est fini, puis s'arrête toute seule.",
@@ -5879,7 +5962,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

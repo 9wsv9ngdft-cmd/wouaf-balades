@@ -254,3 +254,17 @@ test("v44 : nuages argentés envoyés par les ados, lus seulement par Éric ; ja
   await api.post("/reset", { token: j.token });
   assert.equal((await api.post("/clouds", { token: j.token })).j.clouds.length, 0);
 });
+
+test("v47 : journal de bord de Roxy : chiffres par promeneur et de la famille (balades annulées exclues, ni trajet ni position)", async () => {
+  const { api } = await setup();
+  const now = Math.floor(Date.now() / 1000);
+  await api.post("/walk", { walker: "Léa", walk: walk(now - 3600, { pp: 1 }), sum: {} });
+  await api.post("/walk", { walker: "Léa", walk: walk(now - 10 * 86400, { min: 45, m: 3500 }), sum: {} });
+  await api.post("/walk", { walker: "Tom", walk: walk(now - 7200, { cc: 1 }), sum: {} });
+  const j = (await api.get("/journal")).j;
+  const lea = j.walkers.find(x => x.w === "Léa"), tom = j.walkers.find(x => x.w === "Tom");
+  assert.equal(lea.n, 2); assert.equal(lea.n7, 1); assert.equal(lea.n30, 2); assert.equal(lea.min, 75); assert.equal(lea.pp, 1); assert.equal(lea.best, 45);
+  assert.equal(tom.cc, 1);
+  assert.equal(j.fam.n, 3); assert.equal(j.fam.min, 105);
+  assert.ok(!JSON.stringify(j).includes("lat"));
+});
