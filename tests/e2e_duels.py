@@ -8,7 +8,7 @@ def check(n, c, x=""):
     if not c: FAILS.append(n)
 txt = lambda p: p.evaluate("document.querySelector('#sheet').innerText")
 post = lambda path, b: local_api("POST", path, json.dumps(b).encode())
-INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
+INIT = lambda w: "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','44');localStorage.setItem('wouaf-stats-ok','true');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % w
 local_api("GET", "/__wipe")
 now = int(time.time())
 for w in ("Léa", "Tom"): post("/walk", {"walker": w, "walk": {"s": now - 90000, "e": now - 86400, "min": 10, "m": 900, "cs": 0}, "sum": {"cs": 200}})
@@ -57,7 +57,7 @@ with sync_playwright() as pw:
     L.evaluate("__wouaf.openMenu()"); L.wait_for_timeout(200); L.click("#muMoney"); L.wait_for_timeout(500)
     L.evaluate("__wouaf.sendUsage(true)"); L.wait_for_timeout(800)
     # Éric : voit le duel dans le tableau de bord
-    bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');")
+    bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','44');")
     open_app(E, 1500); E.evaluate("__wouaf.askProfile()"); E.fill("#wName", "Éric"); E.click("#whoForm button[type=submit]"); E.wait_for_timeout(800)
     ho = E.evaluate("document.querySelector('#home').textContent")
     check("Éric (testeur) : voit aussi le trésor et les gros lots sur l'accueil", "Trésor" in ho and "Coffre" in ho, ho[:200])

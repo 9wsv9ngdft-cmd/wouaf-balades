@@ -67,7 +67,8 @@ with sync_playwright() as pw:
     p.screenshot(path="/tmp/hunt27.png")
     p.click("#exploreClose"); p.wait_for_timeout(600)
     # tuile trésor -> carte sur le nuage
-    p.click("[data-lot='hunt']"); p.wait_for_timeout(1500)
+    p.click("[data-lot='hunt']"); p.wait_for_timeout(800)   # v44 : la tuile ouvre la fiche du trésor, puis « Voir le nuage doré »
+    p.click("#tzMap"); p.wait_for_timeout(1500)
     check("tuile trésor : ouvre la carte sur le nuage doré", p.evaluate("document.body.classList.contains('explore') && getComputedStyle(document.querySelector('#map')).display !== 'none'"))
     p.click("#exploreClose"); p.wait_for_timeout(600)
     # chien

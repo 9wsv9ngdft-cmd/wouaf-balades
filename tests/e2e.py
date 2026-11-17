@@ -130,7 +130,7 @@ with sync_playwright() as pw:
       const lat = 48.8566, lon = 2.3522; g.home = { lat, lon };
       const d = new Date(Date.now() - 4*3600000); d.setHours(0,0,0,0); d.setDate(d.getDate() - (d.getDay() + 6) % 7);
       const t = new Date(d.getTime() + 5*3600000), key = t.getFullYear() + '-' + (t.getMonth()+1) + '-' + t.getDate();
-      g.hunt = { wk: key, lat, lon, zlat: lat, zlon: lon, found:false, snapped:true, v:2 }; }"""
+      g.hunt = { wk: key, lat, lon, zlat: lat, zlon: lon, found:false, snapped:true, v:2, hk:'48.8566,2.3522' }; }"""
     for p in (A, B, C): ev(p, HUNT)
     start_walk(B, 35); start_walk(C, 30); start_walk(A, 30)
     ev(B, "__wouaf.huntCheck({lat:48.8566, lon:2.3522})"); B.wait_for_timeout(1000)

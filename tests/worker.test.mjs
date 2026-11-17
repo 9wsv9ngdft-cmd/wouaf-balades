@@ -213,3 +213,44 @@ test("trésor placé à la main (v43) : superviseur seulement, renvoyé par /pau
   await api.post("/reset", { token: j.token });
   assert.equal((await api.get("/pause")).j.hpos, null);
 });
+
+test("v44 : maison de la famille arrondie (~200 m), trésor automatique publié par Éric sans écraser une position à la main", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  assert.equal((await api.post("/home-set", { lat: 48.85, lon: 2.35 })).status, 403);
+  const h = await api.post("/home-set", { token: j.token, lat: 48.856613, lon: 2.352222 });
+  assert.equal(h.status, 200);
+  assert.ok(Math.abs(h.j.home.lat - 48.856) < 1e-9 && Math.abs(h.j.home.lon - 2.352) < 1e-9, JSON.stringify(h.j.home));   // jamais l'adresse exacte
+  assert.equal((await api.get("/pause")).j.home.lat, 48.856);
+  // trésor automatique : le 1er publié reste, un 2e automatique ne le remplace pas
+  const a1 = await api.post("/hunt-move", { token: j.token, wk: "2026-12-7", lat: 48.86, lon: 2.36, auto: 1 });
+  assert.equal(a1.status, 200); assert.equal(a1.j.hpos.auto, 1); assert.equal(a1.j.hpos.wk, "2026-12-7");      // date sans zéro acceptée
+  assert.equal((await api.post("/hunt-move", { token: j.token, wk: "2026-12-7", lat: 1, lon: 1, auto: 1 })).j.hpos.lat, 48.86);
+  // à la main : remplace l'automatique ; puis un automatique ne l'écrase plus
+  await api.post("/hunt-move", { token: j.token, wk: "2026-12-7", lat: 48.87, lon: 2.37 });
+  assert.equal((await api.post("/hunt-move", { token: j.token, wk: "2026-12-7", lat: 1, lon: 1, auto: 1 })).j.hpos.lat, 48.87);
+  // changer la maison efface un trésor automatique (calculé autour de l'ancienne), pas un trésor placé à la main
+  await api.post("/home-set", { token: j.token, lat: 48.9, lon: 2.4 });
+  assert.equal((await api.get("/pause")).j.hpos.lat, 48.87);
+  await api.post("/hunt-move", { token: j.token, clear: 1 });
+  await api.post("/hunt-move", { token: j.token, wk: "2026-12-7", lat: 48.86, lon: 2.36, auto: 1 });
+  await api.post("/home-set", { token: j.token, lat: 48.91, lon: 2.41 });
+  assert.equal((await api.get("/pause")).j.hpos, null);
+});
+
+test("v44 : nuages argentés envoyés par les ados, lus seulement par Éric ; jamais pour Éric ; « off » les retire ; remise à zéro les efface", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  assert.equal((await api.post("/cloud", { walker: "Léa", day: "2026-11-17", lat: 48.861234567, lon: 2.35 })).status, 200);
+  await api.post("/cloud", { walker: "Tom", day: "2026-11-17", lat: 48.84, lon: 2.34 });
+  assert.equal((await api.post("/cloud", { walker: "Éric", day: "2026-11-17", lat: 48.84, lon: 2.34 })).j.skipped, true);
+  assert.equal((await api.post("/cloud", { walker: "Léa", day: "hier", lat: 48.84, lon: 2.34 })).status, 400);
+  assert.equal((await api.post("/clouds", {})).status, 403);                                                    // un ado ne lit rien
+  assert.ok(!JSON.stringify((await api.get("/pause")).j).includes("Tom"));                                     // rien dans la route publique
+  let c = (await api.post("/clouds", { token: j.token })).j.clouds;
+  assert.equal(c.length, 2); assert.equal(c.find(x => x.w === "Léa").lat, 48.8612);
+  await api.post("/cloud", { walker: "Tom", off: 1 });
+  c = (await api.post("/clouds", { token: j.token })).j.clouds; assert.deepEqual(c.map(x => x.w), ["Léa"]);
+  await api.post("/reset", { token: j.token });
+  assert.equal((await api.post("/clouds", { token: j.token })).j.clouds.length, 0);
+});

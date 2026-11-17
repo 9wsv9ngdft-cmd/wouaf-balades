@@ -473,6 +473,17 @@
   .copfiche{display:flex;flex-direction:column;gap:6px} .copfiche button{display:flex;flex-direction:column;align-items:flex-start;text-align:left;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
   .copfiche span{font-size:14px;color:var(--muted);font-weight:500}
   .heatc{margin:6px 0;flex-wrap:wrap;overflow:visible} .heatT{font-size:15px;margin:10px 0 0}
+  .trez{text-align:center;border-radius:22px;padding:18px 14px 12px;margin:-4px 0 12px;background:linear-gradient(160deg,#fff6d8,#f6dc84 60%,#e9bf4a);color:#3d2c00;box-shadow:0 6px 20px rgba(201,162,39,.35)}
+  .trez.silver{background:linear-gradient(160deg,#f7f9fb,#dfe5ec 60%,#c3ccd6);color:#26313c;box-shadow:0 6px 20px rgba(120,135,150,.3)}
+  .trez.off{filter:saturate(.45)}
+  .trez .tz-ic{font-size:58px;line-height:1.1;animation:tzb 1.8s ease-in-out infinite}
+  .trez.off .tz-ic{animation:none}
+  .trez h2{margin:4px 0 2px;color:inherit}
+  .trez .tz-v{font-size:34px;font-weight:800;margin:2px 0 6px}
+  .trez p{margin:4px 0 0;font-size:15px;color:inherit}
+  .tz-l{list-style:none;padding:0;margin:0 0 6px}
+  .tz-l li{padding:8px 4px;border-bottom:1px solid rgba(0,0,0,.07);font-size:15px;line-height:1.35}
+  @keyframes tzb{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
   .hpin{font-size:18px;line-height:22px;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
   .care button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#eef3ec;color:var(--ink);border:1px solid #cfe0cf;border-radius:14px;padding:12px 14px;font-size:16px;font-weight:600;box-shadow:none}
   .care button span{font-size:24px} .care button i{margin-left:auto;font-style:normal;font-size:20px;color:var(--green)}
@@ -781,7 +792,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.130345";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.144826";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2039,7 +2050,7 @@
   function openExplore(toHunt){
     try{ useTrack("🗺️ Carte d'exploration"); }catch(e){}
     ensureGame();
-    if (!game.home && !getTraces().length){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
+    if (!game.home && !getTraces().length && !supToken()){ toast("Fais une première balade pour découvrir ta carte 🗺️", 3000); return; }
     closeExplore(true);
     document.body.classList.add("explore"); map.options.touchZoom = map.options.scrollWheelZoom = map.options.doubleClickZoom = "center";
     const st = fogStats();
@@ -2404,7 +2415,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-hpos", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-hpos", "wouaf-cl-sent", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -2432,13 +2443,16 @@
       store.set("wouaf-last", j.last || null);   // null = plus aucune sortie valable (remise à zéro, balade annulée)
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
-      store.set("wouaf-hpos", j.hpos || null);   // 🏴‍☠️ trésor placé à la main par Éric (ou null = automatique)
+      store.set("wouaf-hpos", j.hpos || null);   // 🏴‍☠️ trésor de la semaine commun (à la main ou publié par le téléphone d'Éric ; null = chacun le calcule)
+      store.set("wouaf-fhome", j.home || null);  // 🏠 maison de la famille (arrondie)
+      try{ applyFamilyHome(); }catch(e){}
       store.set("wouaf-record", j.record || null);
       if (j.explo) store.set("wouaf-explo", j.explo);
       if (j.fam) store.set("wouaf-fam", j.fam);
       if (j.paid && profile.walker){ const mine = j.paid[String(profile.walker).toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30)]; store.set("wouaf-paid", mine || {}); }
-      try{ weekHunt(); snapHunt(); }catch(e){}
+      try{ weekHunt(); snapHunt(); publishHunt(); }catch(e){}
       syncHunt();
+      sendCloud();
       return true;
     }
     catch(e){ return false; }   // pas de réseau : on attend de connaître les pauses avant de compter
@@ -2756,13 +2770,50 @@
     document.querySelectorAll("[data-lot]").forEach(b => b.onclick = () => {
       const k = b.dataset.lot;
       if (k === "duel") return sheetDuels();
-      if (k === "chest" && chestCloud()){ toast("☁️ Le coffre est chaud : va vers le nuage argenté, tes chances y sont doublées !", 4000); return openExplore("chest"); }
-      if (k === "hunt" && huntLive() && game.home){ return openExplore(true); }
-      if (k === "hunt" || k === "chest") return sheetBonus();
+      if (k === "hunt") return sheetTreasure();   // v44 : une vraie fiche pour chaque gros lot (avant : les deux ouvraient la liste des bonus)
+      if (k === "chest") return sheetChest();
       const rec = store.get("wouaf-record", null);
       openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${esc(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
       $("#rcClose").onclick = closeSheet;
     });
+  }
+  // ▶️ balade libre tout de suite (fiches trésor et coffre)
+  function goNow(){ closeSheet(); if (state.walk) return; const go = () => { const p = FREE(); p.min = state.dur; startWalk(p); }; setTimeout(() => profile.walker ? go() : askProfile(go), 250); }
+  // 🏴‍☠️ Fiche du trésor de la semaine (v44, demandée le 17/11 : « un truc pour exciter, pour encourager à y aller »)
+  function sheetTreasure(){
+    const wk = weekKey(Date.now()), t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === wk);
+    let hu = null; try{ hu = weekHunt(); }catch(e){}
+    const end = weekStart(Date.now()).getTime() + 7 * DAYMS + 4 * 3600000, left = Math.max(0, end - Date.now());
+    const leftTxt = left < DAYMS ? `plus que ${Math.max(1, Math.round(left / 3600000))} h` : `plus que ${Math.ceil(left / DAYMS)} jour${Math.ceil(left / DAYMS) > 1 ? "s" : ""}`;
+    const mine = hu && hu.found, by = t ? t.by : hu && hu.gone, open = !mine && !by;
+    const where = hu && game.home ? `Caché à <b>~${fmtKm(dist(game.home, hu))}</b> ${compass(game.home, hu)} de la maison, sur une rue ou un chemin ouvert à tous.` : "Il apparaîtra sur ta carte après ta première balade.";
+    openSheet(`<div class="trez${open ? "" : " off"}"><div class="tz-ic">${open ? "🏴‍☠️" : mine ? "🏆" : "🔒"}</div>
+        <h2>${open ? "Trésor de la semaine" : mine ? "Tu as trouvé le trésor !" : `${esc(by)} a trouvé le trésor`}</h2>
+        <div class="tz-v">🪙 ${HUNT_FIRST}</div>
+        <p>${open ? `<b>Un seul gagnant</b> : le premier de la maison qui l'atteint rafle tout.${isTester() ? " 🧪 Toi, tu es testeur : tu peux le chercher, il ne te rapporte rien." : ""}` : mine ? "Bravo, les 500 clebsous sont dans ta tirelire 🎉" : "Trop tard pour cette semaine… le prochain arrive lundi. Sois le premier !"}</p></div>
+      ${open ? `<ul class="tz-l"><li>📍 ${where}</li><li>☁️ Sur la carte, il est sous le <b>nuage doré</b> : entre dedans et fouille.</li><li>📡 À moins de 150 m, le radar te dit « tiède… chaud… brûlant ! ».</li><li>⏳ <b>${leftTxt}</b> avant qu'il disparaisse (lundi).</li></ul>` : ""}
+      <div class="btns">${open && hu && game.home ? `<button id="tzGo">▶️ J'y vais !</button><button class="ghost" id="tzMap">☁️ Voir le nuage doré</button>` : ""}<button class="ghost" id="tzX">Fermer</button></div>`);
+    if ($("#tzGo")) $("#tzGo").onclick = goNow;
+    if ($("#tzMap")) $("#tzMap").onclick = () => { closeSheet(); setTimeout(() => openExplore(true), 200); };
+    $("#tzX").onclick = closeSheet;
+  }
+  // 💰 Fiche du coffre (v44) : ce qu'il vaut, chaud ou pas, comment l'attraper ; en bas, ce que vaut chaque bonus
+  function sheetChest(){
+    let ch = 0, cc = null; try{ ch = chestChance(); cc = chestCloud(); }catch(e){}
+    const reg = (() => { try{ return regular(); }catch(e){ return false; } })(), wait = Math.ceil((chestFrom() - Date.now()) / DAYMS);
+    const st = ch > 0 ? `🔥 <b>Le coffre est chaud !</b> À chaque rue neuve, <b>${Math.round(ch * 100)}&nbsp;%</b> de chances qu'il tombe${cc ? `, et <b>${Math.round(Math.min(1, ch * CHEST_CLOUD_X) * 100)}&nbsp;%</b> dans le nuage argenté` : ""}. Plus tu attends, plus ça monte !`
+      : !reg ? "❄️ <b>Le coffre dort.</b> Pour le réveiller : sors Roxy au moins <b>4 jours sur les 7 derniers</b>."
+      : `⏳ <b>Le coffre se réveille dans ${Math.max(1, wait)} jour${wait > 1 ? "s" : ""}.</b> Continue de sortir Roxy !`;
+    openSheet(`<div class="trez silver${ch > 0 ? "" : " off"}"><div class="tz-ic">💰</div><h2>Le coffre</h2><div class="tz-v">🪙 ${Math.round(CHEST_EUR * CS)}</div>
+        <p>En plus de tout le reste : il ne compte pas dans le plafond.</p></div>
+      <p class="howto" style="font-size:15px">${st}</p>
+      <ul class="tz-l"><li>🛣️ Il tombe au hasard quand tu entres dans une <b>rue neuve</b> (pas faite depuis 15 jours), après 5 min de balade.</li>
+        <li>📅 Il faut sortir Roxy <b>au moins 4 jours sur 7</b>. Après un coffre, il se rendort 10 jours.</li>
+        ${cc ? `<li>☁️ Aujourd'hui, le <b>nuage argenté</b> double tes chances.</li>` : ""}</ul>
+      <div class="btns">${cc ? `<button id="cfMap">☁️ Voir le nuage argenté</button>` : ""}<button class="ghost" id="cfBonus">🎁 Ce que vaut chaque bonus (os, balle…)</button><button class="ghost" id="cfX">Fermer</button></div>`);
+    if ($("#cfMap")) $("#cfMap").onclick = () => { closeSheet(); setTimeout(() => openExplore("chest"), 200); };
+    $("#cfBonus").onclick = () => { closeSheet(); setTimeout(sheetBonus, 200); };
+    $("#cfX").onclick = closeSheet;
   }
   // attend qu'aucune fiche ne soit ouverte (ni balade en cours) pour montrer quelque chose
   function whenFree(fn){ if ($("#modal").classList.contains("open") || state.walk || document.body.classList.contains("recap")){ setTimeout(() => whenFree(fn), 3000); return; } fn(); }
@@ -3094,57 +3145,90 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🏴‍☠️", "Carte du trésor", "voir et déplacer")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
     go("muSupV", () => openDash(supAuth(), true)); go("muSupT", openHuntAdmin); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
   }
 
-  // 🏴‍☠️ Superviseur › Carte du trésor (v43) : voir où est le trésor de la semaine et le déplacer à la main.
-  // Placé à la main = le même endroit pour tout le monde (Worker POST /hunt-move, KV « hpos », renvoyé par GET /pause).
+  // 🗺️ Superviseur › Carte du superviseur (v44, remplace la « Carte du trésor » de la v43) : tout de suite, sans balade et sans nuages,
+  // 🏠 la maison de la famille, 🏴‍☠️ le trésor de la semaine (le même pour tous) et ☁️ le nuage argenté de chaque ado au coffre chaud.
+  // Toucher la carte = choisir un endroit, puis « Trésor ici » (Worker /hunt-move) ou « Maison ici » (/home-set, arrondie à ~200 m).
   let huntMap = null;
-  function openHuntAdmin(){
-    const wk = weekKey(Date.now()), hp = store.get("wouaf-hpos", null), fixed = !!(hp && hp.wk === wk && hp.lat != null);
-    const hu = weekHunt(), t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === wk);
-    openSheet(`<h2>🏴‍☠️ Carte du trésor</h2>
-      <p class="howto" style="margin-top:0">${t ? `✅ Déjà trouvé cette semaine par <b>${esc(t.by)}</b>. Le prochain arrive lundi.` : "Pas encore trouvé cette semaine."}
-        ${fixed ? "📌 Placé à la main : le même pour tout le monde." : "Placé tout seul sur une rue ou un chemin ouvert, à 0,8–1,5 km de la maison."}</p>
-      ${t ? "" : `<p class="howto">Touche la carte (ou fais glisser 🏴‍☠️) pour choisir un endroit sur une rue ou un chemin ouvert à tous, puis « Mettre le trésor ici ».</p>`}
-      <div id="tmap" style="height:48vh;border-radius:14px;overflow:hidden"></div>
-      <p id="tmS" role="status" class="howto" style="text-align:center">🏴‍☠️ trésor · ☁️ nuage que voient les promeneurs · 🏠 maison</p>
-      <div class="btns"><button id="tmOk" disabled>📌 Mettre le trésor ici</button>${fixed ? `<button class="ghost" id="tmAuto">↩️ Placement automatique</button>` : ""}<button class="ghost" id="tmBack">← Superviseur</button></div>`);
+  async function openHuntAdmin(){
+    try{ await loadPauses(); }catch(e){}
+    const wk = weekKey(Date.now()), hp = store.get("wouaf-hpos", null), fixed = !!(hp && hp.wk === wk && hp.lat != null && !hp.auto);
+    const fh = store.get("wouaf-fhome", null), hu = weekHunt(), t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === wk);
+    let clouds = [];
+    try{ const j = await (await api("/clouds", supAuth())).json(); clouds = ((j && j.clouds) || []).filter(c => c.day === dayKey(Date.now())); }catch(e){}
+    const tTxt = t ? `✅ Trésor trouvé cette semaine par <b>${esc(t.by)}</b> (le prochain arrive lundi).` : hu ? `🏴‍☠️ Trésor pas encore trouvé${fixed ? " · 📌 placé à la main" : " · placé tout seul sur une rue ouverte"}.` : "🏴‍☠️ Pas encore de trésor : place d'abord la maison.";
+    const hTxt = fh ? "🏠 Maison de la famille placée (arrondie à ~200 m)." : "🏠 Pas encore de maison de la famille : chaque téléphone prend sa 1re balade.";
+    const cTxt = clouds.length ? `☁️ Coffre chaud aujourd'hui : ${clouds.map(c => esc(c.w)).join(", ")}.` : "☁️ Aucun coffre chaud aujourd'hui.";
+    openSheet(`<h2>🗺️ Carte du superviseur</h2>
+      <p class="howto" style="margin-top:0">${tTxt}<br>${hTxt}<br>${cTxt}</p>
+      <div id="tmap" style="height:44vh;border-radius:14px;overflow:hidden"></div>
+      <p id="tmS" role="status" class="howto" style="text-align:center">Touche la carte pour choisir un endroit.</p>
+      <div class="btns"><button id="tmOk" disabled>🏴‍☠️ Mettre le trésor ici</button><button class="ghost" id="tmHome" disabled>🏠 Mettre la maison ici</button>
+        <button class="ghost" id="tmHere">📍 Je suis à la maison</button>${fixed ? `<button class="ghost" id="tmAuto">↩️ Trésor automatique</button>` : ""}<button class="ghost" id="tmBack">← Superviseur</button></div>`);
     $("#tmBack").onclick = sheetSupMenu;
     try{ if (huntMap) huntMap.remove(); }catch(e){} huntMap = null;
     if (!$("#tmap") || typeof L === "undefined") return;
     huntMap = L.map("tmap", { zoomControl:true });
     L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", { maxZoom: 19, subdomains:"abc", attribution:"© OpenStreetMap" }).addTo(huntMap);
-    const ic = h => L.divIcon({ className:"hpin", html: h, iconSize:[30, 30] }), pts = [];
+    const ic = (h, w) => L.divIcon({ className:"hpin", html: h, iconSize:[w || 30, 30] }), pts = [];
     if (game.home){ L.marker([game.home.lat, game.home.lon], { icon: ic("🏠"), interactive:false, keyboard:false }).addTo(huntMap); pts.push([game.home.lat, game.home.lon]); }
-    let pick = null, mk = null;
-    const setPick = ll => { pick = { lat: ll.lat, lon: ll.lng }; const b = $("#tmOk"); if (b && !t) b.disabled = false; $("#tmS").textContent = "📍 Nouvel endroit choisi : touche « Mettre le trésor ici »."; };
+    for (const c of clouds){
+      silverCloud(huntMap, c, .22);
+      L.marker([c.lat, c.lon], { icon: L.divIcon({ className:"hpin", html:`<span style="font-size:12px;font-weight:700;background:#fff;border-radius:8px;padding:1px 6px;white-space:nowrap">💰 ${esc(c.w)}</span>`, iconSize:[90, 20] }), interactive:false, keyboard:false }).addTo(huntMap);
+      pts.push([c.lat, c.lon]);
+    }
+    let pick = null, mk = null, pin = null;
+    const setPick = ll => {
+      pick = { lat: ll.lat, lon: ll.lng };
+      if (!t) $("#tmOk").disabled = false; $("#tmHome").disabled = false;
+      $("#tmS").textContent = "📍 Endroit choisi : trésor ou maison ?";
+    };
     if (hu){
       const c = huntCloud(hu);
       L.circle([c.lat, c.lon], { radius: HUNT_CLOUD, color:"#c9a227", weight:2, dashArray:"6 6", fillColor:"#f2d36b", fillOpacity:.18, interactive:false }).addTo(huntMap);
-      mk = L.marker([hu.lat, hu.lon], { icon: ic("🏴‍☠️"), draggable: !t, keyboard:false }).addTo(huntMap);
-      mk.on("dragend", () => setPick(mk.getLatLng()));
+      mk = L.marker([hu.lat, hu.lon], { icon: ic(t ? "✅" : "🏴‍☠️"), draggable: !t, keyboard:false }).addTo(huntMap);
+      mk.on("dragend", () => { if (pin){ huntMap.removeLayer(pin); pin = null; } setPick(mk.getLatLng()); });
       pts.push([hu.lat, hu.lon], [c.lat, c.lon]);
     }
-    if (!t) huntMap.on("click", e => { if (mk) mk.setLatLng(e.latlng); else mk = L.marker(e.latlng, { icon: ic("🏴‍☠️"), keyboard:false }).addTo(huntMap); setPick(e.latlng); });
-    if (pts.length > 1) huntMap.fitBounds(L.latLngBounds(pts), { padding:[30, 30], maxZoom:16 }); else huntMap.setView(pts[0] || [48.8566, 2.3522], 15);
+    huntMap.on("click", e => { if (pin) pin.setLatLng(e.latlng); else pin = L.marker(e.latlng, { icon: ic("📍"), keyboard:false, interactive:false }).addTo(huntMap); setPick(e.latlng); });
+    const fit = () => { if (pts.length > 1) huntMap.fitBounds(L.latLngBounds(pts), { padding:[30, 30], maxZoom:16 }); else if (pts.length) huntMap.setView(pts[0], 15); };
+    if (pts.length) fit();
+    else {
+      huntMap.setView([48.8566, 2.3522], 13);
+      if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { try{ huntMap.setView([p.coords.latitude, p.coords.longitude], 15); }catch(e){} }, () => {}, { maximumAge:60000, timeout:10000 });
+    }
     setTimeout(() => { try{ huntMap.invalidateSize(); }catch(e){} }, 350);
-    const send = async body => {
+    const send = async (path, body, msg) => {
       $("#tmS").textContent = "⏳ Envoi…";
       try{
-        const r = await api("/hunt-move", Object.assign(supAuth(), body)), j = await r.json();
+        const r = await api(path, Object.assign(supAuth(), body)), j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || "erreur");
-        store.set("wouaf-hpos", j.hpos || null); weekHunt(); snapHunt(); try{ drawItems(); }catch(e){}
-        toast(j.hpos ? "📌 Trésor déplacé : le même pour tout le monde." : "↩️ Trésor replacé automatiquement.", 4000);
+        if (path === "/home-set"){ store.set("wouaf-fhome", j.home || null); store.set("wouaf-hpos", null); applyFamilyHome(); }
+        else store.set("wouaf-hpos", j.hpos || null);
+        weekHunt(); snapHunt(); try{ drawItems(); }catch(e){}
+        toast(msg, 4000);
         openHuntAdmin();
       }catch(e){ $("#tmS").textContent = "❌ Pas envoyé (réseau ?). Réessaie."; }
     };
-    $("#tmOk").onclick = () => { if (pick) send({ wk, lat: pick.lat, lon: pick.lon }); };
-    if ($("#tmAuto")) $("#tmAuto").onclick = () => send({ clear: 1 });
+    let homeArm = 0;
+    const setHome = q => {
+      if (fh && Date.now() - homeArm > 4000){ homeArm = Date.now(); $("#tmS").textContent = "⚠️ Tous les téléphones prendront cette maison (et un nouveau trésor). Touche encore pour confirmer."; return; }
+      send("/home-set", { lat: q.lat, lon: q.lon }, "🏠 Maison de la famille placée : tous les téléphones la prennent.");
+    };
+    $("#tmOk").onclick = () => { if (pick) send("/hunt-move", { wk, lat: pick.lat, lon: pick.lon }, "📌 Trésor déplacé : le même pour tout le monde."); };
+    $("#tmHome").onclick = () => { if (pick) setHome(pick); };
+    $("#tmHere").onclick = () => {
+      if (!navigator.geolocation){ $("#tmS").textContent = "❌ Position non disponible sur ce téléphone."; return; }
+      $("#tmS").textContent = "📍 Je cherche ta position…";
+      navigator.geolocation.getCurrentPosition(p => setHome({ lat: p.coords.latitude, lon: p.coords.longitude }), () => { $("#tmS").textContent = "❌ Position refusée ou introuvable."; }, { enableHighAccuracy:true, maximumAge:30000, timeout:15000 });
+    };
+    if ($("#tmAuto")) $("#tmAuto").onclick = () => send("/hunt-move", { clear: 1 }, "↩️ Trésor replacé automatiquement.");
   }
 
   // ---------- ☰ Menu ----------
@@ -3590,8 +3674,9 @@
   }
   function weekHunt(){
     const wk = weekKey(Date.now()), hp = store.get("wouaf-hpos", null), fix = hp && hp.wk === wk && hp.lat != null ? hp : null;
-    const cur = game.hunt && game.hunt.wk === wk ? game.hunt : null;
-    if (cur && (cur.v === 2 || cur.found || cur.gone) && (fix ? cur.moved === fix.at : !cur.moved)) return cur;
+    const cur = game.hunt && game.hunt.wk === wk ? game.hunt : null, hk = game.home ? game.home.lat.toFixed(4) + "," + game.home.lon.toFixed(4) : "";
+    if (cur && (cur.found || cur.gone)) return cur;
+    if (cur && (fix ? cur.moved === fix.at : (!cur.moved && cur.v === 2 && cur.hk === hk))) return cur;
     if (!game.home && !fix) return null;
     let lat, lon;
     if (fix){ lat = fix.lat; lon = fix.lon; }
@@ -3602,7 +3687,7 @@
       const cos = Math.cos(home.lat * Math.PI / 180);
       lat = home.lat + d * Math.cos(ang) / 111320; lon = home.lon + d * Math.sin(ang) / (111320 * cos);
     }
-    game.hunt = { wk, v:2, lat, lon, zlat: lat, zlon: lon, found: cur ? cur.found || false : false, snapped: !!fix, moved: fix ? fix.at : 0 };
+    game.hunt = { wk, v:2, hk, lat, lon, zlat: lat, zlon: lon, found: cur ? cur.found || false : false, snapped: !!fix, moved: fix ? fix.at : 0 };
     if (cur && cur.gone) game.hunt.gone = cur.gone;
     saveGame();
     snapHunt();
@@ -3620,10 +3705,43 @@
         const q = `[out:json][timeout:20];way(around:${r},${hu.lat.toFixed(6)},${hu.lon.toFixed(6)})[highway~"^(${HUNT_WAYS})$"][access!~"^(private|no|customers|permit|delivery|destination)$"][foot!~"^(no|private)$"][footway!="private"];out geom;`;
         const j = await getJSON(`${OVERPASS}?data=${encodeURIComponent(q)}`, 20000);
         const p = nearestOnWays(hu, (j && j.elements) || []);
-        if (p){ if (game.hunt !== hu) return; hu.lat = p.lat; hu.lon = p.lon; hu.zlat = p.lat; hu.zlon = p.lon; hu.snapped = true; saveGame(); try{ drawItems(); }catch(e){} return; }
+        if (p){ if (game.hunt !== hu) return; hu.lat = p.lat; hu.lon = p.lon; hu.zlat = p.lat; hu.zlon = p.lon; hu.snapped = true; saveGame(); try{ drawItems(); }catch(e){} publishHunt(); return; }
       }
     }catch(e){}
     finally{ snapBusy = false; }
+  }
+  // 🏴‍☠️ v44 : un seul trésor pour toute la maison. Le téléphone d'Éric publie le trésor automatique de la semaine (une fois recalé) ;
+  // les autres le reprennent tel quel via /pause (« hpos » avec auto:1). Une position choisie à la main n'est jamais remplacée.
+  let pubBusy = false;
+  async function publishHunt(){
+    const hu = game.hunt, hp = store.get("wouaf-hpos", null);
+    if (!PUSH_API || !supToken() || pubBusy || !hu || !hu.snapped || hu.moved || hu.found || hu.gone || hu.wk !== weekKey(Date.now()) || (hp && hp.wk === hu.wk)) return;
+    pubBusy = true;
+    try{
+      const j = await (await api("/hunt-move", Object.assign(supAuth(), { wk: hu.wk, lat: hu.lat, lon: hu.lon, auto: 1 }))).json();
+      if (j && j.hpos){ store.set("wouaf-hpos", j.hpos); weekHunt(); }
+    }catch(e){}
+    finally{ pubBusy = false; }
+  }
+  // 🏠 v44 : maison de la famille placée par Éric (arrondie à ~200 m par le Worker) : remplace la « maison » de chaque téléphone
+  // (centre de la carte, du brouillard et du trésor). Sans maison de la famille, chacun garde la sienne (1er départ).
+  function applyFamilyHome(){
+    const fh = store.get("wouaf-fhome", null); if (!fh || fh.lat == null) return false;
+    ensureGame();
+    if (game.home && Math.abs(game.home.lat - fh.lat) < 1e-7 && Math.abs(game.home.lon - fh.lon) < 1e-7) return false;
+    game.home = { lat: fh.lat, lon: fh.lon }; game.chestCloud = null; saveGame();
+    return true;
+  }
+  // ☁️ v44 : chaque téléphone envoie son nuage argenté du jour (zone de 350 m, jamais sa position) pour la carte d'Éric ; « off » quand il n'y en a plus
+  async function sendCloud(){
+    if (!PUSH_API || !profile.walker || isTester()) return;
+    let c = null; try{ c = chestCloud(); }catch(e){}
+    const key = c ? `${c.day}:${c.lat},${c.lon}` : "off";
+    if (store.get("wouaf-cl-sent", "") === key) return;
+    try{
+      const r = await api("/cloud", c ? { walker: profile.walker, day: c.day, lat: c.lat, lon: c.lon } : { walker: profile.walker, off: 1 });
+      if (r.ok) store.set("wouaf-cl-sent", key);
+    }catch(e){}
   }
   // point le plus proche de q sur les segments des chemins (calcul à plat, en mètres autour de q)
   function nearestOnWays(q, ways){
@@ -5362,7 +5480,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5478,8 +5596,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 43, APP_LABEL = "2.9";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 44, APP_LABEL = "3.0";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    44: [
+      "🏴‍☠️ Touche la tuile du trésor : où il est caché, combien de temps il reste… et fonce !",
+      "💰 Touche la tuile du coffre : est-il chaud ? comment l'attraper ? ce que vaut chaque bonus.",
+      "🏠 Une seule maison pour toute la famille : le même trésor pour tout le monde."
+    ],
     43: [
       "🏴‍☠️ Le trésor de la semaine est plus près : entre 800 m et 1,5 km de la maison.",
       "🛣️ Il est toujours sur une rue ou un chemin ouvert à tous, plus dans une résidence privée."
@@ -5692,7 +5815,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

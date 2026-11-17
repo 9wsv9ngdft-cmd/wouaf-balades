@@ -437,3 +437,21 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   (→ `wouaf-hpos`) ; `weekHunt` le prend tel quel pour la semaine `wk` (même endroit pour tout le monde, pas recalé, `hunt.moved = at`). Déplacement impossible une fois trouvé.
   La remise à zéro efface `hpos`.
 - Tests : `tests/e2e_v43.py` (vraie carte, Overpass simulé), `tests/worker.test.mjs` (/hunt-move).
+
+## Version 3.0 « Croquette » (APP_NUM 44, décidé le 17/11 en Wouaf 6 : lot 2 superviseur)
+- 🏠 **Maison de la famille** placée par Éric (Superviseur › 🗺️ Carte du superviseur : toucher la carte + « Maison ici », ou « 📍 Je suis à la maison »,
+  confirmation si elle existe déjà) → `POST /home-set` (KV `home`, **arrondie à 0,002° × 0,003° ≈ 200 m** : le dépôt est public, jamais l'adresse exacte).
+  `GET /pause` renvoie `home` (→ `wouaf-fhome`) ; `applyFamilyHome` remplace `game.home` de chaque téléphone (et oublie son nuage argenté du jour).
+  Changer la maison efface un trésor automatique (`hpos.auto`), jamais un trésor placé à la main. La remise à zéro garde la maison.
+- 🏴‍☠️ **Un seul trésor pour tous** : le téléphone d'Éric publie son trésor automatique une fois recalé (`publishHunt` → `/hunt-move` avec `auto:1`) ;
+  le Worker ne remplace jamais une position de la même semaine par une automatique. `weekHunt` recalcule si la maison change (`hunt.hk`). Sans publication,
+  chaque téléphone calcule le même trésor à partir de la maison commune.
+- ☁️ **Nuages argentés** : chaque ado envoie le nuage du jour de son coffre chaud (`sendCloud` → `POST /cloud`, centre d'une zone de 350 m, jamais sa position ;
+  `off` quand il n'y en a plus ; clé `wouaf-cl-sent`) → KV `cl:<prénom>` (48 h) ; lus **seulement par Éric** (`POST /clouds`, superviseur). Éric n'envoie rien.
+- 🗺️ **Carte du superviseur** (`openHuntAdmin`, remplace « Carte du trésor ») : sans balade ni nuages : maison, trésor (glisser ou toucher + « Trésor ici »),
+  nuage doré, nuages argentés avec prénom, résumé en haut. Exploration ouverte au superviseur même sans maison (`openExplore`).
+- 🏴‍☠️ 💰 **Fiches des gros lots** (tuiles de l'accueil ; avant, les deux ouvraient `sheetBonus`) : `sheetTreasure` (carte dorée, 500, un seul gagnant, distance
+  et direction depuis la maison, temps restant jusqu'à lundi 4 h, « ▶️ J'y vais ! » = `goNow`, « ☁️ Voir le nuage doré ») ; `sheetChest` (carte argentée, chaud /
+  dort / se réveille dans N jours, % de chances, règles, « Voir le nuage argenté », « 🎁 Ce que vaut chaque bonus » → `sheetBonus`). Classes `.trez`, `.tz-l`.
+- 🐛 Dates sans zéro (`dayKey` / `weekKey` : « 2026-12-7 ») acceptées par `/hunt-move` et `/cloud` (bug de la 2.9 en décembre).
+- Tests : `tests/e2e_v44.py`, `tests/worker.test.mjs` (home-set, auto, clouds) ; `e2e.py`, `e2e_realmap.py`, `e2e_duels.py` adaptés.
