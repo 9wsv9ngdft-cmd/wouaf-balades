@@ -287,6 +287,7 @@
   .sheet h2{font-family:Fraunces,Georgia,serif;margin:0 0 4px;font-size:22px}
   .sheet p{margin:4px 0 12px;color:var(--muted);font-size:14px}
   .sheet label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  .sheet textarea{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);resize:vertical;min-height:110px}
   .sheet input{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
   .sheet .btns{display:grid;gap:8px;margin-top:16px}
   .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
@@ -804,7 +805,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.170526";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.185318";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3166,11 +3167,11 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
-    go("muSupV", () => openDash(supAuth(), true)); go("muSupT", openHuntAdmin); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
   }
 
   // 🗺️ Superviseur › Carte du superviseur (v44, remplace la « Carte du trésor » de la v43) : tout de suite, sans balade et sans nuages,
@@ -3252,6 +3253,50 @@
     if ($("#tmAuto")) $("#tmAuto").onclick = () => send("/hunt-move", { clear: 1 }, "↩️ Trésor replacé automatiquement.");
   }
 
+  // 🐞 icône « bug » dessinée (une coccinelle ronde et souriante, plus jolie que l'emoji 🐛) ; `sz` = taille en px
+  const bugIcon = (sz = 22) => `<svg class="bugic" width="${sz}" height="${sz}" viewBox="0 0 32 32" aria-hidden="true" style="vertical-align:-.2em;flex:none"><path d="M12 6 9 2.5M20 6l3-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M7 14 3 12M25 14l4-2M7 22l-4 2M25 22l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><ellipse cx="16" cy="19" rx="10.5" ry="11" fill="#e0452c"/><path d="M16 8.5v21" stroke="#2b2b2b" stroke-width="1.6"/><path d="M7 9.5a10 8 0 0 1 18 0 12 6 0 0 0-18 0z" fill="#2b2b2b"/><circle cx="11" cy="19" r="2.2" fill="#2b2b2b"/><circle cx="21" cy="19" r="2.2" fill="#2b2b2b"/><circle cx="12" cy="25" r="1.7" fill="#2b2b2b"/><circle cx="20" cy="25" r="1.7" fill="#2b2b2b"/><circle cx="13" cy="8" r="1.3" fill="#fff"/><circle cx="19" cy="8" r="1.3" fill="#fff"/></svg>`;
+  // 🐛 Signaler un bug (v3.5) : le promeneur écrit une ligne, elle part au Worker (KV « bugs ») ; Éric les lit dans Superviseur › Bugs signalés
+  // et coche « Réglé ✓ ». Aucune notification, aucune position envoyée (seulement prénom, texte, numéro de version).
+  function sheetBug(){
+    openSheet(`<h2>${bugIcon(26)} Signaler un bug</h2><p class="howto" style="margin-top:0">Quelque chose ne marche pas, ou t'a gêné ? Écris-le ici, Éric le verra.</p>
+      <form id="bugF"><label class="flabel" for="bugT">Qu'est-ce qui s'est passé ?</label><textarea id="bugT" maxlength="500" placeholder="ex. le bouton Photo ne répond pas pendant la balade"></textarea>
+      <p id="bugS" role="status" class="howto"></p>
+      <div class="btns"><button type="submit" id="bugGo">Envoyer</button><button type="button" class="ghost" id="bugX">Annuler</button></div></form>`);
+    $("#bugX").onclick = closeSheet;
+    $("#bugF").onsubmit = async e => {
+      e.preventDefault();
+      const t = $("#bugT").value.trim(), st = $("#bugS");
+      if (t.length < 3){ st.textContent = "Écris quelques mots pour expliquer."; return; }
+      $("#bugGo").disabled = true; st.textContent = "Envoi…";
+      try{
+        const r = await api("/bug", { walker: profile.walker || "?", text: t, v: APP_LABEL });
+        if (!r.ok) throw new Error(r.status);
+        closeSheet(); toast("Merci, c'est envoyé à Éric !");
+      }catch(err){ $("#bugGo").disabled = false; st.textContent = "Envoi impossible pour l'instant (réseau ?). Ton texte est gardé, réessaie."; }
+    };
+  }
+  async function sheetBugs(){
+    openSheet(`<h2>${bugIcon(26)} Bugs signalés</h2><p class="howto" id="bgS">Chargement…</p><div id="bgL"></div><div class="btns"><button class="ghost" id="bgBack">← Superviseur</button></div>`);
+    $("#bgBack").onclick = sheetSupMenu;
+    let l = [];
+    try{ const r = await api("/bugs", supAuth()); if (!r.ok) throw 0; l = (await r.json()).bugs || []; }catch(e){ const s = $("#bgS"); if (s) s.textContent = "Impossible de charger la liste (réseau ?)."; return; }
+    const draw = () => {
+      const box = $("#bgL"), s = $("#bgS"); if (!box) return;
+      const open = l.filter(b => !b.done).length;
+      s.textContent = l.length ? `${open} à regarder · ${l.length - open} réglé${l.length - open > 1 ? "s" : ""}` : "Aucun bug signalé pour l'instant. 🎉";
+      box.innerHTML = l.map(b => `<div class="entry" data-id="${esc(b.id)}" style="grid-template-columns:1fr;cursor:default;margin-bottom:8px;${b.done ? "opacity:.6" : ""}"><b>${esc(b.walker)}</b> · ${new Date(b.t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${new Date(b.t).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}${b.v ? " · v" + esc(b.v) : ""}<br>${esc(b.text)}
+        <div class="btns"><button class="${b.done ? "ghost" : ""}" data-done="${esc(b.id)}">${b.done ? "↩️ Rouvrir" : "Réglé ✓"}</button><button class="ghost" data-del="${esc(b.id)}" style="color:#c8452f">Supprimer</button></div></div>`).join("");
+      box.querySelectorAll("[data-done]").forEach(btn => btn.onclick = async () => {
+        const b = l.find(x => x.id === btn.dataset.done); if (!b) return;
+        try{ const r = await api("/bug-done", Object.assign(supAuth(), { id: b.id, done: !b.done })); if (r.ok){ b.done = !b.done; draw(); } }catch(e){ toast("Pas de réseau, réessaie."); }
+      });
+      box.querySelectorAll("[data-del]").forEach(btn => btn.onclick = async () => {
+        if (!confirm("Supprimer ce signalement ?")) return;
+        try{ const r = await api("/bug-done", Object.assign(supAuth(), { id: btn.dataset.del, del: true })); if (r.ok){ l = l.filter(x => x.id !== btn.dataset.del); draw(); } }catch(e){ toast("Pas de réseau, réessaie."); }
+      });
+    };
+    draw();
+  }
   // ---------- ☰ Menu ----------
   function openMenu(){   // v2.2 : 4 grosses tuiles, une courte liste, les réglages en icônes
     const tl = (id, k, ic, t, v) => `<button id="${id}" class="${k}"><span class="e">${ic}</span><span><b>${t}</b>${v !== "" ? `<small>${v}</small>` : ""}</span></button>`;
@@ -3274,6 +3319,7 @@
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muToday", "📋", "Missions du jour", "")}
       ${li("muHelp", "❓", "Aide", "comment ça marche, règles, questions")}
+      ${PUSH_API ? li("muBug", bugIcon(22), "Signaler un bug", "") : ""}
       ${PUSH_API && supToken() ? li("muSupAll", "🔑", "Superviseur", "") : ""}
       </div>
       <div class="micons">
@@ -3301,6 +3347,7 @@
     go("muTuto", () => showTuto(0, true));
     go("muToday", sheetToday);
     go("muHelp", sheetHelp);
+    go("muBug", sheetBug);
     go("muAbout", () => { const d = document.querySelector("footer details"); const h = d ? d.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, "") : "";
       openSheet(`<h2>ℹ️ À propos</h2><p><b>Wouaf Balades, version ${APP_LABEL}.</b></p><p class="howto">${h}</p><div class="btns"><button id="abClose">Fermer</button></div>`); $("#abClose").onclick = closeSheet; });
     go("muWho", () => askProfile());
@@ -5632,7 +5679,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5750,8 +5797,11 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 48, APP_LABEL = "3.4";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 49, APP_LABEL = "3.5";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    49: [
+      "🐞 Nouveau : ☰ › Signaler un bug. Quelque chose ne marche pas ? Écris-le, Éric le verra."
+    ],
     48: [
       "💶 La paie tombe maintenant le dimanche soir !",
       "💰 Les coffres reviennent plus souvent, et tes trajets habituels redeviennent « neufs » au bout d'une semaine.",

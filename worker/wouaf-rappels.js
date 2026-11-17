@@ -432,12 +432,22 @@ export default {
       await env.WOUAF.put("alerts", JSON.stringify(l.slice(-30)));
       return json({ ok:true });
     }
+    if (path === "/bug"){   // 🐛 un promeneur signale un problème : texte court, gardé pour le superviseur (aucune notification, aucune position)
+      const w = String(b.walker || "").slice(0, 30), t = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, 500);
+      if (!w || t.length < 3) return json({ error:"bad" }, 400);
+      const l = (await env.WOUAF.get("bugs", "json")) || [];
+      const day = isoDay(Date.now());
+      if (l.filter(x => x.walker === w && x.day === day).length >= 10) return json({ error:"too many" }, 429);
+      l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), walker: w, text: t, v: String(b.v || "").slice(0, 12), day, t: Date.now(), done: false });
+      await env.WOUAF.put("bugs", JSON.stringify(l.slice(-100)));
+      return json({ ok:true });
+    }
     if (path === "/week-pay"){   // 💶 un téléphone annonce la paie de la semaine passée d'un promeneur (le testeur est ignoré)
       if (await isTester(env, b.walker)) return json({ ok:true, test:true });
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/home-set" || path === "/clouds"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -503,6 +513,14 @@ export default {
         const reset = Date.now();
         await env.WOUAF.put("reset", JSON.stringify(reset));
         return json({ ok:true, reset, deleted: n });
+      }
+      if (path === "/bugs") return json({ ok:true, bugs: ((await env.WOUAF.get("bugs", "json")) || []).slice().reverse() });   // 🐛 liste pour le superviseur (récents d'abord)
+      if (path === "/bug-done"){   // 🐛 « Réglé ✓ » (b.done = false pour rouvrir) ou suppression (b.del)
+        const l = (await env.WOUAF.get("bugs", "json")) || [], x = l.find(y => y.id === b.id);
+        if (!x) return json({ error:"not found" }, 404);
+        const out = b.del ? l.filter(y => y.id !== x.id) : l.map(y => y.id === x.id ? { ...y, done: b.done !== false } : y);
+        await env.WOUAF.put("bugs", JSON.stringify(out));
+        return json({ ok:true });
       }
       if (path === "/alert-resolve"){   // 🚨 le superviseur ignore l'alerte, ou redonne le trésor (500 clebsous, comme une correction)
         const l = (await env.WOUAF.get("alerts", "json")) || [], a = l.find(x => x.id === b.id);

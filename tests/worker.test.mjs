@@ -268,3 +268,22 @@ test("v47 : journal de bord de Roxy : chiffres par promeneur et de la famille (b
   assert.equal(j.fam.n, 3); assert.equal(j.fam.min, 105);
   assert.ok(!JSON.stringify(j).includes("lat"));
 });
+
+test("bugs : un promeneur signale, seul le superviseur lit, « Réglé ✓ », rouvrir, supprimer", async () => {
+  const { api } = await setup();
+  const { j } = await api.post("/claim", { walker: "Éric" });
+  assert.equal((await api.post("/bug", { walker: "Léa", text: "  " })).status, 400);
+  assert.equal((await api.post("/bug", { walker: "Léa", text: "Le bouton Photo ne répond pas", v: "3.5" })).status, 200);
+  assert.equal((await api.post("/bug", { walker: "Tom", text: "x".repeat(900) })).status, 200);
+  assert.equal((await api.post("/bugs", {})).status, 403);                               // les ados ne lisent pas la liste
+  const l = (await api.post("/bugs", { token: j.token })).j.bugs;
+  assert.equal(l.length, 2); assert.equal(l[0].walker, "Tom"); assert.equal(l[0].text.length, 500); assert.equal(l[1].done, false);
+  assert.equal((await api.post("/bug-done", { token: j.token, id: l[1].id })).status, 200);
+  assert.equal((await api.post("/bugs", { token: j.token })).j.bugs[1].done, true);
+  await api.post("/bug-done", { token: j.token, id: l[1].id, done: false });
+  assert.equal((await api.post("/bugs", { token: j.token })).j.bugs[1].done, false);
+  await api.post("/bug-done", { token: j.token, id: l[0].id, del: true });
+  assert.equal((await api.post("/bugs", { token: j.token })).j.bugs.length, 1);
+  for (let i = 0; i < 12; i++) await api.post("/bug", { walker: "Zoé", text: "encore un" });
+  assert.equal((await api.post("/bug", { walker: "Zoé", text: "trop" })).status, 429);   // 10 par jour au plus
+});
