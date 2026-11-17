@@ -463,3 +463,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 📲 **Groupe WhatsApp « Roxy »** (`WA_GROUP`, `waHint()`) : consigne verte juste au-dessus du bouton « 📩 Envoyer au groupe « Roxy » » du récap et des paies (retour : récap envoyé au
   mauvais contact). Le partage reste le menu Partager de l'iPhone (choix d'Éric).
 - Tests : `tests/e2e_v45.py` ; `e2e.py` : la balade de référence de Zoé suit l'horloge du test (`NOW`), plus l'heure réelle (le test échouait après 15 h).
+
+## Version 3.2 « Croquette » (APP_NUM 46, décidé le 17/11 en Wouaf 6 : anti-oubli ; contient aussi la 3.1)
+- 😴 **Anti-oubli** (retour du 16/11 : la fin automatique près de la maison a arrêté une balade, la promeneuse a relancé puis oublié → 1 h 30 comptée) :
+  `checkForgot` (à chaque tic de `updateWalk`, aussi juste après une reprise) ; `stillSince` = début du groupe de derniers points du trajet à moins de `STILL_R` (60 m,
+  ou la précision jusqu'à 120 m) ; immobile depuis `STILL_MIN` (12 min) → bandeau « 😴 Tu ne bouges plus depuis N min. La balade est finie ? » (`askForgot`, mode poche fermé,
+  petit tic) « ⏹ Oui, terminer » / « Je continue » (pas de nouvelle question avant 12 min) ; sans réponse en `STILL_WAIT` (3 min) → arrêt automatique.
+  Dans les deux cas **`stopWalk(cutAt)` coupe la balade au moment où on s'est arrêté (+1 min)** : trajet tronqué, durée, argent et carnet recalculés ; toast « le temps
+  immobile ne compte pas ». Balade de plus de `LONG_MIN` (2 h 30) → même question une fois, sans coupe. La fin automatique près de la maison est inchangée.
+- Tests : `tests/e2e_v46.py`.

@@ -800,7 +800,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.153922";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-17.155717";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -4282,6 +4282,7 @@
   // Balade en cours gardée en mémoire : si l'iPhone ferme l'app, elle reprend à la réouverture
   const CUR_KEY = "wouaf-encours", END_KEY = "wouaf-fin";
   let walkHome = null, maxAway = 0, lastPersist = 0, homeTimer = null, homeSnooze = false, bannerTimer = null;
+  let stillTimer = null, stillSnooze = 0, longAsked = false;   // v46 anti-oubli
   function persist(force){
     const p = state.walk; if (!p) return;
     if (!force && Date.now() - lastPersist < 15000) return;
@@ -4363,6 +4364,7 @@
     t0 = Date.now(); walked = 0; setFollow(true); firstFix = !p.line.length; lastFix = null;
     if (free && youMarker && !resume) layers.me.clearLayers(), youMarker = null;   // pas d'ancienne position : on attend le GPS track = []; photos = []; hiddenAt = null; pausedMs = 0;
     walkHome = null; maxAway = 0; homeSnooze = false; clearInterval(homeTimer); homeTimer = null; hideBanner();
+    clearInterval(stillTimer); stillTimer = null; stillSnooze = 0; longAsked = false;
     if (resume){
       t0 = resume.t0; track = resume.track || []; walked = resume.walked || 0; walkHome = resume.home || null; maxAway = resume.maxAway || 0;
       // le temps où l'app était fermée compte comme une pause du suivi
@@ -4448,13 +4450,40 @@
   }
   function cancelHome(){ clearInterval(homeTimer); homeTimer = null; hideBanner(); }
 
+  // ---------- 😴 Anti-oubli (v46, retour du 16/11 : balade relancée à la maison puis oubliée, comptée 1 h 30) ----------
+  // Immobile depuis STILL_MIN (rayon ~60 m) → « La balade est finie ? » ; sans réponse en STILL_WAIT, la balade s'arrête toute seule
+  // ET est coupée au moment où on s'est arrêté (le temps passé immobile ne compte pas). Très longue balade (LONG_MIN) → même question.
+  const STILL_MIN = 12, STILL_WAIT = 180, STILL_R = 60, LONG_MIN = 150;
+  function stillSince(){
+    const pts = track, now = Date.now();
+    if (!pts.length) return lastFix ? lastFix.t : t0;
+    const last = pts[pts.length - 1]; let i = pts.length - 1;
+    while (i > 0 && dist(pts[i - 1], last) <= Math.max(STILL_R, Math.min(120, pts[i - 1].a || 0))) i--;
+    // plus aucune position depuis longtemps (GPS coupé, app fermée) : on s'est arrêté au dernier point connu
+    return Math.min(pts[i].t, now);
+  }
+  function checkForgot(){
+    if (!state.walk || homeTimer || stillTimer) return;
+    const now = Date.now(), since = stillSince(), stillMin = (now - since) / 60000, el = (now - t0) / 60000;
+    if (stillMin >= STILL_MIN && now >= stillSnooze && el >= STILL_MIN) return askForgot(since, `😴 Tu ne bouges plus depuis ${Math.round(stillMin)} min. La balade est finie ?`);
+    if (el >= LONG_MIN && !longAsked){ longAsked = true; askForgot(0, `⏰ Déjà ${fmtMin(el)} de balade : tu es toujours avec ${DOG} ?`); }
+  }
+  function askForgot(cutAt, msg){
+    pocketOff(); haptic(2);
+    let left = STILL_WAIT;
+    const txt = () => `${msg} Fin dans ${left >= 60 ? Math.ceil(left / 60) + " min" : left + " s"}.`;
+    const stop = () => { clearInterval(stillTimer); stillTimer = null; hideBanner(); stopWalk(cutAt || undefined); };
+    showBanner("home", txt(), { label:"⏹ Oui, terminer", fn: stop }, { label:"Je continue", fn: () => { clearInterval(stillTimer); stillTimer = null; hideBanner(); stillSnooze = Date.now() + STILL_MIN * 60000; } });
+    stillTimer = setInterval(() => { left--; if (left <= 0) return stop(); $("#wbText").textContent = txt(); }, 1000);
+  }
+
   // « Pas de balade » : on arrête sans récap ni carnet
   function cancelWalk(){
     shadowClear();
     // 🏴‍☠️ trésor trouvé puis balade annulée : personne n'est payé, on prévient le superviseur (il peut redonner les 500 clebsous)
     if (gw && gw.hunt && !isTester() && PUSH_API && profile.walker && game.hunt) api("/alert", { walker: profile.walker, kind: "hunt", week: game.hunt.wk }).catch(() => {});
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
-    watchId = null; clearInterval(tick); cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog(); walkUIEnd();
+    watchId = null; clearInterval(tick); clearInterval(stillTimer); stillTimer = null; cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog(); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
     state.walk = null; forgetWalk(); store.set(END_KEY, Date.now());
     gw = null; gameLayer.clearLayers();
@@ -4640,6 +4669,7 @@
   function updateWalk(q){
     const p = state.walk; if (!p) return;
     const elapsed = (Date.now() - t0) / 60000;
+    try{ checkForgot(); }catch(e){}
     if (q){
       let best = 0, bd = Infinity;
       for (let k = 0; k < p.line.length; k++){
@@ -4959,15 +4989,18 @@
     $("#closeRecap").onclick = closeSheet;
   }
 
-  function stopWalk(){
+  function stopWalk(cutAt){
     shadowClear();
     // v2.7 : le doigt encore posé sur « Fini » ne doit pas sélectionner le texte du récap
     document.body.classList.add("nosel"); try{ getSelection().removeAllRanges(); }catch(e){}
     const unsel = () => { setTimeout(() => { try{ getSelection().removeAllRanges(); }catch(e){} document.body.classList.remove("nosel"); }, 400); };
     document.addEventListener("touchend", unsel, { once:true }); document.addEventListener("pointerup", unsel, { once:true }); setTimeout(unsel, 4000);
     const p = state.walk;
-    const endTs = Date.now();
+    const cut = typeof cutAt === "number" && cutAt > t0 && cutAt < Date.now() - 60000 ? cutAt + 60000 : 0;   // 😴 anti-oubli : fin = quand on s'est arrêté (+1 min)
+    const endTs = cut || Date.now();
+    if (cut) track = track.filter(x => x.t <= endTs);
     const elapsed = (endTs - t0) / 60000;
+    clearInterval(stillTimer); stillTimer = null;
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null; clearInterval(tick); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
@@ -4999,6 +5032,7 @@
       if (ms){ r.ms = ms; res && (res.shortMalus = ms); }
     }
     if (elapsed >= 2) saveToLog(p, elapsed, r.m, r, res && res.gx);
+    if (cut) setTimeout(() => toast(`😴 Balade arrêtée à ${new Date(endTs).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}, quand tu t'es arrêté : le temps immobile ne compte pas.`, 7000), 600);
     if (elapsed < 2) toast("⏱️ Balade trop courte : pas notée", 3500);   // v2.4 : plus de « Bravo ! 0 min » collé en bas de l'accueil
     if (state.tab === "log") renderLog();
     document.body.classList.remove("hasmap"); renderHome();
@@ -5500,7 +5534,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5616,8 +5650,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 45, APP_LABEL = "3.1";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 46, APP_LABEL = "3.2";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    46: [
+      "📷 Le bouton Photo est en bas pendant la balade, et en mode poche on revient en glissant la patte 🐾.",
+      "😴 Balade oubliée ? Si tu ne bouges plus, l'app te demande si c'est fini, puis s'arrête toute seule.",
+      "📲 Pour envoyer ta balade, choisis le groupe WhatsApp « Roxy »."
+    ],
     45: [
       "📷 Le bouton Photo est maintenant en bas pendant la balade.",
       "🌙 Mode poche : glisse la patte 🐾 pour revenir (fini les retours par erreur dans la poche).",
@@ -5840,7 +5879,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
