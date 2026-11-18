@@ -320,6 +320,9 @@
   .wbanner .wbb button{flex:1;padding:9px 8px;font-size:14px;background:#fff;color:var(--green)}
   .wbanner .wbb button + button{background:rgba(255,255,255,.2);color:#fff}
   .wbanner.home{background:#fff;color:var(--green);font-weight:600}
+  .wbanner.gps{background:#c0392b;color:#fff;font-weight:600}
+  .wbanner.gps .wbb button{background:#fff;color:#c0392b}
+  .wbanner.gps .wbb button + button{background:rgba(255,255,255,.22);color:#fff}
   .wbanner.home .wbb button{background:var(--green);color:#fff}
   .wbanner.home .wbb button + button{background:#eef3ec;color:var(--green)}
   #chooseBar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:2500;display:none;background:var(--green);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 8px 24px -8px rgba(0,0,0,.4);font-size:14px;align-items:center;gap:10px}
@@ -805,7 +808,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-17.191029";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-18.081824";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -4464,7 +4467,7 @@
 
   function showBanner(kind, text, a, b){
     const el = $("#walkBanner");
-    el.className = "wbanner" + (kind === "home" ? " home" : "");
+    el.className = "wbanner" + (kind === "home" || kind === "gps" ? " " + kind : ""); el.dataset.kind = kind;
     $("#wbText").textContent = text;
     $("#wbA").textContent = a.label; $("#wbA").onclick = a.fn;
     $("#wbB").textContent = b.label; $("#wbB").onclick = b.fn;
@@ -4528,7 +4531,7 @@
       else if (navigator.geolocation) navigator.geolocation.getCurrentPosition(pos => { if (state.walk && firstFix) map.setView([pos.coords.latitude, pos.coords.longitude], 16); }, () => {}, { enableHighAccuracy:true, maximumAge:60000, timeout:8000 });
     }, 50);
     cum = [0]; for (let k = 1; k < p.line.length; k++) cum.push(cum[k-1] + dist(p.line[k-1], p.line[k]));
-    t0 = Date.now(); walked = 0; setFollow(true); firstFix = !p.line.length; lastFix = null;
+    t0 = Date.now(); walked = 0; setFollow(true); firstFix = !p.line.length; lastFix = null; gpsWarned = false;
     if (free && youMarker && !resume) layers.me.clearLayers(), youMarker = null;   // pas d'ancienne position : on attend le GPS track = []; photos = []; hiddenAt = null; pausedMs = 0;
     walkHome = null; maxAway = 0; homeSnooze = false; clearInterval(homeTimer); homeTimer = null; hideBanner();
     clearInterval(stillTimer); stillTimer = null; stillSnooze = 0; longAsked = false;
@@ -4553,10 +4556,56 @@
     walkUIStart(!!resume);
     await keepAwake();
     updateWalk(null);
-    tick = setInterval(() => updateWalk(null), 15000);
-    if (navigator.geolocation){
-      watchId = navigator.geolocation.watchPosition(onFix, () => {}, { enableHighAccuracy:true, maximumAge:3000, timeout:20000 });
-    }
+    tick = setInterval(() => { updateWalk(null); gpsCheck(); }, 15000);
+    startGps();
+  }
+
+  // 📍 v3.6 : GPS surveillé. Sur iPhone, la web app redemande la localisation à chaque ouverture :
+  // sans réponse (ou « Refuser »), aucun point n'arrive et la balade finissait à 0 m sans prévenir.
+  const GPS_WAIT = 40000, GPS_LOST = 90000;   // pas de 1re position après 40 s, ou plus rien depuis 90 s → bandeau rouge
+  let gpsStartAt = 0, gpsLastAt = 0, gpsWarned = false;
+  function startGps(){
+    gpsStartAt = Date.now();
+    if (!navigator.geolocation){ gpsProblem(true); return; }
+    if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    watchId = navigator.geolocation.watchPosition(onFix, gpsErr, { enableHighAccuracy:true, maximumAge:3000, timeout:20000 });
+  }
+  function gpsErr(e){ if (state.walk && e && e.code === 1) gpsProblem(true); }   // 1 = position refusée
+  const gpsShown = () => !$("#walkBanner").hidden && $("#walkBanner").dataset.kind === "gps";
+  function gpsCheck(){
+    if (!state.walk || document.hidden || gpsShown() || homeTimer) return;
+    const silent = Date.now() - Math.max(gpsLastAt, gpsStartAt);
+    if (silent > (gpsLastAt > gpsStartAt ? GPS_LOST : GPS_WAIT)) gpsProblem(false);
+  }
+  function gpsProblem(denied){
+    if (!state.walk || gpsShown() || homeTimer) return;
+    showBanner("gps", denied ? `📍 ${DOG} ne te voit pas : la position est refusée. Sans elle, la balade ne compte pas !`
+                             : `📍 ${DOG} ne te voit plus : le GPS ne répond pas. Sans lui, la balade ne compte pas !`,
+      { label:"🔄 Réessayer", fn: () => { hideBanner(); startGps(); } },
+      { label:"❓ Comment faire", fn: gpsHelp });
+    gpsWarned = true; try{ haptic(2); }catch(e){}
+  }
+  function gpsHelp(){
+    openSheet(`<h2>📍 ${DOG} ne te voit pas</h2>
+      <p>Sur iPhone, l'app redemande ta position <b>à chaque ouverture</b>. Quand la fenêtre « … utiliser votre position » apparaît, touche <b>Autoriser</b>.</p>
+      <p>Tu as touché « Refuser » ? Ferme complètement l'app (glisse-la vers le haut), puis rouvre-la : ta balade reprend où elle en était, et cette fois touche <b>Autoriser</b>.</p>
+      <p>Toujours rien ? Réglages › Confidentialité et sécurité › Service de localisation : il doit être activé, et « Sites web Safari » sur « Lorsque l'app est active ».</p>
+      <div class="btns"><button id="gpsRetry">🔄 Réessayer</button><button class="ghost" id="gpsClose">Fermer</button></div>`);
+    $("#gpsRetry").onclick = () => { closeSheet(); hideBanner(); startGps(); };
+    $("#gpsClose").onclick = closeSheet;
+  }
+  // ⏹ « Fini » : longue balade sans aucune position → on prévient avant de terminer
+  function finishWalk(){
+    const p = state.walk; if (!p) return;
+    const el = (Date.now() - t0) / 60000;
+    let m = 0; for (let i = 1; i < track.length; i++) m += dist(track[i-1], track[i]);
+    if (el < 5 || m >= 50 || p.express){ stopWalk(); return; }
+    openSheet(`<h2>📍 ${DOG} ne t'a pas vu bouger</h2>
+      <p>${fmtMin(el)} de balade, mais <b>${fmtKm(m)}</b> : le GPS n'a pas suivi. Sans position, cette balade ne rapporte presque rien.</p>
+      <div class="btns"><button id="fwRetry">🔄 Réessayer le GPS et continuer</button><button class="ghost" id="fwHelp">❓ Comment faire</button><button class="ghost" id="fwStop">⏹ Terminer quand même</button></div>`);
+    $("#fwRetry").onclick = () => { closeSheet(); hideBanner(); startGps(); };
+    $("#fwHelp").onclick = gpsHelp;
+    $("#fwStop").onclick = () => { closeSheet(); stopWalk(); };
   }
 
   // 📸 « Montre-moi Roxy ! » : une fois par balade, entre 6 min et la moitié de la durée prévue (au moins 10 min)
@@ -4578,6 +4627,9 @@
     if (youMarker) youMarker.setLatLng([q.lat, q.lon]);
     if (followMap) map.panTo([q.lat, q.lon], { animate:true });
     lastFix = q;
+    if (gpsShown()) hideBanner();
+    if (gpsWarned){ gpsWarned = false; toast(`📍 C'est bon, ${DOG} te voit !`, 2500); }
+    gpsLastAt = q.t;
     // on garde les points assez précis, tous les 8 m ou toutes les 30 s
     if (q.a <= 60){
       const last = track[track.length-1];
@@ -4672,10 +4724,7 @@
       if (gap > 20000) $("#walktip").textContent = `⏸️ Suivi en pause pendant ${fmtMin(gap/60000)}, il a repris. Garde l'app ouverte 🙏`;
     }
     keepAwake();
-    if (navigator.geolocation){
-      if (watchId != null) navigator.geolocation.clearWatch(watchId);
-      watchId = navigator.geolocation.watchPosition(onFix, () => {}, { enableHighAccuracy:true, maximumAge:3000, timeout:20000 });
-    }
+    startGps();
   });
   // en suivant : on zoome toujours sur moi (pas là où sont les doigts)
   function setFollow(on){
@@ -5218,11 +5267,11 @@
   let holdT = null;
   $("#stop").addEventListener("pointerdown", e => {
     e.preventDefault(); const b = $("#stop"); b.classList.add("holding"); clearTimeout(holdT);
-    holdT = setTimeout(() => { b.classList.remove("holding"); holdT = null; haptic(2); stopWalk(); }, 1000);
+    holdT = setTimeout(() => { b.classList.remove("holding"); holdT = null; haptic(2); finishWalk(); }, 1000);
   });
   const holdEnd = () => { if (holdT){ clearTimeout(holdT); holdT = null; $("#stop").classList.remove("holding"); coach(null, "✋ Garde le doigt sur Fini pour terminer", "bottom"); } };
   ["pointerup", "pointerleave", "pointercancel"].forEach(ev => $("#stop").addEventListener(ev, holdEnd));
-  $("#stop").addEventListener("click", e => { if (e.detail === 0) stopWalk(); });   // clavier / lecteur d'écran
+  $("#stop").addEventListener("click", e => { if (e.detail === 0) finishWalk(); });   // clavier / lecteur d'écran
 
   // ---------- Page récapitulatif (lien reçu par le superviseur) ----------
   async function showRecapPage(){
@@ -5702,7 +5751,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5820,8 +5869,11 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 49, APP_LABEL = "3.5";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 50, APP_LABEL = "3.6";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    50: [
+      "📍 Si le GPS ne te suit pas (position refusée), un bandeau rouge te prévient tout de suite : touche « Autoriser » quand l'iPhone te le demande."
+    ],
     49: [
       "🐞 Nouveau : ☰ › Signaler un bug. Quelque chose ne marche pas ? Écris-le, Éric le verra."
     ],
@@ -6066,7 +6118,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

@@ -505,3 +505,14 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🔑 **Superviseur › 🐞 Bugs signalés** (`sheetBugs`) : liste récente d'abord, « Réglé ✓ » / « Rouvrir » / « Supprimer » (efface aussi l'image), « 📎 Voir la capture » (`POST /bugs`, `/bug-done`, `/bug-img`, jeton ou code).
 - Tests : `tests/e2e_v49.py` (navigateur, avec image), `tests/worker.test.mjs` (bugs, captures).
 - Prochaines étapes décidées : signalements de la communauté (route barrée, chien agressif…), puis design plus doux et joyeux.
+
+## Version 3.6 « Croquette » (APP_NUM 50, décidé le 18/11 : bug de localisation, balade à 0 m)
+- 📍 **GPS surveillé** (`startGps`, `gpsErr`, `gpsCheck`, `gpsProblem`, `gpsHelp`) : retour d'un promeneur (17/11) : sur iPhone, la web app de l'écran d'accueil redemande la
+  localisation à chaque ouverture ; sans réponse ou « Refuser », aucun point n'arrivait et la balade finissait à 0 m (gain limité par la distance) sans rien dire.
+  Maintenant : position refusée (`code 1`) → **bandeau rouge** tout de suite (`showBanner("gps")`, classe `.wbanner.gps`) avec « 🔄 Réessayer » (relance `watchPosition`)
+  et « ❓ Comment faire » (Autoriser, fermer / rouvrir l'app, Réglages › Service de localisation › Sites web Safari « Lorsque l'app est active ») ; pas de 1re position
+  après 40 s (`GPS_WAIT`) ou plus rien depuis 90 s (`GPS_LOST`) → même bandeau (contrôle toutes les 15 s avec le chrono ; aussi quand l'appel iOS reste bloqué sans erreur).
+  Une position revient → bandeau retiré + « 📍 C'est bon, Roxy te voit ! ». Le retour dans l'app (`visibilitychange`) passe aussi par `startGps`.
+- ⏹ **« Fini » à 0 m** (`finishWalk`, appui long et clavier) : balade ≥ 5 min et < 50 m (hors express) → fiche « Roxy ne t'a pas vu bouger » : réessayer le GPS et continuer,
+  comment faire, ou terminer quand même. Fin automatique et anti-oubli inchangés.
+- Tests : `tests/e2e_v50.py` (faux GPS : refusé, muet, revenu ; Fini à 0 m) ; `e2e_accueil.py` / `e2e_v49.py` passent à 3.6.
