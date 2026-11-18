@@ -362,7 +362,7 @@ async function recomputeRecord(env, mk){
 // 🥈 cadeau argenté (v3.9) : KV « spos » = { id, lat, lon, at } posé par Éric ; « sv:<id> » = prénom du gagnant. Même vue publique que le trésor doré (position dans /pause).
 async function silverView(env){
   const sp = await env.WOUAF.get("spos", "json"); if (!sp) return null;
-  return Object.assign({}, sp, { by: (await env.WOUAF.get("sv:" + sp.id)) || null });
+  return Object.assign({}, sp, { by: sp.by || (await env.WOUAF.get("sv:" + sp.id)) || null });
 }
 
 // 🏆 Trophées de Roxy du mois (v3.8) : calculés une fois, au 1er du mois, avec les chiffres déjà envoyés (60 dernières balades de chaque promeneur),
@@ -606,6 +606,8 @@ export default {
         l.push({ id: "v" + e, type:"void", e, why, t: Date.now() });
         await env.WOUAF.put(k, JSON.stringify(l.slice(-50)));
         await recomputeLast(env); await recomputeRecord(env, isoDay(e * 1000).slice(0, 7));
+        { const mk = isoDay(e * 1000).slice(0, 7);   // 🏆 mois déjà figé : on recalcule ses trophées sans la balade annulée
+          if (await env.WOUAF.get("hon:" + mk)){ const h = await computeHonors(env, mk); if (h) await env.WOUAF.put("hon:" + mk, JSON.stringify(h)); else await env.WOUAF.delete("hon:" + mk); } }
         return json({ ok:true });
       }
       if (path === "/adjust"){   // ✏️ ajouter / retirer des clebsous avec un motif
@@ -650,8 +652,8 @@ export default {
       if (await isTester(env, w)) return json({ first:false, test:true });
       const cur = await env.WOUAF.get("spos", "json");
       if (!cur || cur.id !== id) return json({ first:false, gone:true });   // retiré ou remplacé par Éric
-      const by = await env.WOUAF.get("sv:" + id);
-      if (!by){ await env.WOUAF.put("sv:" + id, w, { expirationTtl: 90*86400 }); return json({ first:true, by:w }); }
+      const by = cur.by || (await env.WOUAF.get("sv:" + id));
+      if (!by){ await env.WOUAF.put("sv:" + id, w, { expirationTtl: 90*86400 }); cur.by = w; await env.WOUAF.put("spos", JSON.stringify(cur)); return json({ first:true, by:w }); }   // gagnant gardé aussi dans spos : le cadeau ne revient jamais
       return json({ first: by === w, found:true, by });
     }
     if (path === "/treasure"){   // 🏴‍☠️ premier à trouver le trésor de la semaine (aucune position reçue)

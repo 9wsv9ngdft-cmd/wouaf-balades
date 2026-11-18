@@ -812,7 +812,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-18.163232";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-18.164346";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3995,7 +3995,7 @@
     if (!gw) return;
     ensureGame();
     if (!first){
-      game.silver = { id: sv.id, gone: by || "Éric" }; saveGame(); drawItems();
+      game.silver = { id: sv.id, gone: by || "Quelqu'un" }; saveGame(); drawItems();
       toast(gone ? "🥈 Le cadeau argenté a été retiré." : `🥈 ${by} a trouvé le cadeau argenté juste avant toi !`, 5000);
       return;
     }
@@ -6091,7 +6091,7 @@
   const APP_NUM = 51, APP_LABEL = "3.9";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     51: [
-      "🥈 Cadeau argenté : 250 clebsous, un seul gagnant, caché par Éric sous un nuage argenté. Le coffre chaud passe à l'orange et vaut 100.",
+      "🥈 Cadeau argenté : 250 clebsous, un seul gagnant, caché par Éric sous un nuage argenté. Le coffre passe à l'orange et vaut 100.",
       "🌧️ Il pleut des billets ! Sous la pluie, des 💶 tombent devant toi pendant la balade : ramasse-les.",
       "🏆 Chaque 1er du mois, les trophées de Roxy : Roi du Caca, Maître Arroseur, Explorateur… Le palmarès est dans ☰."
     ],

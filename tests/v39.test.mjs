@@ -8,7 +8,7 @@ const at = (mk, d, h) => Math.floor(Date.parse(`${mk}-${String(d).padStart(2, "0
 const walk = (e, extra) => Object.assign({ s: e - 1800, e, min: 30, m: 2500, cs: 40 }, extra);
 
 test("cadeau argenté : posé par Éric seulement, un seul gagnant, visible dans /pause, retirable", async () => {
-  const { api } = await setup();
+  const { api, env } = await setup();
   const { j } = await api.post("/claim", { walker: "Éric" });
   assert.equal((await api.post("/silver-set", { lat: 48.85, lon: 2.35 })).status, 403);                    // pas superviseur
   assert.equal((await api.post("/silver-set", { token: j.token, lat: 91, lon: 2.35 })).status, 400);
@@ -23,6 +23,9 @@ test("cadeau argenté : posé par Éric seulement, un seul gagnant, visible dans
   assert.equal(b.j.first, false); assert.equal(b.j.by, "Léa");
   assert.equal((await api.post("/silver-found", { id, walker: "Léa" })).j.first, true);                      // même promeneur : reconnu
   assert.equal((await api.get("/pause")).j.silver.by, "Léa");
+  await env.WOUAF.delete("sv:" + id);                                                                     // même après expiration de sv:, le gagnant reste
+  assert.equal((await api.get("/pause")).j.silver.by, "Léa");
+  assert.equal((await api.post("/silver-found", { id, walker: "Tom" })).j.first, false);
   assert.equal((await api.post("/silver-found", { id: "nimporte", walker: "Tom" })).j.gone, true);         // id inconnu / remplacé
   const clear = await api.post("/silver-set", { token: j.token, clear: 1 });
   assert.equal(clear.j.silver, null); assert.equal((await api.get("/pause")).j.silver, null);
@@ -72,6 +75,9 @@ test("trophées du mois : le gagnant de chaque trophée, ex æquo partagés, Ér
   assert.equal(h.honors[0].fam.walkers, 2); assert.equal(h.honors[0].fam.cc, 10);
   assert.ok(await env.WOUAF.get("hon:" + mk));                                                 // gardé pour le palmarès
   assert.equal((await api.get("/honors")).j.honors.length, 1);                                // idempotent
+  await api.post("/void", { code: "1234", walker: "Tom", e: at(mk, 3, 14), why: "test" });    // balade annulée après coup : trophées du mois recalculés
+  const t2 = (await api.get("/honors")).j.honors[0].t;
+  assert.deepEqual(t2.cc.w, ["Léa"]); assert.deepEqual(t2.pp.w, ["Léa"]); assert.equal(t2.duo, undefined);
 });
 
 test("trophées : rien à montrer sans balade, et la remise à zéro efface le palmarès et le cadeau argenté", async () => {
