@@ -812,7 +812,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-18.164346";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-18.183406";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1486,7 +1486,7 @@
     const r = st.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight - 70 || r.height === 0) try{ toast(t, 4000); }catch(e){} } })
     .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
   let introRunning = false;   // écran « tout repart de zéro » + tuto en cours : pas de rechargement (mise à jour, remise à zéro) avant la fin
-  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
+  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -3650,6 +3650,7 @@
     if (digestRunning || document.body.classList.contains("recap")) return;
     digestRunning = true;
     const cards = [];
+    waSentList();   // 📩 1re fois : les balades déjà au carnet comptent comme envoyées
     // ✨ Nouvelle version : un seul écran à part (2–3 lignes), puis le reste éventuel du « Quoi de neuf »
     if (store.get("wouaf-vu", 0) < APP_NUM){
       const nw = NEWS[APP_NUM] || [];
@@ -3682,6 +3683,7 @@
     }
     const pay = paydayCardData(); if (pay) cards.push(pay);
     const wk = weekCardData(); if (wk) cards.push(wk);
+    try{ const uc = unsentCard(); if (uc) cards.push(uc); }catch(e){}   // 📩 v3.9.1 : récap oublié
     try{ const hc = await honorsCard(); if (hc) cards.unshift(hc); }catch(e){}   // 🏆 v3.8 : trophées du mois (le 1er)
     renderHome();
     digestRunning = false;
@@ -5339,17 +5341,70 @@
   // 📲 v45 : les récaps partent dans le groupe WhatsApp « Roxy » (retour du 16/11 : récap envoyé au mauvais contact par erreur)
   const WA_GROUP = "Roxy";
   const waHint = () => `<p class="waHint">📲 Dans WhatsApp, choisis le groupe <b>« ${WA_GROUP} »</b></p>`;
+  // 📩 v3.9.1 (décidé le 18/11) : rappel quand on oublie d'envoyer le récap au groupe. Rien n'est envoyé au serveur : la liste des récaps
+  // déjà partagés reste sur le téléphone (`wouaf-wa-sent`). 1re fois : toutes les balades déjà au carnet comptent comme envoyées (pas de rappel en rafale).
+  const WA_SENT = "wouaf-wa-sent";
+  let pendingRecap = null;   // récap affiché à la fin d'une balade, pas encore partagé
+  const recapKey = r => r && r.s ? r.s + "-" + r.e : "";
+  function waSentList(){
+    let l = store.get(WA_SENT, null);
+    if (!Array.isArray(l)){ l = getLog().filter(e => e.recap).map(e => recapKey(e.recap)); store.set(WA_SENT, l.slice(0, 80)); }
+    return l;
+  }
+  function markSent(r){
+    const k = recapKey(r); if (!k) return;
+    const l = waSentList(); if (!l.includes(k)){ l.unshift(k); store.set(WA_SENT, l.slice(0, 80)); }
+    if (pendingRecap && recapKey(pendingRecap) === k) pendingRecap = null;
+  }
+  function unsentRecaps(){   // mes balades des 3 derniers jours (≥ 2 min, pas annulées) dont le récap n'est pas parti
+    if (isTester() || !profile.walker) return [];
+    const sent = waSentList(), now = Date.now() / 1000, cur = recapKey(pendingRecap);
+    return getLog().filter(e => e.recap && !e.void && (!e.walker || sameN(e.walker, profile.walker)) && now - e.recap.e < 3 * 86400
+      && e.recap.e - e.recap.s >= 120 && !sent.includes(recapKey(e.recap)) && recapKey(e.recap) !== cur).slice(0, 3);
+  }
+  const recapWhen = r => { const d = new Date(r.s * 1000), t = new Date(), y = new Date(Date.now() - 86400000);
+    return (d.toDateString() === t.toDateString() ? "aujourd'hui" : d.toDateString() === y.toDateString() ? "hier" : d.toLocaleDateString("fr-FR", { weekday:"long" })) + " à " + hm(d); };
+  function sendBtnBind(btn, r){
+    btn.onclick = async () => { if (await shareRecap(r, [])){ btn.textContent = "✓ Envoyé"; btn.disabled = true; } };
+  }
+  // à la fermeture du récap sans l'avoir envoyé
+  function recapNudge(){
+    const r = pendingRecap; pendingRecap = null;
+    if (!r || isTester() || waSentList().includes(recapKey(r))) return;
+    let tries = 0;
+    const show = () => {
+      if (state.walk || waSentList().includes(recapKey(r))) return;
+      if ($("#modal").classList.contains("open")){ if (++tries < 40) setTimeout(show, 1500); return; }   // une autre fenêtre (record, coffre…) : on attend qu'elle se ferme
+      openSheet(`<div class="dc-ic" style="font-size:44px;text-align:center">📩</div><h2>Tu as oublié le récap !</h2>
+        <p>Ta balade de ${esc(recapWhen(r))} n'est pas encore partie dans le groupe <b>« ${WA_GROUP} »</b>.</p>${waHint()}
+        <div class="btns"><button id="nuSend">📩 Envoyer maintenant</button><button class="ghost" id="nuLater">Plus tard</button></div>
+        <p class="howto">Plus tard : l'app te le redemandera à la prochaine ouverture (ou ☰ › Carnet › la balade › « Renvoyer »).</p>`);
+      $("#nuSend").onclick = async () => { if (await shareRecap(r, [])) closeSheet(); };
+      $("#nuLater").onclick = closeSheet;
+    };
+    setTimeout(show, 450);
+  }
+  // carte du « Quoi de neuf » à l'ouverture
+  function unsentCard(){
+    const l = unsentRecaps(); if (!l.length) return null;
+    return { html: `<div class="dc-ic">📩</div><h2>Récap pas envoyé</h2><p>${l.length > 1 ? "Ces balades ne sont" : "Cette balade n'est"} pas encore ${l.length > 1 ? "parties" : "partie"} dans le groupe <b>« ${WA_GROUP} »</b> :</p>
+      <div class="props">${l.map((e, i) => `<div class="entry"><div><h4>🐾 ${esc(recapWhen(e.recap))} · ${fmtMin(e.min)}</h4></div><button class="ghost" data-us="${i}">📩 Envoyer</button></div>`).join("")}</div>
+      ${waHint()}<div class="btns"><button class="ghost" data-us="no">Pas besoin</button></div>`,
+      bind: el => { el.querySelectorAll("[data-us]").forEach(b => { if (b.dataset.us === "no") b.onclick = () => { l.forEach(e => markSent(e.recap)); b.textContent = "✓ C'est noté"; b.disabled = true; };
+        else sendBtnBind(b, l[+b.dataset.us].recap); }); } };
+  }
   async function shareRecap(r, files){
     const url = location.origin + location.pathname + "#r=" + await packRecap(r);
     const text = recapText(r) + "\n" + url;
     const title = `Balade de ${r.d}`;
     try{
-      if (files && files.length && navigator.canShare && navigator.canShare({ files })) { await navigator.share({ title, text, files }); return true; }
-      if (navigator.share){ await navigator.share({ title, text }); return true; }
+      if (files && files.length && navigator.canShare && navigator.canShare({ files })) { await navigator.share({ title, text, files }); markSent(r); return true; }
+      if (navigator.share){ await navigator.share({ title, text }); markSent(r); return true; }
     }catch(e){ if (e && e.name === "AbortError") return false; }
     // secours : SMS direct, puis copie
     location.href = "sms:&body=" + encodeURIComponent(text);
     try{ await navigator.clipboard.writeText(text); }catch(e){}
+    markSent(r);
     return true;
   }
 
@@ -5391,6 +5446,7 @@
   }
   function showRecapSheet(r, files, title, res, moneyMin){
     const dur = (r.e - r.s) / 60;
+    waSentList(); pendingRecap = dur >= 2 && !isTester() ? r : null;   // 📩 rappel si on ferme sans envoyer
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
     const hero = (files && files[0]) ? `<img class="tk-photo" alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(files[0])}">` : `<div class="tk-dog">${roxyHTML(game.acc || [])}</div>`;
     openSheet(`<div class="ticket">${hero}
@@ -5969,7 +6025,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6088,8 +6144,11 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 51, APP_LABEL = "3.9";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 52, APP_LABEL = "3.9.1";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    52: [
+      "📩 Tu as oublié d'envoyer le récap de ta balade au groupe « Roxy » ? L'app te le rappelle, et tu peux l'envoyer après coup en un geste."
+    ],
     51: [
       "🥈 Cadeau argenté : 250 clebsous, un seul gagnant, caché par Éric sous un nuage argenté. Le coffre passe à l'orange et vaut 100.",
       "🌧️ Il pleut des billets ! Sous la pluie, des 💶 tombent devant toi pendant la balade : ramasse-les.",
@@ -6342,7 +6401,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

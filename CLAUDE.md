@@ -543,3 +543,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   👑 en tête, couronne de l'année une fois l'année finie ; carte de décembre = « Couronne AAAA »), puis mois par mois. Résumé drôle aussi dans le journal de bord.
 - Limite connue : les trophées ne s'appuient que sur les 60 dernières balades de chaque promeneur ; les premiers sont ceux de novembre (balades depuis la remise à zéro du 14/11), publiés le 1er décembre.
 - Tests : `tests/v39.test.mjs` (Worker : cadeau argenté, alerte, trophées), `tests/e2e_v51.py` (navigateur). `e2e_v26.py` (attend « 3.4 ») et `e2e_duels.py` échouaient déjà avant.
+
+## Version 3.9.1 « Croquette » (APP_NUM 52, décidé le 18/11 à 18 h 22 : rappel du récap oublié)
+- 📩 **Récap pas envoyé au groupe « Roxy »** : la liste des récaps déjà partagés reste **sur le téléphone** (`wouaf-wa-sent`, clé `recapKey` = `s-e`, 80 max) ;
+  `shareRecap` appelle `markSent` dès que le menu Partager aboutit (pas sur « Annuler »). 1re fois (`waSentList`) : toutes les balades déjà au carnet comptent comme envoyées.
+- En fermant le récap sans l'avoir envoyé (`pendingRecap`, posé par `showRecapSheet`, testé dans `closeSheet`) → fiche « 📩 Tu as oublié le récap ! » (`recapNudge`) :
+  « Envoyer maintenant » / « Plus tard » ; si une autre fenêtre est ouverte (record, coffre…), elle attend qu'elle se ferme (toutes les 1,5 s, 1 min max).
+- À l'ouverture et au retour dans l'app : carte « Récap pas envoyé » dans le « Quoi de neuf » (`unsentCard`, `unsentRecaps` : mes balades ≥ 2 min des 3 derniers jours, pas annulées,
+  3 max) avec un bouton « 📩 Envoyer » par balade et « Pas besoin ». Pas pour Éric (testeur). Toujours possible à la main : ☰ › Carnet / journal › la balade › « Renvoyer ».
+- Tests : `tests/e2e_v52.py` ; `e2e.py` marque ses récaps comme envoyés (`markSent`) ; `e2e_v49.py` attend « 3.9.1 ».

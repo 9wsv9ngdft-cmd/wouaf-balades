@@ -45,6 +45,7 @@ def start_walk(page, minutes=35, chest=False, hunt=0):
     page.evaluate(WALK_JS, {"minutes": minutes, "chest": chest, "hunt": hunt}); page.wait_for_timeout(400)
 def stop_walk(page):
     page.evaluate("__wouaf.stopWalk()"); page.wait_for_timeout(900)
+    page.evaluate("(() => { const e = __wouaf.getLog()[0]; if (e && e.recap) __wouaf.markSent(e.recap); })()")   # v3.9.1 : récap compté comme envoyé (sinon le rappel s'ouvre)
 def close_sheet(page):
     if modal_open(page): page.click("#sheetX"); page.wait_for_timeout(700)
 
