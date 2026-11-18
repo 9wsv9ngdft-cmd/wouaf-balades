@@ -516,3 +516,30 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - ⏹ **« Fini » à 0 m** (`finishWalk`, appui long et clavier) : balade ≥ 5 min et < 50 m (hors express) → fiche « Roxy ne t'a pas vu bouger » : réessayer le GPS et continuer,
   comment faire, ou terminer quand même. Fin automatique et anti-oubli inchangés.
 - Tests : `tests/e2e_v50.py` (faux GPS : refusé, muet, revenu ; Fini à 0 m) ; `e2e_accueil.py` / `e2e_v49.py` passent à 3.6.
+
+## Version 3.9 « Croquette » (APP_NUM 51, décidé le 17–18/11 en Wouaf 6 : cadeaux et gains + trophées ; contient aussi la 3.8)
+- 🥈 **Cadeau argenté 250** (`SILVER_CS`, `SILVER_CLOUD` = 350 m) : même principe que le trésor doré (un seul pour tous, **un seul gagnant**, nuage flou), mais **posé à la main par Éric**
+  (Superviseur › Carte du superviseur › « 🥈 Cadeau argenté ici » ; « 🗑️ Retirer ») et qui **reste jusqu'à ce qu'on le trouve**. Worker : KV `spos` = `{ id, lat, lon, at }`
+  (`POST /silver-set`, superviseur), `POST /silver-found` (public : `sv:<id>` = prénom du gagnant ; Éric testeur ne le prend jamais ; id inconnu = `gone`), renvoyé par `GET /pause`
+  (`silver` avec `by`, comme `hpos`). App : `silverSrv` (`wouaf-silver`), `silverLive`, `silverCenter` (nuage décalé de 80–200 m, tiré avec l'id), `silverCheck` (dans `gameFix`, à < 40 m),
+  `game.silver` = `{ id, found | gone }`, `gw.silver` / `res.silver` / `gx.sv` (hors plafond dans `game.bonus`, retiré par `applyVoid`), tuile 🥈 sur l'accueil (`data-lot="silver"`),
+  `sheetSilver`, radar 🥈, flèche au bord = le nuage le plus proche (doré ou argenté), mini-carte et exploration (`openExplore("silver")`). Annuler la balade après l'avoir trouvé :
+  `POST /alert` `kind:"silver"` → tableau de bord « Redonner 250 » (`/alert-resolve`). La remise à zéro efface `spos`, `sv:`.
+- 🔥 **Coffre chaud = orange-rouge** (l'argent est réservé au cadeau argenté) : `FOG_ZONE.hot`, `hotCloud`, `.lt.fire`, `.trez.fire`, textes « nuage orange ».
+- 💰 **Coffres à 100** (`CHEST_EUR` = 1 ; petits coffres 50 inchangés, budget `CHEST_MONTH` 6 €).
+- 🦴 **Objets selon la cagnotte** (`objScale`, `objVal`) : si les gains du mois dépassent le rythme (`paceAllowed`), chaque objet vaut moitié moins (au moins 1, arrondi). La part « objets » du bonus
+  (`gw.objPts` → `res.keep`) n'est plus coupée une 2e fois par `addMoney(eur, keepEur)`.
+- 🌧️ **« Il pleut des billets »** remplace le bonus pluie ×1,5 (`rainMult` supprimé) : sous la pluie (météo du 1er point GPS), un billet 💶 tombe à 45–75 m devant soi tous les ~160–260 m de marche
+  (`billsTick`, `BILL_CS` = 4, `BILL_MAX` = 8, vit `BILL_LIFE` = 4 min, ramassé à < 25 m, `gw.bills`, `gw.billGot` → `res.bills`), valeur ajustée à la cagnotte, ajoutée au bonus du jeu
+  (donc dans le budget du mois). Pas en balade express. `res.rain` / `rn` partent avec `/walk` (trophée Courageux).
+- Plus de « cadeaux du ciel au hasard » : il n'y en avait pas dans le code (rien à retirer) ; les futurs bonus iront sur les lieux (points d'intérêt).
+- 🏆 **Trophées de Roxy du mois** (v3.8) : le Worker calcule, avec les chiffres déjà envoyés par balade (`pp cc nc m min rn du s`, 60 dernières balades par promeneur, Éric exclu),
+  le gagnant de 9 trophées : 💩 Roi du Caca · 💧 Maître Arroseur · 🗺️ Explorateur · 🏃 Marathonien (km) · ⏱️ Patient (plus longue balade) · 🔥 Fidèle (jours de sortie ≥ 20 min) ·
+  🌧️ Courageux (balades sous la pluie) · 🌅 Lève-tôt (départ avant 8 h) · 🤝 Sociable (balades à deux). Ex æquo = tous gagnants ; valeur 0 = pas de trophée. KV `hon:AAAA-MM`
+  (`{ mk, t:{ id:{ w:[prénoms], v } }, fam:{ n walkers m min pp cc nc ob } }`), figé une fois le mois fini (`honorsAll`, aussi au cron) ; `GET /honors` (public, chiffres seulement).
+  La remise à zéro efface `hon:`.
+- 🎉 App : `honorsCard` = carte « Les trophées de Roxy · Novembre » en tête de la fenêtre d'ouverture le 1er du mois (une fois, `wouaf-hon-vu`, confettis), avec le **résumé drôle**
+  (`funnyLines` : km comparés à `KM_PLACES`, cacas, pipis, minutes en films, rues neuves). ☰ › 🏆 **Palmarès** (`sheetPalmares`) : tableau d'honneur de l'année (nombre de trophées par promeneur,
+  👑 en tête, couronne de l'année une fois l'année finie ; carte de décembre = « Couronne AAAA »), puis mois par mois. Résumé drôle aussi dans le journal de bord.
+- Limite connue : les trophées ne s'appuient que sur les 60 dernières balades de chaque promeneur ; les premiers sont ceux de novembre (balades depuis la remise à zéro du 14/11), publiés le 1er décembre.
+- Tests : `tests/v39.test.mjs` (Worker : cadeau argenté, alerte, trophées), `tests/e2e_v51.py` (navigateur). `e2e_v26.py` (attend « 3.4 ») et `e2e_duels.py` échouaient déjà avant.

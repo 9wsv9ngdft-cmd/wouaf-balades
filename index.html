@@ -485,6 +485,7 @@
   .jsay{position:relative;background:#fff6d8;border:2px solid #f2d36b;border-radius:16px;padding:8px 12px;font-size:15px;line-height:1.3;color:#3d2c00}
   .trez{text-align:center;border-radius:22px;padding:18px 14px 12px;margin:-4px 0 12px;background:linear-gradient(160deg,#fff6d8,#f6dc84 60%,#e9bf4a);color:#3d2c00;box-shadow:0 6px 20px rgba(201,162,39,.35)}
   .trez.silver{background:linear-gradient(160deg,#f7f9fb,#dfe5ec 60%,#c3ccd6);color:#26313c;box-shadow:0 6px 20px rgba(120,135,150,.3)}
+  .trez.fire{background:linear-gradient(160deg,#fff1e8,#ffc9ab 60%,#f4936a);color:#43200f;box-shadow:0 6px 20px rgba(224,84,47,.32)}
   .trez.off{filter:saturate(.45)}
   .trez .tz-ic{font-size:58px;line-height:1.1;animation:tzb 1.8s ease-in-out infinite}
   .trez.off .tz-ic{animation:none}
@@ -564,6 +565,7 @@
   body.hasmap .minimap,body.hasmap .gobj,body.hasmap .gostat,body.choosing .minimap{display:none}
   .lt.silver{background:linear-gradient(135deg,#eef1f4,#c9d0d7 55%,#aab3bc);border-color:#b8c0c8;color:#2a3138} .lt.silver small{color:#4a535c}
   .lt.bronze{background:linear-gradient(135deg,#f6dcc2,#d9a06c 55%,#b8763f);border-color:#c2864f;color:#3e2410} .lt.bronze small{color:#5a3518}
+  .lt.fire{background:linear-gradient(135deg,#ffd9c2,#f58a5a 55%,#e0542f);border-color:#e0703f;color:#43200f} .lt.fire small{color:#6a2a10}
   #homeFoot{text-align:center;font-size:13px;color:var(--muted);padding:10px 4px 2px;line-height:1.5;user-select:none;-webkit-user-select:none;cursor:default}
   #homeFoot b{font-weight:700} #homeFoot:empty{display:none}
   body.page #homeFoot,body.walking #homeFoot,body.recap #homeFoot,body.choosing #homeFoot,body.hasmap #homeFoot{display:none}
@@ -572,6 +574,7 @@
     .wxp{background:#1f3445;color:#cfe8ff}
     .lt.silver{background:linear-gradient(135deg,#59616a,#8f99a3 60%,#aeb7c0);border-color:#7c858e;color:#fff} .lt.silver small{color:#eef2f5}
     .lt.bronze{background:linear-gradient(135deg,#6b3d1c,#a3622f 60%,#c07a43);border-color:#8d5428;color:#fff} .lt.bronze small{color:#fbe2cc}
+    .lt.fire{background:linear-gradient(135deg,#7a2c12,#c4502a 60%,#e07a4c);border-color:#a8431f;color:#fff} .lt.fire small{color:#ffe3d4}
   }
 
   /* v2.4 : écran de balade « la carte d'abord » */
@@ -688,7 +691,8 @@
   body.nuit .ltiles .lt b{color:#fff;font-size:16px;font-weight:800}
   body.nuit .lt.gold{background:linear-gradient(135deg,#6e5a2a,#a8873e)}
   body.nuit .lt.silver{background:linear-gradient(135deg,#59616a,#aeb7c0)}
-  body.nuit .lt.silver.hot{box-shadow:0 0 0 2px #f0d48a inset}
+  body.nuit .lt.fire{background:linear-gradient(135deg,#8a3217,#e0693c)}
+  body.nuit .lt.fire.hot{box-shadow:0 0 0 2px #f0d48a inset}
   body.nuit .lt.bronze{background:linear-gradient(135deg,#6b3d1c,#c07a43)}
   body.nuit .lt.arena-t{background:linear-gradient(135deg,#3b2a78,#b03a5b)}
   body.nuit #status:empty{display:none} body.nuit #views{margin:0}
@@ -808,7 +812,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-18.081824";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-18.163232";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -876,13 +880,14 @@
   // calque du brouillard : au-dessus du fond de carte, sous les tracés, Roxy et les objets
   map.createPane("fog"); map.getPane("fog").style.zIndex = 350; map.getPane("fog").style.pointerEvents = "none";
   // Brouillard « lampe » : une toile 100 % opaque, effacée le long des chemins déjà faits (rayon LAMP_M)
-  // v2.7 (décidé le 15/11) : nuages blancs unis et doux ; doré sur la zone du trésor, argenté sur celle du coffre chaud ; tout s'efface là où on est passé
+  // v2.7 (décidé le 15/11) : nuages blancs unis et doux ; doré sur la zone du trésor, argenté sur celle du cadeau argenté (v3.9), orange-rouge sur celle du coffre chaud (v3.9, avant argenté) ; tout s'efface là où on est passé
   const FOG_COLOR = "#f3f4f1", LAMP_M = 40, CELL_LAMP_M = 55;
-  const FOG_ZONE = { gold:["rgba(231,186,72,1)", "rgba(240,212,138,.95)", "rgba(243,244,241,0)"], silver:["rgba(176,188,201,1)", "rgba(204,212,221,.95)", "rgba(243,244,241,0)"] };
+  const FOG_ZONE = { gold:["rgba(231,186,72,1)", "rgba(240,212,138,.95)", "rgba(243,244,241,0)"], silver:["rgba(176,188,201,1)", "rgba(204,212,221,.95)", "rgba(243,244,241,0)"], hot:["rgba(232,96,56,1)", "rgba(244,150,112,.95)", "rgba(243,244,241,0)"] };
   function fogZones(){
     const z = [];
     try{ const hu = huntLive(); if (hu && hu.lat != null) z.push(Object.assign({ r: HUNT_CLOUD, k:"gold" }, huntCloud(hu))); }catch(e){}
-    try{ const cc = chestCloud(); if (cc) z.push({ lat: cc.lat, lon: cc.lon, r: CHEST_CLOUD, k:"silver" }); }catch(e){}
+    try{ const cc = chestCloud(); if (cc) z.push({ lat: cc.lat, lon: cc.lon, r: CHEST_CLOUD, k:"hot" }); }catch(e){}
+    try{ const sv = silverLive(); if (sv) z.push(Object.assign({ r: SILVER_CLOUD, k:"silver" }, silverCenter(sv))); }catch(e){}   // 🥈 v3.9
     return z;
   }
   // 🐾 motif du nuage (v2.8, choix n° 1 d'Éric) : petites pattes éparpillées, très pâles
@@ -1672,10 +1677,16 @@
     // v2.7 : les zones du trésor (doré) et du coffre chaud (argenté) sont peintes dans le nuage (FogCanvas, fogZones)
     for (const it of gw.items) if (!it.got)
       L.marker([it.lat, it.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem">${ITEMS[it.k].icon}</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer);
+    for (const b of gw.bills || [])
+      L.marker([b.lat, b.lon], { icon: L.divIcon({ className:"", html:`<div class="gitem">💶</div>`, iconSize:[24,24], iconAnchor:[12,12] }), interactive:false, keyboard:false }).addTo(gameLayer);
   }
+  // 🦴🎾🍖⭐ v3.9 (décidé le 17/11) : la valeur des objets suit la cagnotte du mois. En avance sur le rythme du mois (comme `paceAllowed`),
+  // ils valent moitié moins (au moins 1) ; sinon leur valeur normale. Ils puisent dans le budget du mois, comme les coffres.
+  const objScale = () => { try{ return (game.money[monthKey(Date.now())] || 0) >= paceAllowed() ? PACE_CUT : 1; }catch(e){ return 1; } };
+  const objVal = base => { const sc = objScale(); return sc < 1 ? Math.max(1, Math.round(base * sc)) : base; };
   function collect(k, onNew){
-    const v = ITEMS[k].v * (onNew ? 2 : 1);
-    gw.itemPts += v; gw.got[k]++;
+    const v = objVal(ITEMS[k].v) * (onNew ? 2 : 1);
+    gw.itemPts += v; gw.objPts = (gw.objPts || 0) + v; gw.got[k]++;
     flyPlus(`${ITEMS[k].icon} +${v}`); if (onNew) toast("🆕 Rue neuve : objet ×2 !", 1600);
     ding(); renderChips();
   }
@@ -1698,14 +1709,15 @@
         if (!gw.chest && (Date.now() - t0) / 60000 >= 5 && Math.random() < chestChance() * (inChestCloud(q) ? CHEST_CLOUD_X : 1)){ gw.chest = true; showChest(); }
       }
     }
+    billsTick(q);   // 🌧️ v3.9 : il pleut des billets
     if (!gw.rainChecked){
       gw.rainChecked = true;
       getJSON(`${METEO}?latitude=${q.lat.toFixed(3)}&longitude=${q.lon.toFixed(3)}&current=precipitation&minutely_15=precipitation&forecast_minutely_15=8&models=meteofrance_seamless&timezone=auto`, 8000)
-        .then(j => { if (gw){ gw.rain = (j.current.precipitation || 0) > 0.05; weatherTip(j, gw.rain); } }).catch(() => {});
+        .then(j => { if (gw){ gw.rain = (j.current.precipitation || 0) > 0.05; weatherTip(j, gw.rain); if (gw.rain && !isExpress()) toast("🌧️ Il pleut des billets ! Ramasse les 💶 qui tombent près de toi", 4500); } }).catch(() => {});
     }
     let hit = false;
     for (const it of gw.items) if (!it.got && dist(it, q) < 25){ it.got = true; collect(it.k, onNew); hit = true; }
-    huntCheck(q);
+    huntCheck(q); silverCheck(q);
     radar(q);
     drawWalkFog(false);
     if (hit) drawItems();
@@ -1714,12 +1726,38 @@
       if (!gw.treasure && home && dist(home, q) >= 400){ gw.treasure = true; collect("s", onNew); }
     }
   }
+  // 🌧️ « Il pleut des billets » (v3.9, décidé le 17/11, remplace le bonus courage ×1,5) : sous la pluie, un billet 💶 tombe devant toi tous les ~200 m
+  // de marche (8 par balade au plus) et disparaît au bout de 4 min ; ramassé à moins de 25 m. Tout reste sur le téléphone ; la valeur suit la cagnotte (objVal).
+  const BILL_CS = 4, BILL_MAX = 8, BILL_LIFE = 4 * 60000;
+  function billsTick(q){
+    if (!gw || !gw.rain || isExpress()) return;
+    gw.bills = gw.bills || [];
+    const now = Date.now(); let ch = false;
+    const keep = gw.bills.filter(b => now - b.t < BILL_LIFE); if (keep.length !== gw.bills.length){ gw.bills = keep; ch = true; }
+    for (let i = gw.bills.length - 1; i >= 0; i--){
+      const b = gw.bills[i];
+      if (dist(b, q) < 25){
+        gw.bills.splice(i, 1); gw.billGot = (gw.billGot || 0) + 1;
+        const v = objVal(BILL_CS); gw.itemPts += v; gw.objPts = (gw.objPts || 0) + v;
+        flyPlus(`💶 +${v}`); ding(); renderChips(); ch = true;
+      }
+    }
+    if (gw.nextBill == null) gw.nextBill = gw.acc + 60 + Math.random() * 80;
+    if (gw.acc >= gw.nextBill && (gw.billN || 0) < BILL_MAX){
+      gw.nextBill = gw.acc + 160 + Math.random() * 100; gw.billN = (gw.billN || 0) + 1;
+      const prev = track.length > 1 ? track[track.length - 2] : null;
+      const a = (prev && dist(prev, q) > 3 ? Math.atan2(q.lon - prev.lon, q.lat - prev.lat) : Math.random() * 2 * Math.PI) + (Math.random() - .5) * 1.2, d = 45 + Math.random() * 30;
+      gw.bills.push({ lat: q.lat + d * Math.cos(a) / 111320, lon: q.lon + d * Math.sin(a) / (111320 * Math.cos(q.lat * Math.PI / 180)), t: now });
+      toast("💶 Un billet vient de tomber près de toi !", 2200); ch = true;
+    }
+    if (ch) drawItems();
+  }
   // 🌤️ créneau météo : combien de temps sans pluie devant soi
   function weatherTip(j, raining){
     const off = (j.utc_offset_seconds || 0) * 1000, now = Date.now(), m15 = j.minutely_15 || {};
     const sl = (m15.time || []).map((t, i) => ({ t: Date.parse(t + "Z") - off, p: (m15.precipitation || [])[i] || 0 })).filter(x => x.t + 15*60000 > now);
     let msg;
-    if (raining){ const stop = sl.find(x => x.p <= 0.05); msg = `🌧️ Il pleut${stop ? `, accalmie vers ${fmtHour(new Date(stop.t))}` : ""} · bonus courage ×1,5`; }
+    if (raining){ const stop = sl.find(x => x.p <= 0.05); msg = `🌧️ Il pleut${stop ? `, accalmie vers ${fmtHour(new Date(stop.t))}` : ""} · il pleut des billets 💶`; }
     else {
       const next = sl.find(x => x.p > 0.05);
       msg = next ? `🌦️ Pluie vers ${fmtHour(new Date(next.t))}` : "☀️ Pas de pluie dans les 2 h";
@@ -1791,8 +1829,8 @@
     const res = { cl: gw.cells.slice(0, 400), items: gw.itemPts, cells: gw.newCells, got: gw.got, mult:1, home:0, streak:0, streakN:0, total:0, short:false, trophies:[] };
     for (const c of gw.cells) game.seen[c] = dayNum();
     if (home && !game.home) game.home = { lat: home.lat, lon: home.lon };
-    const chest = gw.chest, rain = gw.rain, needs = gw.needs, photoBonus = gw.photoBonus || 0, huntPts = gw.hunt || 0, duoPts = gw.duo ? DUO_PTS : 0;
-    res.needs = needs;
+    const chest = gw.chest, rain = gw.rain, needs = gw.needs, photoBonus = gw.photoBonus || 0, huntPts = gw.hunt || 0, silverPts = gw.silver || 0, duoPts = gw.duo ? DUO_PTS : 0;
+    res.needs = needs; res.rain = !!rain; res.bills = gw.billGot || 0; res.objPts = gw.objPts || 0;
     const test = isTester(), gx = res.gx = { c:0, h:0 };   // gx = ce que la balade a rapporté (pour pouvoir l'annuler plus tard)
     gw = null; gameLayer.clearLayers();
     if (chest){
@@ -1806,6 +1844,10 @@
     if (huntPts){   // 🏴‍☠️ trésor de la semaine : en plus du plafond, comme un coffre (un seul gagnant)
       res.hunt = huntPts;
       if (!test){ const k = monthKey(Date.now()); game.bonus[k] = Math.round(((game.bonus[k] || 0) + huntPts / CS) * 100) / 100; gx.h = huntPts; }
+    }
+    if (silverPts){   // 🥈 cadeau argenté : un seul gagnant, hors plafond comme le trésor doré
+      res.silver = silverPts;
+      if (!test){ const k = monthKey(Date.now()); game.bonus[k] = Math.round(((game.bonus[k] || 0) + silverPts / CS) * 100) / 100; gx.sv = silverPts; }
     }
     if (elapsedMin < MONEY_MIN){ res.short = true; res.trophies = checkTrophies(); saveGame(); return res; }
     // statistiques pour les trophées et l'album de saison
@@ -1832,12 +1874,12 @@
     if (game.defiDone !== today && df.ok({ min: elapsedMin, cells: res.cells, n: Object.values(res.got).reduce((a, b) => a + b, 0), m: meters || 0, got: res.got, home: cameHome })){
       game.defiDone = today; res.defi = df.t;
     }
-    if (rain) res.rainMult = 1.5;   // 🌧️ bonus courage
     if (boosted(dIso(Date.now()))) res.boostMult = 2;   // 🎉 jour boosté
     if (isBday()) res.boostMult = (res.boostMult || 1) * 3;   // 🎂 anniversaire de Roxy
     if (duoPts) res.duo = duoPts;
     res.photo = photoBonus;
-    res.total = Math.round((res.items + res.cells) * res.mult * (res.rainMult || 1) * (res.boostMult || 1)) + res.home + res.streak + (res.defi ? DEFI_PTS : 0) + res.photo + (res.duo || 0);
+    res.keep = Math.round(res.objPts * res.mult * (res.boostMult || 1));   // part « objets » du bonus : déjà ajustée à la cagnotte, pas coupée une 2e fois
+    res.total = Math.round((res.items + res.cells) * res.mult * (res.boostMult || 1)) + res.home + res.streak + (res.defi ? DEFI_PTS : 0) + res.photo + (res.duo || 0);
     res.dur = durCs || 0;   // clebsous de la durée
     Object.assign(gx, { w:1, d: res.dur, t: res.total, df: res.defi ? 1 : 0, dd: today, got: res.got, sk: sea.key, e: new Date(startTs).getHours() < 8 ? 1 : 0, r: rain ? 1 : 0, l: elapsedMin >= 60 ? 1 : 0, km: Math.round((meters || 0) / 10) / 100 });
     game.pts += res.total; game.total += res.total + res.dur;
@@ -1854,10 +1896,10 @@
   // les gains sont divisés par 2 (jamais zéro) ; puis plafond doux et plafond final comme avant. Garde de quoi gagner jusqu'au bout du mois.
   const PACE_SLACK = 2, PACE_CUT = 0.5;
   function paceAllowed(t){ const d = new Date(t || Date.now()), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); return MONEY_SOFT * d.getDate() / days + PACE_SLACK; }
-  function addMoney(eur){
+  function addMoney(eur, keepEur){   // keepEur = part déjà ajustée à la cagnotte (objets, billets) : pas coupée une deuxième fois
     const k = monthKey(Date.now());
-    const before = game.money[k] || 0;
-    if (before >= paceAllowed()) eur = eur * PACE_CUT;
+    const before = game.money[k] || 0, keep = Math.min(eur, keepEur || 0);
+    if (before >= paceAllowed()) eur = (eur - keep) * PACE_CUT + keep;
     const full = Math.max(0, Math.min(eur, MONEY_SOFT - before));
     const soft = Math.max(0, Math.min((eur - full) / 4, MONEY_MAX - before - full));
     const added = Math.round((full + soft) * 100) / 100;
@@ -1944,7 +1986,7 @@
   }
 
   // ---------- Progrès : coffre, saisons, trophées, niveaux, brouillard, accessoires, les autres ----------
-  const CHEST_EUR = 2, CHEST_GAP_DAYS = 3, CHEST_MONTH = 6, CHEST_SMALL = 0.5;   // v48 : plus souvent, moins cher ; au-delà de 6 €/mois, petits coffres de 50
+  const CHEST_EUR = 1, CHEST_GAP_DAYS = 3, CHEST_MONTH = 6, CHEST_SMALL = 0.5;   // v48 : plus souvent ; v3.9 : 100 clebsous (décidé le 17/11, sous le cadeau argenté à 250) ; au-delà de 6 €/mois, petits coffres de 50
   const chestMonth = k => ((game.chestM || {})[k || monthKey(Date.now())] || 0);
   const chestValue = () => chestMonth() + CHEST_EUR <= CHEST_MONTH ? CHEST_EUR : CHEST_SMALL;
   function ensureGame(){
@@ -1965,7 +2007,7 @@
     return last + CHEST_GAP_DAYS * 86400000;
   }
   const regular = () => { let n = 0; for (let i = 1; i <= 7; i++) if (walkedOn(dIso(Date.now() - i * DAYMS))) n++; return n >= 4; };
-  // ☁️ Nuage argenté du coffre chaud (v2.6, décidé le 15/11) : quand le coffre est chaud, un coin jamais exploré à 0,7–1,8 km de la maison
+  // ☁️ Nuage du coffre chaud (v2.6, décidé le 15/11 ; orange-rouge depuis la v3.9, l'argent est réservé au cadeau argenté) : quand le coffre est chaud, un coin jamais exploré à 0,7–1,8 km de la maison
   // (change chaque jour) ; dans le nuage, la chance de coffre est doublée. Rien n'est envoyé : calculé sur le téléphone.
   const CHEST_CLOUD = 350, CHEST_CLOUD_X = 2;
   function chestCloud(){
@@ -1988,7 +2030,7 @@
     }catch(e){ return null; }
   }
   const inChestCloud = q => { const c = chestCloud(); return !!(c && q && dist(q, c) < CHEST_CLOUD); };
-  const silverCloud = (layer, c, op) => [1, .75, .5].forEach(f => L.circle([c.lat, c.lon], { radius: CHEST_CLOUD * f, stroke:false, fillColor:"#b9c4cf", fillOpacity: op || .14, interactive:false }).addTo(layer));
+  const hotCloud = (layer, c, op) => [1, .75, .5].forEach(f => L.circle([c.lat, c.lon], { radius: CHEST_CLOUD * f, stroke:false, fillColor:"#f08a5d", fillOpacity: op || .14, interactive:false }).addTo(layer));
   function chestChance(){
     if (!regular()) return 0;
     const d = (Date.now() - chestFrom()) / 86400000;
@@ -2085,6 +2127,7 @@
       const d = fogData(false); exploreFog = fogMake(d.lines, d.cells); fogs.add(exploreFog);
       const hu = huntLive(), hz = hu && hu.lat != null ? huntCloud(hu) : null, cc = chestCloud();
       if (toHunt === "chest" && cc){ exploreCenter(false, true); try{ map.fitBounds(L.latLng(cc.lat, cc.lon).toBounds(CHEST_CLOUD * 2.4), { padding:[30, 30] }); }catch(e){} }
+      else if (toHunt === "silver" && silverLive()){ exploreCenter(false, true); try{ map.fitBounds(L.latLng(silverCenter(silverLive()).lat, silverCenter(silverLive()).lon).toBounds(SILVER_CLOUD * 2.4), { padding:[30, 30] }); }catch(e){} }
       else if (toHunt === true && hz){ exploreCenter(false, true); try{ map.fitBounds(cloudBounds(hz), { padding:[30, 30] }); }catch(e){} }
       else exploreCenter(false);
     }, 60);
@@ -2469,6 +2512,7 @@
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
       store.set("wouaf-hpos", j.hpos || null);   // 🏴‍☠️ trésor de la semaine commun (à la main ou publié par le téléphone d'Éric ; null = chacun le calcule)
+      store.set("wouaf-silver", j.silver || null);   // 🥈 cadeau argenté posé par Éric (le même pour tous ; by = prénom du gagnant)
       store.set("wouaf-fhome", j.home || null);  // 🏠 maison de la famille (arrondie)
       try{ applyFamilyHome(); }catch(e){}
       store.set("wouaf-record", j.record || null);
@@ -2755,8 +2799,9 @@
       l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor"));
     else if (hu && !hu.found && !hu.gone)
       l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor${game.home ? " · " + fmtKm(dist(game.home, hu)) : ""}`));
+    if (silverLive()) l.push(tile("silver", " silver", "🥈", SILVER_CS, "Cadeau argenté"));   // 🥈 v3.9
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(tile("chest", ch > 0 ? " silver hot" : " silver", "💰", Math.round(chestValue() * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
+    l.push(tile("chest", ch > 0 ? " fire hot" : " fire", "💰", Math.round(chestValue() * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
     const rec = store.get("wouaf-record", null);
     l.push(tile("rec", " bronze", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
     const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
@@ -2797,6 +2842,7 @@
       if (k === "duel") return sheetDuels();
       if (k === "hunt") return sheetTreasure();   // v44 : une vraie fiche pour chaque gros lot (avant : les deux ouvraient la liste des bonus)
       if (k === "chest") return sheetChest();
+      if (k === "silver") return sheetSilver();
       const rec = store.get("wouaf-record", null);
       openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${esc(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
       $("#rcClose").onclick = closeSheet;
@@ -2826,16 +2872,16 @@
   function sheetChest(){
     let ch = 0, cc = null; try{ ch = chestChance(); cc = chestCloud(); }catch(e){}
     const reg = (() => { try{ return regular(); }catch(e){ return false; } })(), wait = Math.ceil((chestFrom() - Date.now()) / DAYMS);
-    const st = ch > 0 ? `🔥 <b>Le coffre est chaud !</b> À chaque rue neuve, <b>${Math.round(ch * 100)}&nbsp;%</b> de chances qu'il tombe${cc ? `, et <b>${Math.round(Math.min(1, ch * CHEST_CLOUD_X) * 100)}&nbsp;%</b> dans le nuage argenté` : ""}. Plus tu attends, plus ça monte !`
+    const st = ch > 0 ? `🔥 <b>Le coffre est chaud !</b> À chaque rue neuve, <b>${Math.round(ch * 100)}&nbsp;%</b> de chances qu'il tombe${cc ? `, et <b>${Math.round(Math.min(1, ch * CHEST_CLOUD_X) * 100)}&nbsp;%</b> dans le nuage orange` : ""}. Plus tu attends, plus ça monte !`
       : !reg ? "❄️ <b>Le coffre dort.</b> Pour le réveiller : sors Roxy au moins <b>4 jours sur les 7 derniers</b>."
       : `⏳ <b>Le coffre se réveille dans ${Math.max(1, wait)} jour${wait > 1 ? "s" : ""}.</b> Continue de sortir Roxy !`;
-    openSheet(`<div class="trez silver${ch > 0 ? "" : " off"}"><div class="tz-ic">💰</div><h2>Le coffre</h2><div class="tz-v">🪙 ${Math.round(chestValue() * CS)}</div>
+    openSheet(`<div class="trez fire${ch > 0 ? "" : " off"}"><div class="tz-ic">💰</div><h2>Le coffre</h2><div class="tz-v">🪙 ${Math.round(chestValue() * CS)}</div>
         <p>En plus de tout le reste. Il revient souvent : sors ${DOG} régulièrement !</p></div>
       <p class="howto" style="font-size:15px">${st}</p>
       <ul class="tz-l"><li>🛣️ Il tombe au hasard quand tu entres dans une <b>rue neuve</b> (pas faite depuis ${FRESH_DAYS} jours), après 5 min de balade.</li>
         <li>📅 Il faut sortir Roxy <b>au moins 4 jours sur 7</b>. Après un coffre, il se rendort ${CHEST_GAP_DAYS} jours.</li>
-        ${cc ? `<li>☁️ Aujourd'hui, le <b>nuage argenté</b> double tes chances.</li>` : ""}</ul>
-      <div class="btns">${cc ? `<button id="cfMap">☁️ Voir le nuage argenté</button>` : ""}<button class="ghost" id="cfBonus">🎁 Ce que vaut chaque bonus (os, balle…)</button><button class="ghost" id="cfX">Fermer</button></div>`);
+        ${cc ? `<li>☁️ Aujourd'hui, le <b>nuage orange</b> double tes chances.</li>` : ""}</ul>
+      <div class="btns">${cc ? `<button id="cfMap">☁️ Voir le nuage orange</button>` : ""}<button class="ghost" id="cfBonus">🎁 Ce que vaut chaque bonus (os, balle…)</button><button class="ghost" id="cfX">Fermer</button></div>`);
     if ($("#cfMap")) $("#cfMap").onclick = () => { closeSheet(); setTimeout(() => openExplore("chest"), 200); };
     $("#cfBonus").onclick = () => { closeSheet(); setTimeout(sheetBonus, 200); };
     $("#cfX").onclick = closeSheet;
@@ -3178,7 +3224,7 @@
   }
 
   // 🗺️ Superviseur › Carte du superviseur (v44, remplace la « Carte du trésor » de la v43) : tout de suite, sans balade et sans nuages,
-  // 🏠 la maison de la famille, 🏴‍☠️ le trésor de la semaine (le même pour tous) et ☁️ le nuage argenté de chaque ado au coffre chaud.
+  // 🏠 la maison de la famille, 🏴‍☠️ le trésor de la semaine (le même pour tous) et ☁️ le nuage orange de chaque ado au coffre chaud (v3.9 : + 🥈 le cadeau argenté).
   // Toucher la carte = choisir un endroit, puis « Trésor ici » (Worker /hunt-move) ou « Maison ici » (/home-set, arrondie à ~200 m).
   let huntMap = null;
   async function openHuntAdmin(){
@@ -3190,11 +3236,12 @@
     const tTxt = t ? `✅ Trésor trouvé cette semaine par <b>${esc(t.by)}</b> (le prochain arrive lundi).` : hu ? `🏴‍☠️ Trésor pas encore trouvé${fixed ? " · 📌 placé à la main" : " · placé tout seul sur une rue ouverte"}.` : "🏴‍☠️ Pas encore de trésor : place d'abord la maison.";
     const hTxt = fh ? "🏠 Maison de la famille placée (arrondie à ~200 m)." : "🏠 Pas encore de maison de la famille : chaque téléphone prend sa 1re balade.";
     const cTxt = clouds.length ? `☁️ Coffre chaud aujourd'hui : ${clouds.map(c => esc(c.w)).join(", ")}.` : "☁️ Aucun coffre chaud aujourd'hui.";
+    const sv = silverSrv(), svTxt = !sv ? "🥈 Pas de cadeau argenté : touche la carte puis « Cadeau argenté ici » (250 clebsous, un seul gagnant)." : sv.by ? `🥈 Cadeau argenté trouvé par <b>${esc(sv.by)}</b>. Tu peux en poser un nouveau.` : "🥈 Cadeau argenté posé, pas encore trouvé (il reste jusqu'à ce qu'on le trouve).";
     openSheet(`<h2>🗺️ Carte du superviseur</h2>
-      <p class="howto" style="margin-top:0">${tTxt}<br>${hTxt}<br>${cTxt}</p>
+      <p class="howto" style="margin-top:0">${tTxt}<br>${hTxt}<br>${cTxt}<br>${svTxt}</p>
       <div id="tmap" style="height:44vh;border-radius:14px;overflow:hidden"></div>
       <p id="tmS" role="status" class="howto" style="text-align:center">Touche la carte pour choisir un endroit.</p>
-      <div class="btns"><button id="tmOk" disabled>🏴‍☠️ Mettre le trésor ici</button><button class="ghost" id="tmHome" disabled>🏠 Mettre la maison ici</button>
+      <div class="btns"><button id="tmOk" disabled>🏴‍☠️ Mettre le trésor ici</button><button class="ghost" id="tmSv" disabled>🥈 Cadeau argenté ici</button>${sv && !sv.by ? `<button class="ghost" id="tmSvX">🗑️ Retirer le cadeau argenté</button>` : ""}<button class="ghost" id="tmHome" disabled>🏠 Mettre la maison ici</button>
         <button class="ghost" id="tmHere">📍 Je suis à la maison</button>${fixed ? `<button class="ghost" id="tmAuto">↩️ Trésor automatique</button>` : ""}<button class="ghost" id="tmBack">← Superviseur</button></div>`);
     $("#tmBack").onclick = sheetSupMenu;
     try{ if (huntMap) huntMap.remove(); }catch(e){} huntMap = null;
@@ -3204,15 +3251,15 @@
     const ic = (h, w) => L.divIcon({ className:"hpin", html: h, iconSize:[w || 30, 30] }), pts = [];
     if (game.home){ L.marker([game.home.lat, game.home.lon], { icon: ic("🏠"), interactive:false, keyboard:false }).addTo(huntMap); pts.push([game.home.lat, game.home.lon]); }
     for (const c of clouds){
-      silverCloud(huntMap, c, .22);
+      hotCloud(huntMap, c, .22);
       L.marker([c.lat, c.lon], { icon: L.divIcon({ className:"hpin", html:`<span style="font-size:12px;font-weight:700;background:#fff;border-radius:8px;padding:1px 6px;white-space:nowrap">💰 ${esc(c.w)}</span>`, iconSize:[90, 20] }), interactive:false, keyboard:false }).addTo(huntMap);
       pts.push([c.lat, c.lon]);
     }
     let pick = null, mk = null, pin = null;
     const setPick = ll => {
       pick = { lat: ll.lat, lon: ll.lng };
-      if (!t) $("#tmOk").disabled = false; $("#tmHome").disabled = false;
-      $("#tmS").textContent = "📍 Endroit choisi : trésor ou maison ?";
+      if (!t) $("#tmOk").disabled = false; $("#tmHome").disabled = false; $("#tmSv").disabled = false;
+      $("#tmS").textContent = "📍 Endroit choisi : trésor, cadeau argenté ou maison ?";
     };
     if (hu){
       const c = huntCloud(hu);
@@ -3220,6 +3267,12 @@
       mk = L.marker([hu.lat, hu.lon], { icon: ic(t ? "✅" : "🏴‍☠️"), draggable: !t, keyboard:false }).addTo(huntMap);
       mk.on("dragend", () => { if (pin){ huntMap.removeLayer(pin); pin = null; } setPick(mk.getLatLng()); });
       pts.push([hu.lat, hu.lon], [c.lat, c.lon]);
+    }
+    if (sv){   // 🥈 le cadeau argenté : sa zone et sa place (seulement Éric voit la place exacte ici)
+      const c = silverCenter(sv);
+      L.circle([c.lat, c.lon], { radius: SILVER_CLOUD, color:"#8f99a3", weight:2, dashArray:"6 6", fillColor:"#c9d0d7", fillOpacity:.25, interactive:false }).addTo(huntMap);
+      L.marker([sv.lat, sv.lon], { icon: ic(sv.by ? "✅" : "🥈"), interactive:false, keyboard:false }).addTo(huntMap);
+      pts.push([sv.lat, sv.lon], [c.lat, c.lon]);
     }
     huntMap.on("click", e => { if (pin) pin.setLatLng(e.latlng); else pin = L.marker(e.latlng, { icon: ic("📍"), keyboard:false, interactive:false }).addTo(huntMap); setPick(e.latlng); });
     const fit = () => { if (pts.length > 1) huntMap.fitBounds(L.latLngBounds(pts), { padding:[30, 30], maxZoom:16 }); else if (pts.length) huntMap.setView(pts[0], 15); };
@@ -3235,6 +3288,7 @@
         const r = await api(path, Object.assign(supAuth(), body)), j = await r.json();
         if (!r.ok || !j.ok) throw new Error(j.error || "erreur");
         if (path === "/home-set"){ store.set("wouaf-fhome", j.home || null); store.set("wouaf-hpos", null); applyFamilyHome(); }
+        else if (path === "/silver-set") store.set("wouaf-silver", j.silver || null);
         else store.set("wouaf-hpos", j.hpos || null);
         weekHunt(); snapHunt(); try{ drawItems(); }catch(e){}
         toast(msg, 4000);
@@ -3248,6 +3302,8 @@
     };
     $("#tmOk").onclick = () => { if (pick) send("/hunt-move", { wk, lat: pick.lat, lon: pick.lon }, "📌 Trésor déplacé : le même pour tout le monde."); };
     $("#tmHome").onclick = () => { if (pick) setHome(pick); };
+    $("#tmSv").onclick = () => { if (pick) send("/silver-set", { lat: pick.lat, lon: pick.lon }, "🥈 Cadeau argenté posé : 250 clebsous, un seul gagnant."); };
+    if ($("#tmSvX")) $("#tmSvX").onclick = () => send("/silver-set", { clear: 1 }, "🗑️ Cadeau argenté retiré.");
     $("#tmHere").onclick = () => {
       if (!navigator.geolocation){ $("#tmS").textContent = "❌ Position non disponible sur ce téléphone."; return; }
       $("#tmS").textContent = "📍 Je cherche ta position…";
@@ -3341,6 +3397,7 @@
       ${li("muOuts", "🐾", "Dernières sorties", "")}
       ${li("muLog", "📒", "Carnet", "")}
       ${li("muHeat", "🔥", "Carte de chaleur", "")}
+      ${PUSH_API ? li("muHon", "🏆", "Palmarès", "") : ""}
       ${li("muCop", "🐕", "Copains", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muToday", "📋", "Missions du jour", "")}
@@ -3363,6 +3420,7 @@
     go("muDuel", () => isTester() ? duelPreview() : sheetDuels());
     go("muOuts", sheetOuts);
     go("muHeat", sheetHeat);
+    go("muHon", sheetPalmares);
     go("muCop", sheetCopains);
     go("muLog", () => switchTab("log"));
     go("muAlbum", () => { switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); });
@@ -3544,6 +3602,7 @@
       if (bi >= 0 && bd < 6 * 3600000) game.chests.splice(bi, 1);
     }
     if (g.h){ less(game.bonus, mk, g.h / CS); lost += g.h; }
+    if (g.sv){ less(game.bonus, mk, g.sv / CS); lost += g.sv; }
     game.total = Math.max(0, (game.total || 0) - (g.d || 0) - (g.t || 0)); game.pts = Math.max(0, (game.pts || 0) - (g.t || 0));
     if (g.df && game.defiDone === g.dd) game.defiDone = "";
     if (g.w){
@@ -3623,6 +3682,7 @@
     }
     const pay = paydayCardData(); if (pay) cards.push(pay);
     const wk = weekCardData(); if (wk) cards.push(wk);
+    try{ const hc = await honorsCard(); if (hc) cards.unshift(hc); }catch(e){}   // 🏆 v3.8 : trophées du mois (le 1er)
     renderHome();
     digestRunning = false;
     if (!cards.length) return;
@@ -3670,8 +3730,8 @@
         h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo (aussi en bas : 📷 Photo), et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, glisse la patte pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
       { pic:`<div><div class="big bob">👃</div><div class="row" style="margin-top:10px"><span class="chip">toutes les 15 min</span><span class="chip">🐾 3 min</span><span class="chip">+${FLAIR_CS} 🪙</span></div></div>`,
         h:"Le flair", t:`Toutes les 15 minutes de balade, ${DOG} flaire une piste fraîche : ton téléphone sonne (accepte les notifications : menu ☰ › 🔔), et des pattes 🐾 apparaissent tout près. Rejoins-les avant 3 minutes : +${FLAIR_CS} !` },
-      { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">💰 coffre ${cs(chestValue())}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
-        h:"Les gros lots", t:`Le trésor de la semaine 🏴‍☠️ (or) : un seul gagnant ! Pendant la balade, la flèche dorée au bord de l'écran t'indique sa direction. Le coffre 💰 (argent) se cache dans les rues neuves, et le record du mois 🏅 (bronze) récompense la plus longue balade.` },
+      { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">🥈 cadeau ${SILVER_CS}</span><span class="chip">💰 coffre ${cs(chestValue())}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
+        h:"Les gros lots", t:`Le trésor de la semaine 🏴‍☠️ (or) : un seul gagnant ! Pendant la balade, la flèche dorée au bord de l'écran t'indique sa direction. Le cadeau argenté 🥈 est caché par Éric : un seul gagnant aussi. Le coffre 💰 (orange) se cache dans les rues neuves, et le record du mois 🏅 (bronze) récompense la plus longue balade.` },
       { pic:`<div><div class="row"><span class="chip">🥇 Tom</span><span class="chip">🥈 Toi</span><span class="chip">🥉 Zoé</span></div><div style="font-size:44px;margin-top:6px">👑</div></div>`,
         h:"Les enjeux", t:`Chaque semaine, le classement des explorateurs : les rues neuves et les objets te font monter, le 1er porte la couronne 👑 sur ${DOG}. Défie les autres dans l'arène ⚔️. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide.` }
     ];
@@ -3834,7 +3894,7 @@
     game.home = { lat: fh.lat, lon: fh.lon }; game.chestCloud = null; saveGame();
     return true;
   }
-  // ☁️ v44 : chaque téléphone envoie son nuage argenté du jour (zone de 350 m, jamais sa position) pour la carte d'Éric ; « off » quand il n'y en a plus
+  // ☁️ v44 : chaque téléphone envoie son nuage (orange depuis la v3.9) du jour (zone de 350 m, jamais sa position) pour la carte d'Éric ; « off » quand il n'y en a plus
   async function sendCloud(){
     if (!PUSH_API || !profile.walker || isTester()) return;
     let c = null; try{ c = chestCloud(); }catch(e){}
@@ -3900,6 +3960,70 @@
     setTimeout(() => el.remove(), 6000);
   }
 
+  // ---------- 🥈 Cadeau argenté (v3.9, décidé le 17/11) ----------
+  // Même principe que le trésor doré : UN SEUL cadeau pour toute la maison, UN SEUL gagnant (Worker POST /silver-found), caché sous un nuage argenté.
+  // Il vaut 250 clebsous hors plafond. Il est posé À LA MAIN par Éric (Superviseur › Carte du superviseur › « Cadeau argenté ici ») et reste
+  // jusqu'à ce qu'on le trouve (ou qu'Éric le retire). Le téléphone ne reçoit que sa position (comme le trésor) et n'envoie jamais la sienne.
+  const SILVER_CS = 250, SILVER_CLOUD = 350;
+  const silverSrv = () => { const sv = store.get("wouaf-silver", null); return sv && sv.id && sv.lat != null ? sv : null; };
+  function silverCenter(sv){   // centre du nuage : décalé de 80 à 200 m, le même sur tous les téléphones (tiré avec l'identifiant)
+    let x = 13; for (const c of "argent" + sv.id) x = (x * 31 + c.charCodeAt(0)) >>> 0;
+    const r = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
+    const a = r() * 2 * Math.PI, d = 80 + r() * 120, cos = Math.cos(sv.lat * Math.PI / 180);
+    return { lat: sv.lat + d * Math.cos(a) / 111320, lon: sv.lon + d * Math.sin(a) / (111320 * cos) };
+  }
+  function silverLive(){
+    try{
+      const sv = silverSrv(); if (!sv || sv.by) return null;
+      const m = game && game.silver; if (m && m.id === sv.id && (m.found || m.gone)) return null;
+      return sv;
+    }catch(e){ return null; }
+  }
+  let silverBusy = false, silverRetry = 0;
+  async function silverCheck(q){
+    if (isExpress()) return;
+    const sv = silverLive();
+    if (!gw || !sv || silverBusy || Date.now() < silverRetry || dist(q, sv) > 40) return;
+    const test = isTester();
+    let first = true, by = null, gone = false;
+    if (PUSH_API && !test){
+      silverBusy = true;
+      try{ const j = await (await api("/silver-found", { id: sv.id, walker: profile.walker || "?" })).json(); first = !!j.first; by = j.by || null; gone = !!j.gone; }
+      catch(e){ silverBusy = false; silverRetry = Date.now() + 30000; return; }   // pas de réseau : un seul gagnant, on ne décide pas seul
+      silverBusy = false;
+    }
+    if (!gw) return;
+    ensureGame();
+    if (!first){
+      game.silver = { id: sv.id, gone: by || "Éric" }; saveGame(); drawItems();
+      toast(gone ? "🥈 Le cadeau argenté a été retiré." : `🥈 ${by} a trouvé le cadeau argenté juste avant toi !`, 5000);
+      return;
+    }
+    game.silver = { id: sv.id, found: Date.now() }; saveGame(); addPin("t");
+    gw.silver = test ? 0 : SILVER_CS; gw.silverId = sv.id; persist(true); drawItems();
+    const el = document.createElement("div");
+    el.className = "chest"; el.setAttribute("role", "alert");
+    el.innerHTML = `<div class="ce">🥈</div><b>CADEAU ARGENTÉ !</b><span>${test ? "🧪 test : rien n'est compté" : `+${SILVER_CS} 🪙 en bonus dans ta tirelire`}</span><p style="opacity:.8;font-size:14px;margin-top:14px">Tu es le seul à l'avoir trouvé : il disparaît pour les autres !</p>`;
+    el.onclick = () => el.remove();
+    document.body.appendChild(el); pocketOff(); confetti(); fanfare();
+    setTimeout(() => el.remove(), 6000);
+  }
+  // 🥈 Fiche du cadeau argenté
+  function sheetSilver(){
+    const sv = silverSrv(), mine = !!(sv && ((game.silver && game.silver.id === sv.id && game.silver.found) || (sv.by && sv.by === profile.walker)));
+    const by = sv && (sv.by || (game.silver && game.silver.id === sv.id && game.silver.gone)), open = !!silverLive();
+    const where = sv && game.home ? `Caché à <b>~${fmtKm(dist(game.home, sv))}</b> ${compass(game.home, sv)} de la maison, posé par Éric.` : "Il apparaîtra sur ta carte après ta première balade.";
+    openSheet(`<div class="trez silver${open ? "" : " off"}"><div class="tz-ic">${open ? "🥈" : mine ? "🏆" : "🔒"}</div>
+        <h2>${open ? "Cadeau argenté" : mine ? "Tu as trouvé le cadeau argenté !" : by ? `${esc(by)} a trouvé le cadeau argenté` : "Pas de cadeau argenté pour l'instant"}</h2>
+        <div class="tz-v">🪙 ${SILVER_CS}</div>
+        <p>${open ? `<b>Un seul gagnant</b> : le premier de la maison qui l'atteint rafle tout.${isTester() ? " 🧪 Toi, tu es testeur : tu peux le chercher, il ne te rapporte rien." : ""}` : mine ? "Bravo, les 250 clebsous sont dans ta tirelire 🎉" : by ? "Trop tard… Éric en cachera peut-être un autre !" : "Éric en cache un de temps en temps : garde l'œil ouvert 👀"}</p></div>
+      ${open ? `<ul class="tz-l"><li>📍 ${where}</li><li>☁️ Sur la carte, il est sous le <b>nuage argenté</b> : entre dedans et fouille.</li><li>📡 À moins de 150 m, le radar te dit « tiède… chaud… brûlant ! ».</li><li>⏳ Il reste là jusqu'à ce que quelqu'un le trouve.</li></ul>` : ""}
+      <div class="btns">${open && game.home ? `<button id="svGo">▶️ J'y vais !</button><button class="ghost" id="svMap">☁️ Voir le nuage argenté</button>` : ""}<button class="ghost" id="svX">Fermer</button></div>`);
+    if ($("#svGo")) $("#svGo").onclick = goNow;
+    if ($("#svMap")) $("#svMap").onclick = () => { closeSheet(); setTimeout(() => openExplore("silver"), 200); };
+    $("#svX").onclick = closeSheet;
+  }
+
   // ---------- 📡 Radar chaud / froid ----------
   let radarHot = false;
   function radar(q){
@@ -3908,6 +4032,8 @@
     for (const it of gw.items) if (!it.got){ const d = dist(it, q); if (d < bd){ bd = d; best = ITEMS[it.k].icon; } }
     const hu = game.hunt;
     if (hu && !hu.found && !hu.gone && hu.wk === weekKey(Date.now())){ const d = dist(hu, q); if (d < 400 && d < bd){ bd = d; best = "🏴‍☠️"; } }
+    const sv = silverLive(); if (sv){ const d = dist(sv, q); if (d < 400 && d < bd){ bd = d; best = "🥈"; } }
+    for (const b of gw.bills || []){ const d = dist(b, q); if (d < bd){ bd = d; best = "💶"; } }
     if (best && bd < 150){
       const lvl = bd < 30 ? "🔥🔥 brûlant !" : bd < 70 ? "🔥 chaud !" : "🌤️ tiède…";
       box.textContent = `📡 ${best} ${lvl} (${Math.round(bd / 5) * 5} m)`;
@@ -4156,6 +4282,7 @@
       <div class="flabel">Depuis le début, en famille</div>
       <div class="rgrid">${big(famN, "balades")}${big(fmtKm(famM), "parcourus")}${big(fmtMin(famMin), "dehors")}${big(fam ? fam.nc : "—", "rues neuves")}</div>
       ${pp || cc ? `<p class="howto" style="text-align:center">💧 ${pp} pipi${pp > 1 ? "s" : ""} · 💩 ${cc} caca${cc > 1 ? "s" : ""} notés (sur les dernières balades)</p>` : ""}
+      <p class="howto" style="text-align:center;line-height:1.6">${funnyLines({ m: famM, min: famMin, pp, cc, nc: fam ? fam.nc : 0 }).slice(0, 3).map(esc).join("<br>")}</p>
       ${ws.length ? `<div class="flabel">Qui sort ${DOG} ?</div><div class="props">${wRows}</div>` : ""}
       <div class="flabel">Mes balades : touche pour revoir le trajet</div>
       ${mRows ? `<div class="props">${mRows}</div>` : `<p class="howto">Pas encore de balade sur ce téléphone.</p>`}
@@ -4163,6 +4290,86 @@
       <div class="btns"><button class="ghost" id="jOuts">🐾 Toutes les dernières sorties</button><button class="ghost" id="jRoxy">🐶 La fiche de ${DOG}</button><button class="ghost" id="jX">Fermer</button></div>`);
     document.querySelectorAll("#sheet [data-wk]").forEach(n => n.onclick = () => sheetWalk(n.dataset.wk, sheetJournal));
     $("#jOuts").onclick = sheetOuts; $("#jRoxy").onclick = sheetRoxy; $("#jX").onclick = closeSheet;
+  }
+
+  // ---------- 🏆 Trophées de Roxy du mois + palmarès de l'année (v3.8, décidé le 17/11) ----------
+  // Le Worker calcule, une fois le mois fini, qui a gagné chaque trophée avec les CHIFFRES déjà envoyés (pipis, cacas, rues neuves, km, durée…),
+  // les garde (GET /honors) et l'app les montre le 1er du mois (fenêtre « Quoi de neuf », avec confettis) et dans ☰ › 🏆 Palmarès.
+  // Jamais de trajet ni de position. Éric (testeur) ne concourt pas.
+  const plural = (n, a, b) => n > 1 ? b : a;
+  const TROPHY_INFO = {
+    cc:    { ic:"💩", name:"Roi du Caca",     fmt: v => `${v} caca${plural(v, "", "s")}`,                       joke:"Le sac à crottes n'a plus de secrets pour lui." },
+    pp:    { ic:"💧", name:"Maître Arroseur", fmt: v => `${v} pipi${plural(v, "", "s")}`,                       joke:"Un vrai système d'arrosage automatique." },
+    nc:    { ic:"🗺️", name:"Explorateur",     fmt: v => `${v} rue${plural(v, "", "s")} neuve${plural(v, "", "s")}`, joke:"Plus une rue ne lui résiste." },
+    km:    { ic:"🏃", name:"Marathonien",     fmt: v => `${String(v).replace(".", ",")} km`,                      joke:"Les baskets fument encore." },
+    best:  { ic:"⏱️", name:"Patient",         fmt: v => fmtMin(v),                                                joke:"La plus longue balade, sans râler." },
+    days:  { ic:"🔥", name:"Fidèle",          fmt: v => `${v} jour${plural(v, "", "s")} de sortie`,               joke:"Pas un jour sans Roxy." },
+    rain:  { ic:"🌧️", name:"Courageux",       fmt: v => `${v} balade${plural(v, "", "s")} sous la pluie`,         joke:"La pluie ? Connaît pas." },
+    early: { ic:"🌅", name:"Lève-tôt",        fmt: v => `${v} balade${plural(v, "", "s")} avant 8 h`,             joke:"Debout avant les poules." },
+    duo:   { ic:"🤝", name:"Sociable",        fmt: v => `${v} balade${plural(v, "", "s")} à deux`,                joke:"Jamais sans un copain." }
+  };
+  const TROPHY_ORDER = ["cc", "pp", "nc", "km", "best", "days", "rain", "early", "duo"];
+  const monthLabelFr = mk => { const [y, m] = mk.split("-").map(Number); const t = new Date(y, m - 1, 15).toLocaleDateString("fr-FR", { month:"long", year:"numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); };
+  async function fetchHonors(){
+    if (!PUSH_API) return store.get("wouaf-honors", []);
+    try{ const j = await (await api("/honors")).json(); if (j && Array.isArray(j.honors)){ store.set("wouaf-honors", j.honors); return j.honors; } }catch(e){}
+    return store.get("wouaf-honors", []);
+  }
+  const winnersTxt = w => (w || []).map(x => sameN(x, profile.walker) ? "Toi" : esc(x)).join(" & ") + (w && w.length > 1 ? " (ex æquo)" : "");
+  // 😂 le résumé drôle de Roxy : des chiffres, des phrases qui ne se prennent pas au sérieux (variantes tirées du chiffre, donc stables)
+  function funnyLines(f){
+    const l = [], km = Math.round((f.m || 0) / 100) / 10, cc = f.cc || 0, pp = f.pp || 0, nc = f.nc || 0, min = f.min || 0;
+    if (km >= 1){ let near = null; for (const [k, t] of KM_PLACES) if (km >= k) near = t; l.push(`🏃 ${String(km).replace(".", ",")} km à vous tous${near ? ` : c'est ${near}` : ""} !`); }
+    l.push(!cc ? "💩 Aucun caca noté : Roxy est devenue discrète." : cc < 5 ? `💩 ${cc} caca${plural(cc, "", "s")} : un mois bien sage.` : cc < 15 ? `💩 ${cc} cacas : ça commence à faire une collection.` : `💩 ${cc} cacas ! Heureusement qu'il y a les petits sacs.`);
+    l.push(!pp ? "💧 Aucun pipi noté : Roxy se retient ?" : pp < 10 ? `💧 ${pp} pipi${plural(pp, "", "s")} : le quartier est à peine arrosé.` : `💧 ${pp} pipis : le quartier est bien arrosé, les poteaux aussi.`);
+    if (min >= 60) l.push(`⏱️ ${fmtMin(min)} dehors : ${Math.max(1, Math.round(min / 105))} film${plural(Math.round(min / 105), "", "s")} entier${plural(Math.round(min / 105), "", "s")}, sans pop-corn.`);
+    if (nc >= 5) l.push(`🗺️ ${nc} rues neuves : Roxy connaît le quartier mieux que le facteur.`);
+    return l;
+  }
+  function yearBoard(honors, year){
+    const c = {};
+    for (const h of honors) if (h.mk.slice(0, 4) === String(year)) for (const id in h.t || {}) for (const w of h.t[id].w) c[w] = (c[w] || 0) + 1;
+    const rows = Object.keys(c).map(w => ({ w, n: c[w] })).sort((a, b) => b.n - a.n || (a.w < b.w ? -1 : 1));
+    const top = rows.length ? rows[0].n : 0;
+    return { rows, crown: top ? rows.filter(x => x.n === top).map(x => x.w) : [] };
+  }
+  function trophyRows(h){
+    return TROPHY_ORDER.filter(id => h.t && h.t[id]).map(id => { const i = TROPHY_INFO[id], t = h.t[id];
+      return `<div class="entry"><div><h4>${i.ic} ${i.name} : ${winnersTxt(t.w)}</h4><div class="when">${esc(i.fmt(t.v))} · ${esc(i.joke)}</div></div></div>`; }).join("");
+  }
+  // la carte du 1er du mois (dans la fenêtre d'ouverture) : une seule fois par téléphone et par mois
+  async function honorsCard(){
+    if (!PUSH_API || !profile.walker) return null;
+    const seen = store.get("wouaf-hon-vu", ""), prev = prevMonthKey();
+    if (seen >= prev) return null;
+    if (!(game && game.firstUse) || monthKey(game.firstUse) > prev){ store.set("wouaf-hon-vu", prev); return null; }   // téléphone neuf ce mois-ci : rien à montrer
+    let hs; try{ const j = await (await api("/honors")).json(); hs = j.honors; if (!Array.isArray(hs)) return null; store.set("wouaf-honors", hs); }catch(e){ return null; }   // pas de réseau : on réessaiera
+    const h = hs.filter(x => x.mk > seen && x.mk <= prev).pop();
+    store.set("wouaf-hon-vu", prev);
+    if (!h || !h.t || !Object.keys(h.t).length) return null;
+    const yr = h.mk.endsWith("-12") ? yearBoard(hs, h.mk.slice(0, 4)) : null;
+    const crown = yr && yr.crown.length ? `<p style="text-align:center;font-size:17px;margin:8px 0 2px">👑 <b>Couronne ${h.mk.slice(0, 4)} : ${winnersTxt(yr.crown)}</b></p>` : "";
+    return { party: true, html: `<div class="dc-ic">🏆</div><h2>Les trophées de ${DOG} · ${esc(monthLabelFr(h.mk))}</h2><div class="props">${trophyRows(h)}</div>${crown}
+      <p class="howto" style="line-height:1.6;margin-top:8px">${funnyLines(h.fam || {}).slice(0, 4).map(esc).join("<br>")}</p>
+      <div class="btns"><button class="ghost" data-go="pal">🏆 Voir le palmarès</button></div>`,
+      bind: el => { const b = el.querySelector("[data-go]"); if (b) b.onclick = () => { closeSheet(); setTimeout(sheetPalmares, 200); }; } };
+  }
+  // ☰ › 🏆 Palmarès : tableau d'honneur de l'année (nombre de trophées de chacun, couronne), puis mois par mois
+  async function sheetPalmares(){
+    try{ useTrack("🏆 Palmarès"); }catch(e){}
+    openSheet(`<h2>🏆 Le palmarès de ${DOG}</h2><p class="howto">Un instant…</p>`);
+    const hs = await fetchHonors(), now = new Date(), year = now.getFullYear();
+    const years = [...new Set(hs.map(h => +h.mk.slice(0, 4)).concat([year]))].sort((a, b) => b - a);
+    const board = years.map(y => { const b = yearBoard(hs, y), done = y < year;
+      if (!b.rows.length) return y === year ? `<div class="flabel">${y}</div><p class="howto">Les premiers trophées arrivent le 1er du mois prochain, avec les pipis, les cacas et les kilomètres du mois.</p>` : "";
+      return `<div class="flabel">${y}${done ? "" : " · en cours"}</div>
+        <div class="props">${b.rows.map((x, i) => `<div class="entry"><div><h4>${b.crown.includes(x.w) ? "👑" : i === 1 ? "🥈" : "🐾"} ${winnersTxt([x.w])}</h4><div class="when">${x.n} trophée${plural(x.n, "", "s")}${b.crown.includes(x.w) ? (done ? ` · couronne ${y} !` : " · en tête") : ""}</div></div></div>`).join("")}</div>`; }).join("");
+    const months = hs.slice().reverse().map(h => `<details${h === hs[hs.length - 1] ? " open" : ""} style="margin-top:6px"><summary><b>${esc(monthLabelFr(h.mk))}</b></summary><div class="props">${trophyRows(h)}</div>
+      <p class="howto" style="line-height:1.6">${funnyLines(h.fam || {}).map(esc).join("<br>")}</p></details>`).join("");
+    openSheet(`<h2>🏆 Le palmarès de ${DOG}</h2>${board}${months ? `<div class="flabel">Mois par mois</div>${months}` : ""}
+      <p class="howto">Chaque 1er du mois, ${DOG} remet ses trophées : pipis, cacas, rues neuves, kilomètres… Celui qui en a le plus dans l'année porte la couronne 👑. Seuls les chiffres comptent : jamais de trajet.</p>
+      <div class="btns"><button class="ghost" id="palX">Fermer</button></div>`);
+    $("#palX").onclick = closeSheet;
   }
 
   // ---------- 📊 Envoi des chiffres de chaque balade au programme (tableau de bord) ----------
@@ -4173,7 +4380,7 @@
     const ml = malusIn(m0, Date.now() + DAYMS), w = weekStats(Date.now()), lv = levelOf(game.total);
     const test = isTester();   // 🧪 testeur : ses balades comptent pour les dernières sorties et l'humeur de Roxy, mais aucun argent
     const item = { walker: profile.walker,
-      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0, nc: res ? res.cells || 0 : 0, ob: res && res.got ? Object.values(res.got).reduce((a, b) => a + (+b || 0), 0) : 0 },
+      walk: { s: r.s, e: r.e, min: Math.round((r.e - r.s) / 60), m: r.m, cs: test ? 0 : Math.round((r.eu || 0) * CS), pp: r.pp || 0, cc: r.cc || 0, cb: test ? 0 : Math.round((r.cb || 0) * CS), df: r.df ? 1 : 0, ms: test ? 0 : Math.round((r.ms || 0) * CS), tr: !test && res && res.hunt ? 1 : 0, nc: res ? res.cells || 0 : 0, ob: res && res.got ? Object.values(res.got).reduce((a, b) => a + (+b || 0), 0) : 0, rn: res && res.rain ? 1 : 0, du: res && res.duo ? 1 : 0 },
       sum: { cs: Math.round(moneyThisMonth() * CS), mal: Math.round(ml.eur * CS), malt: ml.text, n: game.streak.n || 0, lv: lv.name, tot: game.total, wn: w.n, wmin: w.min, fog: (() => { try{ return game.home ? fogStats().pct : 0; }catch(e){ return 0; } })(), test: test ? 1 : 0 } };
     const sd = duelOK() && myDuel();
     if (sd && sd.type === "streets" && res && res.cl && item.walk.min >= 20) item.cells = res.cl;   // 🗺️ guerre des rues : seulement des cases, jamais le trajet
@@ -4227,8 +4434,8 @@
             : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:8px 12px;font-size:14px;margin-top:4px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
       </div></div>`;
     };
-    const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé le trésor de la semaine puis annulé sa balade : personne n'a été payé.
-        <div class="btns" style="flex-direction:row;gap:8px;margin-top:6px"><button data-al="${a.id}" data-give="1" style="flex:1">Redonner ${HUNT_FIRST}</button><button class="ghost" data-al="${a.id}" style="flex:1">Ignorer</button></div></div>`).join("");
+    const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé ${a.kind === "silver" ? "le cadeau argenté" : "le trésor de la semaine"} puis annulé sa balade : personne n'a été payé.
+        <div class="btns" style="flex-direction:row;gap:8px;margin-top:6px"><button data-al="${a.id}" data-give="1" style="flex:1">Redonner ${a.kind === "silver" ? SILVER_CS : HUNT_FIRST}</button><button class="ghost" data-al="${a.id}" style="flex:1">Ignorer</button></div></div>`).join("");
     // 💶 paies de la semaine à verser (v2.6)
     const toPay = []; for (const pw of j.pays || []) for (const wk in pw.w || {}){ const x = pw.w[wk]; if (x.eur > 0) toPay.push({ walker: pw.walker, wk, eur: x.eur, paid: x.paid }); }
     toPay.sort((a, b) => (a.paid ? 1 : 0) - (b.paid ? 1 : 0) || b.wk.localeCompare(a.wk));
@@ -4702,6 +4909,7 @@
     shadowClear();
     // 🏴‍☠️ trésor trouvé puis balade annulée : personne n'est payé, on prévient le superviseur (il peut redonner les 500 clebsous)
     if (gw && gw.hunt && !isTester() && PUSH_API && profile.walker && game.hunt) api("/alert", { walker: profile.walker, kind: "hunt", week: game.hunt.wk }).catch(() => {});
+    if (gw && gw.silver && !isTester() && PUSH_API && profile.walker && gw.silverId) api("/alert", { walker: profile.walker, kind: "silver", week: gw.silverId }).catch(() => {});   // 🥈 pareil pour le cadeau argenté
     if (watchId != null && navigator.geolocation) navigator.geolocation.clearWatch(watchId);
     watchId = null; clearInterval(tick); clearInterval(stillTimer); stillTimer = null; cancelHome(); hideBanner(); pocketOff(); $("#radar").textContent = ""; clearWalkFog(); walkUIEnd();
     try{ if (wakeLock) wakeLock.release(); }catch(e){} wakeLock = null;
@@ -4772,11 +4980,14 @@
       .map(([ok, b, l]) => `<span class="${ok ? "ok" : ""}">${b}<small>${l}</small></span>`).join("");
   }
   function renderTreasure(q){
-    const el = $("#wTreasure"), h = game && game.hunt;
-    if (!q || !h || h.found || h.gone || h.wk !== weekKey(Date.now())){ el.hidden = true; return; }
-    const z = huntCloud(h), d = dist(q, z);
-    if (d < HUNT_CLOUD){ el.innerHTML = `<span class="ar">☁️</span><small>il est dans le coin : fouille !</small>`; el.hidden = false; return; }
-    el.innerHTML = `<span class="ar" style="transform:rotate(${Math.round(bearing(q, z))}deg)">⬆</span>☁️🏴‍☠️<small>${fmtKm(d - HUNT_CLOUD)}</small>`; el.hidden = false;
+    const el = $("#wTreasure"), h = game && game.hunt, c = [];
+    if (q && h && !h.found && !h.gone && h.wk === weekKey(Date.now())) c.push({ z: huntCloud(h), R: HUNT_CLOUD, ic: "🏴‍☠️" });
+    const sv = q && silverLive(); if (sv) c.push({ z: silverCenter(sv), R: SILVER_CLOUD, ic: "🥈" });   // v3.9 : la flèche montre le plus proche
+    if (!c.length){ el.hidden = true; return; }
+    for (const x of c) x.d = dist(q, x.z) - x.R;
+    c.sort((a, b) => a.d - b.d); const n = c[0];
+    if (n.d < 0){ el.innerHTML = `<span class="ar">☁️</span><small>${n.ic === "🥈" ? "le cadeau est" : "il est"} dans le coin : fouille !</small>`; el.hidden = false; return; }
+    el.innerHTML = `<span class="ar" style="transform:rotate(${Math.round(bearing(q, n.z))}deg)">⬆</span>☁️${n.ic}<small>${fmtKm(n.d)}</small>`; el.hidden = false;
   }
   function renderWLine(){
     const el = $("#wLine"); if (!el || !state.walk) return;
@@ -5147,6 +5358,7 @@
     const l = [];
     if (res.chest) l.push(`💰 <b>Coffre trouvé : +${fmtCs(res.chest)} en bonus !</b>${isTester() ? " (test)" : ""}`);
     if (res.hunt) l.push(`🏴‍☠️ <b>Trésor de la semaine trouvé : +${res.hunt} clebsous en bonus !</b> Tu es le seul à l'avoir eu.`);
+    if (res.silver) l.push(`🥈 <b>Cadeau argenté trouvé : +${res.silver} clebsous en bonus !</b> Tu es le seul à l'avoir eu.`);
     if (res.defi) l.push(`🎯 <b>Défi du jour réussi : ${esc(res.defi)}</b> (+${DEFI_PTS} clebsous)`);
     if (res.levelUp) l.push(`🎉 <b>Nouveau niveau : ${esc(res.levelUp)} !</b> 🎁 Récompense à choisir avec le superviseur.`);
     if (res.album) l.push(`📖 <b>Album ${esc(res.album)} complet !</b> 🎁 Récompense de saison à choisir avec le superviseur.`);
@@ -5160,7 +5372,7 @@
     if (r.eu){
       const res = r._res, full = res && Math.abs(r.eu * CS - (res.dur + res.total)) < 1;
       const got = res ? Object.entries(res.got).filter(([, n]) => n).map(([k, n]) => `${ITEMS[k].icon}×${n}`).join(" ") : "";
-      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.rainMult ? " · 🌧️ ×1,5" : ""}${res.boostMult ? ` · ${isBday() ? "🎂" : "🎉"} ×${res.boostMult}` : ""}${res.duo ? ` · 👯 +${res.duo}` : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
+      const det = full ? `⏱️ ${res.dur} pour la durée · 🎁 ${res.total} de bonus (${got || "aucun objet"} · 🗺️ ${res.cells} rue${res.cells > 1 ? "s" : ""} neuve${res.cells > 1 ? "s" : ""}${res.mult > 1 ? ` · ⏱️ ×${String(res.mult).replace(".", ",")}` : ""}${res.bills ? ` · 🌧️ ${res.bills} billet${res.bills > 1 ? "s" : ""} 💶` : ""}${res.boostMult ? ` · ${isBday() ? "🎂" : "🎉"} ×${res.boostMult}` : ""}${res.duo ? ` · 👯 +${res.duo}` : ""}${res.photo ? ` · 📸 +${res.photo}` : ""}${res.streak ? ` · 🔥 +1` : ""}${res.defi ? ` · 🎯 +${DEFI_PTS}` : ""})<br>` : "";
       return `<div class="gamebox">🧾 <b>Le détail</b><small>${det}Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())} · ${esc(levelOf(game.total).name)}</small></div>`;
     }
     if ((game.money[monthKey(Date.now())] || 0) >= MONEY_MAX) return `<div class="gamebox">🪙 <b>Tirelire de ${monthName(Date.now())} : ${fmtCs(moneyThisMonth())}</b><small>Bien remplie, bravo 🎉 Continue pour les coffres 💰, l'album et les trophées.</small></div>`;
@@ -5241,7 +5453,7 @@
     if (res && res.trophies.length) r.tro = res.trophies.map(t => t.icon + " " + t.name);
     r.g = snapshot();
     // + les bonus ramassés (objets, rues neuves, défi…), tout en clebsous
-    const eu = isTester() ? 0 : addMoney(res && !res.short ? (res.dur + res.total) / CS : 0);   // 🧪 testeur : pas de tirelire
+    const eu = isTester() ? 0 : addMoney(res && !res.short ? (res.dur + res.total) / CS : 0, res && !res.short ? (res.keep || 0) / CS : 0);   // 🧪 testeur : pas de tirelire
     if (eu) r.eu = eu;
     if (!p.line.length){ p.routeM = r.m; }
     if (elapsed >= 2 && elapsed < MONEY_MIN && !p.express){   // ⚡ express : jamais d'amende « balade courte »
@@ -5665,8 +5877,14 @@
     if (cc){ const [x, y] = XY(cc);
       if (x > -40 && x < W + 40 && y > -40 && y < H + 40){
         const [x2] = XY({ lat: cc.lat, lon: cc.lon + CHEST_CLOUD / (111320 * Math.cos(cc.lat * Math.PI / 180)) }), rr = Math.max(12, Math.abs(x2 - x));
-        const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(200,210,220,.45)"); gr.addColorStop(1, "rgba(200,210,220,0)");
+        const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(240,130,90,.45)"); gr.addColorStop(1, "rgba(240,130,90,0)");
         g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 2 * Math.PI); g.fill(); g.font = "16px system-ui"; g.textAlign = "center"; g.fillText("💰", x, y + 5); } }
+    const svl = silverLive(), sz = svl ? silverCenter(svl) : null;
+    if (sz){ const [x, y] = XY(sz);
+      if (x > -40 && x < W + 40 && y > -40 && y < H + 40){
+        const [x2] = XY({ lat: sz.lat, lon: sz.lon + SILVER_CLOUD / (111320 * Math.cos(sz.lat * Math.PI / 180)) }), rr = Math.max(12, Math.abs(x2 - x));
+        const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, "rgba(176,188,201,.6)"); gr.addColorStop(1, "rgba(176,188,201,0)");
+        g.fillStyle = gr; g.beginPath(); g.arc(x, y, rr, 0, 2 * Math.PI); g.fill(); g.font = "16px system-ui"; g.textAlign = "center"; g.fillText("🥈", x, y + 5); } }
     if (hz){ const [x, y] = XY(hz);
       if (x > -40 && x < W + 40 && y > -40 && y < H + 40){
         const [x2] = XY({ lat: hz.lat, lon: hz.lon + HUNT_CLOUD / (111320 * Math.cos(hz.lat * Math.PI / 180)) }), rr = Math.max(14, Math.abs(x2 - x));
@@ -5743,7 +5961,7 @@
     const w = wxNow(); if (!w) return null;
     const l = lastWalk(), h = l ? (Date.now() - l.t) / 3600000 : 99;
     if (h < 3) return "Je me repose un peu… on ressort plus tard ? 😴";
-    if (w.rainNow) return "🌧️ Il pleut… mais bonus courage ×1,5 ! On y va quand même ?";
+    if (w.rainNow) return "🌧️ Il pleut… des billets vont tomber en balade ! On y va quand même ?";
     if (w.later) return `☀️ C'est le moment : pluie vers ${new Date(w.later.t).getHours()} h !`;
     if (w.t <= 3) return "🥶 Il caille ! Une balade pour se réchauffer ?";
     if (w.day && w.code <= 2) return `☀️ ${w.t}°, il fait trop beau ! On part longtemps ?`;
@@ -5751,7 +5969,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -5796,11 +6014,12 @@
         ${row("🗺️", `Chaque rue pas faite depuis ${FRESH_DAYS} jours (${MAX_NEW_CELLS} max)`, "+1 🪙")}
         ${row("✖️", "Objets trouvés sur une rue neuve", "×2")}
         ${row("⏱️", "Balade longue : dès 40 min / 55 min / 1 h 25", "×1,25 / ×1,5 / ×2")}
-        ${row("🌧️", "Bonus courage : il pleut au départ", "×1,5")}
+        ${row("🌧️", "Il pleut des billets : un 💶 tombe devant toi tous les ~200 m (8 max)", `${BILL_CS} 🪙 chacun`)}
         ${row("🎉", "Jour bonus décidé par le superviseur", "×2")}
         ${row("🎂", `Anniversaire de ${DOG}`, "×3")}
         ${row("👯", "Balade à deux (les deux touchent 👯)", `+${DUO_PTS} 🪙`)}
         ${row("🏴‍☠️", "Trésor de la semaine, à 0,8–1,5 km (un seul gagnant dans la maison, en plus du plafond)", `+${HUNT_FIRST} 🪙`)}
+        ${row("🥈", "Cadeau argenté caché par Éric (un seul gagnant, sous un nuage argenté)", `+${SILVER_CS} 🪙`)}
         ${row("📸", "« Montre-moi Roxy ! » : photo demandée pendant la balade", "+5 🪙")}
         ${row("🔥", "Série de 3 jours ou plus", "+1 🪙")}
         ${row("🎯", "Défi du jour réussi", `+${DEFI_PTS} 🪙`)}
@@ -5869,8 +6088,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 50, APP_LABEL = "3.6";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 51, APP_LABEL = "3.9";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    51: [
+      "🥈 Cadeau argenté : 250 clebsous, un seul gagnant, caché par Éric sous un nuage argenté. Le coffre chaud passe à l'orange et vaut 100.",
+      "🌧️ Il pleut des billets ! Sous la pluie, des 💶 tombent devant toi pendant la balade : ramasse-les.",
+      "🏆 Chaque 1er du mois, les trophées de Roxy : Roi du Caca, Maître Arroseur, Explorateur… Le palmarès est dans ☰."
+    ],
     50: [
       "📍 Si le GPS ne te suit pas (position refusée), un bandeau rouge te prévient tout de suite : touche « Autoriser » quand l'iPhone te le demande."
     ],
@@ -5982,7 +6206,7 @@
     ],
     26: [
       "💧 💩 Pendant la balade, note quand Roxy a fait ses besoins : ça apparaît dans le récap.",
-      "📸 « Montre-moi Roxy ! » : une photo demandée pendant la balade rapporte +5 🪙. Et sous la pluie, bonus courage ×1,5 🌧️.",
+      "📸 « Montre-moi Roxy ! » : une photo demandée pendant la balade rapporte +5 🪙. Et sous la pluie, il pleut des billets 💶 à ramasser !",
       "💶 Chaque lundi, c'est jour de paie : surprise !"
     ],
     25: [
@@ -6118,7 +6342,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

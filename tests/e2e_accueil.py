@@ -44,7 +44,7 @@ with sync_playwright() as pw:
     Cc.emulate_media(color_scheme="dark"); Cc.set_viewport_size({"width": 393, "height": 760}); Cc.wait_for_timeout(300)
     h = Cc.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     check("accueil sans défilement (393 × 760)", h[0] <= h[1], h)
-    check("gros lots en tuiles : trésor or, coffre argent, record bronze, arène", Cc.locator(".ltiles .lt").count() == 4 and Cc.locator(".lt.silver").count() == 1 and Cc.locator(".lt.bronze").count() == 1 and Cc.locator(".lt.arena-t").count() == 1, Cc.locator(".ltiles .lt").count())
+    check("gros lots en tuiles : trésor or, coffre orange-rouge, record bronze, arène", Cc.locator(".ltiles .lt").count() == 4 and Cc.locator(".lt.fire").count() == 1 and Cc.locator(".lt.silver").count() == 0 and Cc.locator(".lt.bronze").count() == 1 and Cc.locator(".lt.arena-t").count() == 1, Cc.locator(".ltiles .lt").count())
     # v2.4 : gros bouton, ligne du bas, secret, aide
     check("gros bouton : mini-carte, 🎯 objectifs, durées en pattes", Cc.locator("#goCard #miniMap").count() == 1 and "🎯" in Cc.evaluate("document.querySelector('#goObj').textContent") and Cc.locator("#durSeg button em").count() == 5)
     # v2.5 « Caviar » : accueil nuit épuré
@@ -56,7 +56,7 @@ with sync_playwright() as pw:
     check("pas de bulle de Roxy tant qu'on ne la touche pas", Cc.locator("#sayBtn").count() == 0)
     check("plus de « Combien de temps ? » ni de ligne Bonus", Cc.evaluate("getComputedStyle(document.querySelector('#durLabel')).display") == "none" and Cc.locator("#goBon").count() == 0)
     foot = Cc.evaluate("document.querySelector('#homeFoot').innerText")
-    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v3.6" in foot, foot)
+    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v3.9" in foot, foot)
     check("pas de « Bravo » collé en bas", "Bravo" not in Cc.evaluate("document.querySelector('#status').innerText"))
     t0 = Cc.evaluate("JSON.parse(localStorage.getItem('wouaf-jeu')).bonus")
     for i in range(16): Cc.click("#homeFoot")

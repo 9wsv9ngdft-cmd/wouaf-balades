@@ -28,7 +28,7 @@ with sync_playwright() as pw:
     b, c, P = new_phone(pw, errors=errs, init=INIT + GEO)
     P.set_viewport_size({"width": 393, "height": 760}); open_app(P, 3000)
     if P.locator("#dgNext").count(): P.click("#dgNext")
-    check("version 3.6 (APP_NUM 50)", P.evaluate("document.querySelector('#homeFoot').textContent").find("3.6") >= 0, P.evaluate("document.querySelector('#homeFoot').textContent"))
+    check("version 3.9 (APP_NUM 51)", P.evaluate("document.querySelector('#homeFoot').textContent").find("3.9") >= 0, P.evaluate("document.querySelector('#homeFoot').textContent"))
     # 1) position refusée au départ
     P.click("#freeWalk"); P.wait_for_timeout(300); P.click("#chFree"); P.wait_for_timeout(800)
     bn = banner(P)

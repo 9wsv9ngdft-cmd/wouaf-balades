@@ -359,6 +359,52 @@ async function recomputeRecord(env, mk){
   if (best) await env.WOUAF.put("rec:" + mk, JSON.stringify(best)); else await env.WOUAF.delete("rec:" + mk);
 }
 
+// 🥈 cadeau argenté (v3.9) : KV « spos » = { id, lat, lon, at } posé par Éric ; « sv:<id> » = prénom du gagnant. Même vue publique que le trésor doré (position dans /pause).
+async function silverView(env){
+  const sp = await env.WOUAF.get("spos", "json"); if (!sp) return null;
+  return Object.assign({}, sp, { by: (await env.WOUAF.get("sv:" + sp.id)) || null });
+}
+
+// 🏆 Trophées de Roxy du mois (v3.8) : calculés une fois, au 1er du mois, avec les chiffres déjà envoyés (60 dernières balades de chaque promeneur),
+// puis gardés dans KV « hon:AAAA-MM » pour le palmarès de l'année. Aucune position, aucun trajet. Éric (testeur) est exclu.
+const TROPHY_DEFS = [
+  { id:"cc",    ic:"💩", name:"Roi du Caca",      f: ws => ws.reduce((a, w) => a + (w.cc || 0), 0) },
+  { id:"pp",    ic:"💧", name:"Maître Arroseur",  f: ws => ws.reduce((a, w) => a + (w.pp || 0), 0) },
+  { id:"nc",    ic:"🗺️", name:"Explorateur",      f: ws => ws.reduce((a, w) => a + (w.nc || 0), 0) },
+  { id:"km",    ic:"🏃", name:"Marathonien",      f: ws => Math.round(ws.reduce((a, w) => a + (w.m || 0), 0) / 100) / 10 },
+  { id:"best",  ic:"⏱️", name:"Patient",          f: ws => ws.reduce((a, w) => Math.max(a, w.min || 0), 0) },
+  { id:"days",  ic:"🔥", name:"Fidèle",           f: ws => new Set(ws.filter(w => (w.min || 0) >= 20).map(w => isoDay((w.e || 0) * 1000))).size },
+  { id:"rain",  ic:"🌧️", name:"Courageux",        f: ws => ws.filter(w => w.rn).length },
+  { id:"early", ic:"🌅", name:"Lève-tôt",        f: ws => ws.filter(w => w.s && local(w.s * 1000).h < 8).length },
+  { id:"duo",   ic:"🤝", name:"Sociable",         f: ws => ws.filter(w => w.du).length }
+];
+async function computeHonors(env, mk){
+  const l = await env.WOUAF.list({ prefix:"d:" }), admin = await env.WOUAF.get("admin"), per = [];
+  for (const k of l.keys){
+    const d = await env.WOUAF.get(k.name, "json"); if (!d || (admin && normName(d.walker) === SUP_NAME)) continue;
+    const ws = (d.walks || []).filter(w => !w.v && isoDay((w.e || 0) * 1000).slice(0, 7) === mk);
+    if (ws.length) per.push({ w: d.walker, ws });
+  }
+  if (!per.length) return null;
+  const t = {};
+  for (const def of TROPHY_DEFS){
+    const vals = per.map(p => ({ w: p.w, v: def.f(p.ws) })), best = Math.max(...vals.map(x => x.v));
+    if (best > 0) t[def.id] = { w: vals.filter(x => x.v === best).map(x => x.w), v: best };
+  }
+  const all = per.flatMap(p => p.ws), sum = k => all.reduce((a, w) => a + (w[k] || 0), 0);
+  return { mk, t, fam: { n: all.length, walkers: per.length, m: sum("m"), min: sum("min"), pp: sum("pp"), cc: sum("cc"), nc: sum("nc"), ob: sum("ob") }, at: Date.now() };
+}
+// tous les mois terminés (calcule ceux qui manquent) ; le mois en cours n'est jamais figé
+async function honorsAll(env, now){
+  const cur = isoDay(now).slice(0, 7), months = new Set();
+  const l = await env.WOUAF.list({ prefix:"d:" });
+  for (const k of l.keys){ const d = await env.WOUAF.get(k.name, "json"); for (const w of (d && d.walks) || []) if (!w.v && w.e){ const mk = isoDay(w.e * 1000).slice(0, 7); if (mk < cur) months.add(mk); } }
+  for (const mk of months) if (!(await env.WOUAF.get("hon:" + mk))){ const h = await computeHonors(env, mk); if (h) await env.WOUAF.put("hon:" + mk, JSON.stringify(h)); }
+  const out = [], hl = await env.WOUAF.list({ prefix:"hon:" });
+  for (const k of hl.keys){ const h = await env.WOUAF.get(k.name, "json"); if (h) out.push(h); }
+  return out.sort((a, b) => a.mk < b.mk ? -1 : 1);
+}
+
 export default {
   async fetch(req, env, ctx){
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -382,6 +428,7 @@ export default {
       return json({ walks: all.slice(0, 25) });
     }
     // 📖 journal de bord de Roxy (v47) : chiffres par promeneur (60 dernières balades de chacun) + totaux de la famille. Ni trajet, ni position, ni argent.
+    if (req.method === "GET" && path === "/honors") return json({ honors: await honorsAll(env, Date.now()), now: isoDay(Date.now()).slice(0, 7) });   // 🏆 trophées du mois (chiffres seulement)
     if (req.method === "GET" && path === "/journal"){
       const l = await env.WOUAF.list({ prefix:"d:" }), now = Date.now() / 1000, out = [];
       let famMin = 0;
@@ -401,7 +448,7 @@ export default {
       if (f.min == null){ f.min = famMin; await env.WOUAF.put("fam", JSON.stringify(f)); }
       return json({ walkers: out, fam: { n: f.n, m: f.m, nc: f.nc, min: f.min } });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json") });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json"), silver: await silverView(env) });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
@@ -426,9 +473,9 @@ export default {
     }
     if (path === "/alert"){   // 🚨 un promeneur prévient le superviseur (ex. balade annulée après avoir trouvé le trésor) : visible dans le tableau de bord
       const w = String(b.walker || "").slice(0, 30), wk = String(b.week || "").slice(0, 12);
-      if (!w || b.kind !== "hunt") return json({ error:"bad" }, 400);
+      if (!w || (b.kind !== "hunt" && b.kind !== "silver")) return json({ error:"bad" }, 400);
       const l = (await env.WOUAF.get("alerts", "json")) || [];
-      if (!l.some(a => a.walker === w && a.kind === "hunt" && a.week === wk)) l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), walker: w, kind:"hunt", week: wk, t: Date.now() });
+      if (!l.some(a => a.walker === w && a.kind === b.kind && a.week === wk)) l.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), walker: w, kind: b.kind, week: wk, t: Date.now() });
       await env.WOUAF.put("alerts", JSON.stringify(l.slice(-30)));
       return json({ ok:true });
     }
@@ -450,7 +497,7 @@ export default {
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/silver-set" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -471,6 +518,14 @@ export default {
         const l = await env.WOUAF.list({ prefix:"cl:" }), out = [];
         for (const k of l.keys.slice(0, 40)){ const c = await env.WOUAF.get(k.name, "json"); if (c) out.push(c); }
         return json({ ok:true, clouds: out });
+      }
+      if (path === "/silver-set"){   // 🥈 cadeau argenté (250 clebsous) : même principe que le trésor doré, mais posé seulement à la main par Éric ; un seul gagnant. clear = le retirer
+        if (b.clear){ await env.WOUAF.delete("spos"); return json({ ok:true, silver:null }); }
+        const lat = +b.lat, lon = +b.lon;
+        if (!isFinite(lat) || !isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return json({ error:"bad position" }, 400);
+        const spos = { id: Date.now().toString(36), lat: Math.round(lat * 1e6) / 1e6, lon: Math.round(lon * 1e6) / 1e6, at: Date.now() };
+        await env.WOUAF.put("spos", JSON.stringify(spos));
+        return json({ ok:true, silver: Object.assign({}, spos, { by: null }) });
       }
       if (path === "/hunt-move"){   // 🏴‍☠️ trésor de la semaine, le même pour tout le monde : placé à la main par Éric, ou publié tout seul par son téléphone (auto) ;
         // clear = placement automatique. Une position automatique ne remplace jamais une position choisie à la main (ni une autre position automatique de la même semaine).
@@ -509,8 +564,8 @@ export default {
         return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
       }
       if (path === "/reset"){   // 🧹 remise à zéro de tout le monde : chiffres, sauvegardes, corrections, trésor. On garde rappels, pauses, jours bonus
-        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:")) + (await wipe(env, "use:")) + (await wipe(env, "cl:"));
-        await env.WOUAF.delete("fam"); await env.WOUAF.delete("live"); await env.WOUAF.delete("hpos");
+        const n = (await wipe(env, "d:")) + (await wipe(env, "b:")) + (await wipe(env, "a:")) + (await wipe(env, "t:")) + (await wipe(env, "duo:")) + (await wipe(env, "rec:")) + (await wipe(env, "use:")) + (await wipe(env, "cl:")) + (await wipe(env, "sv:")) + (await wipe(env, "hon:"));
+        await env.WOUAF.delete("fam"); await env.WOUAF.delete("live"); await env.WOUAF.delete("hpos"); await env.WOUAF.delete("spos");
         await env.WOUAF.delete("duels");
         await env.WOUAF.delete("last"); await env.WOUAF.delete("alerts"); await env.WOUAF.delete("pays");
         const reset = Date.now();
@@ -532,7 +587,7 @@ export default {
         if (!a) return json({ error:"not found" }, 404);
         if (b.give){
           const k = "a:" + slug(a.walker), adj = (await env.WOUAF.get(k, "json")) || [];
-          adj.push({ id: "g" + a.id, cs: 500, why: "Trésor de la semaine redonné par le superviseur", t: Date.now() });
+          adj.push(a.kind === "silver" ? { id: "g" + a.id, cs: 250, why: "Cadeau argenté redonné par le superviseur", t: Date.now() } : { id: "g" + a.id, cs: 500, why: "Trésor de la semaine redonné par le superviseur", t: Date.now() });
           await env.WOUAF.put(k, JSON.stringify(adj.slice(-50)));
         }
         await env.WOUAF.put("alerts", JSON.stringify(l.filter(x => x.id !== a.id)));
@@ -588,6 +643,16 @@ export default {
         if (o && Math.abs(o.s - st) < 45 * 60000 && now - o.t < 4 * 3600000) return json({ partner: o.walker });
       }
       return json({ partner: null });
+    }
+    if (path === "/silver-found"){   // 🥈 premier à trouver le cadeau argenté (aucune position reçue) : comme le trésor doré
+      const id = String(b.id || "").replace(/[^a-z0-9]/gi, "").slice(0, 20), w = String(b.walker || "").slice(0, 30);
+      if (!id || !w) return json({ error:"bad" }, 400);
+      if (await isTester(env, w)) return json({ first:false, test:true });
+      const cur = await env.WOUAF.get("spos", "json");
+      if (!cur || cur.id !== id) return json({ first:false, gone:true });   // retiré ou remplacé par Éric
+      const by = await env.WOUAF.get("sv:" + id);
+      if (!by){ await env.WOUAF.put("sv:" + id, w, { expirationTtl: 90*86400 }); return json({ first:true, by:w }); }
+      return json({ first: by === w, found:true, by });
     }
     if (path === "/treasure"){   // 🏴‍☠️ premier à trouver le trésor de la semaine (aucune position reçue)
       const wk = String(b.week || "").slice(0, 12), w = String(b.walker || "").slice(0, 30);
@@ -699,7 +764,7 @@ export default {
       const w = String(b.walker || "").slice(0, 30), x = b.walk || {};
       if (!w || !x.e) return json({ error:"bad" }, 400);
       const num = v => Math.max(0, Math.min(1e7, Math.round(+v || 0))), ts = v => Math.max(0, Math.min(4e9, Math.round(+v || 0)));
-      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms), tr: x.tr ? 1 : 0, nc: Math.min(50, num(x.nc)), ob: Math.min(200, num(x.ob)) };
+      const walk = { s: ts(x.s), e: ts(x.e), min: num(x.min), m: num(x.m), cs: num(x.cs), pp: num(x.pp), cc: num(x.cc), cb: num(x.cb), df: x.df ? 1 : 0, ms: num(x.ms), tr: x.tr ? 1 : 0, nc: Math.min(50, num(x.nc)), ob: Math.min(200, num(x.ob)), rn: x.rn ? 1 : 0, du: x.du ? 1 : 0 };
       const rs = (await env.WOUAF.get("reset", "json")) || 0;
       if (rs && walk.e * 1000 < rs) return json({ ok:true, ignored:true });   // balade d'avant la remise à zéro (envoi en retard)
       const dk = "d:" + slug(w);
@@ -760,6 +825,6 @@ export default {
     return json({ error:"not found" }, 404);
   },
   async scheduled(event, env, ctx){
-    ctx.waitUntil(Promise.all([run(env, event.scheduledTime || Date.now()), getDuels(env, event.scheduledTime || Date.now()), flairs(env, event.scheduledTime || Date.now())]));
+    ctx.waitUntil(Promise.all([run(env, event.scheduledTime || Date.now()), getDuels(env, event.scheduledTime || Date.now()), flairs(env, event.scheduledTime || Date.now()), honorsAll(env, event.scheduledTime || Date.now())]));
   }
 };

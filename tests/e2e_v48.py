@@ -25,14 +25,14 @@ with sync_playwright() as pw:
     EV(P, f"__wouaf.getGame().money['{mk}'] = 12")
     check("en avance sur le rythme : gain divisé par 2 (jamais zéro)", abs(EV(P, "__wouaf.addMoney(1)") - 0.5) < 0.001)
     # 2. coffres
-    check("coffre normal : 200 clebsous", abs(EV(P, "__wouaf.chestValue()") - 2) < 0.001)
+    check("coffre normal : 100 clebsous (v3.9)", abs(EV(P, "__wouaf.chestValue()") - 1) < 0.001)
     EV(P, f"__wouaf.getGame().chestM = {{ '{mk}': 6 }}")
     check("budget coffres du mois atteint : petits coffres de 50", abs(EV(P, "__wouaf.chestValue()") - 0.5) < 0.001)
     EV(P, "(() => { const g = __wouaf.getGame(); g.chestM = {}; g.chests = [new Date(Date.now() - 4*86400000).toISOString()]; localStorage.setItem('wouaf-carnet', JSON.stringify([1,2,3,4,5].map(i => ({ id:i, date:new Date(Date.now()-i*86400000).toISOString(), min:30, m:2500 })))); })()")
     ch = EV(P, "__wouaf.chestChance()")
     check("coffre de nouveau chaud 3 jours après le dernier (avant : 10)", ch > 0, ch)
     EV(P, "__wouaf.renderHome && __wouaf.renderHome()"); P.wait_for_timeout(300)
-    check("tuile coffre : 200", "200" in (P.locator("[data-lot='chest']").inner_text() if P.locator("[data-lot='chest']").count() else ""), P.locator("[data-lot='chest']").all_inner_texts())
+    check("tuile coffre : 100", "100" in (P.locator("[data-lot='chest']").inner_text() if P.locator("[data-lot='chest']").count() else ""), P.locator("[data-lot='chest']").all_inner_texts())
     # 3. express
     if P.evaluate("document.querySelector('#modal').classList.contains('open')"): P.click("#sheetX"); P.wait_for_timeout(300)
     P.click("#freeWalk"); P.wait_for_timeout(400)
