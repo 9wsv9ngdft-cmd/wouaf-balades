@@ -628,3 +628,27 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   « Inscriptions ouvertes / fermées », liste, « 🔓 Code oublié ») et 🔐 **Créer le compte superviseur** (tant qu'il n'existe pas sur ce téléphone).
 - Pas encore fait : « Fusionner deux prénoms » (le doublon de l'ado qui a changé de prénom avant les comptes reste à regrouper).
 - Tests : `tests/accounts.test.mjs`, `tests/e2e_v54.py`. `e2e_common.new_phone(..., acc=True)` pour voir l'écran d'entrée ; sinon `wouaf-acc-skip` le saute.
+
+## Version 4.5 « Croquette » (APP_NUM 58, décidé par Éric le 20/11 entre 15 h 06 et 16 h 13, codé à 17 h 03 sur demande : nouvel accueil B + nouveau départ)
+- 🚶 **Nouveau départ** (`startQuestion`) : toucher la mini-carte (ou `#freeWalk`, caché mais toujours cliquable) → **une seule question** « Tu gères ta balade, ou je te propose
+  un parcours qui peut te faire gagner plus ? » : `#chFree` « Je gère » (balade libre, démarre tout de suite) · `#chRoute` « Propose-moi » · lien discret `#chExpress`
+  « ⚡ Juste un petit tour de 10 min ». L'ancienne fiche « On part comment ? » (5 choix) est supprimée.
+- 🗺️ **Propose-moi** (`proposeRoutes`, `body.propose` + `hasmap`) : carte plein écran, carte du bas `#propCard` (titre, durée, km, % de nouveau, « jusqu'à N 🪙 ») avec
+  ▶️ **J'y vais** (`#propGo`) · **Suivant ›** (`propShow`, tourne en boucle, « 1/5 ») · **🎲 Choisis pour moi** (`#propDice` : tire un parcours, « Roxy a choisi », démarre 1,3 s après) ;
+  **✕** en haut à gauche (`propClose`) = retour à l'accueil (on peut revenir en arrière). Messages (localisation, erreur) dans la carte du bas (`propMsg`, via `setStatus`) ;
+  sans parcours : « 🚶 Je gère, je pars en libre » (`#propFree`). **Durée proposée** = `propDur()` : moyenne des balades ≥ 20 min des 14 derniers jours × 1,15, arrondie à la
+  durée suivante (30/45/60/90 ; 30 sans historique) → un peu plus que d'habitude, de façon croissante. Le sélecteur de durée de l'accueil n'est plus affiché.
+- 🏠 **Accueil B** : plus de bouton « C'est parti » (`#freeWalk`, `#durSeg`, `.dbar`, `#goStat`, `#goObj` cachés) ; **« jusqu'à +N aujourd'hui »** sous la cagnotte (`#purseUp`
+  → `sheetBonus`) ; mini-carte : **en fluo les rues pas faites depuis 7 jours, en vert discret tes rues habituelles** (chemins `wouaf-traces` coloriés segment par segment avec
+  `isNewCell`), légende `#miniLeg`, petite aide « 👆 Touche la carte pour partir » (`#miniTap`, cachée pour les habitués), **☁️** `#miniExplo` = carte d'exploration ;
+  **« Ta semaine »** (`#weekBar`, minutes de la semaine sur 3 h 30, comme la Forme de Roxy → `sheetRoxy`).
+- **3 tuiles de même taille** (`.btiles .bt`) : or `data-lot="hunt"` (trésor 500, « ✓ Trouvé » sinon) · argent `data-lot="bills"` « Billets » (cadeau argenté 250 + coffre ;
+  `sheetBills` → `sheetSilver` / `sheetChest`) · **classement en direct** `data-lot="rank"` (`rankTileHTML` : places des explorateurs, « Toi » en vert, couronne au 1er).
+  L'arène reste au-dessus pendant un duel / défi. Tuiles record et « Défier » retirées de l'accueil.
+- 🏆 **Fiche du classement** (`sheetRanks(tab)`) : podium + « ⚔️ Défier » + onglets **Semaine** (explorateurs) · **Mois** · **Année** · **Saison** · **🎄** (décembre) ·
+  **😂 Rigolo** (chiffres marrants : 💩 💧 🗺️ 📏 ⏱️ 🌅 🌧️ + `funnyLines`). Mois / année / saison / 🎄 = trophées de Roxy comptés sur la période (`countTrophies`).
+  Worker : `GET /honors` renvoie aussi **`cur`** = trophées du mois en cours calculés en direct (jamais figés).
+- 👑 **La couronne se vole** (`wearCrown`) : le 1er **en direct** de la semaine la porte ; sans classement cette semaine, le champion de la semaine passée. `crownWatch`
+  (à chaque `/pause`) : si je l'avais et que quelqu'un passe devant → « 😱 X m'a piqué la couronne ! ». **Plus de couronne fantôme.**
+- 🌗 **Mode clair / sombre = réglage du téléphone** : `body.nuit` seulement si `prefers-color-scheme: dark` (suivi en direct) ; mode clair = ancien thème clair + accueil B clair.
+- Tests : `tests/e2e_v58.py` ; `e2e_accueil.py`, `e2e_explo.py` (couronne volée), `e2e_v48.py`, `e2e_v49.py`, `e2e_v50.py`, `e2e_v51.py`, `e2e_v53.py` adaptés.

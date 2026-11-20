@@ -465,7 +465,10 @@ export default {
       return json({ walks: all.slice(0, 25) });
     }
     // 📖 journal de bord de Roxy (v47) : chiffres par promeneur (60 dernières balades de chacun) + totaux de la famille. Ni trajet, ni position, ni argent.
-    if (req.method === "GET" && path === "/honors") return json({ honors: await honorsAll(env, Date.now()), now: isoDay(Date.now()).slice(0, 7) });   // 🏆 trophées du mois (chiffres seulement)
+    if (req.method === "GET" && path === "/honors"){   // 🏆 trophées des mois finis + (v4.5) le mois en cours, calculé en direct, jamais figé (chiffres seulement)
+      const mk = isoDay(Date.now()).slice(0, 7);
+      return json({ honors: await honorsAll(env, Date.now()), now: mk, cur: await computeHonors(env, mk) });
+    }
     if (req.method === "GET" && path === "/journal"){
       const l = await env.WOUAF.list({ prefix:"d:" }), now = Date.now() / 1000, out = [];
       let famMin = 0;

@@ -35,10 +35,9 @@ with sync_playwright() as pw:
         EV(P, "(() => { const g = __wouaf.getGame(); __wouaf.ensureGame(); g.home = {lat:48.8566, lon:2.3522}; g.firstUse = Date.now() - 40*86400000; })()")
         EV(P, "__wouaf.loadPauses()"); P.wait_for_timeout(800); EV(P, "__wouaf.renderHome()"); P.wait_for_timeout(300)
     # ---- cadeau argenté : tuile, fiche, un seul gagnant
-    t = L.locator("[data-lot='silver']")
-    check("tuile 🥈 250 sur l'accueil de Léa", t.count() == 1 and "250" in t.inner_text(), t.all_inner_texts() if t.count() else "")
-    check("tuile du coffre : orange-rouge (fire), plus argent", L.locator("[data-lot='chest']").get_attribute("class").find("fire") >= 0 and "silver" not in L.locator("[data-lot='chest']").get_attribute("class"))
-    t.click(); L.wait_for_timeout(400)
+    t = L.locator("[data-lot='bills']")
+    check("v4.5 : tuile argent « Billets » 250 · coffre sur l'accueil de Léa", t.count() == 1 and "250" in t.inner_text(), t.all_inner_texts() if t.count() else "")
+    t.click(); L.wait_for_timeout(400); L.click("#blSilver"); L.wait_for_timeout(500)
     check("fiche du cadeau argenté", "Cadeau argenté" in L.inner_text("#sheet") and "Un seul gagnant" in L.inner_text("#sheet").replace("un seul", "Un seul") and L.locator("#svGo").count() == 1, L.inner_text("#sheet")[:160])
     L.click("#svX"); L.wait_for_timeout(300)
     check("nuage argenté dans les zones de la carte", EV(L, "(() => { try { return !!__wouaf.silverLive(); } catch(e) { return false; } })()"))

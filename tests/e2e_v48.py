@@ -32,10 +32,10 @@ with sync_playwright() as pw:
     ch = EV(P, "__wouaf.chestChance()")
     check("coffre de nouveau chaud 3 jours après le dernier (avant : 10)", ch > 0, ch)
     EV(P, "__wouaf.renderHome && __wouaf.renderHome()"); P.wait_for_timeout(300)
-    check("tuile coffre : 100", "100" in (P.locator("[data-lot='chest']").inner_text() if P.locator("[data-lot='chest']").count() else ""), P.locator("[data-lot='chest']").all_inner_texts())
+    check("tuile billets : coffre 100", "100" in (P.locator("[data-lot='bills']").inner_text() if P.locator("[data-lot='bills']").count() else ""), P.locator("[data-lot='bills']").all_inner_texts())
     # 3. express
     if P.evaluate("document.querySelector('#modal').classList.contains('open')"): P.click("#sheetX"); P.wait_for_timeout(300)
-    P.click("#freeWalk"); P.wait_for_timeout(400)
+    P.click("#miniMap"); P.wait_for_timeout(400)
     check("« On part comment ? » propose la balade express 10 min", P.locator("#chExpress").count() == 1 and "10 min" in P.inner_text("#chExpress"))
     EV(P, "(() => { const g = __wouaf.getGame(); localStorage.setItem('wouaf-carnet', JSON.stringify([1,2].map(i => ({ id:i, date:new Date(Date.now()-i*3600000).toISOString(), min:8, m:500 })))); g.malus = []; g.malusEur = {}; g.firstUse = Date.now() - 30*86400000; })()")
     P.click("#chExpress"); P.wait_for_timeout(800)

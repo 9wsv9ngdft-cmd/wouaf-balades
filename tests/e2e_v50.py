@@ -30,7 +30,7 @@ with sync_playwright() as pw:
     if P.locator("#dgNext").count(): P.click("#dgNext")
     check("version 3.9 (APP_NUM 51)", P.evaluate("document.querySelector('#homeFoot').textContent").find("3.9") >= 0, P.evaluate("document.querySelector('#homeFoot').textContent"))
     # 1) position refusée au départ
-    P.click("#freeWalk"); P.wait_for_timeout(300); P.click("#chFree"); P.wait_for_timeout(800)
+    P.click("#miniMap"); P.wait_for_timeout(300); P.click("#chFree"); P.wait_for_timeout(800)
     bn = banner(P)
     check("position refusée : bandeau rouge tout de suite", bn.startswith("gps|") and "refusée" in bn, bn)
     check("bandeau rouge bien rouge", "gps" in P.get_attribute("#walkBanner", "class"))
@@ -52,7 +52,7 @@ with sync_playwright() as pw:
     check("le GPS revient : bandeau parti", banner(P) == "", banner(P))
     P.evaluate("__wouaf.cancelWalk()"); P.wait_for_timeout(500)
     # 5) longue balade sans aucune position : « Fini » prévient
-    P.evaluate("__geo.mode = 'deny'"); P.click("#freeWalk"); P.wait_for_timeout(300); P.click("#chFree"); P.wait_for_timeout(800)
+    P.evaluate("__geo.mode = 'deny'"); P.click("#miniMap"); P.wait_for_timeout(300); P.click("#chFree"); P.wait_for_timeout(800)
     P.evaluate("__shift(15 * 60000); __wouaf.finishWalk()"); P.wait_for_timeout(400)
     t = P.inner_text("#sheet")
     check("Fini à 0 m après 15 min : avertissement", "pas vu bouger" in t and "Terminer quand même" in t, t[:200])
@@ -65,7 +65,7 @@ with sync_playwright() as pw:
     b2, c2, Q = new_phone(pw, errors=errs, init=INIT + GEO)
     Q.set_viewport_size({"width": 393, "height": 760}); open_app(Q, 3000)
     if Q.locator("#dgNext").count(): Q.click("#dgNext")
-    Q.evaluate("__geo.mode = 'ok'"); Q.click("#freeWalk"); Q.wait_for_timeout(300); Q.click("#chFree"); Q.wait_for_timeout(800)
+    Q.evaluate("__geo.mode = 'ok'"); Q.click("#miniMap"); Q.wait_for_timeout(300); Q.click("#chFree"); Q.wait_for_timeout(800)
     check("GPS OK : pas de bandeau rouge", not banner(Q).startswith("gps"), banner(Q))
     Q.evaluate("__wouaf.gpsCheck()")
     check("GPS OK : gpsCheck ne dit rien", not banner(Q).startswith("gps"), banner(Q))

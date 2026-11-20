@@ -740,6 +740,79 @@
   #aCode,#aCode2{width:100%;margin-top:6px}
   .acccode summary{cursor:pointer;font-weight:700;margin:10px 0 4px}
   @media (prefers-color-scheme: dark){ .accwarn{background:#3a3010;color:#ffe7a3} }
+
+  /* ---------- v4.5 : nouvel accueil (maquette B, décidée par Éric le 20/11) + nouveau départ ---------- */
+  :root{--hb-card:#ffffff;--hb-line:#e3e0d6;--hb-ink:#1f2a22;--hb-muted:#4d5549;--hb-map:#e9eee6;--hb-gold:#8a6514}
+  body.nuit{--hb-card:#121821;--hb-line:#232a36;--hb-ink:#f3efe6;--hb-muted:#b6becb;--hb-map:#10151d;--hb-gold:#f0d48a}
+  .purseCol{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+  .purseUp{all:unset;cursor:pointer;font-size:12.5px;font-weight:800;color:var(--hb-gold);white-space:nowrap}
+  .purseUp:empty{display:none}
+  #goCard{position:relative}
+  #goCard #freeWalk,#goCard #durSeg,#goCard .dbar,#goCard #goStat,#goCard #goObj,#durLabel,#goHint{display:none !important}
+  body.nuit .crownBtn.ghost,.crownBtn.ghost{display:none !important}
+  .minimap .mleg{position:absolute;left:10px;top:10px;z-index:3;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none}
+  .minimap .mleg[hidden]{display:none}
+  .minimap .lg{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.55);color:#f3efe6;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:5px 10px;font-size:12.5px;font-weight:700}
+  .minimap .lg i{display:block;width:14px;height:4px;border-radius:2px}
+  .minimap .lg.fresh{border-color:rgba(198,255,61,.5)} .minimap .lg.fresh i{background:#c6ff3d;box-shadow:0 0 6px rgba(198,255,61,.8)}
+  .minimap .lg.usual{color:#cfd6df;font-weight:600} .minimap .lg.usual i{background:#4f9a7c}
+  body.nuit .minimap .mpct{top:auto;bottom:14px;left:auto;right:12px}
+  .minimap .mpct{top:auto;bottom:14px;left:auto;right:12px}
+  .minimap .mtr{top:auto !important;bottom:14px;left:12px !important;right:auto !important}
+  .minimap .mtap{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;background:rgba(0,0,0,.5);color:#fff;border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700;white-space:nowrap;pointer-events:none;animation:mtap 3.2s ease-in-out infinite}
+  .minimap .mtap[hidden]{display:none}
+  @keyframes mtap{0%,100%{opacity:.75}50%{opacity:1}}
+  .mexplo{all:unset;box-sizing:border-box;position:absolute;right:10px;top:10px;z-index:4;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.18);cursor:pointer}
+  body.hasmap .mexplo,body.hasmap .weekbar{display:none !important}
+  .weekbar{all:unset;box-sizing:border-box;display:block;width:100%;padding:12px 16px 4px;cursor:pointer}
+  .weekbar .wt{display:flex;justify-content:space-between;font-size:13px;font-weight:700} .weekbar .wt span{color:var(--hb-muted);font-weight:600}
+  .weekbar .wb{position:relative;display:block;height:8px;border-radius:4px;background:rgba(127,127,127,.18);margin-top:8px;overflow:hidden}
+  .weekbar .wb i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#2a9d78,#7fd1ae)}
+  body:not(.nuit) #goCard{background:var(--hb-card);border:1px solid var(--hb-line);color:var(--hb-ink);border-radius:24px;padding-bottom:10px}
+  body:not(.nuit) #goCard .minimap::after{background:linear-gradient(transparent,var(--hb-card))}
+  body:not(.nuit) #goCard .minimap{background:#e6ece3} body:not(.nuit) #goCard .minimap .mnone{color:#4d5549}
+  /* 3 tuiles de même taille : or (trésor) · argent (billets) · classement en direct */
+  .btiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .bt{all:unset;box-sizing:border-box;cursor:pointer;height:96px;border-radius:18px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
+  .bt .e{font-size:24px;line-height:1} .bt b{font-size:20px;font-weight:800;white-space:nowrap} .bt small{font-size:12px;font-weight:700;opacity:.95}
+  .bt.gold{background:linear-gradient(135deg,#6e5a2a,#c9a24a);box-shadow:0 0 22px -6px rgba(227,191,92,.6)}
+  .bt.gold.off{background:linear-gradient(135deg,#4c4434,#7d6c45);box-shadow:none}
+  .bt.silver{background:linear-gradient(135deg,#4f5760,#aab3bc)} .bt.silver b{font-size:17px}
+  .bt.rank{background:var(--hb-card);border:1px solid var(--hb-line);color:var(--hb-ink);align-items:stretch;justify-content:center;padding:8px 10px;text-align:left;gap:2px}
+  .bt.rank .live{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--hb-muted)}
+  .bt.rank .live i{width:7px;height:7px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.2);animation:livep 1.6s ease-in-out infinite}
+  @keyframes livep{50%{box-shadow:0 0 0 5px rgba(229,72,77,.08)}}
+  .bt.rank .r{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bt.rank .r b{font-size:13px;width:13px;flex:none;color:var(--hb-muted)} .bt.rank .r.c1 b{color:#c9a24a}
+  .bt.rank .r.me{color:#2a9d78;font-weight:800} body.nuit .bt.rank .r.me{color:#7fd1ae}
+  .bt.rank .r.none{color:var(--hb-muted);font-size:12.5px;white-space:normal}
+  .bt.rank .r .cr{width:13px;height:11px;flex:none}
+  /* nouvel accueil : de l'air en haut, tuiles collées en bas */
+  body.nuit main.wrap{display:flex;flex-direction:column}
+  body.nuit #home{margin-top:14px}
+  /* la question du départ */
+  .startq{text-align:center;font-size:18px;font-weight:700;line-height:1.35;margin:4px 6px 14px}
+  .startbtns{display:grid !important;grid-template-columns:1fr;gap:10px}
+  .startbtns .big{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:16px 18px;gap:3px}
+  .startbtns .big b{font-size:19px} .startbtns .big span{font-size:14px;font-weight:500;opacity:.92}
+  .startbtns .big.gold{background:linear-gradient(135deg,#8a6514,#c9a24a);color:#fff}
+  /* 🗺️ « Propose-moi » : le parcours directement sur la carte, plein écran */
+  body.propose header,body.propose main > :not(#map){display:none !important}
+  body.propose #map{display:block !important;position:fixed !important;left:0;right:0;top:0;bottom:0;height:auto !important;min-height:0;border-radius:0;border:0;z-index:1}
+  body.propose .leaflet-top{top:env(safe-area-inset-top)}
+  #propBar{display:none}
+  body.propose #propBar{display:block}
+  .propx{position:fixed;left:12px;top:calc(env(safe-area-inset-top) + 12px);z-index:1101;width:46px;height:46px;border-radius:50%;padding:0;background:#fff;color:#1f2a22;font-size:20px;font-weight:800;box-shadow:0 4px 14px -4px rgba(0,0,0,.45);display:grid;place-items:center}
+  .pcard{position:fixed;left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 12px);z-index:1100;background:var(--card);color:var(--ink);border-radius:20px;padding:14px 14px 12px;box-shadow:0 10px 30px -8px rgba(0,0,0,.5)}
+  .pcard .ptop{display:flex;justify-content:space-between;gap:10px;align-items:baseline} .pcard .ptop b{font-size:17px;line-height:1.25}
+  .pcard .ptop span{flex:none;font-size:13px;font-weight:700;color:var(--muted)}
+  .pcard .psub{font-size:14px;color:var(--muted);margin-top:4px} .pcard .psub b{color:var(--ink)}
+  .pcard .pbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .pcard .pbtns #propGo{grid-column:1 / -1;font-size:18px;padding:14px}
+  .pcard .pbtns #propFree{grid-column:1 / -1}
+  .pcard .pbtns button[hidden]{display:none}
+  .pcard.wait .ptop b{font-weight:600;font-size:15px}
+  .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
 </style>
 </head>
 <body>
@@ -757,12 +830,13 @@
       <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : le point du jour"></button>
       <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
-      <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
+      <div class="purseCol"><button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button><button class="purseUp" id="purseUp" aria-label="Ce que tu peux gagner aujourd'hui"></button></div>
     </div>
     <div id="heroSay"></div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
     <div class="gocard" id="goCard">
-      <button class="minimap" id="miniMap" aria-label="Partir avec Roxy"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span></button>
+      <button class="minimap" id="miniMap" aria-label="Partir avec Roxy : touche la carte"><canvas id="miniCv"></canvas><span class="mdog" id="miniDog"></span><span class="mleg" id="miniLeg" hidden><span class="lg fresh"><i></i>pas faites depuis 7 jours</span><span class="lg usual"><i></i>tes rues habituelles</span></span><span class="mpct" id="miniPct"></span><span class="mtr" id="miniTr"></span><span class="mnone" id="miniNone"></span><span class="mtap" id="miniTap">👆 Touche la carte pour partir</span></button>
+      <button class="mexplo" id="miniExplo" aria-label="Carte d'exploration : regarder ton quartier et les nuages, sans partir">☁️</button>
       <button class="gobj" id="goObj" aria-label="Mes objectifs du jour"></button>
       <button id="freeWalk" class="big go"><span class="gl"><span id="goText">▶️ C'est parti</span><span class="glot" id="goLot"></span></span><span class="gain" id="goGain"></span><span class="pcrown" id="goCrown" hidden aria-hidden="true">👑</span></button>
       <div class="seg durs" id="durSeg" role="group" aria-labelledby="durLabel">
@@ -774,6 +848,7 @@
       </div>
       <div class="dbar" aria-hidden="true"><i id="durFill"></i></div>
       <button class="gostat" id="goStat" aria-label="Où j'en suis aujourd'hui · dernières sorties de Roxy"></button>
+      <button class="weekbar" id="weekBar" aria-label="Ta semaine avec Roxy"><span class="wt"><b>Ta semaine</b><span id="weekTxt"></span></span><span class="wb"><i id="weekFill"></i></span></button>
     </div>
     <div class="gohint" id="goHint" hidden></div>
     <button id="locate" class="ghost" style="display:none">🗺️ Proposer des parcours</button>
@@ -845,6 +920,9 @@
 <div id="coach" hidden></div>
 <div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
 <div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.</small><div class="pkSlide" id="pkSlide"><i class="pkKnob" id="pkKnob">🐾</i><span>Glisse la patte pour revenir</span></div></div></div>
+<div id="propBar" role="region" aria-label="Parcours proposé"><button id="propX" class="propx" aria-label="Revenir à l'accueil">✕</button>
+  <div class="pcard wait" id="propCard"><div class="ptop"><b id="propTitle"></b><span id="propIdx"></span></div><div class="psub" id="propSub" aria-live="polite"></div>
+  <div class="pbtns"><button id="propGo" hidden>▶️ J'y vais</button><button id="propNext" class="ghost" hidden>Suivant ›</button><button id="propDice" class="ghost" hidden>🎲 Choisis pour moi</button><button id="propFree" class="ghost" hidden>🚶 Je gère, je pars en libre</button></div></div></div>
 <div id="chooseBar" role="status"><span id="chooseText">🐾 Balade en cours : choisis un parcours ci-dessous</span><button id="chooseBack">Continuer en libre</button></div>
 <div id="updBar" role="status"><span>🔄 Nouvelle version de l'app disponible</span><button id="updBtn">Mettre à jour</button></div>
 <div class="modal" id="modal" role="dialog" aria-modal="true"><div class="sheet" id="sheet"></div></div>
@@ -853,7 +931,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.164735";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.172355";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -903,10 +981,11 @@
   const fmtHour = d => d.toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" });
   function setStatus(html, err){
     const el = $("#status"), b = document.body.classList;
-    if (html && !b.contains("hasmap") && !b.contains("choosing") && !b.contains("walking") && !b.contains("explore")){   // v2.4 : sur l'accueil, en bandeau en haut
+    if (html && !b.contains("hasmap") && !b.contains("propose") && !b.contains("choosing") && !b.contains("walking") && !b.contains("explore")){   // v2.4 : sur l'accueil, en bandeau en haut
       el.innerHTML = ""; toast(String(html).replace(/<[^>]+>/g, ""), err ? 4500 : 3200); return;
     }
     el.innerHTML = html; el.classList.toggle("err", !!err);
+    if (b.contains("propose") && state.pi == null && html) try{ propMsg(html, !!err); }catch(e){}   // 🗺️ v4.5 : en « Propose-moi », les messages vont dans la carte du bas
   }
 
   async function getJSON(url, ms){
@@ -1351,6 +1430,7 @@
     if (onlyCat && !shown.length) setStatus(`Pas de balade « ${CATS[onlyCat].label} » de ${fmtMin(state.dur)} autour de vous. Essayez une autre durée ou un autre type.`);
     else setStatus(`${shown.length} balade${shown.length > 1 ? "s" : ""} de ${fmtMin(state.dur)} depuis votre position. Touchez-en une pour la voir.`);
     if (state.sel == null && shown.length) select(state.results.indexOf(shown[0]), true);
+    if (document.body.classList.contains("propose")){ if (shown.length) propShow(state.pi || 0); else propMsg("Pas de parcours trouvé pour l'instant. Pars en libre, c'est très bien aussi !", true); }
   }
 
   // ---------- Affichage des balades ----------
@@ -1382,6 +1462,7 @@
       });
       el.addEventListener("keydown", e => { if ((e.key === "Enter" || e.key === " ") && e.target === el){ e.preventDefault(); select(+el.dataset.i); } });
     });
+    if (document.body.classList.contains("propose") && shown.length){ if (state.pi == null) propShow(0); else { const i = state.pi; $("#propIdx").textContent = `${i + 1}/${shown.length}`; $("#propNext").disabled = $("#propDice").disabled = shown.length < 2; } }
   }
 
   function drawSelected(p, color){
@@ -1700,12 +1781,13 @@
       $("#hLine").onclick = sheetOuts;
     } else { $("#heroSub").textContent = "Dis-nous qui tu es :"; hideSay(); }
     const cb = $("#crownBtn");
-    if (cb) try{ const real = wearCrown(); cb.hidden = !(PUSH_API && profile.walker);
+    if (cb) try{ const real = wearCrown(); cb.hidden = !(PUSH_API && profile.walker && real);   // v4.5 : plus de couronne fantôme ; la vraie reste (et se vole)
       cb.className = "crownBtn " + (real ? "real" : "ghost");
       cb.setAttribute("aria-label", real ? "Tu as la couronne ! Classement des explorateurs" : "Couronne à aller chercher : classement des explorateurs");
-      cb.onclick = e => { e.stopPropagation(); sheetExplo(); }; }catch(e){}   // (PUSH_API pas encore prêt au tout début)
+      cb.onclick = e => { e.stopPropagation(); sheetRanks("week"); }; }catch(e){}   // (PUSH_API pas encore prêt au tout début)
     $("#editWho").hidden = !!profile.walker;
     try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
+    try{ const up = $("#purseUp"); if (up){ up.textContent = profile.walker && !isTester() ? `jusqu'à +${gainEst(propDur())} aujourd'hui` : ""; up.onclick = sheetBonus; } }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
     try{ $("#heroDog").classList.toggle("ping", aventPending()); }catch(e){}   // 🎄 pastille : case de l'Avent pas encore ouverte
     clearTimeout(renderWho._t); renderWho._t = setTimeout(() => { try{ fitHome(); }catch(e){} }, 60);
@@ -2798,7 +2880,7 @@
       store.set("wouaf-fhome", j.home || null);  // 🏠 maison de la famille (arrondie)
       try{ applyFamilyHome(); }catch(e){}
       store.set("wouaf-record", j.record || null);
-      if (j.explo) store.set("wouaf-explo", j.explo);
+      if (j.explo){ store.set("wouaf-explo", j.explo); crownWatch(); }
       if (j.fam) store.set("wouaf-fam", j.fam);
       if (j.paid && profile.walker){ const mine = j.paid[String(profile.walker).toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30)]; store.set("wouaf-paid", mine || {}); }
       try{ weekHunt(); snapHunt(); publishHunt(); }catch(e){}
@@ -3044,7 +3126,10 @@
   }
   function wearCrown(){   // 👑 sur Roxy chez le premier explorateur de la semaine dernière, toute la semaine
     try{ const ex = store.get("wouaf-explo", null), me = profile.walker;
-      return !!(ex && ex.prev && me && !isTester() && (ex.prev.rank || []).some(x => x.r === 1 && normName(x.w) === normName(me))); }catch(e){ return false; }
+      if (!ex || !me || isTester()) return false;
+      const lead = (ex.rank || []).filter(x => x.r === 1);   // v4.5 : la couronne se vole : le 1er en direct la porte ; sinon le champion de la semaine passée
+      if (lead.length) return lead.some(x => normName(x.w) === normName(me));
+      return (ex.prev && ex.prev.rank || []).some(x => x.r === 1 && normName(x.w) === normName(me)); }catch(e){ return false; }
   }
   const MEDAL = r => ["🥇", "🥈", "🥉"][r - 1] || `${r}e`;
   function exploHTML(){
@@ -3074,27 +3159,125 @@
   }
   // ---------- 💎 Les gros lots sur l'accueil (v2.1) : trésor (tant qu'il n'est pas gagné), coffre, record, duel ----------
   const RECORD_CS = 50;
-  function lotsHTML(){   // v2.2 : trois petites tuiles côte à côte (toucher = l'explication)
-    const l = [], hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
-    const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));   // déjà trouvé cette semaine (par quelqu'un)
-    const tile = (k, cls, e, v, t) => `<button class="lt${cls}" data-lot="${k}" aria-label="${esc(t)} : ${v} clebsous"><span class="e">${e}</span><b>${v}</b><small>${t}</small></button>`;
-    if (!game.home && !gone)   // pas encore de maison (1re balade, ou après la remise à zéro) : le trésor est quand même annoncé
-      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, "Trésor"));
-    else if (hu && !hu.found && !hu.gone)
-      l.push(tile("hunt", " gold", "🏴‍☠️", HUNT_FIRST, `Trésor${game.home ? " · " + fmtKm(dist(game.home, hu)) : ""}`));
-    if (silverLive()) l.push(tile("silver", " silver", "🥈", SILVER_CS, "Cadeau argenté"));   // 🥈 v3.9
+  function lotsHTML(){   // v4.5 (maquette B) : 3 tuiles de même taille : or = trésor · argent = billets (cadeau argenté + coffre) · classement en direct
+    const hu = (() => { try{ return weekHunt(); }catch(e){ return null; } })();
+    const gone = (store.get("wouaf-tresor", []) || []).some(x => x.wk === weekKey(Date.now()));
+    const open = (!game.home && !gone) || (hu && !hu.found && !hu.gone);
+    const gold = `<button class="bt gold${open ? "" : " off"}" data-lot="hunt" aria-label="${open ? `Trésor de la semaine : ${HUNT_FIRST} clebsous` : "Trésor de la semaine : déjà trouvé"}"><span class="e">🏴‍☠️</span><b>${open ? HUNT_FIRST : "✓"}</b><small>${open ? "Trésor" : "Trouvé"}</small></button>`;
     let ch = 0; try{ ch = chestChance(); }catch(e){}
-    l.push(tile("chest", ch > 0 ? " fire hot" : " fire", "💰", Math.round(chestValue() * CS), ch > 0 ? "🔥 Coffre chaud" : "Coffre"));
-    const rec = store.get("wouaf-record", null);
-    l.push(tile("rec", " bronze", "🏅", "+" + RECORD_CS, rec ? `Record ${fmtMin(rec.min)}` : "Record"));
-    const lots = `<div class="ltiles" aria-label="Les gros lots">${l.join("")}</div>`;
+    const cv = Math.round(chestValue() * CS), sv = silverLive();
+    const silver = `<button class="bt silver" data-lot="bills" aria-label="Billets : ${sv ? `cadeau argenté ${SILVER_CS}, ` : ""}coffre ${cv}${ch > 0 ? ", le coffre est chaud" : ""}"><span class="e">${ch > 0 ? "🔥" : "💰"}</span><b>${sv ? `${SILVER_CS} · ${cv}` : cv}</b><small>Billets</small></button>`;
     const live = duelOK() && (myDuel() || myInvite() || mySent());
-    if (!live && (duelOK() || (isTester() && PUSH_API))){   // v2.4 : 4e tuile violette
-      l.push(`<button class="lt arena-t" data-arena="${isTester() ? "prev" : "duels"}"><span class="e">⚔️</span><b>±${DUEL_STAKES[DUEL_STAKES.length - 1]}</b><small>${isTester() ? "Duels (aperçu)" : "Défier"}</small></button>`);
-      return `<div class="lots"><div class="ltiles" aria-label="Les gros lots">${l.join("")}</div></div>`;
+    return `<div class="lots">${live ? arenaHTML() : ""}<div class="btiles" aria-label="Les gros lots et le classement">${gold}${silver}${rankTileHTML()}</div></div>`;
+  }
+  // 🏆 tuile « classement en direct » : les places de la semaine (explorateurs), « Toi » en vert, couronne au 1er. Jamais de points.
+  const CROWN_SVG = `<svg class="cr" viewBox="0 0 24 20" aria-hidden="true"><path d="M2 17 L4 6 L8.5 10 L12 3 L15.5 10 L20 6 L22 17 Z" fill="#e3bf5c"/></svg>`;
+  function rankTileHTML(){
+    let rows = "";
+    try{
+      const { rank, mine } = exploMe(), me = profile.walker;
+      let top = rank.slice(0, 3);
+      if (mine && !top.includes(mine)) top = top.slice(0, 2).concat(mine);
+      rows = top.length ? top.map(x => { const isMe = mine && x === mine;
+        return `<span class="r${x.r === 1 ? " c1" : ""}${isMe ? " me" : ""}"><b>${x.r}</b>${isMe ? "Toi" : escN(x.w)}${x.r === 1 ? CROWN_SVG : ""}</span>`; }).join("")
+        : `<span class="r none">${me && !isTester() ? "Personne encore : prends la tête !" : "Personne encore cette semaine"}</span>`;
+    }catch(e){ rows = `<span class="r none">Le classement arrive</span>`; }
+    return `<button class="bt rank" data-lot="rank" aria-label="Classement en direct et duels"><span class="live"><i></i>EN DIRECT</span>${rows}</button>`;
+  }
+  // 💰 tuile argent « Billets » : le cadeau argenté d'Éric et le coffre
+  function sheetBills(){
+    const sv = silverLive(); let ch = 0; try{ ch = chestChance(); }catch(e){}
+    openSheet(`<h2>💶 Les billets</h2>
+      <div class="mlist" style="grid-template-columns:1fr">
+        <button id="blSilver"><span>🥈</span>${sv ? `<b>Cadeau argenté : ${SILVER_CS}</b> · caché par Éric sous un nuage argenté, un seul gagnant` : "Cadeau argenté : pas de cadeau caché en ce moment"}</button>
+        <button id="blChest"><span>${ch > 0 ? "🔥" : "💰"}</span><b>Coffre : ${Math.round(chestValue() * CS)}</b> · ${ch > 0 ? "il est chaud, cherche les rues pas faites depuis 7 jours !" : "il dort pour l'instant"}</button>
+      </div>
+      <p class="howto">🌧️ Et quand il pleut, des billets tombent devant toi pendant la balade.</p>
+      <div class="btns"><button id="blGo">▶️ J'y vais</button></div>`);
+    $("#blSilver").onclick = () => { closeSheet(); setTimeout(sheetSilver, 150); };
+    $("#blChest").onclick = () => { closeSheet(); setTimeout(sheetChest, 150); };
+    $("#blGo").onclick = () => { closeSheet(); setTimeout(startQuestion, 200); };
+  }
+  // 🏆 La fiche du classement (v4.5) : podium + « Défier », onglets Semaine · Mois · Année · Saison · 🎄 · Rigolo.
+  // Semaine = places des explorateurs ; les autres = trophées de Roxy (💩 💧 🗺️ 🏃…) comptés sur la période, mois en cours compris. Jamais de trajet.
+  var rankTab = "week", rankHon = null;
+  const RANK_TABS = [["week", "Semaine"], ["month", "Mois"], ["year", "Année"], ["season", "Saison"], ["event", "🎄"], ["fun", "😂 Rigolo"]];
+  function placesOf(rows){   // [{ w, n }] triés → places avec ex aequo
+    let r = 0, prev = null; return rows.map((x, i) => { if (x.n !== prev){ r = i + 1; prev = x.n; } return { w: x.w, r, n: x.n }; });
+  }
+  function countTrophies(hs){
+    const c = {}; for (const h of hs) for (const id in (h && h.t) || {}) for (const w of h.t[id].w) c[w] = (c[w] || 0) + 1;
+    return placesOf(Object.keys(c).map(w => ({ w, n: c[w] })).sort((a, b) => b.n - a.n || (a.w < b.w ? -1 : 1)));
+  }
+  function podiumHTML(rank){
+    const me = profile.walker, isMe = x => x && me && sameN(x.w, me);
+    const step = (x, cls) => x ? `<div class="step ${cls}${isMe(x) ? " me" : ""}"><div class="face">${x.r === 1 ? "👑" : "🐾"}</div><div class="who">${isMe(x) ? "Toi" : escN(x.w)}</div><div class="blk">${x.r}</div></div>` : `<div class="step ${cls} off"><div class="face">❔</div><div class="who">&nbsp;</div><div class="blk"></div></div>`;
+    const rest = rank.slice(3);
+    return `<div class="podium">${step(rank[1], "s2")}${step(rank[0], "s1")}${step(rank[2], "s3")}</div>${rest.length ? `<p style="text-align:center">${rest.map(x => `${x.r}e ${isMe(x) ? "<b>Toi</b>" : escN(x.w)}`).join(" · ")}</p>` : ""}`;
+  }
+  async function loadRankHon(){
+    if (!PUSH_API) return { hs: store.get("wouaf-honors", []), cur: null };
+    try{ const j = await (await api("/honors")).json(); if (j && Array.isArray(j.honors)){ store.set("wouaf-honors", j.honors); return { hs: j.honors, cur: j.cur || null }; } }catch(e){}
+    return { hs: store.get("wouaf-honors", []), cur: null };
+  }
+  async function sheetRanks(tab){
+    rankTab = tab || rankTab || "week";
+    if (!rankHon || Date.now() - rankHon.at > 5 * 60000){ rankHon = Object.assign({ at: Date.now() }, await loadRankHon()); }
+    const { hs, cur } = rankHon, now = new Date(), year = now.getFullYear(), mk = monthKey(Date.now());
+    const all = hs.filter(h => h.mk !== mk).concat(cur ? [cur] : []);
+    let body = "", sub = "";
+    if (rankTab === "week"){
+      const { ex, rank } = exploMe(), wk = ex.wk ? new Date(ex.wk + "T12:00:00") : null;
+      const left = (() => { if (!wk) return ""; const e = new Date(wk.getTime() + 7 * DAYMS); e.setHours(4, 0, 0, 0); const h = Math.max(0, Math.round((e - Date.now()) / 3600000)); return h >= 24 ? `plus que ${Math.floor(h / 24)} j ${h % 24} h` : `plus que ${h} h`; })();
+      sub = `Les explorateurs · ${left || "cette semaine"}`;
+      body = podiumHTML(rank) + `<p class="howto">Les rues pas faites depuis ${FRESH_DAYS} jours et les objets ramassés te font monter (balades de 20 min ou plus). On ne voit que les places. Celui qui est 1er dimanche soir est le champion et garde la couronne 👑 sur ${DOG}… tant que personne ne la lui pique !</p>`;
+    } else if (rankTab === "month" || rankTab === "event"){
+      if (rankTab === "event" && now.getMonth() !== 11){
+        const j = (() => { try{ return aventSoon(); }catch(e){ return 0; } })();
+        sub = "Événement spécial";
+        body = `<div style="text-align:center;font-size:56px;margin:14px 0 4px">🎄</div><p style="text-align:center"><b>Le classement de Noël</b> commence le 1er décembre${j ? ` (J-${j})` : ""} : les trophées de décembre, avec le calendrier de l'Avent.</p>`;
+      } else {
+        sub = rankTab === "event" ? "🎄 Le classement de Noël · décembre" : `${monthLabelFr(mk)} · en cours`;
+        body = cur && cur.t && Object.keys(cur.t).length ? podiumHTML(countTrophies([cur])) + `<div class="flabel">Qui mène, trophée par trophée</div><div class="props">${trophyRows(cur)}</div>`
+          : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de balade ce mois-ci. Le premier qui sort ${DOG} prend la tête !</p>`;
+      }
+    } else if (rankTab === "year"){
+      sub = `${year} · trophées gagnés (mois en cours compris)`;
+      const r = countTrophies(all.filter(h => h.mk.slice(0, 4) === String(year)));
+      body = r.length ? podiumHTML(r) + `<div class="props">${r.map(x => `<div class="entry"><div><h4>${x.r === 1 ? "👑" : "🐾"} ${sameN(x.w, profile.walker) ? "Toi" : escN(x.w)}</h4><div class="when">${x.n} trophée${x.n > 1 ? "s" : ""}</div></div></div>`).join("")}</div>` : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de trophée cette année.</p>`;
+    } else if (rankTab === "season"){
+      const se = seasonOf(Date.now()), m1 = monthKey(se.start.getTime()), m2 = monthKey(se.end.getTime() - DAYMS);
+      sub = `Saison ${se.name}`;
+      const r = countTrophies(all.filter(h => h.mk >= m1 && h.mk <= m2));
+      body = r.length ? podiumHTML(r) + `<p class="howto">Les trophées de ${DOG} des deux mois de la saison.</p>` : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de trophée cette saison.</p>`;
+    } else {
+      sub = "Les chiffres marrants du mois";
+      const f = (cur && cur.fam) || {}, t = (cur && cur.t) || {};
+      const lead = (id, ic, txt) => t[id] ? `<div class="entry"><div><h4>${ic} ${txt}</h4><div class="when">${winnersTxt(t[id].w)} · ${esc(TROPHY_INFO[id].fmt(t[id].v))}</div></div></div>` : "";
+      body = `<div class="props">${lead("cc", "💩", "Le roi du caca")}${lead("pp", "💧", "L'arroseur du quartier")}${lead("nc", "🗺️", "Celui qui connaît toutes les rues")}${lead("km", "📏", "Les jambes les plus longues")}${lead("best", "⏱️", "Le plus patient")}${lead("early", "🌅", "Debout avant les poules")}${lead("rain", "🌧️", "Même pas peur de la pluie")}</div>
+        ${Object.keys(f).length ? `<p class="howto" style="line-height:1.6;margin-top:10px">${funnyLines(f).map(esc).join("<br>")}${f.ob ? `<br>🐾 ${f.ob} objet${f.ob > 1 ? "s" : ""} ramassé${f.ob > 1 ? "s" : ""} en route.` : ""}</p>` : `<p class="howto" style="text-align:center;margin-top:18px">Les chiffres marrants arrivent avec les premières balades du mois.</p>`}`;
     }
-    const ar = live ? arenaHTML() : "";
-    return `<div class="lots">${live ? ar + lots : lots}</div>`;
+    const canDuel = duelOK(), prev = isTester() && PUSH_API;
+    openSheet(`<h2 style="text-align:center">🏆 Le classement</h2>
+      <div class="seg rtabs" role="tablist">${RANK_TABS.map(([k, l]) => `<button role="tab" data-rt="${k}" class="${k === rankTab ? "on" : ""}" aria-selected="${k === rankTab}">${l}</button>`).join("")}</div>
+      <p class="howto" style="text-align:center;margin:8px 0 0">${esc(sub)}</p>${body}
+      <div class="btns">${canDuel || prev ? `<button id="rkDuel">⚔️ Défier${prev ? " (aperçu)" : ""}</button>` : ""}<button class="ghost" id="rkGo">▶️ Partir explorer</button></div>`);
+    document.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => sheetRanks(b.dataset.rt));
+    if ($("#rkDuel")) $("#rkDuel").onclick = async () => { closeSheet(); if (prev) return duelPreview(); try{ await loadDuels(); }catch(e){} setTimeout(sheetDuels, 120); };
+    $("#rkGo").onclick = () => { closeSheet(); setTimeout(startQuestion, 200); };
+  }
+  // 👑 v4.5 : la couronne se vole. Si je l'avais (1er en direct) et que quelqu'un passe devant : « 😱 X m'a piqué la couronne ! »
+  function crownWatch(){
+    try{
+      if (!PUSH_API || !profile.walker || isTester()) return;
+      const { rank, mine } = exploMe(), had = store.get("wouaf-crown-had", null), wk = (store.get("wouaf-explo", {}) || {}).wk;
+      const now1 = !!(mine && mine.r === 1);
+      if (had && had.wk === wk && had.on && !now1){
+        const thief = (rank.find(x => x.r === 1) || {}).w;
+        if (thief) setTimeout(() => toast(`😱 ${nm(thief)} m'a piqué la couronne ! Une balade avec des rues neuves pour la reprendre ?`, 6000), 1500);
+      }
+      store.set("wouaf-crown-had", { wk, on: now1 });
+    }catch(e){}
   }
   // ⚔️ l'Arène : le duel en face-à-face, le défi reçu, ou « Défier X » (Éric : aperçu)
   function arenaHTML(){
@@ -3126,6 +3309,8 @@
       if (k === "hunt") return sheetTreasure();   // v44 : une vraie fiche pour chaque gros lot (avant : les deux ouvraient la liste des bonus)
       if (k === "chest") return sheetChest();
       if (k === "silver") return sheetSilver();
+      if (k === "bills") return sheetBills();
+      if (k === "rank") return sheetRanks("week");
       const rec = store.get("wouaf-record", null);
       openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${escN(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
       $("#rcClose").onclick = closeSheet;
@@ -4301,7 +4486,7 @@
     return [
       { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle te parle dans sa bulle (touche-la pour une autre phrase) et elle adore les caresses : glisse ton doigt sur sa photo ❤️. Touche-la pour voir son humeur, sa forme et ton niveau.` },
       { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(dayFine())}</span></div></div>`,
-        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque dimanche 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
+        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}, ${JOKERS} joker par mois). Pour partir, touche la carte de l'accueil 👆 : « Je gère » (tu vas où tu veux) ou « Propose-moi » (un parcours qui rapporte plus). Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque dimanche 💶. Sous la carte, « Ta semaine » montre où tu en es.` },
       { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">👃 piste +${FLAIR_CS}</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span></div>`,
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
@@ -4312,7 +4497,7 @@
       { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">🥈 cadeau ${SILVER_CS}</span><span class="chip">💰 coffre ${cs(chestValue())}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
         h:"Les gros lots", t:`Le trésor de la semaine 🏴‍☠️ (or) : un seul gagnant ! Pendant la balade, la flèche dorée au bord de l'écran t'indique sa direction. Le cadeau argenté 🥈 est caché par Éric : un seul gagnant aussi. Le coffre 💰 (orange) se cache dans les rues neuves, et le record du mois 🏅 (bronze) récompense la plus longue balade.` },
       { pic:`<div><div class="row"><span class="chip">🥇 Tom</span><span class="chip">🥈 Toi</span><span class="chip">🥉 Zoé</span></div><div style="font-size:44px;margin-top:6px">👑</div></div>`,
-        h:"Les enjeux", t:`Chaque semaine, le classement des explorateurs : les rues neuves et les objets te font monter, le 1er porte la couronne 👑 sur ${DOG}. Défie les autres dans l'arène ⚔️. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide.` }
+        h:"Les enjeux", t:`Chaque semaine, le classement des explorateurs : les rues neuves et les objets te font monter, le 1er porte la couronne 👑 sur ${DOG}… et elle se vole ! Touche le classement en bas de l'accueil pour le podium et les défis ⚔️. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide.` }
     ];
   }
   // Tuto court (3 écrans) : premier lancement et remise à zéro. Le tuto complet (8 écrans) : menu ☰ › Tuto et « Les bonus ».
@@ -4321,7 +4506,7 @@
     return [
       { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
       { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 7 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque dimanche soir, tes clebsous de la semaine deviennent de vrais sous 💶.` },
-      { pic: full[4].pic, h:"C'est parti !", t:`Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
+      { pic: full[4].pic, h:"C'est parti !", t:`Pour partir, touche la carte de l'accueil 👆. Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
   }
   function showTuto(step, replay){
@@ -5306,7 +5491,7 @@
       updateWalk(null); persist(true);
       return;
     }
-    state.walk = p;
+    state.walk = p; document.body.classList.remove("propose"); state.pi = null;
     const free = !p.line.length;
     if (free){ layers.sel.clearLayers(); layers.routes.clearLayers(); }
     else drawSelected(p, "#d9792b");
@@ -6452,6 +6637,10 @@
   function huntLive(){ try{ const hu = weekHunt(); return hu && !hu.found && !hu.gone ? hu : null; }catch(e){ return null; } }
   function renderGoCard(){
     ensureGame();
+    try{ const w = weekStats(Date.now()), goal = 7 * 30, pct = Math.min(100, Math.round(100 * w.min / goal));   // v4.5 : « Ta semaine » (même objectif que la Forme de Roxy : 3 h 30)
+      $("#weekTxt").textContent = `${w.min ? fmtMin(w.min) : "0 min"} sur ${fmtMin(goal)}`; $("#weekFill").style.width = Math.max(pct ? 3 : 0, pct) + "%";
+      $("#weekBar").onclick = sheetRoxy; }catch(e){}
+    try{ $("#miniTap").hidden = !!(game.streak && game.streak.n >= 3) && getLog().length >= 5; }catch(e){}
     const today = dayKey(Date.now()), done = game.streak.day === today, n = game.streak.n || 0;
     const alive = n >= 2 && (done || streakAlive(game.streak.day));
     const l = lastWalk(); let roxy;
@@ -6491,21 +6680,31 @@
     const dpr = Math.min(2, window.devicePixelRatio || 1); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const g = cv.getContext && cv.getContext("2d"); if (!g) return;
     const nuit = document.body.classList.contains("nuit");
-    g.scale(dpr, dpr); g.fillStyle = nuit ? "#10151d" : "#1e2621"; g.fillRect(0, 0, W, H);
+    g.scale(dpr, dpr); g.fillStyle = nuit ? "#10151d" : "#e6ece3"; g.fillRect(0, 0, W, H);
     const dog = $("#miniDog");
     if (!c){ dog.style.display = "none"; $("#miniPct").textContent = ""; $("#miniTr").textContent = ""; return; }
     const mpp = 1700 / W, cx = W / 2, cy = H * .55, kx = 111320 * Math.cos(c.lat * Math.PI / 180);
     const XY = p => [cx + (p.lon - c.lon) * kx / mpp, cy - (p.lat - c.lat) * 110540 / mpp];
-    g.strokeStyle = nuit ? "rgba(255,255,255,.035)" : "rgba(255,255,255,.05)"; g.lineWidth = 1;
+    g.strokeStyle = nuit ? "rgba(255,255,255,.035)" : "rgba(0,0,0,.05)"; g.lineWidth = 1;
     for (let x = (cx % 26); x < W; x += 26){ g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
     for (let y = (cy % 26); y < H; y += 26){ g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-    g.fillStyle = nuit ? "rgba(243,239,230,.06)" : "rgba(150,215,160,.16)";
+    g.fillStyle = nuit ? "rgba(243,239,230,.06)" : "rgba(79,154,124,.13)";
     for (const k in game.seen || {}){
       const [i, j] = k.split(":").map(Number), [x1, y1] = XY({ lat: i * 0.0009, lon: j * 0.0013 }), [x2, y2] = XY({ lat: (i + 1) * 0.0009, lon: (j + 1) * 0.0013 });
       if (x2 < 0 || x1 > W || y1 < 0 || y2 > H) continue; g.fillRect(x1, y2, x2 - x1, y1 - y2);
     }
-    g.strokeStyle = nuit ? "rgba(243,239,230,.55)" : "rgba(255,206,110,.85)"; g.lineWidth = 2.2; g.lineJoin = g.lineCap = "round";
-    try{ for (const t of getTraces()){ const pts = decPoly(t.s, 5); if (pts.length < 2) continue; g.beginPath(); pts.forEach((p, i) => { const [x, y] = XY(p); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke(); } }catch(e){}
+    // v4.5 (maquette B) : tes rues habituelles en vert discret, et EN FLUO celles que tu n'as pas faites depuis 7 jours (elles rapportent plus)
+    g.lineJoin = g.lineCap = "round"; let nFresh = 0, nUsual = 0;
+    try{ const fresh = [], usual = [];
+      for (const t of getTraces()){ const pts = decPoly(t.s, 5);
+        for (let i = 1; i < pts.length; i++){ const a = pts[i - 1], b2 = pts[i], seg = [XY(a), XY(b2)];
+          if ((seg[0][0] < -20 && seg[1][0] < -20) || (seg[0][0] > W + 20 && seg[1][0] > W + 20) || (seg[0][1] < -20 && seg[1][1] < -20) || (seg[0][1] > H + 20 && seg[1][1] > H + 20)) continue;
+          (isNewCell(cellOf({ lat: (a.lat + b2.lat) / 2, lon: (a.lon + b2.lon) / 2 })) ? fresh : usual).push(seg); } }
+      const draw = (list, col, w, glow) => { if (!list.length) return; g.save(); g.strokeStyle = col; g.lineWidth = w; if (glow){ g.shadowColor = "rgba(198,255,61,.8)"; g.shadowBlur = 6; }
+        g.beginPath(); for (const [p1, p2] of list){ g.moveTo(p1[0], p1[1]); g.lineTo(p2[0], p2[1]); } g.stroke(); g.restore(); };
+      draw(usual, nuit ? "#3d6e5d" : "#4f9a7c", 3.2, false); draw(fresh, nuit ? "#c6ff3d" : "#8bc400", 3.4, true);
+      nFresh = fresh.length; nUsual = usual.length; }catch(e){}
+    const leg = $("#miniLeg"); if (leg){ leg.hidden = !(nFresh || nUsual); leg.querySelector(".fresh").hidden = !nFresh; leg.querySelector(".usual").hidden = !nUsual; }
     const hu = huntLive();
     const hz = hu && hu.lat != null ? huntCloud(hu) : null, cc = chestCloud();
     if (cc){ const [x, y] = XY(cc);
@@ -6544,13 +6743,15 @@
   window.addEventListener("resize", () => { clearTimeout(fitHome._t); fitHome._t = setTimeout(fitHome, 150); });
   // 🌙 v2.5 : l'accueil est « nuit » (bleu nuit, ivoire) ; la balade, la carte et les pages gardent leurs couleurs
   function setNuit(){
-    const b = document.body.classList, on = !["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k));
+    const b = document.body.classList, dark = !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;   // v4.5 : mode clair / sombre = réglage du téléphone
+    const on = dark && !["walking", "page", "recap", "choosing", "hasmap", "explore", "propose"].some(k => b.contains(k));
     if (b.contains("nuit") === on) return;
     b.toggle("nuit", on); if (!on) hideSay();
     const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = on ? "#0b0e13" : "#2f5d3a";
     try{ drawMiniMap(); }catch(e){}
   }
   new MutationObserver(setNuit).observe(document.body, { attributes:true, attributeFilter:["class"] }); setNuit();
+  try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { setNuit(); try{ renderHome(); }catch(e){} }); }catch(e){}
   $("#miniMap").addEventListener("click", () => { $("#freeWalk").click(); });   // v2.8 (décidé le 15/11) : la mini-carte = « Encore une ? » (fiche de départ)
 
   // ---------- 🌤️ Météo sur l'accueil (v2.4, Open-Meteo, coordonnées arrondies de la maison) ----------
@@ -6603,7 +6804,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6667,20 +6868,81 @@
   }
   updateGo();
   $("#locate").addEventListener("click", locate);
-  $("#freeWalk").addEventListener("click", () => {
-    if (!profile.walker){ askProfile(() => $("#freeWalk").click()); return; }
-    openSheet(`<h2>On part comment ?</h2>
-      <div class="btns">
-        <button id="chFree" class="big" style="text-align:left;padding:16px">🚶 <b>Balade libre</b><br><span style="font-size:14px;font-weight:500;opacity:.9">Tu vas où tu veux. Ça démarre tout de suite.</span></button>
-        <button id="chExpress" class="big ghost" style="text-align:left;padding:16px">⚡ <b>Balade express · 10 min</b><br><span style="font-size:14px;font-weight:500">Juste un petit tour pour ${DOG}. Notée dans le carnet, sans jeu ni clebsous, sans amende.</span></button>
-        <button id="chRoute" class="big ghost" style="text-align:left;padding:16px">🗺️ <b>Choisir un parcours</b><br><span style="font-size:14px;font-weight:500">L'app te propose des balades de ${fmtMin(state.dur)} autour de toi.</span></button>
-        <button id="chExplo" class="big ghost" style="text-align:left;padding:16px">☁️ <b>Carte d'exploration</b><br><span style="font-size:14px;font-weight:500">Regarder ton quartier et les nuages, sans partir.</span></button>
-        <button class="ghost" id="chNo">Annuler</button></div>`);
-    $("#chExplo").onclick = () => { closeSheet(); setTimeout(() => { try{ openExplore(); }catch(e){} }, 150); };
-    $("#chFree").onclick = () => { closeSheet(); const p = FREE(); p.min = state.dur; startWalk(p); };
+  // ---------- 🚶 Nouveau départ (v4.5, décidé par Éric le 20/11 entre 16 h 05 et 16 h 13) ----------
+  // Toucher la carte de l'accueil → UNE question : « Tu gères ta balade, ou je te propose un parcours qui peut te faire gagner plus ? »
+  // Je gère = balade libre tout de suite ; Propose-moi = un parcours directement sur la carte (J'y vais · Suivant · 🎲 Choisis pour moi, ✕ pour revenir).
+  // La durée proposée est un peu plus longue que d'habitude (de façon croissante) ; la balade express de 10 min reste en petit lien.
+  var PROP_VALS = [20, 30, 45, 60, 90];
+  function propDur(){
+    try{
+      const me = normName(profile.walker || ""), ws = walksBetween(Date.now() - 14 * DAYMS, Date.now() + DAYMS).filter(e => !e.express && e.min >= 20 && (!e.walker || normName(e.walker) === me));
+      if (!ws.length) return 30;
+      const avg = ws.reduce((a, e) => a + e.min, 0) / ws.length, want = avg * 1.15;   // un peu plus que d'habitude
+      return PROP_VALS.find(v => v >= want && v >= 30) || 90;
+    }catch(e){ return 30; }
+  }
+  function startQuestion(){
+    if (state.walk) return;
+    if (!profile.walker){ askProfile(startQuestion); return; }
+    const d = propDur(), up = gainEst(d);
+    openSheet(`<h2 style="text-align:center">On y va ! 🐾</h2>
+      <p class="startq">Tu gères ta balade, ou je te propose un parcours qui peut te faire gagner plus ?</p>
+      <div class="btns startbtns">
+        <button id="chFree" class="big"><b>🚶 Je gère</b><span>Tu vas où tu veux, ça démarre tout de suite.</span></button>
+        <button id="chRoute" class="big gold"><b>🗺️ Propose-moi</b><span>Un parcours de ${fmtMin(d)} sur la carte, jusqu'à ${up} 🪙.</span></button>
+      </div>
+      <p style="text-align:center;margin:14px 0 2px"><button class="linkish" id="chExpress">⚡ Juste un petit tour de 10 min</button></p>`);
+    $("#chFree").onclick = () => { closeSheet(); state.dur = d; const p = FREE(); p.min = d; startWalk(p); };
     $("#chExpress").onclick = () => { closeSheet(); startWalk(EXPRESS()); };
-    $("#chRoute").onclick = () => { closeSheet(); locate(); setTimeout(() => $("#map").scrollIntoView({ behavior:"smooth", block:"start" }), 400); };
-    $("#chNo").onclick = closeSheet;
+    $("#chRoute").onclick = () => { closeSheet(); setTimeout(() => proposeRoutes(d), 150); };
+  }
+  $("#freeWalk").addEventListener("click", startQuestion);
+  $("#miniExplo").addEventListener("click", e => { e.stopPropagation(); try{ openExplore(); }catch(err){} });
+  function proposeRoutes(d){
+    try{ useTrack("🗺️ Propose-moi"); }catch(e){}
+    state.dur = d || propDur(); state.pi = null; state.cat = "all"; resetSearch();
+    document.body.classList.add("propose");
+    propMsg(`<span class="spinner"></span>Je cherche un parcours de ${fmtMin(state.dur)} autour de toi…`);
+    setTimeout(() => { try{ map.invalidateSize(); }catch(e){} }, 60);
+    locate();
+  }
+  function propMsg(html, fail){
+    $("#propCard").classList.toggle("wait", true);
+    $("#propTitle").innerHTML = html; $("#propSub").innerHTML = "";
+    $("#propIdx").textContent = "";
+    $("#propGo").hidden = $("#propNext").hidden = $("#propDice").hidden = true;
+    $("#propFree").hidden = !fail;
+  }
+  function propShow(i, dice){
+    const shown = visible(); if (!shown.length) return;
+    i = ((i % shown.length) + shown.length) % shown.length; state.pi = i;
+    const p = shown[i], k = state.results.indexOf(p);
+    select(k, true);
+    $("#propCard").classList.remove("wait");
+    $("#propIdx").textContent = shown.length > 1 ? `${i + 1}/${shown.length}` : "";
+    $("#propTitle").textContent = (dice ? "🎲 Roxy a choisi : " : "") + titleOf(p);
+    const nw = p.newPct >= 10 && Object.keys(game.seen || {}).length ? ` · 🆕 ${p.newPct} % de nouveau` : "";
+    $("#propSub").innerHTML = `${fmtMin(p.min)} · ${fmtKm(p.m)}${nw} · <b>jusqu'à ${gainEst(Math.round(p.min))} 🪙</b>`;
+    $("#propGo").hidden = $("#propNext").hidden = $("#propDice").hidden = false; $("#propFree").hidden = true;
+    $("#propNext").disabled = shown.length < 2; $("#propDice").disabled = shown.length < 2;
+  }
+  function propClose(){
+    genId++; document.body.classList.remove("propose", "hasmap"); state.pi = null;
+    try{ layers.routes.clearLayers(); layers.sel.clearLayers(); }catch(e){}
+    resetSearch(); state.results = []; state.sel = null; state.start = null; state.picking = false; $("#map").classList.remove("picking");
+    $("#status").innerHTML = ""; renderHome(); setTimeout(fitHome, 60);
+  }
+  $("#propX").addEventListener("click", propClose);
+  $("#propNext").addEventListener("click", () => propShow((state.pi || 0) + 1));
+  $("#propGo").addEventListener("click", () => { const p = state.results[state.sel]; if (p) startWalk(p); });
+  $("#propFree").addEventListener("click", () => { const d = state.dur; propClose(); const p = FREE(); p.min = d; startWalk(p); });
+  $("#propDice").addEventListener("click", () => {
+    const n = visible().length; if (n < 2) return;
+    let i = Math.floor(Math.random() * n); if (i === state.pi) i = (i + 1) % n;
+    propShow(i, true); ding();
+    $("#propGo").hidden = $("#propNext").hidden = $("#propDice").hidden = true;
+    const p = state.results[state.sel];
+    setTimeout(() => { if (document.body.classList.contains("propose") && p) startWalk(p); }, 1300);
   });
 
 
@@ -6722,8 +6984,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 57, APP_LABEL = "4.4";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    58: [
+      "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
+      "🗺️ Sur la carte de l'accueil : en fluo, les rues que tu n'as pas faites depuis 7 jours. ☁️ en haut à droite = carte d'exploration.",
+      "🏆 En bas, le classement en direct : touche-le pour le podium, les défis et les chiffres rigolos. Et la couronne 👑 se vole !"
+    ],
     57: [
       "👤 Chaque promeneur a son compte : un identifiant (à retenir, il ne change jamais) et un code.",
       "✏️ Ton prénom se change quand tu veux : ☰ › 👤 Mon compte. Tout le monde voit le nouveau.",
@@ -6999,7 +7266,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
