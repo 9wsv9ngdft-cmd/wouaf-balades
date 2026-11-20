@@ -670,3 +670,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🐛 **✕ de « Propose-moi »** : `propClose` vide la liste des parcours (`#props`, `#toolbar`, `#meteo`) ; `locate()` porte un numéro (`locGen`) et ignore une position
   qui arrive après le ✕ (avant : la carte et la recherche revenaient sous l'accueil).
 - Tests : `tests/e2e_v58.py` (✕ avant la position, carte qui remplit à 393 × 852) ; `e2e_v49.py` attend « 4.5.1 ».
+
+## Version 4.5.2 « Croquette » (APP_NUM 58, libellé « 4.5.2 », Éric le 20/11 à 18 h 03–18 h 06 : « il ne faut pas pouvoir scroller », barre blanche après ✕)
+- 🔒 **Accueil fixe** (`homeFix`, classe `html.homefix` : `overflow:hidden`, `overscroll-behavior:none`) : sur l'accueil seulement (pas en balade, page, récap, carte,
+  exploration, « Propose-moi », fiche ouverte) et seulement s'il tient dans l'écran ; `touchmove` bloqué hors carte / fiche / surprise (pas de rebond iPhone).
+  Recalculé par `fitHome` et à chaque changement de classe du body (MutationObserver). Avant : on pouvait faire glisser l'accueil → titre dans le flou du haut,
+  bande noire (ou blanche après « Propose-moi ») en bas.
+- `fitHome` mesure le bas de `main.wrap` (et plus seulement `#homeFoot`) : la carte remplit exactement l'écran, sans les 8–12 px qui faisaient défiler.
+- Titre un peu plus haut : `body.nuit header` = zone sûre + 12 px (avant + 18).
+- Tests : `tests/e2e_v58.py` (accueil fixe, molette, fiche ouverte puis refermée).

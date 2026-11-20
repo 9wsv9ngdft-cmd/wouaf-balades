@@ -813,7 +813,9 @@
   .pcard .pbtns button[hidden]{display:none}
   .pcard.wait .ptop b{font-weight:600;font-size:15px}
   /* v4.5.1 (maquette « descendu » A, choisie par Éric le 20/11 17 h 47) : de l'air sous l'heure, tuiles juste au-dessus de la barre de l'iPhone */
-  body.nuit header{padding-top:calc(env(safe-area-inset-top) + 18px)}
+  body.nuit header{padding-top:calc(env(safe-area-inset-top) + 12px)}
+  /* v4.5.2 (Éric, 20/11 18 h 03 : « il ne faut pas pouvoir scroller ») : l'accueil est fixe, il ne glisse plus (ni rebond iPhone) quand il tient dans l'écran */
+  html.homefix,html.homefix body{overflow:hidden;overscroll-behavior:none;height:100%}
   body.nuit .hero{margin-top:18px}
   body.nuit #goCard{margin-top:16px}
   body.nuit #homeFoot{padding-bottom:calc(env(safe-area-inset-bottom) + 4px)}
@@ -984,7 +986,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.175154";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.182042";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -6880,15 +6882,32 @@
   function fitHome(){
     const b = document.body.classList; if (["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k))) return;
     const mm = $("#miniMap"); if (!mm) return;
+    document.documentElement.classList.remove("homefix");   // v4.5.2 : on mesure la page libre, puis homeFix la refixe
     mm.style.height = "70px";
-    const last = $("#homeFoot").textContent ? $("#homeFoot") : $("#home");
-    const extra = window.innerHeight - (last.getBoundingClientRect().bottom + window.scrollY) - 12;
+    const extra = window.innerHeight - ($("main.wrap").getBoundingClientRect().bottom + window.scrollY) - 4;   // tout le bas de la page compte (pied, vues vides…)
     let h = Math.max(70, Math.min(900, 70 + extra)); mm.style.height = h + "px";   // v4.5.1 (maquette « descendu » A) : la carte remplit tout, plus de vide en bas
     const over = document.documentElement.scrollHeight - window.innerHeight;   // sécurité : jamais de défilement à cause de la carte
     if (over > 0 && h > 70){ h = Math.max(70, h - over); mm.style.height = h + "px"; }
+    try{ homeFix(); }catch(e){}
     drawMiniMap();
   }
   window.addEventListener("resize", () => { clearTimeout(fitHome._t); fitHome._t = setTimeout(fitHome, 150); });
+  // v4.5.2 : accueil fixe. Seulement sur l'accueil, et seulement s'il tient dans l'écran (un petit téléphone garde le défilement)
+  const onHome = () => { const b = document.body.classList; return !["walking", "page", "recap", "choosing", "hasmap", "explore", "propose", "locked"].some(k => b.contains(k)); };
+  function homeFix(){
+    const h = document.documentElement, was = h.classList.contains("homefix");
+    if (!onHome()){ h.classList.remove("homefix"); return; }
+    if (!was && window.scrollY > 0) window.scrollTo(0, 0);
+    h.classList.remove("homefix");
+    const fits = document.documentElement.scrollHeight <= window.innerHeight + 1;
+    h.classList.toggle("homefix", fits);
+  }
+  new MutationObserver(() => { clearTimeout(homeFix._t); homeFix._t = setTimeout(homeFix, 30); }).observe(document.body, { attributes:true, attributeFilter:["class"] });
+  document.addEventListener("touchmove", e => {   // iPhone : pas de rebond de la page d'accueil (les fiches et la carte défilent toujours)
+    if (!document.documentElement.classList.contains("homefix") || $("#modal").classList.contains("open")) return;
+    if (e.target.closest && e.target.closest(".leaflet-container, #sheet, #surp")) return;
+    if (e.cancelable) e.preventDefault();
+  }, { passive:false });
   // 🌙 v2.5 : l'accueil est « nuit » (bleu nuit, ivoire) ; la balade, la carte et les pages gardent leurs couleurs
   function setNuit(){
     const b = document.body.classList, dark = !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;   // v4.5 : mode clair / sombre = réglage du téléphone
@@ -7133,7 +7152,7 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5.1";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5.2";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
