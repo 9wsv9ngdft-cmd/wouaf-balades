@@ -652,3 +652,14 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   (à chaque `/pause`) : si je l'avais et que quelqu'un passe devant → « 😱 X m'a piqué la couronne ! ». **Plus de couronne fantôme.**
 - 🌗 **Mode clair / sombre = réglage du téléphone** : `body.nuit` seulement si `prefers-color-scheme: dark` (suivi en direct) ; mode clair = ancien thème clair + accueil B clair.
 - Tests : `tests/e2e_v58.py` ; `e2e_accueil.py`, `e2e_explo.py` (couronne volée), `e2e_v48.py`, `e2e_v49.py`, `e2e_v50.py`, `e2e_v51.py`, `e2e_v53.py` adaptés.
+- 🕹️🎄 **Surprises** (décidé par Éric le 20/11 entre 16 h 49 et 17 h 27 ; pas annoncées dans les nouveautés, c'est le but) : overlay plein écran `#surp` (`surpPlay(scenes, kind)` :
+  scènes `{ id, bg, ms, cls, html }`, un toucher = fini), thème `surpTheme()` = **Noël en décembre** (rouge / vert / or, neige `spSnow`, cadeaux `spGifts`), **arcade** sinon
+  (lignes de vitesse, balayage, contour doré, billets `spBills`) ; les autres événements (Halloween, Pâques) auront leur thème plus tard. Polices du téléphone (aucune police téléchargée).
+  - **Ouverture** (`surpOpenMaybe`, fin de `startupDigest` quand il n'y a rien à montrer et que le pop-up du jour est déjà vu) : ~1 fois sur 8, une fois par jour, ~2 s :
+    « PRÊTE ? → WOUAF !! » / « HO HO HO… → JOYEUX WOUAF ! ».
+  - **Retour de balade** (`surpBackMaybe`, juste après `showRecapSheet`, par-dessus le récap) : balade ≥ 20 min, pas express ; chance 20 % / 34 % dès 45 min / 50 % dès 1 h ;
+    K.O. (« HO HO HO ! ») → résultats (km, durée, rues neuves, pipis = « sapins arrosés ») → COMBO ×série (« GUIRLANDE ») si série ≥ 2 → +clebsous de la balade
+    (« sous le sapin ») → « Demain… COMBO ×n+1 ? » (« LA CASE n+1 du calendrier ! »). ~15–20 s.
+  - **Pop-up du jour** (`popJudge`, appelé par `closeSheet`) : les 3 cartes vues en ≥ 9 s = **bien lu** → « BIEN LU ! » / « LUTIN MODÈLE ! » et **+10 clebsous** (`READ_CS`, `addMoney`,
+    une fois par jour, pas pour Éric) ; fermé en < 4 s = **zappé** → juste « Ah non… t'es sûr ? C'est pour Roxy. » (une fois par jour, rien d'autre). Clé `wouaf-surp`.
+  - Tests : `tests/e2e_v58_surprise.py` (horloge simulée : 25/11 arcade, 3/12 Noël ; `window.__surpForce` force le hasard).

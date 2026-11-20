@@ -813,6 +813,53 @@
   .pcard .pbtns button[hidden]{display:none}
   .pcard.wait .ptop b{font-weight:600;font-size:15px}
   .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
+
+  /* ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 16 h 49–17 h 27) : arcade d'habitude, Noël en décembre ---------- */
+  #surp{position:fixed;inset:0;z-index:5000;display:none;overflow:hidden;font-family:"Bungee","Arial Black",Impact,system-ui,sans-serif;color:#fff;-webkit-user-select:none;user-select:none}
+  #surp.on{display:block}
+  #surp .sc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;text-align:center;padding:0 22px}
+  #surp .skip{all:unset;position:absolute;inset:0;z-index:30;cursor:pointer}
+  #surp .hint{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:31;text-align:center;font:700 12.5px system-ui,sans-serif;opacity:.75;pointer-events:none}
+  #surp .lines{position:absolute;left:-50%;top:-50%;width:200%;height:200%;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.15) 0deg 2deg,transparent 2deg 9deg);animation:sp-spin 5s linear infinite;pointer-events:none}
+  #surp .scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 2px,transparent 2px 4px);pointer-events:none}
+  #surp .flash{position:absolute;inset:0;background:#fff;animation:sp-flash .4s ease-out both;pointer-events:none}
+  #surp .big{position:relative;line-height:1;letter-spacing:1px}
+  #surp .gold{text-shadow:3px 3px 0 #e3bf5c,-3px -3px 0 #e3bf5c,3px -3px 0 #e3bf5c,-3px 3px 0 #e3bf5c,0 3px 0 #e3bf5c,0 -3px 0 #e3bf5c,8px 10px 0 rgba(0,0,0,.85)}
+  #surp .wht{text-shadow:3px 3px 0 #fff,-3px -3px 0 #fff,3px -3px 0 #fff,-3px 3px 0 #fff,0 3px 0 #fff,0 -3px 0 #fff,8px 10px 0 rgba(0,0,0,.6)}
+  #surp .sub{position:relative;font-size:18px;letter-spacing:1px}
+  #surp .slam{animation:sp-slam .45s cubic-bezier(.2,1.4,.4,1) both}
+  #surp .shake{animation:sp-shake .35s .35s both}
+  #surp .zoom{animation:sp-zoom .5s ease-out both}
+  #surp .fade{animation:sp-fade .45s ease-out both}
+  #surp .rise{animation:sp-rise .45s cubic-bezier(.2,1.3,.4,1) both}
+  #surp .pop{animation:sp-pop .55s cubic-bezier(.2,1.6,.4,1) both}
+  #surp .band{animation:sp-band .5s cubic-bezier(.2,1.2,.4,1) both}
+  #surp .blink{animation:sp-blink 1s steps(1) infinite}
+  #surp .row{position:relative;width:100%;max-width:340px;display:flex;justify-content:space-between;align-items:center;border:3px solid #e3bf5c;border-radius:14px;padding:12px 16px;box-shadow:6px 7px 0 rgba(0,0,0,.8);box-sizing:border-box}
+  #surp .row span{font-size:14px} #surp .row b{font-size:26px;font-weight:400}
+  #surp .bill{position:absolute;top:-60px;width:34px;height:18px;border-radius:3px;background:#7fd88a;border:2px solid #2f8a43;animation:sp-fall 2.6s linear infinite}
+  #surp .snow{position:absolute;top:-20px;border-radius:50%;background:#fff;animation:sp-snow 4s linear infinite;pointer-events:none}
+  #surp .gift{position:absolute;top:-60px;width:30px;height:26px;border-radius:4px;animation:sp-fall 3s linear infinite}
+  #surp .gift::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:6px;margin-left:-3px;background:#e3bf5c}
+  #surp .gift::after{content:"";position:absolute;top:50%;left:0;right:0;height:6px;margin-top:-3px;background:#e3bf5c}
+  #surp .jab{position:relative;background:#f4f1ea;color:#0d1117;border-radius:24px;padding:24px 26px;font:800 24px/1.25 system-ui,sans-serif;box-shadow:0 20px 40px -10px rgba(0,0,0,.6);animation:sp-wob .55s cubic-bezier(.2,1.5,.4,1) both}
+  #surp .jab small{display:block;font-weight:500;font-size:17px;color:#3b4450;margin-top:8px}
+  #surp .coin{position:relative;background:#e3bf5c;color:#0d1117;border-radius:14px;padding:8px 18px;font-size:30px}
+  #surp .coin small{display:block;font:700 13px system-ui,sans-serif}
+  @keyframes sp-spin{to{transform:rotate(360deg)}}
+  @keyframes sp-flash{from{opacity:.95}to{opacity:0}}
+  @keyframes sp-slam{0%{transform:scale(3.2) rotate(-14deg);opacity:0}65%{transform:scale(.9) rotate(-6deg);opacity:1}100%{transform:scale(1) rotate(-6deg)}}
+  @keyframes sp-shake{0%,100%{transform:translate(0,0)}20%{transform:translate(-7px,5px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-4px,-5px)}80%{transform:translate(4px,3px)}}
+  @keyframes sp-zoom{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes sp-fade{from{opacity:0}to{opacity:1}}
+  @keyframes sp-rise{from{transform:translateX(-115%)}to{transform:none}}
+  @keyframes sp-pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes sp-band{from{transform:translateX(120%) rotate(-10deg)}to{transform:translateX(0) rotate(-10deg)}}
+  @keyframes sp-blink{50%{opacity:0}}
+  @keyframes sp-fall{from{transform:translateY(0) rotate(0)}to{transform:translateY(110vh) rotate(560deg)}}
+  @keyframes sp-snow{from{transform:translate(0,0)}to{transform:translate(30px,110vh)}}
+  @keyframes sp-wob{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){ #surp *{animation-duration:.01s !important;animation-iteration-count:1 !important} }
 </style>
 </head>
 <body>
@@ -920,6 +967,7 @@
 <div id="coach" hidden></div>
 <div id="exploreBar" role="region" aria-label="Carte d'exploration"><div class="t" id="exploreTxt"></div><button id="exploreMe" aria-label="Recentrer sur moi">📍</button><button id="exploreClose">✕ Fermer</button></div>
 <div id="pocket" hidden><div class="pk"><div style="font-size:40px">🌙</div><b>Mode poche</b><div id="pocketStats"></div><div class="pflair" id="pocketFlair"></div><small>La balade continue, le GPS aussi.</small><div class="pkSlide" id="pkSlide"><i class="pkKnob" id="pkKnob">🐾</i><span>Glisse la patte pour revenir</span></div></div></div>
+<div id="surp" aria-live="polite"></div>
 <div id="propBar" role="region" aria-label="Parcours proposé"><button id="propX" class="propx" aria-label="Revenir à l'accueil">✕</button>
   <div class="pcard wait" id="propCard"><div class="ptop"><b id="propTitle"></b><span id="propIdx"></span></div><div class="psub" id="propSub" aria-live="polite"></div>
   <div class="pbtns"><button id="propGo" hidden>▶️ J'y vais</button><button id="propNext" class="ghost" hidden>Suivant ›</button><button id="propDice" class="ghost" hidden>🎲 Choisis pour moi</button><button id="propFree" class="ghost" hidden>🚶 Je gère, je pars en libre</button></div></div></div>
@@ -931,7 +979,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.172355";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.173453";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1842,7 +1890,7 @@
     const r = st.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight - 70 || r.height === 0) try{ toast(t, 4000); }catch(e){} } })
     .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
   let introRunning = false;   // écran « tout repart de zéro » + tuto en cours : pas de rechargement (mise à jour, remise à zéro) avant la fin
-  function closeSheet(){ if (popOpen){ popOpen = false; try{ popToRoxy(); }catch(e){} } $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
+  function closeSheet(){ if (popOpen){ popOpen = false; try{ popToRoxy(); }catch(e){} try{ popJudge(); }catch(e){} } $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal" && !gateOpen) closeSheet(); });
   function askProfile(then){
     if (!accSkip() && supToken() && isEricName(profile.walker)){ accSupCreate(then); return; }   // 🔐 téléphone superviseur sans compte : la bascule
@@ -4177,7 +4225,7 @@
     renderHome();
     digestRunning = false;
     setTimeout(dailyPopMaybe, 1200);   // 🗒️ v4.0 : pop-up du jour, après le « Quoi de neuf »
-    if (!cards.length) return;
+    if (!cards.length){ if (store.get(POP_KEY, "") === dIso(Date.now())) setTimeout(() => { try{ surpOpenMaybe(); }catch(e){} }, 700); return; }   // 🕹️ v4.5 : rien à dire → parfois une surprise
     const show = () => {
       if ($("#modal").classList.contains("open") || state.walk){ setTimeout(show, 3000); return; }
       // ✨ une seule fenêtre, courte : toutes les nouvelles les unes sous les autres, un seul bouton
@@ -4438,8 +4486,9 @@
         <p class="popwhy">🐕 ${esc(POP_WHY[doy % POP_WHY.length])}</p>
         <p class="howto">À demain ! Ouvre-moi chaque jour 🐾</p>`
     ];
-    let i = 0;
+    let i = 0; popT0 = Date.now(); popMax = 0;
     const draw = () => {
+      popMax = Math.max(popMax, i);
       openSheet(`<div class="popday">${cards[i]}</div>
         <div class="popdots">${cards.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
         <div class="btns">${i ? `<button class="ghost" id="popPrev">‹</button>` : ""}<button id="popNext">${i < cards.length - 1 ? "Suivant ›" : "C'est noté 🐾"}</button></div>`);
@@ -4450,6 +4499,97 @@
       const av = $("#popAvent"); if (av) av.onclick = () => { popOpen = false; closeSheet(); setTimeout(() => { const d = aventDayNum(); if (d && aventPending()) aventOpen(d); else sheetEvents(); }, 150); };
     };
     draw();
+  }
+  // ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 entre 16 h 49 et 17 h 27) ----------
+  // Un truc qui déboule plein pot, rare, au hasard : style arcade / manga / années 80 d'habitude, et une version Noël en décembre
+  // (« les trucs spéciaux » ; Halloween et Pâques auront la leur plus tard, en attendant : arcade).
+  // Moments : à l'ouverture (court, ~2 s, Roxy attend), au retour de balade (le grand spectacle, ~15–20 s), pop-up du jour bien lu (+10),
+  // pop-up zappé trop vite (juste « Ah non… t'es sûr ? C'est pour Roxy. »). Toujours passable d'un toucher. Rien n'est envoyé.
+  var SURP_KEY = "wouaf-surp", READ_CS = 10;
+  const surpTheme = t => new Date(t || Date.now()).getMonth() === 11 ? "xmas" : "arcade";
+  const surpSt = () => store.get(SURP_KEY, {}) || {};
+  const surpSave = o => store.set(SURP_KEY, Object.assign(surpSt(), o));
+  const surpRnd = () => window.__surpForce != null ? window.__surpForce : Math.random();   // les tests forcent le hasard
+  var surpTimer = null, surpEnd = null;
+  const spSnow = n => Array.from({ length: n }, (_, k) => { const sz = 3 + (k * 7) % 6; return `<i class="snow" style="left:${(k * 37 + 11) % 100}%;width:${sz}px;height:${sz}px;opacity:${.5 + (k % 5) / 10};animation-delay:${((k * 13) % 40) / 10}s;animation-duration:${3 + (k % 4)}s"></i>`; }).join("");
+  const spBills = n => Array.from({ length: n }, (_, k) => `<i class="bill" style="left:${(k * 53 + 11) % 92}%;animation-delay:${((k * 37) % 26) / 10}s;animation-duration:${2.2 + ((k * 13) % 9) / 10}s"></i>`).join("");
+  const spGifts = n => Array.from({ length: n }, (_, k) => `<i class="gift" style="left:${(k * 47 + 7) % 90}%;background:${["#b3121f", "#0f7a4a", "#2a6fd6", "#c58b18"][k % 4]};animation-delay:${((k * 29) % 30) / 10}s;animation-duration:${2.6 + ((k * 11) % 10) / 10}s"></i>`).join("");
+  const SP_LINES = `<div class="lines"></div>`, SP_SCAN = `<div class="scan"></div>`, SP_FLASH = `<div class="flash"></div>`;
+  function surpPlay(scenes, kind){
+    const box = $("#surp"); if (!box || !scenes.length) return;
+    clearTimeout(surpTimer); let i = 0;
+    try{ useTrack("🕹️ Surprise " + kind); }catch(e){}
+    const end = () => { clearTimeout(surpTimer); box.classList.remove("on"); box.innerHTML = ""; box.dataset.kind = ""; const f = surpEnd; surpEnd = null; if (f) f(); };
+    const step = () => {
+      if (i >= scenes.length) return end();
+      const sc = scenes[i++];
+      box.innerHTML = `<div class="sc ${sc.cls || ""}" style="background:${sc.bg}" data-sc="${sc.id || ""}">${sc.html}</div><button class="skip" aria-label="Passer la surprise"></button>${scenes.length > 1 ? `<div class="hint">touche pour passer</div>` : ""}`;
+      box.querySelector(".skip").onclick = end;
+      surpTimer = setTimeout(step, sc.ms);
+    };
+    box.dataset.kind = kind; box.classList.add("on"); step();
+  }
+  function surpOpenScenes(th){
+    if (th === "xmas") return [
+      { id:"ho", bg:"#0f3d2e", ms:800, html: spSnow(26) + `<div class="big zoom wht" style="font-size:46px;color:#b3121f">HO HO HO…</div>` },
+      { id:"wouaf", bg:"#b3121f", ms:1700, cls:"shake", html: spSnow(34) + `<div class="big slam gold" style="font-size:66px;color:#0f5132">JOYEUX</div><div class="big slam gold" style="font-size:66px;color:#0f5132;animation-delay:.12s">WOUAF !</div>` + SP_FLASH }];
+    return [
+      { id:"ready", bg:"#14161f", ms:700, html: SP_LINES.replace("lines", "lines\" style=\"opacity:.5") + `<div class="big zoom" style="font-size:54px">PRÊTE ?</div>` + SP_SCAN },
+      { id:"wouaf", bg:"#c1121f", ms:1500, cls:"shake", html: SP_LINES + `<div class="big slam gold" style="font-size:92px;color:#c1121f">WOUAF</div><div class="big slam gold" style="font-size:92px;color:#c1121f;animation-delay:.12s">!!</div>` + SP_SCAN + SP_FLASH }];
+  }
+  function surpReadScenes(th){
+    const coin = `<div class="coin pop" style="animation-delay:.45s">+${READ_CS}<small>${th === "xmas" ? "cadeau de lecture" : "bonus lecteur"}</small></div>`;
+    if (th === "xmas") return [{ id:"read", bg:"#0f5132", ms:2400, cls:"shake", html: spSnow(30) + `<div class="big slam gold" style="font-size:54px;color:#b3121f">LUTIN</div><div class="big slam gold" style="font-size:54px;color:#b3121f;animation-delay:.1s">MODÈLE !</div>${coin}` + SP_FLASH }];
+    return [{ id:"read", bg:"#1d4ed8", ms:2200, cls:"shake", html: SP_LINES + `<div class="big slam gold" style="font-size:72px;color:#1d4ed8">BIEN</div><div class="big slam gold" style="font-size:72px;color:#1d4ed8;animation-delay:.1s">LU !</div>${coin}` + SP_SCAN + SP_FLASH }];
+  }
+  const surpJabScenes = () => [{ id:"jab", bg:"rgba(5,8,12,.6)", ms:2800, html: `<div class="jab">Ah non… t'es sûr ?<small>C'est pour ${esc(DOG)}.</small></div>` }];
+  function surpBackScenes(th, c){
+    const x = th === "xmas", sc = [], km = (c.m || 0) / 1000;
+    const rows = [["DISTANCE", `${km.toFixed(1).replace(".", ",")} KM`], ["DURÉE", `${Math.round(c.min)} MIN`]];
+    if (c.nc) rows.push(["RUES NEUVES", String(c.nc)]);
+    if (c.pp) rows.push([x ? "SAPINS ARROSÉS" : "PIPIS", String(c.pp)]);
+    sc.push(x ? { id:"ko", bg:"#b3121f", ms:2600, cls:"shake", html: spSnow(34) + `<div class="big slam gold" style="font-size:72px;color:#0f5132">HO HO HO !</div><div class="sub blink" style="color:#fff">BALADE BOUCLÉE</div>` + SP_FLASH }
+      : { id:"ko", bg:"#0a0a12", ms:2600, cls:"shake", html: SP_LINES.replace("lines", "lines\" style=\"opacity:.7") + `<div class="big slam gold" style="font-size:124px;color:#c1121f">K.O.</div><div class="sub blink" style="color:#e3bf5c">BALADE BOUCLÉE</div>` + SP_SCAN + SP_FLASH });
+    sc.push({ id:"res", bg: x ? "#0f3d2e" : "#11131c", ms: 1400 + rows.length * 800, html: (x ? spSnow(18) : "") + `<div class="big" style="font-size:28px;color:#e3bf5c">${x ? "TA HOTTE" : "RÉSULTATS"}</div>` +
+      rows.map((r, k) => `<div class="row rise" style="background:${x ? "#b3121f" : "#c1121f"};animation-delay:${.3 + k * .8}s"><span>${r[0]}</span><b>${r[1]}</b></div>`).join("") + (x ? "" : SP_SCAN) });
+    if (c.streak >= 2) sc.push(x ? { id:"combo", bg:"#0f5132", ms:3000, cls:"shake", html: spSnow(26) + `<div class="big slam" style="font-size:46px">GUIRLANDE</div><div class="big slam gold" style="font-size:140px;color:#b3121f;animation-delay:.2s">×${c.streak}</div><div class="sub fade" style="font:600 18px system-ui,sans-serif;animation-delay:.6s">${c.streak} jours d'affilée : ça brille !</div>` + SP_FLASH }
+      : { id:"combo", bg:"#0b3a4a", ms:3000, cls:"shake", html: SP_LINES + `<div class="big slam" style="font-size:56px">COMBO</div><div class="big slam gold" style="font-size:140px;color:#2ec4f1;animation-delay:.2s">×${c.streak}</div><div class="sub fade" style="font:600 18px system-ui,sans-serif;animation-delay:.6s">${c.streak} jours de balade d'affilée</div>` + SP_SCAN + SP_FLASH });
+    if (c.cs > 0) sc.push({ id:"gain", bg: x ? "#0f3d2e" : "#0a0a12", ms:3600, html: (x ? spGifts(12) + spSnow(16) : spBills(14)) + `<div class="big pop gold" style="font-size:${String(c.cs).length > 3 ? 84 : 108}px;color:#c1121f">+${c.cs}</div><div class="sub fade" style="color:#e3bf5c;animation-delay:.5s">${x ? "CLEBSOUS SOUS LE SAPIN" : "CLEBSOUS"}</div>` + (x ? "" : SP_SCAN) });
+    let tease;
+    if (x){ const d = (() => { try{ return aventDayNum(); }catch(e){ return 0; } })(); tease = d && d < 24 ? `<div class="sub" style="font:600 18px system-ui,sans-serif">Demain…</div><div class="big" style="font-size:40px;color:#e3bf5c">LA CASE ${d + 1}</div><div class="sub">DU CALENDRIER !</div>` : `<div class="big" style="font-size:42px;color:#e3bf5c">JOYEUX NOËL</div><div class="sub">${esc(DOG.toUpperCase())} TE DIT MERCI</div>`; }
+    else tease = c.streak >= 1 ? `<div class="sub" style="font:600 18px system-ui,sans-serif;color:#b6becb">Demain…</div><div class="big" style="font-size:46px;color:#2ec4f1">COMBO ×${c.streak + 1} ?</div>` : `<div class="big" style="font-size:42px;color:#2ec4f1">ON REMET ÇA ?</div>`;
+    sc.push({ id:"tease", bg: x ? "#b3121f" : "#0a0a12", ms:2600, html: (x ? spSnow(24) : "") + tease + `<div class="sub blink" style="font-size:14px;color:#e3bf5c;margin-top:30px">TOUCHE POUR CONTINUER</div>` + (x ? "" : SP_SCAN) });
+    return sc;
+  }
+  // à l'ouverture : rare (~1 fois sur 8), une fois par jour au plus, seulement si rien d'autre ne s'affiche
+  function surpOpenMaybe(){
+    if (!profile.walker || introRunning || state.walk || $("#modal").classList.contains("open") || document.body.classList.contains("page")) return false;
+    const st = surpSt(), today = dIso(Date.now());
+    if (st.open === today || surpRnd() >= .12) return false;
+    surpSave({ open: today }); surpPlay(surpOpenScenes(surpTheme()), "ouverture"); return true;
+  }
+  // au retour de balade : plus la balade est longue, plus c'est probable (le spectacle passe par-dessus le récap)
+  function surpBackMaybe(c){
+    if (!c || c.express || c.min < MONEY_MIN) return false;
+    const ch = c.min >= 60 ? .5 : c.min >= 45 ? .34 : .2;
+    if (surpRnd() >= ch) return false;
+    surpSave({ back: Date.now() }); surpPlay(surpBackScenes(surpTheme(), c), "retour"); return true;
+  }
+  // pop-up du jour : bien lu (les 3 cartes, sans se presser) → récompense ; zappé (fermé en moins de 4 s) → « Ah non… t'es sûr ? »
+  var popT0 = 0, popMax = 0;
+  function popJudge(){
+    const dt = Date.now() - popT0, st = surpSt(), today = dIso(Date.now());
+    if (popMax >= 2 && dt >= 9000){
+      if (st.read === today) return "read-done";
+      surpSave({ read: today });
+      if (!isTester()){ ensureGame(); addMoney(READ_CS / CS); game.total = (game.total || 0) + READ_CS; saveGame(); }
+      setTimeout(() => { surpPlay(surpReadScenes(surpTheme()), "bien lu"); try{ renderHome(); }catch(e){} }, 650); return "read";
+    }
+    if (dt < 4000){
+      if (st.jab === today) return "jab-done";
+      surpSave({ jab: today }); setTimeout(() => surpPlay(surpJabScenes(), "zappé"), 650); return "jab";
+    }
+    return "";
   }
   function popToRoxy(){   // la fenêtre se range dans le médaillon de Roxy, puis elle dit qu'on peut la toucher
     const s = $("#sheet"), dog = $("#heroDog"); if (!s || !dog || document.body.classList.contains("page")) return;
@@ -6286,6 +6426,7 @@
     document.body.classList.remove("hasmap"); renderHome();
     Object.defineProperty(r, "_res", { value: res, enumerable:false });
     showRecapSheet(r, photos.slice(), titleOf(p), res, moneyMin);
+    try{ surpBackMaybe({ min: elapsed, m: r.m, nc: res ? res.cells || 0 : 0, pp: r.pp || 0, cs: Math.round((r.eu || 0) * CS), streak: (game.streak && game.streak.n) || 0, express: !!p.express }); }catch(e){}   // 🕹️🎄 v4.5
     pushState(true); queueWalk(r, res);
     if (duoWait) duoCheck(false).then(pn => {
       if (!pn) return;
@@ -7266,7 +7407,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
