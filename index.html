@@ -986,7 +986,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.183123";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.184147";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3739,11 +3739,11 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupC", "👥", "Comptes", "inscriptions, code oublié")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${acc && acc.sup ? "" : it("muSupK", "🔐", "Créer le compte superviseur", "l'ancien code s'arrêtera")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupS", "🕹️", "Voir les surprises", "arcade et Noël, sans attendre le hasard")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupC", "👥", "Comptes", "inscriptions, code oublié")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${acc && acc.sup ? "" : it("muSupK", "🔐", "Créer le compte superviseur", "l'ancien code s'arrêtera")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
-    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupC", sheetAccounts); go("muSupK", () => accSupCreate()); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupS", sheetSurprises); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupC", sheetAccounts); go("muSupK", () => accSupCreate()); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
   }
   // 📱 v4.4 : plusieurs téléphones sur le même compte superviseur (un jeton chacun, Worker /sup-phones). Se connecter ailleurs avec le code ne déconnecte plus personne.
   async function sheetSupPhones(){
@@ -4581,6 +4581,30 @@
     const ch = c.min >= 60 ? .5 : c.min >= 45 ? .34 : .2;
     if (surpRnd() >= ch) return false;
     surpSave({ back: Date.now() }); surpPlay(surpBackScenes(surpTheme(), c), "retour"); return true;
+  }
+  // 🕹️ v4.5.4 (Éric, 20/11 18 h 38) : Superviseur › Voir les surprises : chaque surprise à la demande, en arcade ou en Noël, avec des chiffres d'exemple.
+  // Rien n'est compté : pas de clebsous, pas de « déjà vu aujourd'hui ». Quand la surprise se termine, on revient à cette fiche.
+  const SURP_DEMO = { min: 52, m: 3400, nc: 5, pp: 3, cs: 120, streak: 3 };
+  function sheetSurprises(){
+    const row = th => `<div class="flabel">${th === "xmas" ? "🎄 Version Noël (en décembre)" : "🕹️ Version arcade (le reste de l'année)"}</div>
+      <div class="mlist" style="grid-template-columns:1fr 1fr">
+        <button data-sp="open" data-th="${th}"><span>⚡</span>À l'ouverture</button>
+        <button data-sp="back" data-th="${th}"><span>🏁</span>Retour de balade</button>
+        <button data-sp="read" data-th="${th}"><span>📖</span>Pop-up bien lu</button>
+        <button data-sp="jab" data-th="${th}"><span>🙈</span>Pop-up zappé</button>
+      </div>`;
+    openSheet(`<h2>🕹️ Les surprises</h2>
+      <p class="howto">Ce que voient les promeneurs, sans attendre le hasard. Chiffres d'exemple (3,4 km, 52 min, série de 3, +120). Touche l'écran pour passer.</p>
+      ${row("arcade")}${row("xmas")}
+      <p class="howto">En vrai : ouverture ~1 fois sur 8 (une fois par jour) · retour de balade de 20 min ou plus : 1 fois sur 5, 1 sur 3 dès 45 min, 1 sur 2 dès 1 h · pop-up bien lu (+10, une fois par jour) · pop-up zappé en moins de 4 s (une fois par jour).</p>
+      <div class="btns"><button class="ghost" id="spsBack">← Superviseur</button></div>`);
+    document.querySelectorAll("#sheet [data-sp]").forEach(b => b.onclick = () => {
+      const th = b.dataset.th, k = b.dataset.sp;
+      const sc = k === "open" ? surpOpenScenes(th) : k === "back" ? surpBackScenes(th, SURP_DEMO) : k === "read" ? surpReadScenes(th) : surpJabScenes();
+      closeSheet(); surpEnd = () => setTimeout(sheetSurprises, 250);
+      setTimeout(() => surpPlay(sc, "aperçu " + k), 200);
+    });
+    $("#spsBack").onclick = sheetSupMenu;
   }
   // pop-up du jour : bien lu (les 3 cartes, sans se presser) → récompense ; zappé (fermé en moins de 4 s) → « Ah non… t'es sûr ? »
   var popT0 = 0, popMax = 0;
@@ -7160,7 +7184,7 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5.3";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5.4";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
@@ -7442,7 +7466,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

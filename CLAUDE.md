@@ -686,3 +686,9 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   (app de l'écran d'accueil), `innerHeight` peut être trop petit à l'ouverture → carte trop courte et noir en bas. `fitHome` est relancé à 0,4 / 1,2 / 2,5 / 5 s après
   l'ouverture, au retour dans l'app, sur `visualViewport` resize, `pageshow` et rotation.
 - Moins de noir sous les tuiles : `#homeFoot` = 6 px en haut, `max(6px, zone sûre du bas − 12 px)` en bas (la ligne de version peut frôler la barre de l'iPhone).
+
+## Version 4.5.4 « Croquette » (APP_NUM 58, libellé « 4.5.4 », demandé par Éric le 20/11 à 18 h 38)
+- 🕹️ **Superviseur › Voir les surprises** (`sheetSurprises`, entrée `#muSupS` de `sheetSupMenu`) : 8 boutons (arcade / Noël × ouverture, retour de balade, pop-up bien lu,
+  pop-up zappé), joués à la demande avec des chiffres d'exemple (`SURP_DEMO`) ; à la fin (ou au toucher), retour à la fiche (`surpEnd`). Rien n'est compté : ni clebsous,
+  ni « déjà vu aujourd'hui ». Rappel des fréquences réelles en bas de la fiche.
+- Tests : `tests/e2e_v58_surprise.py` (fiche, Noël joué, retour à la fiche, pas de clebsous).
