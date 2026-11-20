@@ -24,7 +24,18 @@ with sync_playwright() as pw:
     B.fill("#supCode", "1234"); B.click("#supMine"); B.wait_for_timeout(1200)
     check("bon code : ce téléphone devient le superviseur", bool(B.evaluate("__wouaf.supToken()")) and "Superviseur" in B.evaluate("document.querySelector('#sheet').innerText"))
     r = local_api("POST", "/dash", json.dumps({"token": A.evaluate("__wouaf.supToken()")}).encode())
-    check("l'ancien téléphone perd la main", r[0] == 403 if isinstance(r, tuple) else True, r)
+    check("v4.4 : l'ancien téléphone reste connecté", r[0] == 200 if isinstance(r, tuple) else True, r)
+    # 📱 Superviseur › Téléphones connectés : 2 téléphones, puis « déconnecter les autres » depuis B
+    B.evaluate("document.querySelector('#sheetX') && document.querySelector('#sheetX').click()"); B.wait_for_timeout(300)
+    B.evaluate("__wouaf.sheetSupMenu()"); B.wait_for_timeout(300)
+    check("menu superviseur : entrée Téléphones connectés", B.evaluate("!!document.querySelector('#muSupF')"))
+    B.click("#muSupF"); B.wait_for_timeout(1000)
+    if True:
+        check("fiche : 2 téléphones connectés", "2 téléphones" in B.evaluate("document.querySelector('#sheet').innerText"))
+        B.click("#spOnly"); B.click("#spOnly"); B.wait_for_timeout(800)
+        check("fiche : seul ce téléphone reste", "Seul" in B.evaluate("document.querySelector('#sheet').innerText"))
+        r = local_api("POST", "/dash", json.dumps({"token": A.evaluate("__wouaf.supToken()")}).encode())
+        check("l'autre téléphone est déconnecté", r[0] == 403 if isinstance(r, tuple) else True, r)
     # 3e téléphone : tape « Éric » → refusé → champ code dans la même fiche
     bC, cC, C = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','42');")
     C.emulate_media(color_scheme="dark"); open_app(C, 2000)

@@ -845,7 +845,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.145538";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.162542";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1530,7 +1530,7 @@
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
       <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div><p id="whoMsg" role="status"></p>
       <div id="whoSup" hidden><label for="wCode">Tu es le superviseur ? Code superviseur</label><input id="wCode" type="password" inputmode="numeric" autocomplete="off">
-        <div class="btns"><button type="button" id="wCodeGo">🔑 C'est moi : ce téléphone devient celui du superviseur</button></div></div></form>`);
+        <div class="btns"><button type="button" id="wCodeGo">🔑 C'est moi : connecter aussi ce téléphone au compte superviseur</button></div></div></form>`);
     $("#whoCancel").onclick = closeSheet;
     $("#wCodeGo").onclick = async () => {   // 🔑 Éric sur un nouveau téléphone (ou l'icône au lieu de Safari) : le code une fois, puis plus jamais
       const name = $("#wName").value.trim(), code = $("#wCode").value.trim(), say = t => { const m = $("#whoMsg"); if (m) m.textContent = t; };
@@ -2660,7 +2660,7 @@
     const today = dIso(Date.now());
     openSheet(`<h2>Superviseur</h2>
       ${supToken() ? `<p class="howto">🔑 Ce téléphone est celui du superviseur (Éric) : pas besoin de code.</p>` : `<label for="supCode">Code superviseur</label><input id="supCode" type="password" inputmode="numeric" autocomplete="off">
-        ${isEricName(profile.walker) ? `<p class="howto">Le prénom Éric est enregistré sur un autre téléphone (ou dans Safari au lieu de l'icône Wouaf). Entre le code une seule fois pour que <b>ce</b> téléphone devienne celui du superviseur.</p><div class="btns" style="margin-top:6px"><button id="supMine">🔑 C'est mon téléphone : ne plus demander le code</button></div>` : ""}`}
+        ${isEricName(profile.walker) ? `<p class="howto">Le compte superviseur est déjà ouvert sur un autre téléphone (ou dans Safari au lieu de l'icône Wouaf). Entre le code une seule fois pour connecter <b>aussi</b> ce téléphone : les autres restent connectés.</p><div class="btns" style="margin-top:6px"><button id="supMine">🔑 Connecter ce téléphone : ne plus demander le code</button></div>` : ""}`}
       <div class="btns" style="margin-top:10px"><button id="supDash">📊 Tableau de bord des promeneurs</button>
         <button class="ghost" id="supAdj">✏️ Corriger une tirelire</button><button class="ghost" id="supRes">♻️ Restaurer un promeneur sur ce téléphone</button>
         <button class="ghost" id="supVoid">❌ Annuler une balade</button><button class="ghost" id="supReset" style="color:#c8452f">🧹 Tout remettre à zéro</button></div>
@@ -3257,11 +3257,29 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
-    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+  }
+  // 📱 v4.4 : plusieurs téléphones sur le même compte superviseur (un jeton chacun, Worker /sup-phones). Se connecter ailleurs avec le code ne déconnecte plus personne.
+  async function sheetSupPhones(){
+    openSheet(`<h2>📱 Téléphones connectés</h2><p id="spN" class="howto">Un instant…</p>
+      <p class="howto">Pour connecter un autre téléphone : sur ce téléphone, prénom <b>Éric</b> puis le code superviseur. Il a alors tous les pouvoirs, et les téléphones déjà connectés le restent (6 au plus).</p>
+      <div class="btns"><button class="ghost" id="spOnly" hidden style="color:#c8452f">🚪 Déconnecter tous les autres téléphones</button><button class="ghost" id="spBack">← Superviseur</button></div><p id="spMsg" role="status"></p>`);
+    $("#spBack").onclick = sheetSupMenu;
+    const show = j => { const n = (j && j.phones) || 0, el = $("#spN"); if (!el) return;
+      el.innerHTML = n <= 1 ? "📱 Seul <b>ce téléphone</b> est connecté au compte superviseur." : `📱 <b>${n} téléphones</b> sont connectés au compte superviseur (celui-ci compris).`;
+      const b = $("#spOnly"); if (b) b.hidden = !(n > 1 && supToken()); };
+    try{ const r = await api("/sup-phones", supAuth()); if (!r.ok) throw 0; show(await r.json()); }
+    catch(e){ const el = $("#spN"); if (el) el.textContent = "Pas de connexion pour l'instant, réessaie."; return; }
+    $("#spOnly").onclick = async () => {
+      const b = $("#spOnly");
+      if (!b.dataset.sure){ b.dataset.sure = "1"; b.textContent = "Sûr ? Touche encore pour déconnecter les autres"; return; }
+      try{ const r = await api("/sup-phones", { token: supToken(), only: 1 }); if (!r.ok) throw 0; show(await r.json()); toast("✓ Les autres téléphones sont déconnectés.", 4000); }
+      catch(e){ const m = $("#spMsg"); if (m) m.textContent = "Ça n'a pas marché, réessaie."; }
+    };
   }
 
   // 🗺️ Superviseur › Carte du superviseur (v44, remplace la « Carte du trésor » de la v43) : tout de suite, sans balade et sans nuages,
@@ -6734,7 +6752,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetSupPhones, sheetSupMenu, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

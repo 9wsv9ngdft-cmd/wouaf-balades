@@ -128,14 +128,36 @@ test("alerte trésor : balade annulée après la trouvaille → alerte pour Éri
   assert.equal((await api.post("/alert-resolve", { token: j.token, id: al[0].id })).status, 404);               // déjà traitée
 });
 
-test("claim avec le code : un autre téléphone récupère Éric, l'ancien jeton ne marche plus", async () => {
+test("v4.4 : un 2e téléphone se connecte au compte superviseur avec le code, le 1er reste connecté", async () => {
   const { api } = await setup();
   const old = (await api.post("/claim", { walker: "Éric" })).j.token;
   assert.equal((await api.post("/claim", { walker: "Éric", code: "0000" })).status, 403);   // mauvais code
   const n = await api.post("/claim", { walker: "Éric", code: "1234" });
-  assert.equal(n.status, 200); assert.notEqual(n.j.token, old);
+  assert.equal(n.status, 200); assert.notEqual(n.j.token, old); assert.equal(n.j.phones, 2);
   assert.equal((await api.post("/dash", { token: n.j.token })).status, 200);
+  assert.equal((await api.post("/dash", { token: old })).status, 200);                     // le 1er téléphone n'est plus déconnecté
+  const again = await api.post("/claim", { walker: "Éric", token: old });                   // chaque téléphone se reconnaît avec son jeton
+  assert.equal(again.status, 200); assert.equal(again.j.token, old);
+  assert.equal((await api.post("/claim", { walker: "Éric" })).status, 403);                 // sans code ni jeton : toujours refusé
+  const ph = await api.post("/sup-phones", { token: old });
+  assert.equal(ph.j.phones, 2);
+  assert.equal((await api.post("/sup-phones", { token: "faux-jeton-0123456789" })).status, 403);
+  assert.equal((await api.post("/sup-phones", { code: "1234", only: 1 })).status, 400);    // le code seul ne dit pas quel téléphone garder
+  const only = await api.post("/sup-phones", { token: n.j.token, only: 1 });                // déconnecter les autres
+  assert.equal(only.j.phones, 1);
   assert.equal((await api.post("/dash", { token: old })).status, 403);
+  assert.equal((await api.post("/dash", { token: n.j.token })).status, 200);
+});
+
+test("v4.4 : ancien format (un seul jeton) toujours accepté, et 6 téléphones au plus", async () => {
+  const { api, env } = await setup();
+  await env.WOUAF.put("admin", JSON.stringify({ token: "jeton-d-avant-0123456789", walker: "Éric", at: Date.now() }));
+  assert.equal((await api.post("/dash", { token: "jeton-d-avant-0123456789" })).status, 200);
+  const toks = [];
+  for (let i = 0; i < 6; i++) toks.push((await api.post("/claim", { walker: "Éric", code: "1234" })).j.token);
+  assert.equal((await api.post("/dash", { token: "jeton-d-avant-0123456789" })).status, 403);   // le plus ancien est sorti
+  for (const t of toks) assert.equal((await api.post("/dash", { token: t })).status, 200);
+  assert.equal((await api.post("/sup-phones", { token: toks[0] })).j.phones, 6);
 });
 
 test("Éric pris avant la libération du 14/11 : le premier téléphone qui tape Éric le reprend, sans code", async () => {

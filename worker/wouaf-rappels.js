@@ -190,10 +190,14 @@ async function supOk(env, b){
   if (env.SUPERVISOR_CODE && b.code != null && safeEq(b.code, env.SUPERVISOR_CODE)) return true;
   if (typeof b.token === "string" && b.token.length >= 16){
     const a = await env.WOUAF.get("admin", "json");
-    if (a && a.token && safeEq(a.token, b.token)) return true;
+    if (a && supTokens(a).some(t => safeEq(t.t, b.token))) return true;
   }
   return false;
 }
+// 📱 v4.4 : plusieurs téléphones connectés au même compte superviseur (un jeton par téléphone). Ancien format : un seul `token`.
+const SUP_MAX_PHONES = 6;
+const supTokens = a => (a && Array.isArray(a.tokens) && a.tokens.length) ? a.tokens.filter(x => x && typeof x.t === "string") : (a && a.token ? [{ t: a.token, at: a.at || 0 }] : []);
+const supSave = (env, a, list) => env.WOUAF.put("admin", JSON.stringify(Object.assign({}, a, { token: list[0].t, tokens: list })));
 async function isTester(env, walker){ return normName(walker) === SUP_NAME && !!(await env.WOUAF.get("admin")); }
 // efface toutes les clés d'un préfixe : on relit la liste depuis le début tant qu'il en reste (pas de curseur à garder entre deux suppressions)
 async function wipe(env, prefix){
@@ -460,16 +464,26 @@ export default {
         await env.WOUAF.put("admin", JSON.stringify({ token, walker: String(b.walker).slice(0, 30), at: Date.now() }));
         return json({ ok:true, token, created:true });
       }
-      if (typeof b.token === "string" && safeEq(a.token, b.token)) return json({ ok:true, token: a.token });
-      if (b.code != null && env.SUPERVISOR_CODE){   // 🔑 récupérer Éric avec le code (nouveau téléphone, Safari/icône, prénom volé) : l'ancien jeton ne marche plus
+      if (typeof b.token === "string" && supTokens(a).some(t => safeEq(t.t, b.token))) return json({ ok:true, token: b.token });
+      if (b.code != null && env.SUPERVISOR_CODE){   // 🔑 v4.4 : un autre téléphone se connecte avec le code ; les téléphones déjà connectés le restent (6 max, le plus ancien sort)
         const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
         if (fails >= 20) return json({ error:"too many" }, 429);
         if (!safeEq(b.code, env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
-        const token = newToken();
-        await env.WOUAF.put("admin", JSON.stringify({ token, walker: String(b.walker).slice(0, 30), at: Date.now(), moved: true }));
-        return json({ ok:true, token, moved:true });
+        const token = newToken(), list = supTokens(a).concat([{ t: token, at: Date.now() }]).slice(-SUP_MAX_PHONES);
+        await supSave(env, a, list);
+        return json({ ok:true, token, added:true, phones: list.length });
       }
       return json({ error:"taken" }, 403);
+    }
+    if (path === "/sup-phones"){   // 📱 superviseur : combien de téléphones sont connectés ; `only:1` = déconnecter tous les autres (garde celui qui demande)
+      if (!(await supOk(env, b))) return json({ error:"forbidden" }, 403);
+      const a = await env.WOUAF.get("admin", "json"); let list = supTokens(a);
+      const mine = typeof b.token === "string" ? list.find(t => safeEq(t.t, b.token)) : null;
+      if (b.only){
+        if (!mine) return json({ error:"token needed" }, 400);   // avec le code seul, on ne sait pas quel téléphone garder
+        list = [mine]; await supSave(env, a, list);
+      }
+      return json({ ok:true, phones: list.length, since: list.map(t => t.at || 0) });
     }
     if (path === "/alert"){   // 🚨 un promeneur prévient le superviseur (ex. balade annulée après avoir trouvé le trésor) : visible dans le tableau de bord
       const w = String(b.walker || "").slice(0, 30), wk = String(b.week || "").slice(0, 12);

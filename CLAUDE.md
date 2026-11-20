@@ -594,3 +594,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   avec un halo vert doux qui respire (`youIcon`, `.youmk .halo/.dot`, `youhalo`), en balade et en exploration. **Mini-carte de l'accueil : la même patte** à la place de la photo
   de Roxy (`#miniDog.paw`). `WALKER_SVG` supprimé.
 - 🎄 Compte à rebours encore un peu plus gros (19 px).
+
+## Compte superviseur sur plusieurs téléphones (décidé le 20/11 à 15 h 50, codé à 16 h 20 ; pas de nouveau numéro : rien ne change pour les promeneurs)
+- 📱 KV `admin` garde maintenant **un jeton par téléphone** (`tokens: [{ t, at }]`, `token` = le 1er pour l'ancien code ; ancien format à un seul `token` toujours lu par `supTokens`).
+  `supOk` et `/claim` acceptent n'importe lequel. **Se connecter avec `SUPERVISOR_CODE` ajoute un jeton au lieu de remplacer** : les téléphones déjà connectés le restent
+  (`SUP_MAX_PHONES` = 6, le plus ancien sort au-delà).
+- `POST /sup-phones` (superviseur) : nombre de téléphones connectés ; `only:1` + jeton = **déconnecter tous les autres** (le code seul est refusé : on ne saurait pas qui garder).
+- App : Superviseur › 📱 **Téléphones connectés** (`sheetSupPhones`, double toucher pour « Déconnecter tous les autres ») ; textes « connecter aussi ce téléphone » (`#supMine`, `#wCodeGo`).
+  Un 2e téléphone se connecte comme avant : prénom Éric + code. Les vrais comptes (identifiant, code, inscriptions) viendront ensuite.
+- Tests : `tests/worker.test.mjs` (2 téléphones, ancien format, 6 max, déconnecter les autres), `tests/e2e_claim.py`.
