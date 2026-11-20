@@ -722,6 +722,9 @@
   .poptip{font-size:16px;line-height:1.5} .popwhy{background:var(--sand);color:#3a2f1e;border-radius:12px;padding:10px 12px;font-size:14px}
   .popdots{display:flex;justify-content:center;gap:6px;margin:8px 0 0} .popdots i{width:7px;height:7px;border-radius:50%;background:var(--line)} .popdots i.on{background:var(--accent)}
   .popghost{position:fixed;z-index:9999;background:var(--card);border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.3);transition:all .45s cubic-bezier(.5,0,.3,1);pointer-events:none}
+  .evchip{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:999px;padding:3px 10px;margin-left:4px;vertical-align:middle;background:linear-gradient(135deg,#f6d36b,#e0a52a);color:#3b2a00;cursor:pointer;position:relative}
+  .evchip.tree{font-size:18px;padding:1px 6px;background:none}
+  .evchip.ping::after{content:"";position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#e2483c;border:2px solid #fff}
   .heroDog.ping::after{content:"";position:absolute;top:0;right:0;width:13px;height:13px;border-radius:50%;background:#e2483c;border:2px solid #fff;animation:avglow 1.6s ease-in-out infinite}
 </style>
 </head>
@@ -836,7 +839,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.140821";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.143535";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2746,7 +2749,7 @@
     // v2.3 : le classement des explorateurs remplace la ligne des missions (les missions passent dans la bulle de Roxy et le menu)
     box.innerHTML = lotsHTML();   // v2.5 : le classement = la couronne 👑 (ou fantôme) sur Roxy
     const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
-    renderGoCard(); renderFoot(); loadWx();
+    renderGoCard(); renderFoot(); loadWx(); try{ renderEvDeco(); }catch(e){}
     setTimeout(fitHome, 0);
     bindLots();
   }
@@ -3782,6 +3785,19 @@
   }
   var aventDayNum = t => { const iso = dIso(t == null ? Date.now() : t); return iso.slice(5, 7) === "12" && +iso.slice(8) <= 24 ? +iso.slice(8) : 0; };
   var aventIso = (y, d) => y + "-12-" + pad2(d);
+  function aventSoon(){   // jours avant le 1er décembre (novembre seulement), sinon 0
+    const iso = dIso(Date.now()); if (iso.slice(5, 7) !== "11") return 0;
+    return 31 - +iso.slice(8);   // 30 novembre → J-1
+  }
+  function renderEvDeco(){   // 🎄 v4.1 : compte à rebours « 🎄 J-11 » en novembre, sapin en décembre ; toucher = page Événements spéciaux
+    const el = $("#evDeco"); if (!el) return;
+    const soon = aventSoon(), ad = aventDayNum();
+    if (isBday()){ el.textContent = "🎂"; el.className = ""; el.onclick = null; return; }
+    if (soon){ el.innerHTML = `<button class="evchip" aria-label="Calendrier de l'Avent dans ${soon} jour${soon > 1 ? "s" : ""}">🎄 J-${soon}</button>`; }
+    else if (ad || (EVENT && dIso(Date.now()).slice(5, 7) === "12")){ el.innerHTML = `<button class="evchip tree${ad && aventPending() ? " ping" : ""}" aria-label="Calendrier de l'Avent">🎄</button>`; }
+    else { el.textContent = EVENT ? EVENT.deco : ""; return; }
+    el.firstChild.onclick = e => { e.stopPropagation(); sheetEvents(); };
+  }
   function aventState(){
     ensureGame();
     const y = +dIso(Date.now()).slice(0, 4);
@@ -3904,7 +3920,7 @@
     try{ confetti(); ding(); haptic(2); }catch(e){}
     aventDefiCheck();
     sheetEvents(d);
-    try{ renderWho(); }catch(e){}
+    try{ renderWho(); renderEvDeco(); }catch(e){}
   }
 
   // ---------- 🗒️ v4.0 : pop-up du jour (une fois par jour), qui se range dans le médaillon de Roxy ----------
@@ -3956,6 +3972,8 @@
     try{ if (silverLive()) gains.push(`🥈 Un cadeau argenté de ${SILVER_CS} 🪙 attend quelqu'un…`); }catch(e){}
     try{ if (chestChance() > 0) gains.push("🔥 Le coffre est chaud : cherche le nuage orange !"); }catch(e){}
     const ad = aventDayNum(), aPlan = ad ? aventPlan(aventState().y)[ad] : null;
+    const soonN = aventSoon();
+    if (soonN) gains.unshift(`🎄 <b>Calendrier de l'Avent dans ${soonN} jour${soonN > 1 ? "s" : ""}</b> : une case par jour, jusqu'à 1 500 🪙. Ouvre l'app chaque jour pour n'en rater aucune !`);
     const avHTML = ad ? `<button class="avpopbtn" id="popAvent">🎄 ${aventState().got[ad] ? `Case du ${ad} ouverte ✓ · voir ma scène` : `Ouvre ta case du ${ad} décembre (+${aPlan.cs} 🪙)`}</button>` : "";
     const cards = [
       `<div class="popdog">${roxyHTML(accList(game.acc))}</div><h2>Aujourd'hui avec ${DOG}</h2>
@@ -6317,7 +6335,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6436,8 +6454,11 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 53, APP_LABEL = "4.0";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 54, APP_LABEL = "4.1";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    54: [
+      "🎄 Le compte à rebours est lancé : le calendrier de l'Avent de Roxy commence le 1er décembre. Touche « 🎄 J-… » en haut pour tout savoir."
+    ],
     53: [
       "🎄 Le calendrier de l'Avent de Roxy arrive le 1er décembre : une case par jour, jusqu'à 1 500 clebsous en plus ! Une case ratée est perdue : ouvre l'app chaque jour.",
       "🗒️ Chaque jour, Roxy te fait le point. Touche-la pour le revoir.",
@@ -6663,7 +6684,7 @@
   // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
   let lastShared = 0;
   document.addEventListener("visibilitychange", () => { if (document.hidden || state.walk || Date.now() - lastShared < 60000) return; lastShared = Date.now(); loadPauses().then(() => applyReset()).then(rs => { if (!rs && !$("#modal").classList.contains("open")) startupDigest(); else renderHome(); }).catch(() => {}); });
-  if (EVENT || isBday()) $("#evDeco").textContent = isBday() ? "🎂" : EVENT.deco;
+  renderEvDeco();
 
   // ---------- Au lancement ----------
   // 1) lien de récap → page du superviseur ; 2) balade interrompue → reprise ;
@@ -6698,7 +6719,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

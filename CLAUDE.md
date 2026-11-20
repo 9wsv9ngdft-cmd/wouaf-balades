@@ -574,3 +574,9 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   y compris l'amende d'une balade annulée ; annoncée dans le pop-up du jour, le tuto et la tirelire.
 - Tests : `tests/e2e_v53.py` (horloge simulée : 25/11, 1er et 3 décembre). `tests/e2e_common.py` marque le pop-up du jour comme déjà vu (`NO_POP`) sauf `new_phone(..., pop=True)`.
 - Nouveau look : en stand-by (pas définitif) ; rien n'en est repris dans cette version.
+
+## Version 4.1 « Croquette » (APP_NUM 54, décidé le 20/11 à 14 h 31–14 h 32 : « qu'on puisse voir qu'il y aura bientôt un calendrier de l'Avent… dès aujourd'hui »)
+- 🎄 **Compte à rebours** à côté du titre (`renderEvDeco`, `#evDeco .evchip`) : en novembre « 🎄 J-11 » (`aventSoon` = jours avant le 1er décembre), toucher = `sheetEvents` (annonce) ;
+  en décembre, un sapin 🎄 touchable (pastille rouge si la case du jour n'est pas ouverte). Mis à jour par `renderHome` et après l'ouverture d'une case.
+- 🗒️ Pop-up du jour, carte « À gagner » : en novembre, 1re ligne « 🎄 Calendrier de l'Avent dans N jours… ouvre l'app chaque jour pour n'en rater aucune ! ».
+- Tests : `tests/e2e_v53.py` (J-6 le 25/11, sapin avec pastille le 1/12).

@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','53');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','54');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 EV = lambda P, js: P.evaluate(js)
 is_open = lambda P: P.evaluate("document.querySelector('#modal').classList.contains('open')")
 sheet = lambda P: P.inner_text("#sheet") if is_open(P) else ""
@@ -25,6 +25,7 @@ with sync_playwright() as pw:
     check("bouton journal de bord dans le pop-up", P.locator("#popJournal").count() == 1)
     P.click("#popNext"); P.wait_for_timeout(300)
     check("carte 2 : à gagner aujourd'hui", "À gagner aujourd'hui" in sheet(P))
+    check("carte 2 : « Calendrier de l'Avent dans 6 jours »", "Calendrier de l'Avent dans 6 jours" in sheet(P), sheet(P)[:300])
     P.click("#popNext"); P.wait_for_timeout(300)
     check("carte 3 : le savais-tu ?", "Le savais-tu" in sheet(P))
     P.click("#popNext"); P.wait_for_timeout(150)
@@ -38,6 +39,10 @@ with sync_playwright() as pw:
     P.click("#popJournal"); P.wait_for_timeout(900)
     check("le journal de bord s'ouvre depuis le pop-up", "journal" in sheet(P).lower(), sheet(P)[:120])
     P.click("#sheetX"); P.wait_for_timeout(400)
+    check("compte à rebours « 🎄 J-6 » en haut", "J-6" in P.inner_text("#evDeco"), P.inner_text("#evDeco"))
+    P.click("#evDeco .evchip"); P.wait_for_timeout(500)
+    check("le toucher ouvre l'annonce du calendrier", "arrive le 1er décembre" in sheet(P))
+    P.click("#evClose"); P.wait_for_timeout(300)
     P.click("#menuBtn"); P.wait_for_timeout(500)
     check("menu ☰ : Événements spéciaux", P.locator("#muEvt").count() == 1)
     P.click("#muEvt"); P.wait_for_timeout(600)
@@ -55,6 +60,7 @@ with sync_playwright() as pw:
     P.clock.install(time=T(12, 1))
     P.set_viewport_size({"width": 393, "height": 760}); open_app(P, 2500)
     P.wait_for_timeout(2500)
+    check("1er décembre : sapin en haut avec pastille", P.locator("#evDeco .evchip.tree.ping").count() == 1)
     check("1er décembre : pastille sur Roxy (case pas encore ouverte)", EV(P, "document.querySelector('#heroDog').classList.contains('ping')"))
     if "Aujourd'hui avec Roxy" in sheet(P):
         P.click("#popNext"); P.wait_for_timeout(300)
