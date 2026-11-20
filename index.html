@@ -818,7 +818,12 @@
   html.homefix,html.homefix body{overflow:hidden;overscroll-behavior:none;height:100%}
   body.nuit .hero{margin-top:18px}
   body.nuit #goCard{margin-top:16px}
-  body.nuit #homeFoot{padding-top:6px;padding-bottom:max(6px, calc(env(safe-area-inset-bottom) - 12px))}   /* v4.5.3 : moins de noir sous les tuiles (la ligne de version peut frôler la barre de l'iPhone) */
+  body.nuit #homeFoot{padding-top:6px;padding-bottom:max(6px, calc(env(safe-area-inset-bottom) - 12px))}
+  /* v4.5.6 (capture d'Éric, 20/11 22 h 27) : l'iPhone donne une page plus courte que l'écran (852 − 59 = 793) : elle s'arrête déjà au-dessus de la barre du bas,
+     donc pas de marge « zone sûre du bas » en plus (elle était comptée deux fois → ~60 points de vide sous les tuiles) */
+  html.shortvp body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{padding-bottom:4px}
+  html.shortvp #homeFoot,html.shortvp body.nuit #homeFoot{padding-bottom:4px}
+  .minimap .mtap.up{bottom:48px}   /* v4.5.3 : moins de noir sous les tuiles (la ligne de version peut frôler la barre de l'iPhone) */
   .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
 
   /* ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 16 h 49–17 h 27) : arcade d'habitude, Noël en décembre ---------- */
@@ -987,7 +992,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.214456";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.224029";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -6891,13 +6896,31 @@
         g.font = "18px system-ui"; g.textAlign = "center"; g.fillText("🏴‍☠️", x, y + 6); } }
     dog.style.display = ""; dog.style.left = cx + "px"; dog.style.top = cy + "px"; dog.style.backgroundImage = "none"; dog.classList.add("paw"); if (!dog.firstChild) dog.innerHTML = PAW_SVG;
     try{ $("#miniPct").textContent = game.home ? `${fogStats().pct} %` : ""; }catch(e){}
-    $("#miniTr").textContent = hz ? `${arrowTo(c, hz)} ☁️🏴‍☠️ ${fmtKm(Math.max(0, dist(c, hz) - HUNT_CLOUD))}` : "";
+    $("#miniTr").textContent = hz ? `${arrowTo(c, hz)} ☁️🏴‍☠️ ${fmtKm(Math.max(0, dist(c, hz) - HUNT_CLOUD))}` : "";    try{ miniTapPlace(); }catch(e){}
   }
   // la mini-carte prend toute la place qui reste : l'accueil remplit l'écran sans défiler
   // v4.5.3 : hauteur de l'écran. Sur iPhone (app de l'écran d'accueil), window.innerHeight peut être trop petit au lancement → bande noire en bas :
   // on prend la plus grande mesure fiable (fenêtre, page, zone visible) et on recalcule plusieurs fois après l'ouverture
   const viewH = () => Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, (window.visualViewport && window.visualViewport.height) || 0);
+  // v4.5.6 : app de l'écran d'accueil, en portrait, dont la page est plus courte que l'écran (l'iPhone retire la hauteur de la barre d'état)
+  function shortVp(){
+    try{
+      const stand = navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+      const on = !!stand && innerHeight > innerWidth && screen.height > screen.width && screen.height - viewH() >= 20;
+      document.documentElement.classList.toggle("shortvp", on); return on;
+    }catch(e){ return false; }
+  }
+  // v4.5.6 : « 👆 Touche la carte pour partir » ne passe plus par-dessus « ☁️🏴‍☠️ 1,7 km » ou « 0 % » : elle monte d'un cran si elles se touchent
+  function miniTapPlace(){
+    const t = $("#miniTap"), mm = $("#miniMap"); if (!t || !mm) return;
+    t.classList.remove("up"); if (t.hidden) return;
+    const a = t.getBoundingClientRect(); if (!a.width) return;
+    const hit = ["#miniTr", "#miniPct"].some(sel => { const e = $(sel); if (!e || !e.textContent.trim()) return false; const r = e.getBoundingClientRect();
+      return r.width && r.left < a.right + 6 && r.right > a.left - 6 && r.top < a.bottom + 4 && r.bottom > a.top - 4; });
+    t.classList.toggle("up", hit);
+  }
   function fitHome(){
+    try{ shortVp(); }catch(e){}
     const b = document.body.classList; if (["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k))) return;
     const mm = $("#miniMap"); if (!mm) return;
     document.documentElement.classList.remove("homefix");   // v4.5.2 : on mesure la page libre, puis homeFix la refixe
@@ -6908,6 +6931,7 @@
     if (over > 0 && h > 70){ h = Math.max(70, h - over); mm.style.height = h + "px"; }
     try{ homeFix(); }catch(e){}
     drawMiniMap();
+    try{ miniTapPlace(); }catch(e){}
   }
   const refit = () => { clearTimeout(fitHome._t); fitHome._t = setTimeout(fitHome, 150); };
   window.addEventListener("resize", refit);
@@ -6946,7 +6970,7 @@
     const tick = () => {
       const cs = getComputedStyle(probe), vv = window.visualViewport, sec = ((Date.now() - t0) / 1000).toFixed(1);
       const line = `écran ${screen.height} · inner ${innerHeight} · client ${document.documentElement.clientHeight} · visible ${vv ? Math.round(vv.height) + (vv.offsetTop ? "+" + Math.round(vv.offsetTop) : "") : "–"}
-zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(parseFloat(cs.paddingBottom) || 0)} · titre ${r("header", "top")} · carte ${($("#miniMap") || {}).offsetHeight || 0} · bas ${r("#homeFoot", "bottom")} · page ${document.documentElement.scrollHeight} · défil ${Math.round(scrollY)}`;
+zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(parseFloat(cs.paddingBottom) || 0)}${document.documentElement.classList.contains("shortvp") ? " · page courte ✓" : ""} · titre ${r("header", "top")} · carte ${($("#miniMap") || {}).offsetHeight || 0} · bas ${r("#homeFoot", "bottom")} · page ${document.documentElement.scrollHeight} · défil ${Math.round(scrollY)}`;
       if (last && line !== last) jumps.push(sec + " s"); last = line;
       box.textContent = `📏 ${sec} s · seulement toi le vois\n${line}${jumps.length ? "\n⚡ a changé à " + jumps.slice(-6).join(", ") : ""}`;
       if (Date.now() - t0 < 20000) setTimeout(tick, 250); else { box.remove(); probe.remove(); screenDiag.on = false; }
@@ -7199,7 +7223,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5.5";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5.6";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
@@ -7481,7 +7505,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

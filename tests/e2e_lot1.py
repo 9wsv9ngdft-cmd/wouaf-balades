@@ -55,5 +55,22 @@ with sync_playwright() as pw:
     E.click("#muSupH"); E.wait_for_timeout(300)
     check("on peut le couper", not EV(E, "__wouaf.diagOn()"))
     b.close()
+    # ---- v4.5.6 : iPhone, app de l'écran d'accueil, page plus courte que l'écran (852 − 59) ----
+    IOS = "Object.defineProperty(navigator, 'standalone', { get: () => true }); Object.defineProperty(screen, 'height', { get: () => 852 }); Object.defineProperty(screen, 'width', { get: () => 393 });"
+    for short in (False, True):
+        b, c, P = new_phone(pw, errors=errs, init=init("Léa") + (IOS if short else ""))
+        P.emulate_media(color_scheme="dark"); P.set_viewport_size({"width": 393, "height": 793}); open_app(P, 2500)
+        g = EV(P, "[document.documentElement.classList.contains('shortvp'), innerHeight - document.querySelector('#homeFoot').getBoundingClientRect().bottom, document.documentElement.scrollHeight - innerHeight]")
+        if short:
+            check("v4.5.6 : page courte de l'iPhone repérée", g[0], g)
+            check("v4.5.6 : presque plus de vide sous la ligne du bas (≤ 24 px, avant ~80)", g[1] <= 24 and g[2] <= 0, g)
+        else:
+            check("v4.5.6 : navigateur normal : rien ne change", not g[0], g)
+        # chevauchement de l'aide et de la flèche du trésor
+        EV(P, "document.querySelector('#miniTap').hidden = false; document.querySelector('#miniTr').textContent = '↙ ☁️🏴‍☠️ 1,7 km'; __wouaf.miniTapPlace()")
+        ov = EV(P, "(() => { const a = document.querySelector('#miniTap').getBoundingClientRect(), r = document.querySelector('#miniTr').getBoundingClientRect(); return r.left < a.right && r.right > a.left && r.top < a.bottom && r.bottom > a.top; })()")
+        check("v4.5.6 : « Touche la carte » ne passe plus sur « 1,7 km »" + (" (page courte)" if short else ""), not ov)
+        if short: P.screenshot(path="/tmp/lot1-short.png")
+        b.close()
 check("aucune erreur JavaScript", not errs, errs)
 print("\n%d échec(s)" % len(FAILS) if FAILS else "\nTout est vert ✅"); sys.exit(1 if FAILS else 0)

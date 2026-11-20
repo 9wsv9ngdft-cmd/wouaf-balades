@@ -705,3 +705,12 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   hauteur de l'écran, `innerHeight`, `clientHeight`, zone visible, zones sûres, position du titre, hauteur de la carte, bas de l'accueil, défilement, et les moments où ça change
   (« ⚡ a changé à… »). Ne bloque pas les touchers, rien n'est envoyé. Superviseur › 📏 pour couper / rallumer (`wouaf-diag`). Sert à corriger le « saut » au pixel.
 - Tests : `tests/e2e_lot1.py` ; `e2e_v58.py`, `e2e_v51.py`, `e2e_accueil.py`, `e2e_v49.py`, `e2e_duels.py` adaptés.
+
+## Version 4.5.6 « Croquette » (APP_NUM 58, libellé « 4.5.6 », capture d'Éric le 20/11 à 22 h 27, « oui » à 22 h 35)
+- ✅ Éric (22 h 35) : le classement s'ouvre de nouveau ; plus de saut d'écran.
+- 📏 Ce que montrait le diagnostic : écran 852, page 793 (l'iPhone retire la barre d'état, 59, à l'app de l'écran d'accueil), zones sûres ↑59 ↓34 ; la page s'arrêtait
+  déjà au-dessus de la barre du bas, mais on gardait en plus la marge « zone sûre du bas » (`main.wrap` + `#homeFoot`) → ~80 points de vide sous les tuiles.
+- `shortVp()` (appelé par `fitHome`) : app de l'écran d'accueil en portrait dont la page est plus courte que l'écran (≥ 20 points) → `html.shortvp` : marges du bas à 4 px.
+  Les 59 points que l'iPhone garde pour lui restent vides (impossible à remplir sans risque). Le diagnostic affiche « page courte ✓ ».
+- `miniTapPlace()` (après `drawMiniMap` et `fitHome`) : « 👆 Touche la carte pour partir » monte d'un cran (`.mtap.up`) quand elle touche « ☁️🏴‍☠️ x km » ou « x % ».
+- Tests : `tests/e2e_lot1.py` (navigator.standalone et écran 852 simulés).
