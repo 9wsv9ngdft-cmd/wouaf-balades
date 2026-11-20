@@ -679,3 +679,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - `fitHome` mesure le bas de `main.wrap` (et plus seulement `#homeFoot`) : la carte remplit exactement l'écran, sans les 8–12 px qui faisaient défiler.
 - Titre un peu plus haut : `body.nuit header` = zone sûre + 12 px (avant + 18).
 - Tests : `tests/e2e_v58.py` (accueil fixe, molette, fiche ouverte puis refermée).
+
+## Version 4.5.3 « Croquette » (APP_NUM 58, libellé « 4.5.3 », Éric le 20/11 à 18 h 25 : « on récupère le flou en haut », « toujours beaucoup de noir en bas »)
+- Titre redescendu : `body.nuit header` = zone sûre + 18 px (comme en 4.5.1).
+- 📏 **Hauteur d'écran fiable** (`viewH()` = plus grande valeur entre `innerHeight`, `clientHeight` et `visualViewport.height`) dans `fitHome` et `homeFix` : sur iPhone
+  (app de l'écran d'accueil), `innerHeight` peut être trop petit à l'ouverture → carte trop courte et noir en bas. `fitHome` est relancé à 0,4 / 1,2 / 2,5 / 5 s après
+  l'ouverture, au retour dans l'app, sur `visualViewport` resize, `pageshow` et rotation.
+- Moins de noir sous les tuiles : `#homeFoot` = 6 px en haut, `max(6px, zone sûre du bas − 12 px)` en bas (la ligne de version peut frôler la barre de l'iPhone).
