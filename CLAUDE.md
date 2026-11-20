@@ -552,3 +552,25 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - À l'ouverture et au retour dans l'app : carte « Récap pas envoyé » dans le « Quoi de neuf » (`unsentCard`, `unsentRecaps` : mes balades ≥ 2 min des 3 derniers jours, pas annulées,
   3 max) avec un bouton « 📩 Envoyer » par balade et « Pas besoin ». Pas pour Éric (testeur). Toujours possible à la main : ☰ › Carnet / journal › la balade › « Renvoyer ».
 - Tests : `tests/e2e_v52.py` ; `e2e.py` marque ses récaps comme envoyés (`markSent`) ; `e2e_v49.py` attend « 3.9.1 ».
+
+## Version 4.0 « Croquette » (APP_NUM 53, décidé le 20/11 entre 11 h 12 et 13 h 45 en Wouaf 6 : lot 1 = Avent + pop-up du jour + amende)
+- 🎄 **Page « Événements spéciaux »** (☰ › 🎄, `sheetEvents`) : hors décembre, annonce du calendrier (« arrive le 1er décembre ») ; plus tard Pâques et l'été iront ici.
+- 🎄 **Calendrier de l'Avent** (1er–24 décembre, `aventPlan(y)`) : 1 case par jour, **ouverte seulement si l'app a été ouverte ce jour-là**
+  (`aventMark` à chaque `startupDigest` / pop-up du jour → `game.avent.seen[d]` ; case ratée = perdue, décidé par Éric). Toucher la case (`aventOpen`) = gain.
+  Montants (2026, max **1 500 par promeneur**, décidé par Éric) : cases simples 30, dimanches 110, le 24 = 330 ; 8 cases « défi » (samedis : 1 h ; 5 jours de semaine :
+  45 min) **doublées (+30)** si une balade assez longue est faite CE jour-là (`aventDefiCheck`, à l'ouverture et 2,5 s après chaque récap). Gains hors plafond
+  (`game.bonus`, + `game.total`) ; Éric (testeur) voit tout sans gagner. Tout le monde a un calendrier (personne âgée comprise). `game.avent = { y, seen, got, bon }`.
+  Limite : une balade annulée après coup ne retire pas un défi de l'Avent déjà payé.
+- 🎨 **Scène d'hiver générative** (`aventScene`, SVG) : graine = prénom (même scène sur tous les téléphones d'un promeneur, différente d'un promeneur à l'autre) ;
+  chaque case ouverte ajoute un morceau (`AV_TYPES` : lune, collines, maisons, sapins, bonhomme de neige, guirlandes…, grand sapin le 23, étoile le 24) à une place
+  fixée d'avance ; qualité = plus longue balade du jour (`bestMinOn` : 20 / 45 / 60 min → fenêtres allumées, fumée, couronnes, boules, lumières). Le morceau du jour apparaît
+  avec une animation (`.avnew`). Mot de Roxy du jour (`AV_WORDS`) quand on ouvre une case.
+- 🗒️ **Pop-up du jour** (`dailyPop`, `dailyPopMaybe` après le « Quoi de neuf », une fois par journée de l'app : clé `wouaf-pop`) : 3 cartes, une à la fois (‹ / Suivant) :
+  1) Roxy et les devoirs (sortie du jour faite ou pas, « 20 min avec l'app, sinon amende de X », bouton 📖 journal de bord) ; 2) à gagner aujourd'hui (45 min / 1 h, défi,
+  trésor, cadeau argenté, coffre chaud, bouton de la case de l'Avent) ; 3) « Le savais-tu ? » (`POP_TIPS`, une astuce par jour) + une phrase sur le bien-être (`POP_WHY`).
+  En se fermant, la fenêtre **se range dans le médaillon de Roxy** (`popToRoxy`, `.popghost`), puis Roxy dit « Touche-moi si tu as besoin d'infos » (3,5 s).
+  **Toucher Roxy en haut = rouvre le pop-up du jour** (avant : journal de bord, qui est maintenant dans la carte 1). Pastille rouge sur Roxy (`.heroDog.ping`) tant que la case de l'Avent du jour n'est pas ouverte.
+- 💸 **Amende « jour sans balade de 20 min avec l'app » = 150 clebsous à partir du 1er décembre 2026** (`dayFine(iso)`, `FINE_FROM`, `MALUS_DAY_NEW` ; 30 avant, `MALUS_DAY_OLD`),
+  y compris l'amende d'une balade annulée ; annoncée dans le pop-up du jour, le tuto et la tirelire.
+- Tests : `tests/e2e_v53.py` (horloge simulée : 25/11, 1er et 3 décembre). `tests/e2e_common.py` marque le pop-up du jour comme déjà vu (`NO_POP`) sauf `new_phone(..., pop=True)`.
+- Nouveau look : en stand-by (pas définitif) ; rien n'en est repris dans cette version.

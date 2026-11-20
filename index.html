@@ -699,6 +699,30 @@
   body.nuit #homeFoot{color:#b6becb;font-size:12.5px;letter-spacing:.5px}
   body.nuit #homeFoot b{font-weight:600}
   body.nuit #homeFoot small{display:block;letter-spacing:0;opacity:.95}
+  /* 🎄 v4.0 : événements spéciaux, calendrier de l'Avent, pop-up du jour */
+  .avscene{display:block;width:100%;height:auto;border-radius:16px;margin:6px 0 10px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+  .avscene .avnew{transform-box:fill-box;transform-origin:50% 100%;animation:avpop 1.1s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes avpop{0%{opacity:0;transform:scale(.2) translateY(14px)}60%{opacity:1}100%{opacity:1;transform:none}}
+  .avgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+  .avc{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;font:inherit;min-height:44px}
+  .avc b{font-size:17px;line-height:1} .avc small{font-size:11px;margin-top:3px;white-space:nowrap}
+  .avc.got{background:#e8f3ea;border-color:#9cc8a6;color:#24583a}
+  .avc.can{background:linear-gradient(135deg,#f6d36b,#e0a52a);color:#3b2a00;border-color:#c98f14;animation:avglow 1.6s ease-in-out infinite;cursor:pointer}
+  @keyframes avglow{50%{box-shadow:0 0 0 5px rgba(240,190,60,.35)}}
+  .avc.lost{opacity:.55} .avc.lock{opacity:.8}
+  .avsum{text-align:center;margin:4px 0} .avdefi{text-align:center;font-weight:600;margin:6px 0}
+  .avsay{display:flex;gap:10px;align-items:center;background:var(--sand);color:#3a2f1e;border-radius:14px;padding:8px 12px;margin:4px 0 8px}
+  .avsay p{margin:0;font-size:14px} .heroDogMini .roxy{width:40px;height:40px;font-size:22px;border-width:2px}
+  .avhero{text-align:center} .avbig{font-size:64px}
+  .avpopbtn{display:block;width:100%;margin:6px 0 10px;padding:12px;border-radius:14px;border:0;font:inherit;font-weight:700;background:linear-gradient(135deg,#f6d36b,#e0a52a);color:#3b2a00}
+  .popday{text-align:center} .popday .dc-ic{font-size:48px} .popday h2{margin:6px 0 8px}
+  .popdog{display:flex;justify-content:center;margin:6px 0} .popdog .roxy{width:84px;height:84px;font-size:46px;border-width:3px;border-color:var(--accent)}
+  .poplead{font-size:16px} .popduty{background:#fff6ef;color:#3a2f1e;border:1px solid #f0d9c4;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.5}
+  .popgain{list-style:none;padding:0;margin:6px 0;text-align:left} .popgain li{padding:8px 4px;border-bottom:1px solid var(--line);font-size:14.5px} .popgain li:last-child{border-bottom:0}
+  .poptip{font-size:16px;line-height:1.5} .popwhy{background:var(--sand);color:#3a2f1e;border-radius:12px;padding:10px 12px;font-size:14px}
+  .popdots{display:flex;justify-content:center;gap:6px;margin:8px 0 0} .popdots i{width:7px;height:7px;border-radius:50%;background:var(--line)} .popdots i.on{background:var(--accent)}
+  .popghost{position:fixed;z-index:9999;background:var(--card);border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.3);transition:all .45s cubic-bezier(.5,0,.3,1);pointer-events:none}
+  .heroDog.ping::after{content:"";position:absolute;top:0;right:0;width:13px;height:13px;border-radius:50%;background:#e2483c;border:2px solid #fff;animation:avglow 1.6s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -713,7 +737,7 @@
   <div id="recapbox"></div>
   <div class="panel">
     <div class="hero">
-      <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : son journal de bord"></button>
+      <button class="heroDog" id="heroDog" aria-label="Toucher Roxy : le point du jour"></button>
       <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button>
@@ -812,7 +836,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-18.183406";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.140821";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1435,6 +1459,7 @@
     $("#editWho").hidden = !!profile.walker;
     try{ $("#purseV").textContent = "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"); }catch(e){}
     try{ $("#heroDog").innerHTML = roxyHTML(accList(game.acc)); }catch(e){ $("#heroDog").innerHTML = roxyHTML([]); }
+    try{ $("#heroDog").classList.toggle("ping", aventPending()); }catch(e){}   // 🎄 pastille : case de l'Avent pas encore ouverte
     clearTimeout(renderWho._t); renderWho._t = setTimeout(() => { try{ fitHome(); }catch(e){} }, 60);
   }
   // v2.5 : « ☀️ 14° · ✓ sortie ce matin · 🔥 5 » ou « ☀️ 14° · attend depuis 6 h · 🔥 4 »
@@ -1468,6 +1493,7 @@
     setTimeout(() => { try{ fitHome(); }catch(e){} }, 30);
   }
   function openSheet(html){
+    popOpen = false;
     try{ const m = /<h2[^>]*>([\s\S]*?)<\/h2>/.exec(html); if (m) useTrack(m[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()); }catch(e){}
     const s = $("#sheet");
     s.innerHTML = `<button class="sheetx" id="sheetX" aria-label="Fermer">✕</button><div class="sbody">${html}</div>`;
@@ -1486,7 +1512,7 @@
     const r = st.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight - 70 || r.height === 0) try{ toast(t, 4000); }catch(e){} } })
     .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
   let introRunning = false;   // écran « tout repart de zéro » + tuto en cours : pas de rechargement (mise à jour, remise à zéro) avant la fin
-  function closeSheet(){ $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
+  function closeSheet(){ if (popOpen){ popOpen = false; try{ popToRoxy(); }catch(e){} } $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
   $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
   function askProfile(then){
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
@@ -2446,8 +2472,11 @@
   // Jour sans balade d'au moins 15 min avec l'app : −0,20 € (2 jokers par mois) ; dès la 3e balade de moins de 15 min
   // dans la semaine : −0,10 € chacune ; semaine de moins de 4 jours de balade : −0,50 €. Pas pendant une pause du superviseur.
   // La tirelire affichée = gains − malus du mois, jamais sous 0 €.
-  const MALUS_START = "2026-11-16", MALUS_DAY = 0.3, MALUS_SHORT = 0.1, MALUS_WEEK = 0.5, JOKERS = 1, WEEK_DAYS = 6, PERFECT_WEEK = 0.3;
+  const MALUS_START = "2026-11-16", MALUS_DAY_OLD = 0.3, MALUS_SHORT = 0.1, MALUS_WEEK = 0.5, JOKERS = 1, WEEK_DAYS = 6, PERFECT_WEEK = 0.3;
   const pad2 = n => String(n).padStart(2, "0");
+  // 💸 v4.0 (décidé le 20/11) : jour sans balade d'au moins 20 min avec l'app = 150 clebsous à partir du 1er décembre (30 avant) ; annoncé dans le pop-up du jour
+  const FINE_FROM = "2026-12-01", MALUS_DAY_NEW = 1.5;
+  const dayFine = iso => (iso || dIso(Date.now())) >= FINE_FROM ? MALUS_DAY_NEW : MALUS_DAY_OLD;
   const isoOf = d => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
   const dIso = t => isoOf(new Date(t - 4*3600000));   // la journée commence à 4 h
   const nextIso = (iso, n) => { const [y, m, d] = iso.split("-").map(Number); return isoOf(new Date(y, m - 1, d + (n == null ? 1 : n), 12)); };
@@ -2543,7 +2572,7 @@
     for (let d = game.malusDone ? nextIso(game.malusDone) : start; d < today; d = nextIso(d)){
       if (!paused(d) && !walkedOn(d)){
         const used = game.malus.filter(x => x.k === "joker" && x.d.slice(0, 7) === d.slice(0, 7)).length;
-        out.push(addMalus(used < JOKERS && !(game.noJoker || {})[d] ? { k:"joker", d, eur:0 } : { k:"day", d, eur: MALUS_DAY }));   // balade annulée par le superviseur : jamais de joker
+        out.push(addMalus(used < JOKERS && !(game.noJoker || {})[d] ? { k:"joker", d, eur:0 } : { k:"day", d, eur: dayFine(d) }));   // balade annulée par le superviseur : jamais de joker
       }
       game.malusDone = d;
     }
@@ -2593,7 +2622,7 @@
     return `<div class="wallet" style="background:#fff6ef;color:var(--ink);border:1px solid #f0d9c4">
         <div style="font-weight:600">⚠️ Malus de ${monthName(Date.now())}${ml.eur ? ` : −${fmtCs(ml.eur)}` : " : aucun 👏"}</div>
         ${ml.list.length ? `<div style="font-size:13px;margin-top:6px;line-height:1.6">${ml.list.map(x => esc(malusLabel(x))).join("<br>")}</div>` : ""}
-        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 20 min avec l'app : −${fmtCs(MALUS_DAY)} · dès la 3e balade de moins de 20 min dans la semaine : −${fmtCs(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtCs(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">🃏 Jokers ce mois-ci : ${Math.max(0, JOKERS - jok)} sur ${JOKERS}. Jour sans balade d'au moins 20 min avec l'app : −${fmtCs(dayFine())} · dès la 3e balade de moins de 20 min dans la semaine : −${fmtCs(MALUS_SHORT)} · semaine de moins de ${WEEK_DAYS} jours de balade : −${fmtCs(MALUS_WEEK)}. Une balade sans l'app ne compte pas.</div>
       </div>`;
   }
   // à l'ouverture : annoncer les nouveaux malus (ou jokers utilisés)
@@ -2699,6 +2728,7 @@
     const walked = game.streak.day === today;
     if (isBday()) l.push({ ic:"🎂", t:`C'est l'anniversaire de ${DOG} ! Tous les bonus comptent triple aujourd'hui 🎉`, done:false });
     if (EVENT) l.push({ ic: EVENT.deco, t: EVENT.title, done:false });
+    { const ad = aventDayNum(); if (ad) l.push({ ic:"🎄", t:`Case du ${ad} décembre du calendrier de l'Avent`, done: !!aventState().got[ad] }); }
     if (boosted(dIso(Date.now()))) l.push({ ic:"🎉", t:"Jour bonus : tous les bonus comptent double aujourd'hui !", done:false });
     const hu = weekHunt();
     if (hu) l.push(hu.gone ? { ic:"🏴‍☠️", t:`${hu.gone} a trouvé le trésor de la semaine !`, done:true }
@@ -3400,6 +3430,7 @@
       ${PUSH_API ? li("muHon", "🏆", "Palmarès", "") : ""}
       ${li("muCop", "🐕", "Copains", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
+      ${li("muEvt", "🎄", "Événements spéciaux", aventDayNum() ? (aventPending() ? "ta case t'attend !" : "calendrier de l'Avent") : "")}
       ${li("muToday", "📋", "Missions du jour", "")}
       ${li("muHelp", "❓", "Aide", "comment ça marche, règles, questions")}
       ${PUSH_API ? li("muBug", bugIcon(22), "Signaler un bug", "") : ""}
@@ -3430,6 +3461,7 @@
     { const b = $("#muSon"); if (b) b.onclick = () => { setSound(!soundOn()); openMenu(); toast(soundOn() ? "🔊 Sons activés" : "🔇 Sons coupés"); }; }
     go("muTuto", () => showTuto(0, true));
     go("muToday", sheetToday);
+    go("muEvt", () => sheetEvents());
     go("muHelp", sheetHelp);
     go("muBug", sheetBug);
     go("muAbout", () => { const d = document.querySelector("footer details"); const h = d ? d.innerHTML.replace(/<summary>[\s\S]*?<\/summary>/, "") : "";
@@ -3623,7 +3655,7 @@
       const first = dIso(game.firstUse), start = first > MALUS_START ? first : MALUS_START;
       if (D >= start && !paused(D)){   // plus aucune balade ce jour-là : amende, sans joker
         fine = true;
-        if (game.malusDone && D <= game.malusDone) addMalus({ k:"void", d: D, eur: MALUS_DAY, why: a.why || "" });   // jour déjà passé en revue
+        if (game.malusDone && D <= game.malusDone) addMalus({ k:"void", d: D, eur: dayFine(D), why: a.why || "" });   // jour déjà passé en revue
         else (game.noJoker = game.noJoker || {})[D] = 1;                                                              // pas encore : processMalus l'appliquera sans joker
       }
     }
@@ -3649,6 +3681,7 @@
   async function startupDigest(){
     if (digestRunning || document.body.classList.contains("recap")) return;
     digestRunning = true;
+    try{ aventMark(); aventDefiCheck(); }catch(e){}   // 🎄 v4.0 : l'app est ouverte aujourd'hui → case du jour gagnée d'avance
     const cards = [];
     waSentList();   // 📩 1re fois : les balades déjà au carnet comptent comme envoyées
     // ✨ Nouvelle version : un seul écran à part (2–3 lignes), puis le reste éventuel du « Quoi de neuf »
@@ -3669,7 +3702,7 @@
     for (const v of fa.voids) if (v.ent) cards.push({ html: `<div class="dc-ic">❌</div><h2>Balade annulée</h2>
       <p>Le superviseur a annulé ta balade du ${new Date(v.ent.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${hm(new Date(v.ent.date))}.</p>
       ${v.a.why ? `<p>Motif : <b>${esc(v.a.why)}</b></p>` : ""}
-      <p>${v.lost ? `Retiré de ta tirelire : <b>${v.lost.toLocaleString("fr-FR")} 🪙</b>.` : "Rien à retirer."}${v.fine ? ` Comme c'était ta seule balade de la journée : <b>amende −${Math.round(MALUS_DAY * CS)} 🪙</b>.` : ""}</p>` });
+      <p>${v.lost ? `Retiré de ta tirelire : <b>${v.lost.toLocaleString("fr-FR")} 🪙</b>.` : "Rien à retirer."}${v.fine ? ` Comme c'était ta seule balade de la journée : <b>amende −${Math.round(dayFine(v.ent ? dIso(new Date(v.ent.date).getTime()) : null) * CS)} 🪙</b>.` : ""}</p>` });
     syncHunt();
     { const hu = game.hunt; if (hu && hu.gone && game.huntNote !== hu.wk){ game.huntNote = hu.wk; saveGame();
         cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${esc(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
@@ -3687,6 +3720,7 @@
     try{ const hc = await honorsCard(); if (hc) cards.unshift(hc); }catch(e){}   // 🏆 v3.8 : trophées du mois (le 1er)
     renderHome();
     digestRunning = false;
+    setTimeout(dailyPopMaybe, 1200);   // 🗒️ v4.0 : pop-up du jour, après le « Quoi de neuf »
     if (!cards.length) return;
     const show = () => {
       if ($("#modal").classList.contains("open") || state.walk){ setTimeout(show, 3000); return; }
@@ -3698,6 +3732,263 @@
       $("#dgNext").onclick = closeSheet;
     };
     show();
+  }
+
+
+  // ---------- 🎄 v4.0 (décidé le 20/11) : page « Événements spéciaux » + calendrier de l'Avent génératif ----------
+  // Une case par jour du 1er au 24 décembre, qui ne s'ouvre que si l'app a été ouverte ce jour-là (case ratée = perdue).
+  // 1 500 clebsous max par promeneur, hors plafond (game.bonus, comme les coffres). Éric (testeur) voit tout mais ne gagne rien.
+  // Chaque case ouverte ajoute un morceau à une scène d'hiver unique (graine = prénom) ; plus la balade du jour est longue, plus il est beau.
+  var AV_SIMPLE = 30, AV_SUN = 110, AV_LAST = 330, AV_DEFI = 30;
+  var AV_TYPES = ["moon","hills","house","tree","stars","house","tree","snowman","house","garland","tree","lamp",
+    "house","fence","tree","stars","house","sled","tree","snow","house","garland","bigtree","star"];
+  var AV_WORDS = [
+    "Il fait froid ? Moi j'adore la neige ❄️ Une balade et je suis la plus heureuse !",
+    "Sortir tous les jours, c'est bon pour mes pattes… et pour toi aussi 💪",
+    "Un chien qui marche longtemps dort bien. Et toi aussi, tu verras 😴",
+    "Mets ton bonnet, j'ai déjà mon pelage 🧣",
+    "Je renifle tout le quartier : c'est mon journal du matin 📰👃",
+    "Merci d'être là pour moi, même quand il pleut 💛",
+    "Dehors, pas d'écran : juste toi, moi et les copains chiens 🐕",
+    "Marcher 45 min, c'est le meilleur cadeau que tu peux me faire 🎁",
+    "Les journées sont courtes : on sort avant la nuit ? 🌇",
+    "Je ne connais pas encore toutes les rues… on en découvre une ? 🗺️",
+    "Un pipi par lampadaire, c'est la règle 💧😄",
+    "Quand tu prends la laisse, mon cœur fait wouaf 💓",
+    "Un peu d'air frais et tu réfléchis mieux, c'est prouvé 🧠",
+    "On fait le grand tour aujourd'hui ? Je suis en forme ⚡",
+    "J'aime quand on prend notre temps. Pas toi ? 🐾",
+    "La neige, ça chatouille les coussinets 🐾❄️",
+    "Ton téléphone dans la poche, tes yeux sur moi : parfait 🌙",
+    "Bientôt Noël : je veux juste une longue balade 🎄",
+    "Je compte sur toi ce soir aussi, d'accord ? 🤞",
+    "Tu sais que je reconnais tes pas avant même d'ouvrir la porte ? 👂",
+    "Les chiens heureux sont des chiens qui sortent. CQFD 😎",
+    "Encore quelques dodos avant Noël… et plein de balades 🛷",
+    "Demain c'est le grand jour : on se fait une belle balade aujourd'hui ? ✨",
+    "Joyeux Noël ! Merci pour toutes ces balades 🎄💛 Ta scène d'hiver est finie, elle est unique au monde."
+  ];
+  function aventPlan(y){   // [1..24] → { cs, defi (minutes, 0 = pas de défi) }
+    const p = [null], wk = [];
+    for (let d = 1; d <= 24; d++){
+      const wd = new Date(y, 11, d, 12).getDay();
+      if (d === 24) p.push({ cs: AV_LAST, defi: 0 });
+      else if (wd === 0) p.push({ cs: AV_SUN, defi: 0 });
+      else if (wd === 6) p.push({ cs: AV_SIMPLE, defi: 60 });   // samedi : défi 1 h
+      else { p.push({ cs: AV_SIMPLE, defi: 0 }); wk.push(d); }
+    }
+    for (let i = 0; i < 5 && wk.length; i++) p[wk[Math.round(i * (wk.length - 1) / 4)]].defi = 45;   // 5 défis de 45 min en semaine
+    return p;
+  }
+  var aventDayNum = t => { const iso = dIso(t == null ? Date.now() : t); return iso.slice(5, 7) === "12" && +iso.slice(8) <= 24 ? +iso.slice(8) : 0; };
+  var aventIso = (y, d) => y + "-12-" + pad2(d);
+  function aventState(){
+    ensureGame();
+    const y = +dIso(Date.now()).slice(0, 4);
+    if (!game.avent || game.avent.y !== y) game.avent = { y, seen:{}, got:{}, bon:{} };
+    return game.avent;
+  }
+  function aventMark(){   // l'app est ouverte aujourd'hui : la case du jour est gagnée d'avance (il reste à l'ouvrir)
+    const d = aventDayNum(); if (!d || !profile.walker) return;
+    const a = aventState(); if (!a.seen[d]){ a.seen[d] = 1; saveGame(); }
+  }
+  var aventPending = () => { const d = aventDayNum(); if (!d) return false; const a = aventState(); return !!a.seen[d] && !a.got[d]; };
+  function aventPay(cs){
+    if (isTester()) return;
+    const k = monthKey(Date.now()); game.bonus = game.bonus || {};
+    game.bonus[k] = Math.round(((game.bonus[k] || 0) + cs / CS) * 100) / 100;
+    game.total = (game.total || 0) + cs;
+  }
+  function bestMinOn(iso){ return getLog().filter(e => !e.void && dIso(new Date(e.date).getTime()) === iso).reduce((m, e) => Math.max(m, e.min || 0), 0); }
+  function aventDefiCheck(){   // défi réussi (balade assez longue CE jour-là) → la case est doublée
+    const a = aventState(), plan = aventPlan(a.y); let n = 0;
+    for (let d = 1; d <= 24; d++){
+      const pl = plan[d]; if (!pl.defi || !a.got[d] || a.bon[d]) continue;
+      if (bestMinOn(aventIso(a.y, d)) >= pl.defi){ a.bon[d] = AV_DEFI; aventPay(AV_DEFI); n += AV_DEFI; }
+    }
+    if (n){ saveGame(); try{ toast(`🎄 Défi de l'Avent réussi : case doublée, +${n} 🪙`, 3500); ding(); }catch(e){} }
+    return n;
+  }
+  function aventTotal(){ const a = aventState(); let n = 0; for (let d = 1; d <= 24; d++) n += (a.got[d] || 0) + (a.bon[d] || 0); return n; }
+  // 🎨 la scène d'hiver (SVG), toujours la même pour un prénom, qui grandit case après case
+  function aventScene(newDay){
+    const a = aventState();
+    let h = 2166136261; for (const c of (profile.walker || "Roxy").toLowerCase()) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+    let st = h >>> 0; const rnd = () => { st = (st + 0x6D2B79F5) >>> 0; let t = st; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+    const slots = [14, 32, 50, 68, 86, 104, 124, 196, 216, 234, 252, 270, 288, 306].map(x => x + (rnd() * 6 - 3));
+    for (let i = slots.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [slots[i], slots[j]] = [slots[j], slots[i]]; }
+    const hue = Math.floor(rnd() * 360), roofs = ["#b8483e", "#5a6f9a", "#7a5a8c", "#3f7a5c", "#a0683a"], warm = "#ffd36b";
+    let si = 0, back = "", mid = "", front = "", sky = "";
+    const q = d => { const m = bestMinOn(aventIso(a.y, d)); return m >= 60 ? 3 : m >= 45 ? 2 : m >= 20 ? 1 : 0; };
+    const g = (d, body) => `<g class="${d === newDay ? "avnew" : ""}">${body}</g>`;
+    const tree = (x, y, s, k) => { let o = `<rect x="${x - 2 * s}" y="${y - 6 * s}" width="${4 * s}" height="${6 * s}" fill="#5b3b24"/>`;
+      for (let i = 0; i < 3; i++) o += `<polygon points="${x},${y - (30 - i * 8) * s} ${x - (13 - i * 2) * s},${y - (8 + i * 7) * s} ${x + (13 - i * 2) * s},${y - (8 + i * 7) * s}" fill="${i ? "#2f6b45" : "#24583a"}"/>`;
+      for (let i = 0; i < k * 3; i++){ const yy = y - (10 + rnd() * 18) * s, w = (30 - (y - yy) / s) * 0.35 * s; o += `<circle cx="${x + (rnd() * 2 - 1) * w}" cy="${yy}" r="${1.4 * s}" fill="${["#ff5b5b", warm, "#7fd3ff", "#fff"][i % 4]}"/>`; }
+      return o + `<path d="M${x - 9 * s} ${y - 14 * s} q${9 * s} -4 ${18 * s} 0" stroke="#fff" stroke-width="${1.5 * s}" fill="none" opacity=".8"/>`; };
+    const house = (x, y, k) => { const w = 26 + rnd() * 8, hh = 18 + rnd() * 6, c = roofs[Math.floor(rnd() * roofs.length)];
+      let o = `<rect x="${x - w / 2}" y="${y - hh}" width="${w}" height="${hh}" fill="#e9dcc6"/><polygon points="${x - w / 2 - 3},${y - hh} ${x},${y - hh - 14} ${x + w / 2 + 3},${y - hh}" fill="${c}"/>
+        <path d="M${x - w / 2 - 3} ${y - hh} L${x} ${y - hh - 14} L${x + w / 2 + 3} ${y - hh}" stroke="#fff" stroke-width="3" fill="none"/>`;
+      o += `<rect x="${x - w / 2 + 4}" y="${y - hh + 5}" width="6" height="6" fill="${k >= 1 ? warm : "#55607a"}"/><rect x="${x + w / 2 - 10}" y="${y - hh + 5}" width="6" height="6" fill="${k >= 1 ? warm : "#55607a"}"/><rect x="${x - 3}" y="${y - 9}" width="6" height="9" fill="#6b4a33"/>`;
+      if (k >= 2) o += `<rect x="${x + w / 4}" y="${y - hh - 12}" width="4" height="8" fill="#7a6a5a"/><path d="M${x + w / 4 + 2} ${y - hh - 13} q4 -6 0 -10 q-4 -5 1 -9" stroke="#dfe6ee" stroke-width="2" fill="none" opacity=".7"/>`;
+      if (k >= 3) o += `<circle cx="${x}" cy="${y - hh - 4}" r="3" fill="none" stroke="#2f6b45" stroke-width="2"/><circle cx="${x}" cy="${y - hh - 1}" r="1" fill="#ff5b5b"/>`;
+      return o; };
+    const SLOT_T = ["house", "tree", "snowman", "lamp", "fence", "sled"];
+    for (let d = 1; d <= 24; d++){
+      const t = AV_TYPES[d - 1], x = SLOT_T.includes(t) ? slots[si++ % slots.length] : 0;   // place fixée d'avance : la scène ne bouge pas quand on ajoute un morceau
+      if (!a.got[d]) continue;
+      st = (h + d * 7919) >>> 0;   // hasard propre à chaque jour
+      const k = q(d);
+      if (t === "moon") sky += g(d, `<circle cx="${250 + rnd() * 40}" cy="${30}" r="${12 + k * 2}" fill="#f6f1d8"/><circle cx="${256 + rnd() * 40}" cy="${26}" r="${12}" fill="hsl(${hue},45%,18%)" opacity=".9"/>`);
+      else if (t === "stars"){ let o = ""; for (let i = 0; i < 6 + k * 6; i++) o += `<circle cx="${rnd() * 320}" cy="${rnd() * 80}" r="${rnd() * 1.2 + .4}" fill="#fff" opacity="${.5 + rnd() * .5}"/>`; sky += g(d, o); }
+      else if (t === "hills") back += g(d, `<path d="M0 140 Q60 ${96 - k * 4} 130 132 T260 ${120 - k * 4} T320 128 V200 H0Z" fill="#dfe8f2"/>`);
+      else if (t === "snow"){ let o = ""; for (let i = 0; i < 25 + k * 25; i++) o += `<circle cx="${rnd() * 320}" cy="${rnd() * 190}" r="${rnd() * 1.6 + .5}" fill="#fff" opacity=".85"/>`; front += g(d, o); }
+      else if (t === "garland"){ let o = `<path d="M10 ${108 + rnd() * 10} Q160 ${128 + rnd() * 10} 310 ${108 + rnd() * 10}" stroke="#3b3b3b" stroke-width="1" fill="none"/>`;
+        for (let i = 0; i < 8 + k * 6; i++){ const xx = 14 + i * (292 / (8 + k * 6)); o += `<circle cx="${xx}" cy="${112 + Math.sin(i) * 3 + (1 - Math.pow((xx - 160) / 150, 2)) * 12}" r="2.2" fill="${["#ff5b5b", warm, "#7fd3ff", "#8dff9a"][i % 4]}"/>`; }
+        mid += g(d, o); }
+      else if (t === "bigtree") mid += g(d, tree(160, 168, 2.1 + k * .15, Math.max(1, k + 1)));
+      else if (t === "star") mid += g(d, `<polygon points="160,${82 - k * 3} 164,${92 - k * 3} 175,${92 - k * 3} 166,${99 - k * 3} 170,${110 - k * 3} 160,${103 - k * 3} 150,${110 - k * 3} 154,${99 - k * 3} 145,${92 - k * 3} 156,${92 - k * 3}" fill="${warm}" stroke="#fff3c4" stroke-width="1.5"/><circle cx="160" cy="${97 - k * 3}" r="${18 + k * 4}" fill="${warm}" opacity=".18"/>`);
+      else {
+        if (t === "house") mid += g(d, house(x, 160 + rnd() * 6, k));
+        else if (t === "tree") mid += g(d, tree(x, 162 + rnd() * 8, .9 + rnd() * .4 + k * .1, k));
+        else if (t === "snowman") front += g(d, `<circle cx="${x}" cy="174" r="9" fill="#fff"/><circle cx="${x}" cy="160" r="6.5" fill="#fff"/><circle cx="${x - 2}" cy="159" r=".9"/><circle cx="${x + 2}" cy="159" r=".9"/><path d="M${x} 161 l4 1 -4 1z" fill="#ff8a2a"/>${k >= 1 ? `<rect x="${x - 5}" y="${150}" width="10" height="5" fill="#222"/><rect x="${x - 7}" y="154" width="14" height="2" fill="#222"/>` : ""}${k >= 2 ? `<path d="M${x - 6} 166 h12" stroke="#d33" stroke-width="3"/>` : ""}`);
+        else if (t === "lamp") front += g(d, `<rect x="${x - 1}" y="138" width="2" height="38" fill="#333"/><rect x="${x - 4}" y="132" width="8" height="7" fill="#333"/><rect x="${x - 3}" y="133" width="6" height="5" fill="${warm}"/><circle cx="${x}" cy="136" r="${10 + k * 4}" fill="${warm}" opacity=".2"/>`);
+        else if (t === "fence"){ let o = ""; for (let i = 0; i < 5; i++) o += `<rect x="${x - 18 + i * 9}" y="168" width="3" height="12" fill="#7a5a3a"/>`; front += g(d, o + `<rect x="${x - 19}" y="171" width="40" height="2" fill="#7a5a3a"/>`); }
+        else if (t === "sled") front += g(d, `<rect x="${x - 10}" y="174" width="20" height="4" rx="2" fill="#b8483e"/><path d="M${x - 12} 181 h24 q4 0 5 -4" stroke="#555" stroke-width="1.5" fill="none"/>${k >= 2 ? `<rect x="${x - 6}" y="167" width="8" height="7" fill="#7fd3ff"/><rect x="${x - 6}" y="170" width="8" height="1.5" fill="#ff5b5b"/>` : ""}`);
+      }
+    }
+    return `<svg class="avscene" viewBox="0 0 320 200" role="img" aria-label="Ta scène d'hiver : ${Object.keys(a.got).length} morceaux sur 24">
+      <defs><linearGradient id="avsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="hsl(${hue},45%,14%)"/><stop offset="1" stop-color="hsl(${(hue + 30) % 360},40%,32%)"/></linearGradient></defs>
+      <rect width="320" height="200" fill="url(#avsky)"/>${sky}${back}<path d="M0 168 Q80 160 160 166 T320 164 V200 H0Z" fill="#f4f7fb"/>${mid}${front}</svg>`;
+  }
+  function sheetEvents(justOpened){
+    const now = dIso(Date.now()), mo = now.slice(5, 7), y = +now.slice(0, 4), day = aventDayNum();
+    if (mo !== "12"){   // avant / après décembre : on annonce
+      const next = mo === "11" ? "le 1er décembre" : `le 1er décembre ${y}`;
+      openSheet(`<h2>🎉 Événements spéciaux</h2>
+        <div class="avhero"><div class="avbig">🎄</div><h3>Le calendrier de l'Avent de ${DOG}</h3>
+        <p>Il arrive ${next} : une case par jour jusqu'au 24, et jusqu'à <b>1 500 🪙</b> de cadeaux en plus de ta cagnotte.</p>
+        <p class="howto">⚠️ Une case ne s'ouvre que si tu ouvres l'app ce jour-là : une case ratée est perdue. Chaque case ajoute un morceau à ta scène d'hiver, unique au monde, encore plus belle les jours de longue balade.</p></div>
+        <p class="howto">Plus tard ici : Pâques 🐣 et l'été ☀️.</p>
+        <div class="btns"><button id="evClose">Super ! 🐾</button></div>`);
+      $("#evClose").onclick = closeSheet; return;
+    }
+    aventMark(); aventDefiCheck();
+    const a = aventState(), plan = aventPlan(a.y), tot = aventTotal();
+    const cells = [];
+    for (let d = 1; d <= 24; d++){
+      const pl = plan[d], got = a.got[d], late = day ? d < day : true, can = a.seen[d] && !got && (day ? d <= day : true);
+      let cls = "avc", inner = `<b>${d}</b>`;
+      if (got) { cls += " got"; inner += `<small>+${got + (a.bon[d] || 0)}</small>`; }
+      else if (can) { cls += " can"; inner += `<small>🎁 ouvrir</small>`; }
+      else if (late) { cls += " lost"; inner += `<small>❄️ ratée</small>`; }
+      else { cls += " lock"; inner += `<small>${pl.defi ? "🎯" : d === 24 ? "⭐" : "🔒"}</small>`; }
+      cells.push(`<button class="${cls}" data-d="${d}" ${can ? "" : "aria-disabled=\"true\""} aria-label="Case du ${d} décembre${got ? ", ouverte" : can ? ", à ouvrir" : late ? ", ratée" : ", fermée"}">${inner}</button>`);
+    }
+    const pl = day ? plan[day] : null;
+    const defiTxt = pl && pl.defi ? (a.bon[day] ? `🎯 Défi du jour réussi : case doublée ✓` : `🎯 Défi du jour : une balade d'au moins ${pl.defi === 60 ? "1 h" : pl.defi + " min"} aujourd'hui = case doublée (+${AV_DEFI} 🪙)`) : "";
+    const word = justOpened ? AV_WORDS[justOpened - 1] : "";
+    openSheet(`<h2>🎄 Le calendrier de l'Avent</h2>
+      ${aventScene(justOpened)}
+      ${word ? `<div class="avsay"><div class="heroDogMini">${roxyHTML(accList(game.acc))}</div><p>${esc(word)}</p></div>` : ""}
+      <p class="avsum">${isTester() ? "🧪 Aperçu testeur : pas de clebsous pour toi." : `Déjà gagné : <b>${tot} 🪙</b> sur 1 500 · ${Object.keys(a.got).length} morceau${Object.keys(a.got).length > 1 ? "x" : ""} de scène sur 24`}</p>
+      ${defiTxt ? `<p class="avdefi">${defiTxt}</p>` : ""}
+      <div class="avgrid">${cells.join("")}</div>
+      <p class="howto">Une case par jour, seulement si tu ouvres l'app ce jour-là (case ratée = perdue). Dimanches et 24 décembre : grosses cases. 🎯 = défi balade, case doublée. Plus ta balade du jour est longue, plus le morceau de ta scène est beau (lumières, fumée, guirlandes…).</p>
+      <div class="btns"><button id="evClose">Fermer</button></div>`);
+    $("#evClose").onclick = closeSheet;
+    document.querySelectorAll("#sheet .avc.can").forEach(b => b.onclick = () => aventOpen(+b.dataset.d));
+  }
+  function aventOpen(d){
+    const a = aventState(), plan = aventPlan(a.y); if (!a.seen[d] || a.got[d]) return;
+    a.got[d] = plan[d].cs; aventPay(plan[d].cs); saveGame();
+    try{ confetti(); ding(); haptic(2); }catch(e){}
+    aventDefiCheck();
+    sheetEvents(d);
+    try{ renderWho(); }catch(e){}
+  }
+
+  // ---------- 🗒️ v4.0 : pop-up du jour (une fois par jour), qui se range dans le médaillon de Roxy ----------
+  var POP_KEY = "wouaf-pop";
+  var POP_TIPS = [
+    "🌙 Mode poche : l'écran devient noir mais la balade et le GPS continuent. Pour revenir, glisse la patte.",
+    "📷 Une photo de Roxy pendant la balade quand elle te le demande = des clebsous en plus.",
+    "🗺️ Les rues que tu n'as pas faites depuis une semaine sont « neuves » : elles rapportent plus.",
+    "💧💩 Touche Roxy pendant la balade pour noter pipi et caca : ça compte pour les trophées du mois.",
+    "📩 À la fin de la balade, envoie le récap au groupe WhatsApp « Roxy ».",
+    "🏴‍☠️ Le trésor doré change chaque lundi. Un seul gagnant : le premier arrivé !",
+    "🔥 Quand le nuage orange apparaît, le coffre est chaud : passe dedans pendant ta balade.",
+    "⚔️ Lance un duel à un autre promeneur dans ☰ › Duels.",
+    "📖 Ton journal de bord : toutes tes balades, et qui sort Roxy le plus.",
+    "🏆 Le 1er de chaque mois : les trophées de Roxy (Roi du Caca, Explorateur…).",
+    "⚡ Pas le temps ? La balade express de 10 min (sans jeu) est dans « On part comment ? ».",
+    "🐞 Quelque chose ne marche pas ? ☰ › Signaler un bug.",
+    "🔔 Active les rappels dans ☰ pour ne jamais oublier Roxy.",
+    "🎄 En décembre : ouvre l'app chaque jour pour ta case du calendrier de l'Avent."
+  ];
+  var POP_WHY = [
+    "Un chien a besoin de marcher chaque jour pour être heureux et en bonne santé.",
+    "Marcher 30 min par jour, c'est bon pour ton cœur, ton sommeil et ton moral.",
+    "Plus la balade est longue, plus Roxy se dépense… et plus elle est calme à la maison.",
+    "Renifler, c'est le sport cérébral du chien : laisse-la explorer.",
+    "Dehors, sans écran : ton cerveau se repose aussi.",
+    "Les chiens qui sortent souvent aboient moins et dorment mieux.",
+    "Une balade, c'est aussi un moment rien qu'à vous deux."
+  ];
+  var popOpen = false;
+  function dailyPopMaybe(tries){
+    tries = tries || 0;
+    if (!profile.walker || introRunning || store.get(POP_KEY, "") === dIso(Date.now())) return;
+    if ($("#modal").classList.contains("open") || state.walk || document.body.classList.contains("recap") || document.body.classList.contains("page") || digestRunning){
+      if (tries < 60) setTimeout(() => dailyPopMaybe(tries + 1), 2500); return;
+    }
+    dailyPop();
+  }
+  function dailyPop(){
+    ensureGame(); aventMark();
+    store.set(POP_KEY, dIso(Date.now()));
+    const today = dIso(Date.now()), walked = walkedOn(today), fine = Math.round(dayFine(today) * CS), dn = new Date(Date.now() - 4 * 3600000);
+    const doy = Math.floor((dn - new Date(dn.getFullYear(), 0, 0)) / 86400000);
+    const duty = isTester() ? `🧪 Testeur : pas d'amende pour toi.` : paused(today) ? `🏖️ Pause décidée par le superviseur : pas d'amende en ce moment.`
+      : `📌 Chaque jour : une balade d'au moins <b>20 min avec l'app</b>. Sinon : amende de <b>${fine} 🪙</b>.${today < FINE_FROM ? ` À partir du 1er décembre : <b>${Math.round(MALUS_DAY_NEW * CS)} 🪙</b>.` : ""}`;
+    const gains = [`🐾 45 min = jusqu'à <b>${gainEst(45)} 🪙</b> · 1 h = jusqu'à <b>${gainEst(60)} 🪙</b>`];
+    try{ gains.push(game.defiDone === dayKey(Date.now()) ? "🎯 Défi du jour réussi ✓" : `🎯 Défi du jour : ${esc(defiOf(Date.now()).t)} (+${DEFI_PTS} 🪙)`); }catch(e){}
+    try{ if (huntOpen()) gains.push(`🏴‍☠️ Le trésor doré est encore à prendre : ${HUNT_FIRST} 🪙 pour le premier !`); }catch(e){}
+    try{ if (silverLive()) gains.push(`🥈 Un cadeau argenté de ${SILVER_CS} 🪙 attend quelqu'un…`); }catch(e){}
+    try{ if (chestChance() > 0) gains.push("🔥 Le coffre est chaud : cherche le nuage orange !"); }catch(e){}
+    const ad = aventDayNum(), aPlan = ad ? aventPlan(aventState().y)[ad] : null;
+    const avHTML = ad ? `<button class="avpopbtn" id="popAvent">🎄 ${aventState().got[ad] ? `Case du ${ad} ouverte ✓ · voir ma scène` : `Ouvre ta case du ${ad} décembre (+${aPlan.cs} 🪙)`}</button>` : "";
+    const cards = [
+      `<div class="popdog">${roxyHTML(accList(game.acc))}</div><h2>Aujourd'hui avec ${DOG}</h2>
+        <p class="poplead">${walked ? `✓ Tu m'as sortie aujourd'hui. Merci ! 💛` : `Je dois sortir aujourd'hui. Toi : <b>pas encore de balade</b>.`}</p>
+        <p class="popduty">${duty}</p>
+        <button class="ghost" id="popJournal">📖 Mon journal de bord</button>`,
+      `<div class="dc-ic">🎁</div><h2>À gagner aujourd'hui</h2>${avHTML}<ul class="popgain">${gains.map(x => `<li>${x}</li>`).join("")}</ul>`,
+      `<div class="dc-ic">💡</div><h2>Le savais-tu ?</h2><p class="poptip">${esc(POP_TIPS[doy % POP_TIPS.length])}</p>
+        <p class="popwhy">🐕 ${esc(POP_WHY[doy % POP_WHY.length])}</p>
+        <p class="howto">À demain ! Ouvre-moi chaque jour 🐾</p>`
+    ];
+    let i = 0;
+    const draw = () => {
+      openSheet(`<div class="popday">${cards[i]}</div>
+        <div class="popdots">${cards.map((_, k) => `<i class="${k === i ? "on" : ""}"></i>`).join("")}</div>
+        <div class="btns">${i ? `<button class="ghost" id="popPrev">‹</button>` : ""}<button id="popNext">${i < cards.length - 1 ? "Suivant ›" : "C'est noté 🐾"}</button></div>`);
+      popOpen = true;
+      const n = $("#popNext"); if (n) n.onclick = () => { if (i < cards.length - 1){ i++; draw(); } else closeSheet(); };
+      const p = $("#popPrev"); if (p) p.onclick = () => { i--; draw(); };
+      const j = $("#popJournal"); if (j) j.onclick = () => { popOpen = false; closeSheet(); setTimeout(sheetJournal, 150); };
+      const av = $("#popAvent"); if (av) av.onclick = () => { popOpen = false; closeSheet(); setTimeout(() => { const d = aventDayNum(); if (d && aventPending()) aventOpen(d); else sheetEvents(); }, 150); };
+    };
+    draw();
+  }
+  function popToRoxy(){   // la fenêtre se range dans le médaillon de Roxy, puis elle dit qu'on peut la toucher
+    const s = $("#sheet"), dog = $("#heroDog"); if (!s || !dog || document.body.classList.contains("page")) return;
+    const a = s.getBoundingClientRect(), b = dog.getBoundingClientRect(); if (!b.width) return;
+    const g = document.createElement("div"); g.className = "popghost";
+    Object.assign(g.style, { left: a.left + "px", top: a.top + "px", width: a.width + "px", height: a.height + "px" });
+    document.body.appendChild(g);
+    requestAnimationFrame(() => { Object.assign(g.style, { left: b.left + "px", top: b.top + "px", width: b.width + "px", height: b.height + "px", borderRadius: "50%", opacity: ".2" }); });
+    setTimeout(() => { g.remove(); dog.classList.remove("jump"); void dog.offsetWidth; dog.classList.add("jump");
+      try{ roxySay("Touche-moi si tu as besoin d'infos, je suis là 🐾"); clearTimeout(showSay._t); showSay._t = setTimeout(hideSay, 3500); }catch(e){} }, 480);
   }
 
   // ---------- ✨ Écran « Nouveau dans la version X » (une fois par téléphone et par version) ----------
@@ -3723,8 +4014,8 @@
       <text x="285" y="34" font-size="22" text-anchor="middle">🐕</text></svg>`;
     return [
       { pic: dog, h:`Salut ! Voici ${DOG} 🐾`, t:`C'est un peu ton Tamagotchi : elle te parle dans sa bulle (touche-la pour une autre phrase) et elle adore les caresses : glisse ton doigt sur sa photo ❤️. Touche-la pour voir son humeur, sa forme et ton niveau.` },
-      { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(MALUS_DAY)}</span></div></div>`,
-        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque dimanche 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
+      { pic:`<div><div class="clock">⏱️ 20 min</div><div class="row" style="margin-top:8px"><span class="chip">✅ chaque jour</span><span class="chip">📱 app ouverte</span><span class="chip">⬜ −${cs(dayFine())}</span></div></div>`,
+        h:"Sortir Roxy", t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}, ${JOKERS} joker par mois). Dans le gros bouton vert : choisis la durée et touche « C'est parti ! ». Au-delà de 20 min, chaque minute rapporte des 🪙 clebsous, qui deviennent de vrais sous chaque dimanche 💶. En bas du bouton, tu vois où tu en es aujourd'hui.` },
       { pic:`<div class="row"><span class="chip">🦴 1</span><span class="chip">🎾 2</span><span class="chip">🍖 3</span><span class="chip">⭐ 5</span><span class="chip">🆕 rue neuve ×2</span><span class="chip">👃 piste +${FLAIR_CS}</span><span class="chip">🎯 défi +${DEFI_PTS}</span><span class="chip">📸 photo +5</span><span class="chip">👯 à deux +${DUO_PTS}</span></div>`,
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
@@ -3742,7 +4033,7 @@
   function tutoShort(){
     const cs = v => Math.round(v * CS), full = tutoPages();
     return [
-      { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(MALUS_DAY)}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
+      { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
       { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 7 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque dimanche soir, tes clebsous de la semaine deviennent de vrais sous 💶.` },
       { pic: full[4].pic, h:"C'est parti !", t:`Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
@@ -4465,7 +4756,7 @@
   function openVoidForm(auth, walker, e, label, voidMode){
     openSheet(`<h2>❌ Annuler cette balade ?</h2>
       <p><b>${esc(walker)}</b> · ${esc(label)}</p>
-      <p class="howto">Tous ses gains seront retirés (durée, bonus, défi, trésor, coffre). Si c'était sa seule balade de 20 min ou plus ce jour-là : amende de ${Math.round(MALUS_DAY * CS)} clebsous, sans joker.</p>
+      <p class="howto">Tous ses gains seront retirés (durée, bonus, défi, trésor, coffre). Si c'était sa seule balade de 20 min ou plus ce jour-là : amende de ${Math.round(dayFine() * CS)} clebsous, sans joker.</p>
       <label for="vdWhy">Motif (le promeneur le verra)</label><input id="vdWhy" placeholder="ex. balade faite en voiture" autocomplete="off">
       <div class="btns"><button id="vdGo" style="background:#c8452f">❌ Annuler cette balade</button><button class="ghost" id="vdNo">Retour</button></div><p id="vdMsg" role="status"></p>`);
     $("#vdNo").onclick = () => openDash(auth, voidMode);
@@ -5447,6 +5738,7 @@
   function showRecapSheet(r, files, title, res, moneyMin){
     const dur = (r.e - r.s) / 60;
     waSentList(); pendingRecap = dur >= 2 && !isTester() ? r : null;   // 📩 rappel si on ferme sans envoyer
+    setTimeout(() => { try{ aventDefiCheck(); renderWho(); }catch(e){} }, 2500);   // 🎄 v4.0 : défi de l'Avent réussi pendant cette balade ?
     const thumbs = (files || []).map(f => `<img alt="Photo du chien" src="${URL.createObjectURL(f)}">`).join("");
     const hero = (files && files[0]) ? `<img class="tk-photo" alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(files[0])}">` : `<div class="tk-dog">${roxyHTML(game.acc || [])}</div>`;
     openSheet(`<div class="ticket">${hero}
@@ -5849,7 +6141,7 @@
     if (Date.now() - petAt < 600) return;   // c'était une caresse, pas un toucher
     const el = $("#heroDog");
     el.classList.remove("jump"); void el.offsetWidth; el.classList.add("jump"); ding();
-    setTimeout(sheetJournal, 250);   // v47 : toucher Roxy ouvre son journal de bord (elle parle en haut du journal)
+    setTimeout(dailyPop, 250);   // v4.0 : toucher Roxy rouvre le pop-up du jour (le journal de bord est dedans)
   });
   function updateGo(){   // v2.4 : gros bouton (gain à droite) ; la durée qui rapporte le plus porte une étiquette « ×N »
     const dur = Math.round(walkEuros(state.dur) * CS), bon = bonusEst(state.dur), tot = dur + bon;
@@ -6025,7 +6317,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6144,8 +6436,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 52, APP_LABEL = "3.9.1";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 53, APP_LABEL = "4.0";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    53: [
+      "🎄 Le calendrier de l'Avent de Roxy arrive le 1er décembre : une case par jour, jusqu'à 1 500 clebsous en plus ! Une case ratée est perdue : ouvre l'app chaque jour.",
+      "🗒️ Chaque jour, Roxy te fait le point. Touche-la pour le revoir.",
+      "⚠️ À partir du 1er décembre, un jour sans balade de 20 min avec l'app coûte 150 clebsous."
+    ],
     52: [
       "📩 Tu as oublié d'envoyer le récap de ta balade au groupe « Roxy » ? L'app te le rappelle, et tu peux l'envoyer après coup en un geste."
     ],
@@ -6401,7 +6698,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
