@@ -101,7 +101,7 @@ with sync_playwright() as pw:
     L.click("#palX"); L.wait_for_timeout(300)
     # menu
     EV(L, "__wouaf.openMenu()"); L.wait_for_timeout(400)
-    check("menu : entrée Palmarès", L.locator("#muHon").count() == 1)
+    check("v4.5.5 : menu sans Palmarès (il est dans le classement)", L.locator("#muHon").count() == 0)
     check("menu : toujours sans défilement", EV(L, "(() => { const s = document.querySelector('#sheet'); return s.scrollHeight <= s.clientHeight + 2; })()"))
     L.screenshot(path="/tmp/menu39.png")
     for b in (bL, bT): b.close()

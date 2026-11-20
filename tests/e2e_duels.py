@@ -20,7 +20,7 @@ with sync_playwright() as pw:
     L.evaluate(GIVE); T.evaluate(GIVE)   # 30 clebsous chacun : assez pour parier 25
     home = L.evaluate("document.querySelector('#home').textContent")
     check("accueil : gros lots (trésor, coffre, record, lancer un duel)", "Trésor" in home and "Coffre" in home and "Record" in home and "Défier" in home, home[:400])
-    L.evaluate("__wouaf.openMenu()"); check("menu : ⚔️ Duels", "Duels" in txt(L)); L.click("#muDuel"); L.wait_for_timeout(1500)
+    L.evaluate("__wouaf.sheetDuels()"); L.wait_for_timeout(1500)   # v4.5.5 : plus dans le menu (classement › ⚔️ Défier)
     L.click("#dyNew"); L.wait_for_timeout(400)
     check("formulaire : Tom proposé, que des paris (pas de « sans mise »), 50 grisé (tirelire 30)", "Tom" in txt(L) and "Aucune" not in txt(L) and L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"50\"]').disabled") and not L.evaluate("document.querySelector('.pick[data-k=stake] button[data-v=\"25\"]').disabled"))
     L.click(".pick[data-k=days] button[data-v='7']"); L.wait_for_timeout(200); L.click(".pick[data-k=type] button[data-v='streets']"); L.wait_for_timeout(200)
@@ -54,15 +54,14 @@ with sync_playwright() as pw:
     L.evaluate("__wouaf.flushWalks()"); L.wait_for_timeout(2500)
     check("Léa : fiche « Nouveau record ! » et +50 hors plafond", "Nouveau record" in txt(L) and abs(L.evaluate("(()=>{const g=JSON.parse(localStorage.getItem('wouaf-jeu'));const k=Object.keys(g.bonus||{})[0];return (g.bonus||{})[k]||0})()") - 0.5) < 0.001, txt(L)[:120])
     # 📈 statistiques : Léa ouvre des pages, puis envoie ses chiffres
-    L.evaluate("__wouaf.openMenu()"); L.wait_for_timeout(200); L.click("#muMoney"); L.wait_for_timeout(500)
+    L.evaluate("__wouaf.switchTab && __wouaf.switchTab('shop')"); L.wait_for_timeout(500)
     L.evaluate("__wouaf.sendUsage(true)"); L.wait_for_timeout(800)
     # Éric : voit le duel dans le tableau de bord
     bE, cE, E = new_phone(pw, errors=errs, init="localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','48');")
     open_app(E, 1500); E.evaluate("__wouaf.askProfile()"); E.fill("#wName", "Éric"); E.click("#whoForm button[type=submit]"); E.wait_for_timeout(800)
     ho = E.evaluate("document.querySelector('#home').textContent")
     check("Éric (testeur) : voit aussi le trésor et les gros lots sur l'accueil", "Trésor" in ho and "Coffre" in ho, ho[:200])
-    E.evaluate("__wouaf.openMenu()"); check("Éric : menu Duels en aperçu", "aperçu" in txt(E))
-    E.click("#muDuel"); E.wait_for_timeout(1500); f = txt(E)
+    E.evaluate("__wouaf.duelPreview ? __wouaf.duelPreview() : __wouaf.sheetDuels()"); E.wait_for_timeout(1500); f = txt(E)
     check("Éric : aperçu du formulaire avec les vrais prénoms", "Aperçu superviseur" in f and "Léa" in f, f[:300])
     E.click("#dnNext"); E.wait_for_timeout(300)
     check("Éric : fiche visible, envoi impossible", E.evaluate("document.querySelector('#dnSend').disabled") and "pas d'envoi" in txt(E))

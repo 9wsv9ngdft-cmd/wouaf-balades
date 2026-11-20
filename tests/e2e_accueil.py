@@ -113,7 +113,7 @@ with sync_playwright() as pw:
     Cc.evaluate("__wouaf.openMenu()"); Cc.wait_for_timeout(300)
     m = Cc.evaluate("(()=>{const s=document.querySelector('#sheet .sbody');return [s.scrollHeight,s.clientHeight]})()")
     check("menu sans défilement", m[0] <= m[1], m)
-    check("menu : 4 tuiles, À propos", Cc.locator(".mgrid button").count() == 4 and "À propos" in txt(Cc))
+    check("v4.5.5 : menu allégé (plus de Tirelire, Duels, Exploration, Palmarès), À propos", Cc.locator(".mgrid").count() == 0 and all(Cc.locator(x).count() == 0 for x in ("#muMoney", "#muDuel", "#muFog", "#muHon")) and Cc.locator("#muProg").count() == 1 and "À propos" in txt(Cc))
     Cc.click("#muAbout"); Cc.wait_for_timeout(400)
     check("À propos : version et crédits OpenStreetMap", "Wouaf Balades, version" in txt(Cc) and "OpenStreetMap" in txt(Cc), txt(Cc)[:200])
     check("aucune erreur JavaScript", not errs, errs)

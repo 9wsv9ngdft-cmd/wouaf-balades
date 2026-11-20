@@ -692,3 +692,16 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   pop-up zappé), joués à la demande avec des chiffres d'exemple (`SURP_DEMO`) ; à la fin (ou au toucher), retour à la fiche (`surpEnd`). Rien n'est compté : ni clebsous,
   ni « déjà vu aujourd'hui ». Rappel des fréquences réelles en bas de la fiche.
 - Tests : `tests/e2e_v58_surprise.py` (fiche, Noël joué, retour à la fiche, pas de clebsous).
+
+## Version 4.5.5 « Croquette » (APP_NUM 58, libellé « 4.5.5 », lot 1 décidé par Éric le 20/11 entre 19 h 10 et 20 h 38, « go » à 21 h 30)
+- 🏆 **Classement qui s'ouvre tout de suite** (« on ne peut plus cliquer sur le classement ») : `sheetRanks` n'attend plus `/honors` ; la fiche s'ouvre avec les trophées
+  déjà gardés (`wouaf-honors`), la réponse du serveur arrive ensuite (8 s max, `loadRankHon`) et rafraîchit l'onglet ouvert (sauf Semaine, qui n'en a pas besoin).
+  Cause non prouvée sur iPhone (dans le navigateur de test, la tuile répondait) : c'est l'hypothèse la plus probable (attente sans limite = rien ne se passe).
+- Tuile du classement : « ⚔️ DÉFIER » (violet) à la place de « EN DIRECT » et de son point rouge.
+- Fiche du classement : onglets **Semaine · Mois · Année · 😂 Rigolo** (plus de Saison ni de 🎄 : pas de concurrence à Noël, Éric).
+- ☰ **Menu allégé** : plus de grosses tuiles ; Progrès passe en tête de la liste ; retirés : Tirelire (cagnotte de l'accueil › « Voir tout »), Duels (classement › ⚔️ Défier),
+  Exploration (☁️ de la mini-carte), Palmarès (onglet Année ; `sheetPalmares` reste ouvert par la carte des trophées du 1er du mois). Textes d'aide mis à jour.
+- 📏 **Diagnostic d'écran du superviseur** (`screenDiag`, `#scrDiag`) : pendant 20 s à l'ouverture et au retour dans l'app, seulement sur un téléphone superviseur :
+  hauteur de l'écran, `innerHeight`, `clientHeight`, zone visible, zones sûres, position du titre, hauteur de la carte, bas de l'accueil, défilement, et les moments où ça change
+  (« ⚡ a changé à… »). Ne bloque pas les touchers, rien n'est envoyé. Superviseur › 📏 pour couper / rallumer (`wouaf-diag`). Sert à corriger le « saut » au pixel.
+- Tests : `tests/e2e_lot1.py` ; `e2e_v58.py`, `e2e_v51.py`, `e2e_accueil.py`, `e2e_v49.py`, `e2e_duels.py` adaptés.

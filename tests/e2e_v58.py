@@ -104,13 +104,13 @@ with sync_playwright() as pw:
     EV(P, "localStorage.setItem('wouaf-explo', JSON.stringify({ wk:'2026-11-16', rank:[{ w:'Tom', r:1 }, { w:'Léa', r:2 }, { w:'Zoé', r:3 }], prev:{ rank:[] } }))")
     EV(P, "__wouaf.renderHome()"); P.wait_for_timeout(300)
     rt = P.inner_text("[data-lot='rank']")
-    check("tuile classement : EN DIRECT, Toi en 2e, couronne au 1er", "EN DIRECT" in rt and "Toi" in rt and "Tom" in rt and P.locator("[data-lot='rank'] .r.c1 .cr").count() == 1 and P.locator("[data-lot='rank'] .r.me").count() == 1, rt)
+    check("tuile classement : ⚔️ DÉFIER (plus « en direct »), Toi en 2e, couronne au 1er", "DÉFIER" in rt and "EN DIRECT" not in rt and "Toi" in rt and "Tom" in rt and P.locator("[data-lot='rank'] .r.c1 .cr").count() == 1 and P.locator("[data-lot='rank'] .r.me").count() == 1, rt)
     P.click("[data-lot='rank']"); P.wait_for_timeout(900)
     t = sheet(P)
     check("fiche du classement : podium + Défier", "Le classement" in t and P.locator("#sheet .podium").count() == 1 and P.locator("#rkDuel").count() == 1, t[:200])
     tabs = P.locator("#sheet [data-rt]").all_inner_texts()
-    check("onglets Semaine · Mois · Année · Saison · 🎄 · Rigolo", tabs == ["Semaine", "Mois", "Année", "Saison", "🎄", "😂 Rigolo"], tabs)
-    for k in ["month", "year", "season", "event", "fun", "week"]:
+    check("v4.5.5 : onglets Semaine · Mois · Année · Rigolo (plus de Saison ni de 🎄)", tabs == ["Semaine", "Mois", "Année", "😂 Rigolo"], tabs)
+    for k in ["month", "year", "fun", "week"]:
         P.click(f"#sheet [data-rt='{k}']"); P.wait_for_timeout(400)
     check("tous les onglets s'ouvrent", "Le classement" in sheet(P))
     EV(P, "document.querySelector('#sheetX').click()"); P.wait_for_timeout(300)

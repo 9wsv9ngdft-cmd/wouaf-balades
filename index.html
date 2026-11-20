@@ -779,7 +779,7 @@
   .bt.gold.off{background:linear-gradient(135deg,#4c4434,#7d6c45);box-shadow:none}
   .bt.silver{background:linear-gradient(135deg,#4f5760,#aab3bc)} .bt.silver b{font-size:17px}
   .bt.rank{background:var(--hb-card);border:1px solid var(--hb-line);color:var(--hb-ink);align-items:stretch;justify-content:center;padding:8px 10px;text-align:left;gap:2px}
-  .bt.rank .live{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--hb-muted)}
+  .bt.rank .live{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.5px;color:#7a4fc9} body.nuit .bt.rank .live{color:#c7a6ff}
   .bt.rank .live i{width:7px;height:7px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 3px rgba(229,72,77,.2);animation:livep 1.6s ease-in-out infinite}
   @keyframes livep{50%{box-shadow:0 0 0 5px rgba(229,72,77,.08)}}
   .bt.rank .r{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -822,6 +822,7 @@
   .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
 
   /* ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 16 h 49–17 h 27) : arcade d'habitude, Noël en décembre ---------- */
+  #scrDiag{position:fixed;left:8px;right:8px;top:42%;z-index:4500;pointer-events:none;white-space:pre-wrap;font:600 11.5px/1.4 ui-monospace,Menlo,monospace;background:rgba(0,0,0,.78);color:#9ff5c9;padding:8px 10px;border-radius:10px}
   #surp{position:fixed;inset:0;z-index:5000;display:none;overflow:hidden;font-family:"Bungee","Arial Black",Impact,system-ui,sans-serif;color:#fff;-webkit-user-select:none;user-select:none}
   #surp.on{display:block}
   #surp .sc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden;text-align:center;padding:0 22px}
@@ -986,7 +987,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.184147";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.214456";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3237,7 +3238,7 @@
         return `<span class="r${x.r === 1 ? " c1" : ""}${isMe ? " me" : ""}"><b>${x.r}</b>${isMe ? "Toi" : escN(x.w)}${x.r === 1 ? CROWN_SVG : ""}</span>`; }).join("")
         : `<span class="r none">${me && !isTester() ? "Personne encore : prends la tête !" : "Personne encore cette semaine"}</span>`;
     }catch(e){ rows = `<span class="r none">Le classement arrive</span>`; }
-    return `<button class="bt rank" data-lot="rank" aria-label="Classement en direct et duels"><span class="live"><i></i>EN DIRECT</span>${rows}</button>`;
+    return `<button class="bt rank" data-lot="rank" aria-label="Classement : touche pour voir le podium et défier quelqu'un"><span class="live">⚔️ DÉFIER</span>${rows}</button>`;   // v4.6 (Éric, 20/11 20 h 07) : « Défier » à la place de « en direct »
   }
   // 💰 tuile argent « Billets » : le cadeau argenté d'Éric et le coffre
   function sheetBills(){
@@ -3256,7 +3257,7 @@
   // 🏆 La fiche du classement (v4.5) : podium + « Défier », onglets Semaine · Mois · Année · Saison · 🎄 · Rigolo.
   // Semaine = places des explorateurs ; les autres = trophées de Roxy (💩 💧 🗺️ 🏃…) comptés sur la période, mois en cours compris. Jamais de trajet.
   var rankTab = "week", rankHon = null;
-  const RANK_TABS = [["week", "Semaine"], ["month", "Mois"], ["year", "Année"], ["season", "Saison"], ["event", "🎄"], ["fun", "😂 Rigolo"]];
+  const RANK_TABS = [["week", "Semaine"], ["month", "Mois"], ["year", "Année"], ["fun", "😂 Rigolo"]];   // v4.6 (Éric, 20/11 20 h 38) : plus de Saison ni de 🎄 (pas de concurrence à Noël)
   function placesOf(rows){   // [{ w, n }] triés → places avec ex aequo
     let r = 0, prev = null; return rows.map((x, i) => { if (x.n !== prev){ r = i + 1; prev = x.n; } return { w: x.w, r, n: x.n }; });
   }
@@ -3272,12 +3273,21 @@
   }
   async function loadRankHon(){
     if (!PUSH_API) return { hs: store.get("wouaf-honors", []), cur: null };
-    try{ const j = await (await api("/honors")).json(); if (j && Array.isArray(j.honors)){ store.set("wouaf-honors", j.honors); return { hs: j.honors, cur: j.cur || null }; } }catch(e){}
+    try{ const j = await Promise.race([api("/honors").then(r => r.json()), new Promise((_, no) => setTimeout(() => no(new Error("lent")), 8000))]); if (j && Array.isArray(j.honors)){ store.set("wouaf-honors", j.honors); return { hs: j.honors, cur: j.cur || null }; } }catch(e){}
     return { hs: store.get("wouaf-honors", []), cur: null };
   }
   async function sheetRanks(tab){
-    rankTab = tab || rankTab || "week";
-    if (!rankHon || Date.now() - rankHon.at > 5 * 60000){ rankHon = Object.assign({ at: Date.now() }, await loadRankHon()); }
+    rankTab = tab || rankTab || "week"; if (!RANK_TABS.some(x => x[0] === rankTab)) rankTab = "week";
+    // v4.6 (Éric, 20/11 19 h 10 : « on ne peut plus cliquer sur le classement ») : la fiche s'ouvre tout de suite avec ce qu'on a déjà,
+    // les trophées arrivent du serveur ensuite (avant : on attendait la réponse de /honors sans limite → rien ne se passait sur un réseau lent)
+    if (!rankHon) rankHon = { at: 0, hs: store.get("wouaf-honors", []), cur: null };
+    if (Date.now() - rankHon.at > 5 * 60000 && !sheetRanks.busy){
+      sheetRanks.busy = true;
+      loadRankHon().then(r => { rankHon = Object.assign({ at: Date.now() }, r); }).catch(() => { rankHon.at = Date.now(); }).then(() => {
+        sheetRanks.busy = false;
+        if ($("#modal").classList.contains("open") && document.querySelector("#sheet .rtabs") && rankTab !== "week") sheetRanks(rankTab);
+      });
+    }
     const { hs, cur } = rankHon, now = new Date(), year = now.getFullYear(), mk = monthKey(Date.now());
     const all = hs.filter(h => h.mk !== mk).concat(cur ? [cur] : []);
     let body = "", sub = "";
@@ -3286,25 +3296,14 @@
       const left = (() => { if (!wk) return ""; const e = new Date(wk.getTime() + 7 * DAYMS); e.setHours(4, 0, 0, 0); const h = Math.max(0, Math.round((e - Date.now()) / 3600000)); return h >= 24 ? `plus que ${Math.floor(h / 24)} j ${h % 24} h` : `plus que ${h} h`; })();
       sub = `Les explorateurs · ${left || "cette semaine"}`;
       body = podiumHTML(rank) + `<p class="howto">Les rues pas faites depuis ${FRESH_DAYS} jours et les objets ramassés te font monter (balades de 20 min ou plus). On ne voit que les places. Celui qui est 1er dimanche soir est le champion et garde la couronne 👑 sur ${DOG}… tant que personne ne la lui pique !</p>`;
-    } else if (rankTab === "month" || rankTab === "event"){
-      if (rankTab === "event" && now.getMonth() !== 11){
-        const j = (() => { try{ return aventSoon(); }catch(e){ return 0; } })();
-        sub = "Événement spécial";
-        body = `<div style="text-align:center;font-size:56px;margin:14px 0 4px">🎄</div><p style="text-align:center"><b>Le classement de Noël</b> commence le 1er décembre${j ? ` (J-${j})` : ""} : les trophées de décembre, avec le calendrier de l'Avent.</p>`;
-      } else {
-        sub = rankTab === "event" ? "🎄 Le classement de Noël · décembre" : `${monthLabelFr(mk)} · en cours`;
-        body = cur && cur.t && Object.keys(cur.t).length ? podiumHTML(countTrophies([cur])) + `<div class="flabel">Qui mène, trophée par trophée</div><div class="props">${trophyRows(cur)}</div>`
-          : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de balade ce mois-ci. Le premier qui sort ${DOG} prend la tête !</p>`;
-      }
+    } else if (rankTab === "month"){
+      sub = `${monthLabelFr(mk)} · en cours`;
+      body = cur && cur.t && Object.keys(cur.t).length ? podiumHTML(countTrophies([cur])) + `<div class="flabel">Qui mène, trophée par trophée</div><div class="props">${trophyRows(cur)}</div>`
+        : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de balade ce mois-ci. Le premier qui sort ${DOG} prend la tête !</p>`;
     } else if (rankTab === "year"){
       sub = `${year} · trophées gagnés (mois en cours compris)`;
       const r = countTrophies(all.filter(h => h.mk.slice(0, 4) === String(year)));
       body = r.length ? podiumHTML(r) + `<div class="props">${r.map(x => `<div class="entry"><div><h4>${x.r === 1 ? "👑" : "🐾"} ${sameN(x.w, profile.walker) ? "Toi" : escN(x.w)}</h4><div class="when">${x.n} trophée${x.n > 1 ? "s" : ""}</div></div></div>`).join("")}</div>` : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de trophée cette année.</p>`;
-    } else if (rankTab === "season"){
-      const se = seasonOf(Date.now()), m1 = monthKey(se.start.getTime()), m2 = monthKey(se.end.getTime() - DAYMS);
-      sub = `Saison ${se.name}`;
-      const r = countTrophies(all.filter(h => h.mk >= m1 && h.mk <= m2));
-      body = r.length ? podiumHTML(r) + `<p class="howto">Les trophées de ${DOG} des deux mois de la saison.</p>` : `<p class="howto" style="text-align:center;margin-top:18px">Pas encore de trophée cette saison.</p>`;
     } else {
       sub = "Les chiffres marrants du mois";
       const f = (cur && cur.fam) || {}, t = (cur && cur.t) || {};
@@ -3739,11 +3738,12 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupS", "🕹️", "Voir les surprises", "arcade et Noël, sans attendre le hasard")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupC", "👥", "Comptes", "inscriptions, code oublié")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${acc && acc.sup ? "" : it("muSupK", "🔐", "Créer le compte superviseur", "l'ancien code s'arrêtera")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupS", "🕹️", "Voir les surprises", "arcade et Noël, sans attendre le hasard")}${it("muSupH", "📏", "Diagnostic de l'écran : " + (diagOn() ? "activé" : "coupé"), "les chiffres de hauteur pendant 20 s à l'ouverture")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupC", "👥", "Comptes", "inscriptions, code oublié")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${acc && acc.sup ? "" : it("muSupK", "🔐", "Créer le compte superviseur", "l'ancien code s'arrêtera")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
     go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupS", sheetSurprises); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupC", sheetAccounts); go("muSupK", () => accSupCreate()); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    { const b = $("#muSupH"); if (b) b.onclick = () => { store.set("wouaf-diag", diagOn() ? 0 : 1); sheetSupMenu(); if (diagOn()){ closeSheet(); setTimeout(screenDiag, 300); } toast(diagOn() ? "📏 Diagnostic activé" : "📏 Diagnostic coupé"); }; }
   }
   // 📱 v4.4 : plusieurs téléphones sur le même compte superviseur (un jeton chacun, Worker /sup-phones). Se connecter ailleurs avec le code ne déconnecte plus personne.
   async function sheetSupPhones(){
@@ -3921,24 +3921,15 @@
     draw();
   }
   // ---------- ☰ Menu ----------
-  function openMenu(){   // v2.2 : 4 grosses tuiles, une courte liste, les réglages en icônes
-    const tl = (id, k, ic, t, v) => `<button id="${id}" class="${k}"><span class="e">${ic}</span><span><b>${t}</b>${v !== "" ? `<small>${v}</small>` : ""}</span></button>`;
+  function openMenu(){   // v2.2 : une courte liste, les réglages en icônes. v4.6 (Éric, 20/11 19 h 59–20 h 07) : plus de Tirelire, Duels, Exploration ni Palmarès (tout est sur l'accueil)
     const li = (id, ic, t, sub) => `<button id="${id}"><span>${ic}</span>${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     const ic = (id, e, t) => `<button id="${id}">${e}<small>${t}</small></button>`;
-    const inv = duelOK() && myInvite(), du = duelOK() && myDuel();
     openSheet(`<h2>☰ Menu</h2>
-      <div class="mgrid">
-      ${tl("muProg", "k1", "🏆", "Progrès", esc(levelOf(game.total).name))}
-      ${tl("muMoney", "k2", "🪙", "Tirelire", "🪙 " + Math.round(moneyThisMonth() * CS).toLocaleString("fr-FR"))}
-      ${isTester() && PUSH_API ? tl("muDuel", "k3", "⚔️", "Duels", "aperçu") : ""}
-      ${duelOK() ? tl("muDuel", "k3" + (inv ? " ping" : ""), "⚔️", "Duels", du ? scoreOf(du).join(" – ") : inv ? "défi reçu !" : "lancer un défi") : ""}
-      ${tl("muFog", "k4", "🗺️", "Exploration", game.home ? fogStats().pct + " %" : "à découvrir")}
-      </div>
       <div class="mlist">
+      ${li("muProg", "🏆", "Progrès", esc(levelOf(game.total).name))}
       ${li("muOuts", "🐾", "Dernières sorties", "")}
       ${li("muLog", "📒", "Carnet", "")}
       ${li("muHeat", "🔥", "Carte de chaleur", "")}
-      ${PUSH_API ? li("muHon", "🏆", "Palmarès", "") : ""}
       ${li("muCop", "🐕", "Copains", "")}
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muEvt", "🎄", "Événements spéciaux", aventDayNum() ? (aventPending() ? "ta case t'attend !" : "calendrier de l'Avent") : "")}
@@ -4441,7 +4432,7 @@
     "📩 À la fin de la balade, envoie le récap au groupe WhatsApp « Roxy ».",
     "🏴‍☠️ Le trésor doré change chaque lundi. Un seul gagnant : le premier arrivé !",
     "🔥 Quand le nuage orange apparaît, le coffre est chaud : passe dedans pendant ta balade.",
-    "⚔️ Lance un duel à un autre promeneur dans ☰ › Duels.",
+    "⚔️ Lance un duel : touche le classement, puis ⚔️ Défier.",
     "📖 Ton journal de bord : toutes tes balades, et qui sort Roxy le plus.",
     "🏆 Le 1er de chaque mois : les trophées de Roxy (Roi du Caca, Explorateur…).",
     "⚡ Pas le temps ? La balade express de 10 min (sans jeu) est dans « On part comment ? ».",
@@ -6940,6 +6931,30 @@
     if (e.target.closest && e.target.closest(".leaflet-container, #sheet, #surp")) return;
     if (e.cancelable) e.preventDefault();
   }, { passive:false });
+  // 📏 v4.6 (lot 1, Éric 20/11 18 h 37 : « au bout de ~10 s tout saute vers le haut, le noir revient en bas ») : diagnostic visible SEULEMENT par le superviseur,
+  // 20 s après l'ouverture (et au retour dans l'app) : les mesures d'écran 4 fois par seconde et le moment où elles changent. Éric fait des captures avant / après le saut.
+  // Rien n'est envoyé. Coupé / rallumé dans Superviseur › 📏.
+  const diagOn = () => { try{ return !!supToken() && store.get("wouaf-diag", 1) !== 0; }catch(e){ return false; } };
+  function screenDiag(){
+    if (!diagOn() || screenDiag.on) return;
+    screenDiag.on = true;
+    const t0 = Date.now(), probe = document.createElement("div"), box = document.createElement("div");
+    probe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)";
+    box.id = "scrDiag"; box.setAttribute("aria-hidden", "true"); document.body.append(probe, box);
+    let last = "", jumps = [];
+    const r = (sel, k) => { const e = document.querySelector(sel); return e ? Math.round(e.getBoundingClientRect()[k]) : "–"; };
+    const tick = () => {
+      const cs = getComputedStyle(probe), vv = window.visualViewport, sec = ((Date.now() - t0) / 1000).toFixed(1);
+      const line = `écran ${screen.height} · inner ${innerHeight} · client ${document.documentElement.clientHeight} · visible ${vv ? Math.round(vv.height) + (vv.offsetTop ? "+" + Math.round(vv.offsetTop) : "") : "–"}
+zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(parseFloat(cs.paddingBottom) || 0)} · titre ${r("header", "top")} · carte ${($("#miniMap") || {}).offsetHeight || 0} · bas ${r("#homeFoot", "bottom")} · page ${document.documentElement.scrollHeight} · défil ${Math.round(scrollY)}`;
+      if (last && line !== last) jumps.push(sec + " s"); last = line;
+      box.textContent = `📏 ${sec} s · seulement toi le vois\n${line}${jumps.length ? "\n⚡ a changé à " + jumps.slice(-6).join(", ") : ""}`;
+      if (Date.now() - t0 < 20000) setTimeout(tick, 250); else { box.remove(); probe.remove(); screenDiag.on = false; }
+    };
+    tick();
+  }
+  setTimeout(() => { try{ screenDiag(); }catch(e){} }, 50);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) setTimeout(() => { try{ screenDiag(); }catch(e){} }, 50); });
   // 🌙 v2.5 : l'accueil est « nuit » (bleu nuit, ivoire) ; la balade, la carte et les pages gardent leurs couleurs
   function setNuit(){
     const b = document.body.classList, dark = !window.matchMedia || window.matchMedia("(prefers-color-scheme: dark)").matches;   // v4.5 : mode clair / sombre = réglage du téléphone
@@ -7184,7 +7199,7 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5.4";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5.5";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
@@ -7287,7 +7302,7 @@
       "☰ Nouveau menu : Progrès, Tirelire, Duels et Exploration en grandes tuiles."
     ],
     35: [
-      "⚔️ Les duels : défie un autre promeneur sur 3 ou 7 jours (menu ☰ › Duels). Et la Guerre des rues : vole les rues de l'autre !",
+      "⚔️ Les duels : défie un autre promeneur sur 3 ou 7 jours (touche le classement, puis ⚔️ Défier). Et la Guerre des rues : vole les rues de l'autre !",
       "🏅 Le record du mois : fais la plus longue balade du mois et gagne +50 clebsous.",
       "💎 Sur l'accueil : le trésor (500 !), le coffre et le record, pour ne rien rater."
     ],
@@ -7466,7 +7481,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
