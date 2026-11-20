@@ -22,7 +22,10 @@ def kv():
 # v4.0 : le pop-up du jour s'affiche une fois par jour ; les anciens tests le marquent « déjà vu » (pop=True pour le tester)
 NO_POP = "try{ if (!window.__wantPop){ const d = new Date(Date.now() - 4*3600000), p = n => String(n).padStart(2, '0'); localStorage.setItem('wouaf-pop', JSON.stringify(d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()))); } }catch(e){}"
 
-def new_phone(pw, name=None, errors=None, init=None, pop=False):
+# v4.4 : l'écran d'entrée (comptes) s'affiche une fois par téléphone ; les anciens tests le passent (acc=True pour le tester)
+NO_ACC = "try{ localStorage.setItem('wouaf-acc-skip', '1'); }catch(e){}"
+
+def new_phone(pw, name=None, errors=None, init=None, pop=False, acc=False):
     """Un « téléphone » = un contexte de navigateur isolé (son propre localStorage / IndexedDB)."""
     b = pw.chromium.launch()
     ctx = b.new_context(viewport={"width": 390, "height": 800}, geolocation={"latitude": 48.8566, "longitude": 2.3522}, permissions=["geolocation"])
@@ -48,6 +51,7 @@ def new_phone(pw, name=None, errors=None, init=None, pop=False):
         page.on("pageerror", lambda e: errors.append(str(e)))
     if init: ctx.add_init_script(init)
     ctx.add_init_script("window.__wantPop = true;" if pop else NO_POP)
+    if not acc: ctx.add_init_script(NO_ACC)
     return b, ctx, page
 
 def open_app(page, wait=2200):

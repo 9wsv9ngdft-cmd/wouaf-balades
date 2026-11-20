@@ -732,6 +732,14 @@
   .evchip.tree{font-size:22px;padding:2px 8px}
   .evchip.ping::after{content:"";position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#e2483c;border:2px solid #fff}
   .heroDog.ping::after{content:"";position:absolute;top:0;right:0;width:13px;height:13px;border-radius:50%;background:#e2483c;border:2px solid #fff;animation:avglow 1.6s ease-in-out infinite}
+  /* 👤 v4.4 : comptes */
+  .accg{display:flex;justify-content:center;margin:4px 0 8px}.accg .roxy{width:88px;height:88px}
+  .accwarn{background:#fff4d6;color:#5a4300;border-radius:10px;padding:8px 10px}
+  .accid{font-size:19px;letter-spacing:.5px}
+  .ctype{display:flex;gap:8px;margin:6px 0}.ctype button{flex:1;padding:9px 6px;font-size:15px}
+  #aCode,#aCode2{width:100%;margin-top:6px}
+  .acccode summary{cursor:pointer;font-weight:700;margin:10px 0 4px}
+  @media (prefers-color-scheme: dark){ .accwarn{background:#3a3010;color:#ffe7a3} }
 </style>
 </head>
 <body>
@@ -845,7 +853,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.162542";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.164735";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1442,6 +1450,235 @@
   const supToken = () => store.get(SUP_KEY, "") || "";
   const isTester = () => !!supToken() && isEricName(profile.walker);
   const supAuth = code => supToken() ? { token: supToken() } : { code };
+  // 👤 v4.4 : comptes. Le téléphone garde { login, key, name, tok } (clé wouaf-acc). profile.walker = la CLÉ, fixe, envoyée au serveur ;
+  // acc.name = prénom affiché, modifiable tout le temps. names (GET /pause) = prénom affiché de chaque clé, pour tout ce qui vient du serveur.
+  const ACC_KEY = "wouaf-acc";
+  let acc = store.get(ACC_KEY, null), namesMap = store.get("wouaf-names", {}) || {};
+  const wslug = w => String(w || "").toLowerCase().trim().replace(/[^a-z0-9àâäéèêëîïôöùûüç-]/g, "_").slice(0, 30);
+  const nm = w => { if (!w) return w; const x = namesMap[wslug(w)]; return (x && x.n) || w; };
+  const escN = w => esc(nm(w));
+  const myName = () => (acc && acc.name) || nm(profile.walker) || profile.walker || "";
+  const accSkip = () => !PUSH_API || !!acc || !!store.get("wouaf-acc-skip", 0);
+  let gateOpen = false;
+  function accSave(j){
+    acc = Object.assign({}, j.acc, { tok: j.token }); store.set(ACC_KEY, acc);
+    profile = { walker: acc.key, dog: DOG }; store.set("wouaf-profil", { walker: acc.key });
+    namesMap[wslug(acc.key)] = { k: acc.key, n: acc.name }; store.set("wouaf-names", namesMap);
+    if (j.supToken) store.set(SUP_KEY, j.supToken);
+    try{ renderWho(); }catch(e){}
+  }
+  const ACC_ERR = { "login taken":"Cet identifiant est déjà pris : choisis-en un autre.", "name taken":"Ce prénom est déjà utilisé par quelqu'un d'autre : ajoute une initiale (ex. « Léa B. »).",
+    "closed":"Les inscriptions sont fermées pour l'instant : demande au superviseur de les ouvrir.", "reserved":"Ce nom est réservé au superviseur.",
+    "bad login":"Identifiant : 2 à 20 lettres ou chiffres, sans espace.", "bad code":"Code : 4 chiffres, ou un mot de passe d'au moins 6 caractères.", "bad name":"Écris ton prénom." };
+  const loginSuggest = w => String(w || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9_.-]/g, "").slice(0, 20);
+  // champ « code » : 4 chiffres ou mot de passe (au choix), avec confirmation
+  const codeFields = (lbl) => `<div class="flabel">${lbl || "Ton code"}</div>
+      <div class="ctype" role="radiogroup"><button type="button" class="on" data-ct="pin" role="radio" aria-checked="true">🔢 4 chiffres</button><button type="button" class="ghost" data-ct="pw" role="radio" aria-checked="false">🔤 Mot de passe</button></div>
+      <input id="aCode" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="4 chiffres" aria-label="Code">
+      <input id="aCode2" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Encore une fois" aria-label="Le même code, encore une fois">`;
+  function bindCode(){
+    document.querySelectorAll("[data-ct]").forEach(b => b.onclick = () => {
+      const pw = b.dataset.ct === "pw";
+      document.querySelectorAll("[data-ct]").forEach(x => { const on = x === b; x.className = on ? "on" : "ghost"; x.setAttribute("aria-checked", on); });
+      for (const id of ["#aCode", "#aCode2"]){ const i = $(id); i.value = ""; i.inputMode = pw ? "text" : "numeric"; i.maxLength = pw ? 64 : 4; i.placeholder = id === "#aCode" ? (pw ? "6 caractères ou plus" : "4 chiffres") : "Encore une fois"; }
+    });
+  }
+  const readCode = () => { const a = $("#aCode").value, b = $("#aCode2").value, pin = $("[data-ct=pin]").classList.contains("on");
+    if (pin ? !/^\d{4}$/.test(a) : a.length < 6) return { err: pin ? "Le code fait 4 chiffres." : "Le mot de passe fait au moins 6 caractères." };
+    if (a !== b) return { err: "Les deux codes ne sont pas pareils." };
+    return { code: a }; };
+  // 🚪 écran d'entrée (une seule fois par téléphone) : « Je m'inscris » / « J'ai déjà un compte »
+  async function accGate(then){
+    if (accSkip() || document.body.classList.contains("recap")){ then(); return; }
+    let st = null;
+    try{ const r = await api("/acc-status", {}); if (r.ok) st = await r.json(); }catch(e){}
+    if (supToken() && isEricName(profile.walker)){   // 🔑 téléphone superviseur
+      if (st && st.supacc){ try{ const j = await (await api("/acc-sup-me", { token: supToken() })).json(); if (j.ok) accSave(j); }catch(e){} then(); return; }
+      if (st && !store.get("wouaf-supacc-later", "") .startsWith(dIso(Date.now()))){ accSupCreate(() => then()); return; }
+      then(); return;
+    }
+    gateOpen = true; introRunning = true;
+    const done = () => { gateOpen = false; introRunning = false; closeSheet(); setTimeout(then, 250); };
+    accHome(st, done);
+  }
+  function gateSheet(html){ openSheet(html); const x = $("#sheetX"); if (x && gateOpen) x.style.display = "none"; }
+  function accHome(st, done){
+    const old = !!profile.walker;
+    if (!st){
+      gateSheet(`<div class="accg">${roxyHTML([])}</div><h2>${old ? `Salut ${esc(myName())} ! 👋` : `Bienvenue chez ${DOG} 🐾`}</h2>
+        <p>${old ? "Nouveau : chaque promeneur a maintenant son compte. Il faut internet pour le créer : on te le redemandera à la prochaine ouverture." : "Il faut internet pour créer ton compte."}</p>
+        <div class="btns"><button id="agRetry">🔄 Réessayer</button>${old ? `<button class="ghost" id="agLater">Continuer sans compte pour l'instant</button>` : ""}</div>`);
+      $("#agRetry").onclick = async () => { let s2 = null; try{ const r = await api("/acc-status", {}); if (r.ok) s2 = await r.json(); }catch(e){} if (s2) accHome(s2, done); else toast("Toujours pas de connexion.", 3000); };
+      if ($("#agLater")) $("#agLater").onclick = done;
+      return;
+    }
+    gateSheet(`<div class="accg">${roxyHTML([])}</div><h2>${old ? `Salut ${esc(myName())} ! 👋` : `Bienvenue chez ${DOG} 🐾`}</h2>
+      <p>${old ? `Nouveau : chaque promeneur a son compte, pour protéger un peu ${DOG} et ne jamais rien perdre. <b>Tout ce qui est sur ce téléphone reste</b> (tirelire, carnet, calendrier).` : `Pour commencer, crée ton compte. Tu as déjà un compte (nouveau téléphone) ? Connecte-toi.`}</p>
+      ${!old && !st.open ? `<p class="howto">🔒 Les inscriptions sont fermées pour l'instant : demande au superviseur de les ouvrir.</p>` : ""}
+      <div class="btns"><button id="agNew"${!old && !st.open ? " disabled" : ""}>✨ Je m'inscris</button><button class="ghost" id="agLog">🔑 J'ai déjà un compte</button></div>`);
+    $("#agNew").onclick = () => accSignup(st, done);
+    $("#agLog").onclick = () => accLogin(st, done);
+  }
+  function accSignup(st, done){
+    const old = !!profile.walker;
+    gateSheet(`<h2>✨ Je m'inscris</h2>
+      <form id="agForm"><label for="aLogin">Ton identifiant</label><input id="aLogin" autocapitalize="none" autocomplete="username" spellcheck="false" value="${esc(loginSuggest(profile.walker))}" required>
+      <p class="howto accwarn">⚠️ <b>Retiens bien ton identifiant.</b> Il ne change jamais : c'est lui qui sert si tu perds ton téléphone.</p>
+      <label for="aName">Ton prénom (celui qu'on voit)</label><input id="aName" autocomplete="given-name" value="${esc(myName())}" required>
+      <p class="howto">Tu pourras le changer quand tu veux (☰ › 👤 Mon compte).</p>
+      ${codeFields()}
+      <div class="btns"><button type="submit">Créer mon compte</button><button type="button" class="ghost" id="agBack">← Retour</button></div><p id="agMsg" role="status"></p></form>`);
+    bindCode();
+    $("#agBack").onclick = () => accHome(st, done);
+    $("#agForm").onsubmit = async e => {
+      e.preventDefault();
+      const say = t => { $("#agMsg").textContent = t; }, c = readCode(); if (c.err){ say(c.err); return; }
+      const login = $("#aLogin").value.trim(), name = $("#aName").value.trim();
+      say("Un instant…");
+      try{
+        const r = await api("/acc-signup", { login, name, code: c.code, key: old ? profile.walker : undefined }), j = await r.json();
+        if (!r.ok){ say(j.error === "key taken" ? `Il existe déjà un compte pour ${myName()} : touche « ← Retour » puis « J'ai déjà un compte ».` : ACC_ERR[j.error] || "Ça n'a pas marché, réessaie."); return; }
+        accSave(j);
+        gateSheet(`<div class="accg">${roxyHTML([])}</div><h2>✅ Ton compte est créé !</h2>
+          <p>Ton identifiant : <b class="accid">${esc(acc.login)}</b></p><p class="howto accwarn">⚠️ Note-le quelque part (ou fais une capture d'écran) : c'est lui qui sert si tu perds ton téléphone. Code oublié ? Le superviseur le remet à zéro.</p>
+          <div class="btns"><button id="agOk">C'est noté 🐾</button></div>`);
+        $("#agOk").onclick = done;
+      }catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+  }
+  function accLogin(st, done, msg){
+    gateSheet(`<h2>🔑 J'ai déjà un compte</h2>
+      <form id="agForm"><label for="aLogin">Ton identifiant</label><input id="aLogin" autocapitalize="none" autocomplete="username" spellcheck="false" required>
+      <label for="aPass">Ton code</label><input id="aPass" type="password" autocomplete="current-password" required>
+      <p class="howto">Code oublié ? Demande au superviseur de le remettre à zéro.</p>
+      <div class="btns"><button type="submit">Me connecter</button><button type="button" class="ghost" id="agBack">← Retour</button></div><p id="agMsg" role="status">${esc(msg || "")}</p></form>`);
+    $("#agBack").onclick = () => accHome(st, done);
+    $("#agForm").onsubmit = async e => {
+      e.preventDefault();
+      const say = t => { $("#agMsg").textContent = t; }, login = $("#aLogin").value.trim();
+      say("Un instant…");
+      try{
+        const r = await api("/acc-login", { login, code: $("#aPass").value }), j = await r.json();
+        if (r.status === 429){ say("Trop d'essais aujourd'hui : réessaie demain, ou demande au superviseur."); return; }
+        if (j.needCode){ accNewCode(st, done, login); return; }
+        if (!r.ok){ say("Identifiant ou code incorrect."); return; }
+        accLoggedIn(j, done);
+      }catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+  }
+  function accNewCode(st, done, login){   // 🔓 code remis à zéro par le superviseur
+    gateSheet(`<h2>🔓 Nouveau code</h2><p>Le superviseur a remis ton code à zéro. Choisis-en un nouveau pour <b>${esc(login)}</b>.</p>
+      <form id="agForm">${codeFields("Ton nouveau code")}<div class="btns"><button type="submit">Valider</button><button type="button" class="ghost" id="agBack">← Retour</button></div><p id="agMsg" role="status"></p></form>`);
+    bindCode();
+    $("#agBack").onclick = () => accLogin(st, done);
+    $("#agForm").onsubmit = async e => {
+      e.preventDefault();
+      const say = t => { $("#agMsg").textContent = t; }, c = readCode(); if (c.err){ say(c.err); return; }
+      say("Un instant…");
+      try{ const r = await api("/acc-login", { login, newCode: c.code }), j = await r.json(); if (!r.ok){ say(ACC_ERR[j.error] || "Ça n'a pas marché, réessaie."); return; } accLoggedIn(j, done); }
+      catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+  }
+  async function accLoggedIn(j, done){
+    const had = !!(getLog().length || (game && game.total));
+    if (had && profile.walker && wslug(profile.walker) !== wslug(j.acc.key) &&
+        !confirm(`Ce téléphone contient les balades de ${myName()}. Te connecter comme ${j.acc.name} ? Elles resteront sur ce téléphone, mélangées aux tiennes.`)) return;
+    accSave(j);
+    if (!had){   // ♻️ nouveau téléphone : on propose sa sauvegarde
+      try{
+        const r = await api("/acc-backup", { login: acc.login, token: acc.tok });
+        if (r.ok){ const b = (await r.json()).backup, d = b && b.data;
+          if (d && d.jeu && confirm(`On a retrouvé ta sauvegarde du ${new Date(b.at).toLocaleDateString("fr-FR")} (tirelire, niveau, trophées, carnet). La remettre sur ce téléphone ?`)){
+            store.set(GAME_KEY, d.jeu); store.set(LOG_KEY, d.carnet || []); store.set("wouaf-tuto", 1); store.set("wouaf-vu", APP_NUM);
+            gateOpen = false; introRunning = false; location.reload(); return; } }
+      }catch(e){}
+    }
+    toast(`✅ Connecté : salut ${acc.name} !`, 3000);
+    done();
+  }
+  // 👤 ☰ › Mon compte : identifiant (fixe), prénom affiché (modifiable), changer de code
+  function sheetAccount(then){
+    openSheet(`<h2>👤 Mon compte</h2>
+      <p>Identifiant : <b class="accid">${esc(acc.login)}</b>${acc.sup ? " · 🔑 superviseur" : ""}<br><span class="howto">Il ne change jamais : c'est lui qui sert si tu perds ton téléphone.</span></p>
+      <form id="acForm"><label for="acName">${acc.sup ? "Nom du compte (celui qu'on voit)" : "Ton prénom (celui qu'on voit)"}</label><input id="acName" value="${esc(acc.name)}" required>
+      <div class="btns"><button type="submit">Enregistrer</button></div><p id="acMsg" role="status"></p></form>
+      <details class="acccode"><summary>🔒 Changer mon code</summary><form id="acCodeForm"><label for="acOld">Code actuel</label><input id="acOld" type="password" autocomplete="current-password">${codeFields("Nouveau code")}
+        <div class="btns"><button type="submit">Changer le code</button></div><p id="acMsg2" role="status"></p></form></details>
+      <div class="btns"><button class="ghost" id="acClose">Fermer</button></div>`);
+    bindCode();
+    $("#acClose").onclick = () => { closeSheet(); if (then) then(); };
+    $("#acForm").onsubmit = async e => {
+      e.preventDefault(); const say = t => { $("#acMsg").textContent = t; }, name = $("#acName").value.trim();
+      if (!name || name === acc.name){ say(name ? "C'est déjà ton prénom." : "Écris ton prénom."); return; }
+      say("Un instant…");
+      try{ const r = await api("/acc-rename", { login: acc.login, token: acc.tok, name }), j = await r.json();
+        if (r.status === 403 && j.error === "forbidden"){ say("Ce téléphone n'est plus connecté : reconnecte-toi (☰ › 👤)."); acc = null; localStorage.removeItem(ACC_KEY); return; }
+        if (!r.ok){ say(ACC_ERR[j.error] || "Ça n'a pas marché, réessaie."); return; }
+        acc.name = j.acc.name; store.set(ACC_KEY, acc); namesMap[wslug(acc.key)] = { k: acc.key, n: acc.name }; store.set("wouaf-names", namesMap);
+        renderWho(); try{ renderHome(); }catch(e){} say(`✓ C'est fait : tout le monde te voit maintenant comme ${acc.name}.`);
+      }catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+    $("#acCodeForm").onsubmit = async e => {
+      e.preventDefault(); const say = t => { $("#acMsg2").textContent = t; }, c = readCode(); if (c.err){ say(c.err); return; }
+      say("Un instant…");
+      try{ const r = await api("/acc-code", { login: acc.login, token: acc.tok, old: $("#acOld").value, code: c.code });
+        say(r.ok ? "✓ Nouveau code enregistré." : r.status === 403 ? "Code actuel incorrect." : "Ça n'a pas marché, réessaie."); }
+      catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+  }
+  // 🔐 bascule : créer LE compte superviseur (depuis le téléphone superviseur) ; l'ancien code ne marche plus ensuite
+  function accSupCreate(then){
+    const later = () => { store.set("wouaf-supacc-later", dIso(Date.now())); closeSheet(); if (then) setTimeout(then, 250); };
+    openSheet(`<h2>🔐 Créer le compte superviseur</h2>
+      <p>Un seul compte superviseur, avec tous les pouvoirs. Sur un autre téléphone, on s'y connecte avec l'identifiant et le code (« J'ai déjà un compte »).</p>
+      <p class="howto">✅ Rien n'est perdu : balades, paies, corrections, maison, cadeaux.<br>⚠️ <b>L'ancien code superviseur ne marchera plus nulle part.</b></p>
+      <form id="scForm"><label for="aLogin">Identifiant du compte</label><input id="aLogin" autocapitalize="none" spellcheck="false" autocomplete="username" required>
+      <p class="howto accwarn">⚠️ Retiens bien l'identifiant et le code : ce code-là, personne ne peut le remettre à zéro.</p>
+      <label for="aName">Nom du compte (celui qu'on voit, modifiable ensuite)</label><input id="aName" required>
+      ${codeFields("Code du compte")}
+      <div class="btns"><button type="submit" id="scGo">Créer le compte superviseur</button><button type="button" class="ghost" id="scLater">Plus tard</button></div><p id="scMsg" role="status"></p></form>`);
+    bindCode();
+    $("#scLater").onclick = later;
+    $("#scForm").onsubmit = async e => {
+      e.preventDefault(); const say = t => { $("#scMsg").textContent = t; }, c = readCode(); if (c.err){ say(c.err); return; }
+      const login = $("#aLogin").value.trim(), name = $("#aName").value.trim(), go = $("#scGo");
+      if (!name){ say("Choisis un nom pour le compte."); return; }
+      if (!go.dataset.sure){ go.dataset.sure = "1"; go.textContent = "Sûr ? Touche encore : l'ancien code s'arrête"; return; }
+      say("Un instant…");
+      try{ const r = await api("/acc-sup-create", { token: supToken(), login, name, code: c.code }), j = await r.json();
+        if (r.status === 409 && j.error === "exists"){   // déjà créé sur un autre téléphone : on s'y rattache
+          try{ const m = await (await api("/acc-sup-me", { token: supToken() })).json(); if (m.ok){ accSave(m); closeSheet(); toast(`✅ Ce téléphone est rattaché au compte superviseur ${acc.name}.`, 4000); if (then) setTimeout(then, 250); return; } }catch(e2){}
+          say("Le compte superviseur existe déjà : connecte-toi avec « J'ai déjà un compte »."); return; }
+        if (!r.ok){ say(ACC_ERR[j.error] || "Ça n'a pas marché, réessaie."); return; }
+        accSave(j);
+        openSheet(`<h2>✅ Compte superviseur créé</h2><p>Identifiant : <b class="accid">${esc(acc.login)}</b> · nom : <b>${esc(acc.name)}</b></p>
+          <p class="howto">L'ancien code ne marche plus. Pour un autre téléphone : « J'ai déjà un compte » avec cet identifiant et ton code. Tu vois les téléphones connectés dans ☰ › 🔑 Superviseur › 📱.</p>
+          <div class="btns"><button id="scOk">OK</button></div>`);
+        $("#scOk").onclick = () => { closeSheet(); if (then) setTimeout(then, 250); };
+      }catch(err){ say("Pas de connexion pour l'instant, réessaie."); }
+    };
+  }
+  // 👥 Superviseur › Comptes : inscriptions ouvertes / fermées, comptes, code oublié
+  async function sheetAccounts(){
+    openSheet(`<h2>👥 Comptes</h2><p class="howto">Un instant…</p>`);
+    let j = null; try{ const r = await api("/acc-list", supAuth()); if (r.ok) j = await r.json(); }catch(e){}
+    if (!j){ openSheet(`<h2>👥 Comptes</h2><p>Pas de connexion pour l'instant.</p><div class="btns"><button id="caBack">← Superviseur</button></div>`); $("#caBack").onclick = sheetSupMenu; return; }
+    const fmt = t => new Date(t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
+    openSheet(`<h2>👥 Comptes</h2>
+      <div class="entry"><div><h4>${j.open ? "🟢 Inscriptions ouvertes" : "🔴 Inscriptions fermées"}</h4><div class="when">${j.open ? "Tout le monde peut créer un compte." : "Plus de nouveaux comptes (les promeneurs qui ont déjà des balades peuvent encore créer le leur)."}</div></div>
+        <button class="ghost" id="caOpen">${j.open ? "Fermer" : "Ouvrir"}</button></div>
+      <div class="flabel">${j.accounts.length} compte${j.accounts.length > 1 ? "s" : ""}</div>
+      <div class="props">${j.accounts.map(a => `<div class="entry"><div><h4>${a.sup ? "🔑 " : "👤 "}${esc(a.name)}</h4><div class="when">identifiant <b>${esc(a.login)}</b> · depuis le ${fmt(a.at)}${a.key !== a.name ? ` · avant « ${esc(a.key)} »` : ""}${a.nocode ? " · 🔓 nouveau code à choisir" : ""}</div></div>
+        ${a.sup || a.nocode ? "" : `<button class="ghost" data-car="${esc(a.login)}" aria-label="Remettre le code de ${esc(a.name)} à zéro">🔓 Code oublié</button>`}</div>`).join("") || "<p class='howto'>Aucun compte pour l'instant.</p>"}</div>
+      <p class="howto">🔓 Code oublié : le promeneur choisit un nouveau code à sa prochaine connexion (« J'ai déjà un compte » avec son identifiant).</p>
+      <div class="btns"><button class="ghost" id="caBack">← Superviseur</button></div><p id="caMsg" role="status"></p>`);
+    $("#caBack").onclick = sheetSupMenu;
+    $("#caOpen").onclick = async () => { try{ const r = await api("/acc-open", Object.assign(supAuth(), { open: !j.open })); if (!r.ok) throw 0; sheetAccounts(); }catch(e){ $("#caMsg").textContent = "Ça n'a pas marché, réessaie."; } };
+    document.querySelectorAll("[data-car]").forEach(b => b.onclick = async () => {
+      if (!b.dataset.sure){ b.dataset.sure = "1"; b.textContent = "Sûr ? Touche encore"; return; }
+      try{ const r = await api("/acc-reset", Object.assign(supAuth(), { login: b.dataset.car })); if (!r.ok) throw 0; sheetAccounts(); }catch(e){ $("#caMsg").textContent = "Ça n'a pas marché, réessaie."; }
+    });
+  }
   // 🔑 Prénom Éric déjà choisi AVANT la 2.0 (ou téléphone sans jeton) : on réclame le jeton tout seul, sans retaper le prénom.
   // Renvoie "ok", "taken" (pris par un autre téléphone), "off" (pas de réseau) ou "" (rien à faire).
   async function autoClaim(code){
@@ -1456,7 +1693,7 @@
     }catch(e){ return "off"; }
   }
   function renderWho(){
-    $("#whoText").textContent = profile.walker ? `Salut ${profile.walker}` : `Qui promène ${DOG} ?`;
+    $("#whoText").textContent = profile.walker ? `Salut ${myName()}` : `Qui promène ${DOG} ?`;
     if (profile.walker){
       // v2.5 : une seule petite ligne « météo · où j'en suis · série » ; Roxy ne parle que quand on touche sa photo
       $("#heroSub").innerHTML = `<button class="hline" id="hLine" aria-label="Où j'en suis · dernières sorties de ${esc(DOG)}">${heroLine()}</button>`;
@@ -1524,8 +1761,11 @@
     .observe(document.getElementById("sheet"), { subtree:true, childList:true, characterData:true });
   let introRunning = false;   // écran « tout repart de zéro » + tuto en cours : pas de rechargement (mise à jour, remise à zéro) avant la fin
   function closeSheet(){ if (popOpen){ popOpen = false; try{ popToRoxy(); }catch(e){} } $("#modal").classList.remove("open"); unlockBody(); if (pendingRecap) recapNudge(); if (introRunning) return; if (window.__wouafUpdatePending && window.__wouafUpdatePending() && !state.walk) setTimeout(applyUpdate, 300); if (resetPending() && !state.walk) setTimeout(applyReset, 600); }
-  $("#modal").addEventListener("click", e => { if (e.target.id === "modal") closeSheet(); });
+  $("#modal").addEventListener("click", e => { if (e.target.id === "modal" && !gateOpen) closeSheet(); });
   function askProfile(then){
+    if (!accSkip() && supToken() && isEricName(profile.walker)){ accSupCreate(then); return; }   // 🔐 téléphone superviseur sans compte : la bascule
+    if (!accSkip()){ accGate(() => { if (then) then(); }); return; }   // 👤 v4.4 : pas encore de compte → écran d'entrée
+    if (PUSH_API && acc){ sheetAccount(then); return; }               // 👤 compte : prénom affiché + code
     openSheet(`<h2>Qui promène ${DOG} ?</h2><p>Ton prénom apparaîtra dans le récapitulatif envoyé au superviseur. On ne te le demande qu'une fois sur ce téléphone.</p>
       <form id="whoForm"><label for="wName">Ton prénom</label><input id="wName" autocomplete="given-name" value="${esc(profile.walker)}" required>
       <div class="btns"><button type="submit">Enregistrer</button><button type="button" class="ghost" id="whoCancel">Annuler</button></div><p id="whoMsg" role="status"></p>
@@ -1972,7 +2212,7 @@
     const tot = moneyOf(monthKey(per.start.getTime()));
     const ml = malusIn(per.start.getTime(), per.end.getTime());
     const chests = (game.chests || []).filter(c => { const t = new Date(c).getTime(); return t >= per.start.getTime() && t < per.end.getTime(); }).length;
-    const text = `📊 ${profile.walker || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 🪙 ${fmtCs(eur)}${chests ? ` · 💰 ${chests} coffre${chests > 1 ? "s" : ""} (+${fmtCs(chests * CHEST_EUR)})` : ""}` +
+    const text = `📊 ${myName() || "Promeneur"} · ${DOG} · du ${shortDate(per.start)} au ${shortDate(last)} : ${ws.length} balade${ws.length > 1 ? "s" : ""} (${ok.length} de 15 min ou plus) · ${fmtMin(min)} · ${fmtKm(m)} · 🪙 ${fmtCs(eur)}${chests ? ` · 💰 ${chests} coffre${chests > 1 ? "s" : ""} (+${fmtCs(chests * CHEST_EUR)})` : ""}` +
       (ml.eur ? ` · ⚠️ malus −${fmtCs(ml.eur)} (${ml.text})` : "") +
       (per.first ? "" : ` · tirelire de ${monthName(per.start)} : ${fmtCs(tot)}`);
     return { n: ws.length, text };
@@ -2001,7 +2241,7 @@
     const lv = levelOf(game.total);
     const coins = Object.keys(game.seen).length;
     $("#v-shop").innerHTML = `<div class="wallet">
-        <div style="font-size:14px">${esc(profile.walker || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
+        <div style="font-size:14px">${esc(myName() || "Promeneur")} · tirelire de ${monthName(Date.now())}</div>
         <div class="big">🪙 ${fmtCs(eur)}</div>
         <div class="lvl">Rythme ≈ ${fmtCs(monthPace())} à la fin du mois</div>
         ${bonusThisMonth() ? `<div class="lvl">💰 dont ${fmtCs(bonusThisMonth())} de coffre${bonusThisMonth() > CHEST_EUR ? "s" : ""}</div>` : ""}
@@ -2242,9 +2482,9 @@
     const recP = store.get("wouaf-record", null);
     $("#v-prog").innerHTML = `<h2 class="ptitle">🏆 Mes progrès</h2>
       ${roxyNumbers()}
-      <div class="entry" style="margin-bottom:10px"><div><h4>🏅 Record du mois : ${recP ? `${fmtMin(recP.min)} par ${esc(recP.walker)}` : "pas encore"}</h4><div class="when">Battre le record = +${RECORD_CS} clebsous · repart de zéro le 1er du mois</div></div></div>
+      <div class="entry" style="margin-bottom:10px"><div><h4>🏅 Record du mois : ${recP ? `${fmtMin(recP.min)} par ${escN(recP.walker)}` : "pas encore"}</h4><div class="when">Battre le record = +${RECORD_CS} clebsous · repart de zéro le 1er du mois</div></div></div>
       <div class="wallet">
-        <div style="font-size:14px">${esc(profile.walker || "Promeneur")} · niveau de ${DOG}</div>
+        <div style="font-size:14px">${esc(myName() || "Promeneur")} · niveau de ${DOG}</div>
         <div class="big" style="font-size:30px">${lv.name}</div>
         <div class="bar"><i style="width:${lv.next ? Math.round(100 * (game.total - lv.from) / (lv.next[0] - lv.from)) : 100}%"></i></div>
         <div class="lvl">🪙 ${fmtCs(game.total / CS)} gagnés depuis le début${lv.next ? ` · encore ${fmtCs((lv.next[0] - game.total) / CS)} pour ${lv.next[1]} 🎁` : " · niveau max !"}</div>
@@ -2267,7 +2507,7 @@
       <div class="accs">${ACCS.map(([e, n, need]) => { const on = game.acc.includes(e), locked = game.total < need; return `<button data-acc="${e}" class="${on ? "on" : ""}"${locked ? " disabled" : ""} aria-pressed="${on}" aria-label="${esc(n)}${locked ? `, se débloque à ${need} points` : on ? ", porté" : ""}">${roxyHTML([e])}<span>${locked ? `🔒 ${need.toLocaleString("fr-FR")}` : esc(n)}</span></button>`; }).join("")}</div>
       <div class="howto" style="margin-top:6px">Touche un accessoire pour le mettre ou l'enlever à ${DOG} (tu peux en porter plusieurs). Nouveaux accessoires à 400, 1 200, 2 400, 5 000 et 10 000 clebsous gagnés.</div>
       <div class="flabel">👀 Où en sont les autres</div>
-      <div class="props others">${lineOf(profile.walker || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(n, g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
+      <div class="props others">${lineOf(myName() || "Moi", me, "moi")}${Object.entries(others).map(([n, g]) => lineOf(nm(n), g, "le " + new Date(g.date * 1000).toLocaleDateString("fr-FR", { day:"numeric", month:"short" }))).join("")}</div>
       <div class="howto">Ça se met à jour quand tu ouvres les récaps des autres promeneurs (dans votre groupe de messages). Pas de classement : juste pour voir où chacun en est.</div>`;
     $("#fogBtn").onclick = openExplore;
     fillGallery();
@@ -2345,7 +2585,7 @@
     box.querySelectorAll("[data-ph]").forEach(btn => btn.onclick = () => {
       const x = all.find(y => y.t === +btn.dataset.ph); if (!x) return;
       openSheet(`<img alt="Photo de ${esc(DOG)}" src="${URL.createObjectURL(x.b)}" style="width:100%;border-radius:12px">
-        <p>${new Date(x.t).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}${x.w ? " · par " + esc(x.w) : ""}</p>
+        <p>${new Date(x.t).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}${x.w ? " · par " + escN(x.w) : ""}</p>
         <div class="btns"><button id="phAv">🐕 En faire la photo de ${esc(DOG)}</button><button class="ghost" id="phShare">📤 Partager</button><button class="ghost" id="phDel">🗑️ Supprimer</button><button class="ghost" id="phClose">Fermer</button></div>`);
       $("#phClose").onclick = closeSheet;
       $("#phAv").onclick = async () => { await setAvatarFrom(x.b); closeSheet(); toast(`📸 C'est la nouvelle photo de ${DOG} !`, 2500); renderProg(); };
@@ -2552,7 +2792,9 @@
       if (j.reset != null) store.set(RESET_SRV, j.reset);
       if (j.treasure) store.set("wouaf-tresor", j.treasure);
       store.set("wouaf-hpos", j.hpos || null);   // 🏴‍☠️ trésor de la semaine commun (à la main ou publié par le téléphone d'Éric ; null = chacun le calcule)
-      store.set("wouaf-silver", j.silver || null);   // 🥈 cadeau argenté posé par Éric (le même pour tous ; by = prénom du gagnant)
+      store.set("wouaf-silver", j.silver || null);
+      if (j.names){ namesMap = j.names; store.set("wouaf-names", namesMap);   // 👤 v4.4 : prénoms affichés (le compte a pu être renommé sur un autre téléphone)
+        const me = acc && namesMap[wslug(acc.key)]; if (me && me.n && me.n !== acc.name){ acc.name = me.n; store.set(ACC_KEY, acc); try{ renderWho(); }catch(e){} } }   // 🥈 cadeau argenté posé par Éric (le même pour tous ; by = prénom du gagnant)
       store.set("wouaf-fhome", j.home || null);  // 🏠 maison de la famille (arrondie)
       try{ applyFamilyHome(); }catch(e){}
       store.set("wouaf-record", j.record || null);
@@ -2808,7 +3050,7 @@
   function exploHTML(){
     if (!PUSH_API || !profile.walker) return "";
     const { rank, mine, above } = exploMe(), top = rank.slice(0, 3), sun = new Date(Date.now() - 4 * 3600000).getDay() === 0;
-    const pod = top.length ? top.map(x => `<span class="${mine && x === mine ? "me" : ""}"><small>${MEDAL(x.r)}</small>${mine && x === mine ? "Toi" : esc(x.w)}</span>`).join("")
+    const pod = top.length ? top.map(x => `<span class="${mine && x === mine ? "me" : ""}"><small>${MEDAL(x.r)}</small>${mine && x === mine ? "Toi" : escN(x.w)}</span>`).join("")
       : `<span class="empty">Personne n'est encore classé cette semaine</span>`;
     const tip = isTester() ? "Les ados se classent avec les rues nouvelles et les objets. Aucun chiffre affiché."
       : mine ? (mine.r === 1 ? "👑 Tu es en tête ! Garde ta place jusqu'à dimanche." : `🔥 Encore quelques rues nouvelles et tu passes devant ${esc(above || "")} !`) + (mine.r > 3 ? ` (tu es ${mine.r}e)` : "")
@@ -2819,11 +3061,11 @@
     const { ex, rank, mine } = exploMe(), wk = ex.wk ? new Date(ex.wk + "T12:00:00") : null;
     const end = wk ? new Date(wk.getTime() + 6 * DAYMS) : null, f = d => d.toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
     const left = (() => { if (!wk) return ""; const e = new Date(wk.getTime() + 7 * DAYMS); e.setHours(4, 0, 0, 0); const h = Math.max(0, Math.round((e - Date.now()) / 3600000)); return h >= 24 ? `plus que ${Math.floor(h / 24)} j ${h % 24} h` : `plus que ${h} h`; })();
-    const step = (x, cls) => x ? `<div class="step ${cls}${mine && x === mine ? " me" : ""}"><div class="face">${x.r === 1 ? "👑" : "🐾"}</div><div class="who">${mine && x === mine ? "Toi" : esc(x.w)}</div><div class="blk">${x.r}</div></div>` : `<div class="step ${cls} off"><div class="face">❔</div><div class="who">&nbsp;</div><div class="blk"></div></div>`;
+    const step = (x, cls) => x ? `<div class="step ${cls}${mine && x === mine ? " me" : ""}"><div class="face">${x.r === 1 ? "👑" : "🐾"}</div><div class="who">${mine && x === mine ? "Toi" : escN(x.w)}</div><div class="blk">${x.r}</div></div>` : `<div class="step ${cls} off"><div class="face">❔</div><div class="who">&nbsp;</div><div class="blk"></div></div>`;
     const rest = rank.slice(3);
     openSheet(`<h2 style="text-align:center">🧭 Les explorateurs</h2><p class="howto" style="text-align:center;margin-top:-4px">${wk ? `Semaine du ${f(wk)} au ${f(end)} · ${left}` : "Cette semaine"}</p>
       <div class="podium">${step(rank[1], "s2")}${step(rank[0], "s1")}${step(rank[2], "s3")}</div>
-      ${rest.length ? `<p style="text-align:center">${rest.map(x => `${x.r}e ${mine && x === mine ? "<b>Toi</b>" : esc(x.w)}`).join(" · ")}</p>` : ""}
+      ${rest.length ? `<p style="text-align:center">${rest.map(x => `${x.r}e ${mine && x === mine ? "<b>Toi</b>" : escN(x.w)}`).join(" · ")}</p>` : ""}
       <div class="entry" style="margin-top:10px"><div><h4>🥇 Le premier</h4><div class="when">porte la couronne 👑 sur ${DOG}, chez lui, toute la semaine suivante</div></div></div>
       <p class="warnline" style="margin-top:10px">💡 Pour passer devant : prends des rues que tu n'as pas faites depuis 15 jours, et ramasse les objets en route.</p>
       <p class="howto">Ce qui compte : les rues nouvelles (surtout) et les objets ramassés, pendant les balades de 20 min ou plus. On ne montre pas les chiffres, seulement les places. Tout repart à zéro le lundi.</p>
@@ -2860,20 +3102,20 @@
     if (!duelOK()) return "";
     const inv = myInvite(), du = myDuel(), sent = mySent();
     if (inv) return `<button class="arena ping" data-arena="duels"><div class="at"><span>⚔️ Défi reçu ! · ${inv.days} jours</span><span class="bet">${inv.stake ? `🎲 ± ${inv.stake} 🪙` : "🎲 pour la gloire"}</span></div>
-      <div class="vs"><div><b>Toi</b></div><div class="sc">VS</div><div style="text-align:right"><b>${esc(inv.from)}</b></div></div>
+      <div class="vs"><div><b>Toi</b></div><div class="sc">VS</div><div style="text-align:right"><b>${escN(inv.from)}</b></div></div>
       <div class="atag">${DUEL_TYPE[inv.type]} · ${inv.stake ? `🪙 ${inv.stake} en jeu` : "pour la gloire"} · tu acceptes ? 👀</div></button>`;
     if (du){
       const [a, b] = scoreOf(du), op = otherN(du), mx = Math.max(1, a, b), start = isoDayLocal() < du.start;
-      const tag = start ? `Ça commence demain. Prépare-toi ! 💪` : a > b ? `Tu mènes ! Ne lâche rien 🔥` : b > a ? `${esc(op)} mène : une balade et tu reviens ! 😤` : `Égalité : tout se joue maintenant ⚡`;
+      const tag = start ? `Ça commence demain. Prépare-toi ! 💪` : a > b ? `Tu mènes ! Ne lâche rien 🔥` : b > a ? `${escN(op)} mène : une balade et tu reviens ! 😤` : `Égalité : tout se joue maintenant ⚡`;
       return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ ${DUEL_TYPE[du.type]} · ${leftTxt(du)}</span><span class="bet">${du.stake ? `🎲 ± ${du.stake} 🪙` : "🎲 pour la gloire"}</span></div>
         <div class="vs"><div><b>Toi</b><div class="bar"><i style="width:${Math.round(100 * a / mx)}%;background:#ffd25e"></i></div></div><div class="sc">${a} – ${b}</div>
-        <div style="text-align:right"><b>${esc(op)}</b><div class="bar"><i style="width:${Math.round(100 * b / mx)}%;background:#c9a7ff;margin-left:auto"></i></div></div></div>
+        <div style="text-align:right"><b>${escN(op)}</b><div class="bar"><i style="width:${Math.round(100 * b / mx)}%;background:#c9a7ff;margin-left:auto"></i></div></div></div>
         <div class="atag">${tag}</div></button>`;
     }
-    if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${esc(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
+    if (sent) return `<button class="arena" data-arena="duels"><div class="at"><span>⚔️ Défi envoyé</span><span>en attente</span></div><div class="atag">${escN(sent.to)} a jusqu'à 6 h pour répondre${sent.stake ? ` · 🪙 ${sent.stake} en jeu` : ""}. Ça va chauffer ! 🔥</div></button>`;
     const pl = (duelData.players || []).slice(0, 3);
     return `<div class="arena slim"><div class="at"><span>⚔️ L'arène · 🎲 ± ${DUEL_STAKES[DUEL_STAKES.length - 1]} 🪙</span></div>
-      <div class="chal"><button data-arena="duels">⚔️ ${pl.length === 1 ? `Défier ${esc(pl[0].walker)}` : "Lancer un défi"}</button></div></div>`;
+      <div class="chal"><button data-arena="duels">⚔️ ${pl.length === 1 ? `Défier ${escN(pl[0].walker)}` : "Lancer un défi"}</button></div></div>`;
   }
   function bindLots(){
     document.querySelectorAll("[data-arena]").forEach(b => b.onclick = e => { e.stopPropagation(); b.dataset.arena === "prev" ? duelPreview() : sheetDuels(); });
@@ -2885,7 +3127,7 @@
       if (k === "chest") return sheetChest();
       if (k === "silver") return sheetSilver();
       const rec = store.get("wouaf-record", null);
-      openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${esc(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
+      openSheet(`<div style="text-align:center;font-size:60px">🏅</div><h2 style="text-align:center">Record du mois</h2><p style="text-align:center">${rec ? `<b>${fmtMin(rec.min)}</b> par ${escN(rec.walker)}.` : "Pas encore de record ce mois-ci."}</p><p class="howto">Seules les balades valides (20 min ou plus) comptent. Battre le record rapporte <b>+${RECORD_CS} clebsous</b>. Il repart de zéro le 1er de chaque mois.</p><div class="btns"><button id="rcClose">Fermer</button></div>`);
       $("#rcClose").onclick = closeSheet;
     });
   }
@@ -2968,7 +3210,7 @@
     const op = forTo ? p.from : p.to, st = +p.stake || 0;
     const when = p.start ? `du ${frDay(p.start)} au ${frDay(p.end)} inclus` : `${p.days} jours, à partir du lendemain de l'acceptation (de minuit à minuit)`;
     return `<div class="dfiche">
-      <b>⚔️ Duel ${forTo ? "lancé par" : "contre"} ${esc(op)}</b><br>
+      <b>⚔️ Duel ${forTo ? "lancé par" : "contre"} ${escN(op)}</b><br>
       ⏱️ <b>Durée :</b> ${when}<br>
       ${p.type === "streets" ? `🗺️ <b>Guerre des rues :</b> chaque rue parcourue pendant une balade valide (20 min ou plus) prend ta couleur. Passer sur une rue de l'autre la lui vole. Celui qui a le plus de rues à la fin gagne. Pendant ta balade, ses rues sont en violet, et l'app te prévient quand tu entres « dans son ombre ».<br>🔒 Ton adversaire verra les rues où tu passes pendant le duel (des cases d'environ 100 m, sans le tracé ni les horaires). Tout est effacé à la fin.`
         : `🐾 <b>Balades :</b> celui qui fait le plus de balades valides (20 min ou plus) gagne. À égalité, c'est le total de minutes qui compte.`}<br>
@@ -2990,23 +3232,23 @@
     let h = `<h2>⚔️ Duels</h2>`;
     if (inv){
       const can = (inv.stake || 0) <= myBal();
-      h += `<p><b>${inv.counterOf ? `${esc(inv.from)} te répond : d'accord pour le duel, mais avec une mise de ${inv.stake} clebsous (au lieu de ${inv.was})` : `${esc(inv.from)} te lance un défi !`}</b></p>${ficheHTML(inv, true)}
+      h += `<p><b>${inv.counterOf ? `${escN(inv.from)} te répond : d'accord pour le duel, mais avec une mise de ${inv.stake} clebsous (au lieu de ${inv.was})` : `${escN(inv.from)} te lance un défi !`}</b></p>${ficheHTML(inv, true)}
         ${can ? "" : `<p class="howto">Ta tirelire (${myBal()} clebsous) est plus petite que la mise : tu ne peux pas accepter, mais tu peux proposer une autre mise.</p>`}
         <div class="btns" style="flex-direction:row;gap:8px"><button id="dyYes" style="flex:1"${can ? "" : " disabled"}>✅ J'accepte</button><button class="ghost" id="dyNo" style="flex:1">❌ Non merci</button></div>
         <div class="flabel">Ou propose une autre mise</div><div class="pick" id="dyCounter">${DUEL_STAKES.filter(v => v !== inv.stake).map(v => `<button data-v="${v}"${v > myBal() ? " disabled" : ""}>🎲 ${v} 🪙</button>`).join("")}</div>`;
     }
     if (du){
       const [a, b] = scoreOf(du), mine = (du.cancel || []).some(x => sameN(x, profile.walker)), theirs = (du.cancel || []).some(x => !sameN(x, profile.walker));
-      h += `<div class="dsc">${a} – ${b}</div><p style="text-align:center;margin-top:0">Toi contre <b>${esc(otherN(du))}</b> · ${DUEL_TYPE[du.type]} · ${leftTxt(du)}${du.stake ? ` · mise ${du.stake} 🪙` : ""}</p>
+      h += `<div class="dsc">${a} – ${b}</div><p style="text-align:center;margin-top:0">Toi contre <b>${escN(otherN(du))}</b> · ${DUEL_TYPE[du.type]} · ${leftTxt(du)}${du.stake ? ` · mise ${du.stake} 🪙` : ""}</p>
         ${du.type === "streets" ? `<div class="btns"><button id="dyMap">🗺️ Voir la carte des rues</button></div>` : ""}
         <details><summary>Les règles de ce duel</summary>${ficheHTML(du, !meFirst(du))}</details>
-        ${theirs ? `<p class="howto">${esc(otherN(du))} propose d'annuler le duel.</p>` : mine ? `<p class="howto">Tu as proposé d'annuler : on attend ${esc(otherN(du))}.</p>` : ""}
+        ${theirs ? `<p class="howto">${escN(otherN(du))} propose d'annuler le duel.</p>` : mine ? `<p class="howto">Tu as proposé d'annuler : on attend ${escN(otherN(du))}.</p>` : ""}
         <div class="btns" style="flex-direction:row;gap:8px">${mine ? "" : `<button class="ghost" id="dyCancel" style="flex:1">${theirs ? "D'accord, on annule" : "Proposer d'annuler"}</button>`}<button class="ghost" id="dyQuit" style="flex:1;color:#c8452f">Abandonner</button></div>`;
     }
-    if (sent) h += `<p>📨 ${sent.counterOf ? "Contre-proposition envoyée" : "Défi envoyé"} à <b>${esc(sent.to)}</b> : on attend sa réponse (6 h au plus).</p>${ficheHTML(sent)}<div class="btns" style="flex-direction:row;gap:8px"><button class="ghost" id="dyWithdraw" style="flex:1">Retirer le défi</button><button class="ghost" id="dyRedo" style="flex:1">Changer le défi</button></div>`;
+    if (sent) h += `<p>📨 ${sent.counterOf ? "Contre-proposition envoyée" : "Défi envoyé"} à <b>${escN(sent.to)}</b> : on attend sa réponse (6 h au plus).</p>${ficheHTML(sent)}<div class="btns" style="flex-direction:row;gap:8px"><button class="ghost" id="dyWithdraw" style="flex:1">Retirer le défi</button><button class="ghost" id="dyRedo" style="flex:1">Changer le défi</button></div>`;
     if (!inv && !du && !sent) h += `<p>Défie un autre promeneur : celui qui sort le plus ${DOG} gagne. Pas de classement, juste entre vous deux.</p><div class="btns"><button id="dyNew">⚔️ Lancer un défi</button></div>`;
     if (past.length) h += `<div class="flabel">Derniers duels</div><div class="props">${past.map(d => { const [x, y] = scoreOf(d), w = d.res && d.res.winner;
-      return `<div class="entry"><div><h4>${w ? (sameN(w, profile.walker) ? "🏆 Gagné" : "Perdu") : "🤝 Égalité"} contre ${esc(otherN(d))} · ${x} – ${y}</h4><div class="when">${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} 🪙` : ""}${d.res && d.res.why === "quit" ? " · abandon" : ""}</div></div></div>`; }).join("")}</div>`;
+      return `<div class="entry"><div><h4>${w ? (sameN(w, profile.walker) ? "🏆 Gagné" : "Perdu") : "🤝 Égalité"} contre ${escN(otherN(d))} · ${x} – ${y}</h4><div class="when">${DUEL_TYPE[d.type]}${d.stake ? ` · mise ${d.stake} 🪙` : ""}${d.res && d.res.why === "quit" ? " · abandon" : ""}</div></div></div>`; }).join("")}</div>`;
     h += `<p id="dyMsg" role="status"></p><div class="btns"><button class="ghost" id="dyClose">Fermer</button></div>`;
     openSheet(h);
     const msg = t => { const m = $("#dyMsg"); if (m) m.textContent = t; };
@@ -3047,17 +3289,17 @@
     const poor = !duelPrev && maxSt() < DUEL_STAKES[0];   // pas assez dans une tirelire pour le plus petit pari
     const chips = (k, list, lab) => `<div class="pick" data-k="${k}">${list.map(v => `<button data-v="${v}" class="${String(p[k]) === String(v) ? "on" : ""}"${k === "stake" && v > maxSt() ? " disabled" : ""}>${lab(v)}</button>`).join("")}</div>`;
     openSheet(`<h2>⚔️ Lancer un défi</h2>
-      <div class="flabel">Qui ?</div>${chips("to", pl.map(x => x.walker), v => esc(v))}
+      <div class="flabel">Qui ?</div>${chips("to", pl.map(x => x.walker), v => escN(v))}
       <div class="flabel">Combien de temps ?</div>${chips("days", [3, 7], v => `${v} jours`)}
       <div class="flabel">Quel duel ?</div>${chips("type", ["walks", "streets"], v => DUEL_TYPE[v])}
       ${duelPrev ? `<p class="howto">🧪 Aperçu superviseur : c'est l'écran que voient les promeneurs. Rien ne sera envoyé.</p>` : ""}
       <div class="flabel">La mise (ta tirelire : ${myBal()} 🪙)</div>${chips("stake", DUEL_STAKES, v => `🎲 ${v} 🪙`)}
-      ${poor ? `<p class="howto">Il faut au moins ${DUEL_STAKES[0]} clebsous dans ta tirelire et dans celle de ${esc(p.to)} pour parier. Une balade de plus et c'est bon !</p>` : ""}
+      ${poor ? `<p class="howto">Il faut au moins ${DUEL_STAKES[0]} clebsous dans ta tirelire et dans celle de ${escN(p.to)} pour parier. Une balade de plus et c'est bon !</p>` : ""}
       <div class="btns"><button id="dnNext"${poor ? " disabled" : ""}>Voir la fiche →</button><button class="ghost" id="dnBack">Retour</button></div>`);
     document.querySelectorAll(".pick button").forEach(b => b.onclick = () => { const k = b.parentElement.dataset.k; p[k] = (k === "to" || k === "type") ? b.dataset.v : +b.dataset.v; sheetDuelNew(p); });
     $("#dnBack").onclick = duelPrev ? closeSheet : sheetDuels;
     $("#dnNext").onclick = () => {
-      openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${esc(p.to)} recevra exactement la même fiche, et a 6 h pour répondre (il peut aussi proposer une autre mise).</p><p id="dnMsg" role="status"></p>
+      openSheet(`<h2>📄 La fiche du duel</h2>${ficheHTML(p)}<p class="howto">${escN(p.to)} recevra exactement la même fiche, et a 6 h pour répondre (il peut aussi proposer une autre mise).</p><p id="dnMsg" role="status"></p>
         <div class="btns">${duelPrev ? `<button id="dnSend" disabled>🧪 Aperçu : pas d'envoi pour le superviseur</button>` : `<button id="dnSend">📨 Envoyer le défi</button>`}<button class="ghost" id="dnEdit">← Modifier</button></div>`);
       $("#dnEdit").onclick = () => sheetDuelNew(p);
       if (!duelPrev) $("#dnSend").onclick = async () => { $("#dnMsg").textContent = "Un instant…"; const r = await duelCall("/duel-new", Object.assign({}, p, { have: myBal() })); if (r.ok) sheetDuels(); else $("#dnMsg").textContent = duelErr(r.status); };
@@ -3128,7 +3370,7 @@
   }
   async function sheetDuelMap(du){
     const [a, b] = scoreOf(du);
-    openSheet(`<h2>🗺️ Guerre des rues</h2><div class="dsc" id="dmSc">${a} – ${b}</div><p style="text-align:center;margin-top:0">🟧 tes rues · 🟪 celles de ${esc(otherN(du))}</p>
+    openSheet(`<h2>🗺️ Guerre des rues</h2><div class="dsc" id="dmSc">${a} – ${b}</div><p style="text-align:center;margin-top:0">🟧 tes rues · 🟪 celles de ${escN(otherN(du))}</p>
       <div id="dmap" style="height:55vh;border-radius:14px;overflow:hidden"></div><div class="btns"><button class="ghost" id="dmBack">← Retour</button></div>`);
     $("#dmBack").onclick = sheetDuels;
     let j; try{ j = await (await api("/duel-map", { walker: profile.walker, id: du.id })).json(); }catch(e){ return; }
@@ -3149,26 +3391,26 @@
     const seen = id => game.duelSeen.includes(id), mark = id => { game.duelSeen.push(id); game.duelSeen = game.duelSeen.slice(-60); };
     for (const d of duelData.duels || []){
       if (d.status === "pending" && sameN(d.to, me) && !seen("i" + d.id)){ mark("i" + d.id);
-        cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.counterOf ? `${esc(d.from)} propose une autre mise` : `${esc(d.from)} te lance un défi !`}</h2><p>${d.days} jours · ${DUEL_TYPE[d.type]} · ${d.stake ? `mise ${d.stake} clebsous` : "sans mise"}. Tu as 6 h pour répondre.</p><div class="btns"><button class="ghost" data-go="duels">Voir le défi</button></div>`, bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(sheetDuels, 200); } }); }
+        cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.counterOf ? `${escN(d.from)} propose une autre mise` : `${escN(d.from)} te lance un défi !`}</h2><p>${d.days} jours · ${DUEL_TYPE[d.type]} · ${d.stake ? `mise ${d.stake} clebsous` : "sans mise"}. Tu as 6 h pour répondre.</p><div class="btns"><button class="ghost" data-go="duels">Voir le défi</button></div>`, bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(sheetDuels, 200); } }); }
       if (d.status === "done" && !seen("r" + d.id)){ mark("r" + d.id);
         const w = d.res && d.res.winner, [x, y] = scoreOf(d), won = w && sameN(w, me), op = otherN(d);
-        cards.push({ party: won, html:`<div class="dc-ic">${won ? "🏆" : w ? "⚔️" : "🤝"}</div><h2>${won ? `Tu as gagné le duel !${d.stake ? ` +${d.stake}` : ""}` : w ? `${esc(op)} a gagné cette fois… revanche ?` : "Égalité ! Chacun garde sa mise."}</h2><p>${x} – ${y}${d.res && d.res.why === "quit" ? ` (abandon de ${esc(sameN(d.res.quit, me) ? "toi" : op)})` : ""}${!won && w && d.stake ? ` · −${d.stake} clebsous` : ""}</p><div class="btns"><button class="ghost" data-go="re">⚔️ Revanche</button></div>`,
+        cards.push({ party: won, html:`<div class="dc-ic">${won ? "🏆" : w ? "⚔️" : "🤝"}</div><h2>${won ? `Tu as gagné le duel !${d.stake ? ` +${d.stake}` : ""}` : w ? `${escN(op)} a gagné cette fois… revanche ?` : "Égalité ! Chacun garde sa mise."}</h2><p>${x} – ${y}${d.res && d.res.why === "quit" ? ` (abandon de ${esc(sameN(d.res.quit, me) ? "toi" : op)})` : ""}${!won && w && d.stake ? ` · −${d.stake} clebsous` : ""}</p><div class="btns"><button class="ghost" data-go="re">⚔️ Revanche</button></div>`,
           bind: el => el.querySelector("[data-go]").onclick = () => { closeSheet(); setTimeout(() => sheetDuelNew({ to: op, days: d.days, type: d.type, stake: d.stake }), 200); } }); }
       if ((d.status === "declined" || d.status === "expired" || (d.status === "cancelled" && d.by === "sup")) && !seen("x" + d.id)){ mark("x" + d.id);
-        if (d.status === "cancelled" || sameN(d.from, me)) cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.status === "declined" ? `${esc(d.to)} a dit non merci` : d.status === "expired" ? "Défi expiré" : "Duel annulé"}</h2><p>${d.status === "declined" ? "Une autre fois peut-être !" : d.status === "expired" ? `${esc(d.to)} n'a pas répondu dans les 6 h.` : "Le superviseur a annulé le duel : chacun garde sa mise."}</p>` }); }
+        if (d.status === "cancelled" || sameN(d.from, me)) cards.push({ html:`<div class="dc-ic">⚔️</div><h2>${d.status === "declined" ? `${escN(d.to)} a dit non merci` : d.status === "expired" ? "Défi expiré" : "Duel annulé"}</h2><p>${d.status === "declined" ? "Une autre fois peut-être !" : d.status === "expired" ? `${escN(d.to)} n'a pas répondu dans les 6 h.` : "Le superviseur a annulé le duel : chacun garde sa mise."}</p>` }); }
       if (d.status === "active" && d.lost && d.type === "streets"){
         const n = d.lost[Object.keys(d.lost).find(k => sameN(k, me))] || 0, k = "wouaf-lost-" + d.id, was = store.get(k, 0);
-        if (n > was){ store.set(k, n); cards.push({ html:`<div class="dc-ic">🗺️</div><h2>${esc(otherN(d))} t'a pris ${n - was} rue${n - was > 1 ? "s" : ""} !</h2><p>Repasse dessus pendant une balade de 20 min ou plus pour les reprendre.</p>` }); }
+        if (n > was){ store.set(k, n); cards.push({ html:`<div class="dc-ic">🗺️</div><h2>${escN(otherN(d))} t'a pris ${n - was} rue${n - was > 1 ? "s" : ""} !</h2><p>Repasse dessus pendant une balade de 20 min ou plus pour les reprendre.</p>` }); }
       }
     }
     const rec = store.get("wouaf-record", null);
     if (rec && !sameN(rec.walker, me)){ const k = rec.walker + rec.min;
-      if (store.get("wouaf-record-vu", "") !== k){ store.set("wouaf-record-vu", k); cards.push({ html:`<div class="dc-ic">🏅</div><h2>${esc(rec.walker)} a battu le record : ${fmtMin(rec.min)}</h2><p>Fais une balade plus longue pour le reprendre : +${RECORD_CS} clebsous !</p>` }); } }
+      if (store.get("wouaf-record-vu", "") !== k){ store.set("wouaf-record-vu", k); cards.push({ html:`<div class="dc-ic">🏅</div><h2>${escN(rec.walker)} a battu le record : ${fmtMin(rec.min)}</h2><p>Fais une balade plus longue pour le reprendre : +${RECORD_CS} clebsous !</p>` }); } }
     try{ const ex = store.get("wouaf-explo", null), pr = ex && ex.prev;   // 🧭 lundi : le premier explorateur de la semaine passée
       if (pr && pr.wk && (pr.rank || []).length && store.get("wouaf-explo-vu", "") !== pr.wk){ store.set("wouaf-explo-vu", pr.wk);
         const first = pr.rank.filter(x => x.r === 1), won = !isTester() && first.some(x => sameN(x.w, me)), mine = pr.rank.find(x => sameN(x.w, me));
         cards.push({ party: won, html: won ? `<div class="dc-ic"><div class="bigdog" style="margin:30px 0 6px">${roxyHTML(accList(game.acc))}</div></div><h2>Tu es l'explorateur de la semaine !</h2><p>${DOG} porte la couronne 👑 chez toi jusqu'à dimanche. Nouvelle semaine : tout repart à zéro… qui va te la piquer ? 😏</p>`
-          : `<div class="dc-ic">👑</div><h2>${first.map(x => esc(x.w)).join(" et ")} ${first.length > 1 ? "sont les explorateurs" : "est l'explorateur"} de la semaine !</h2><p>${mine ? `Toi : ${MEDAL(mine.r)} ${mine.r > 3 ? "" : "place"}. ` : ""}Nouvelle semaine, tout repart à zéro : à toi la couronne ? 🧭</p>` }); } }catch(e){}
+          : `<div class="dc-ic">👑</div><h2>${first.map(x => escN(x.w)).join(" et ")} ${first.length > 1 ? "sont les explorateurs" : "est l'explorateur"} de la semaine !</h2><p>${mine ? `Toi : ${MEDAL(mine.r)} ${mine.r > 3 ? "" : "place"}. ` : ""}Nouvelle semaine, tout repart à zéro : à toi la couronne ? 🧭</p>` }); } }catch(e){}
     saveGame();
     return cards;
   }
@@ -3257,16 +3499,16 @@
     const it = (id, ic, t, sub) => `<button id="${id}">${ic} ${t}${sub ? `<small>${sub}</small>` : ""}</button>`;
     openSheet(`<h2>🔑 Superviseur</h2><div class="menu">
       ${it("muSupD", "📊", "Tableau de bord", "promeneurs, statistiques, duels")}${it("muSupP", "🏖️", "Pause · 🎉 Jours bonus", "")}${it("muSupA", "✏️", "Corriger une tirelire", "")}
-      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
+      ${it("muSupT", "🗺️", "Carte du superviseur", "maison, trésor, coffres chauds")}${it("muSupB", bugIcon(20), "Bugs signalés", "ce que les ados ont remarqué")}${it("muSupV", "❌", "Annuler une balade", "")}${it("muSupR", "♻️", "Restaurer un promeneur", "")}${it("muSupC", "👥", "Comptes", "inscriptions, code oublié")}${it("muSupF", "📱", "Téléphones connectés", "au compte superviseur")}${acc && acc.sup ? "" : it("muSupK", "🔐", "Créer le compte superviseur", "l'ancien code s'arrêtera")}${it("muSupZ", "🧹", "Tout remettre à zéro", "")}</div>
       <div class="btns"><button class="ghost" id="smBack">← Menu</button></div>`);
     const go = (id, fn) => { const b = $("#" + id); if (b) b.onclick = () => { closeSheet(); setTimeout(fn, 120); }; };
     go("muSupD", () => openDash(supAuth())); go("muSupP", openSuper); go("muSupA", () => openAdjust(supAuth())); go("muSupR", () => openRestore(supAuth()));
-    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
+    go("muSupV", () => openDash(supAuth(), true)); go("muSupB", sheetBugs); go("muSupT", openHuntAdmin); go("muSupF", sheetSupPhones); go("muSupC", sheetAccounts); go("muSupK", () => accSupCreate()); go("muSupZ", () => openReset(supAuth())); $("#smBack").onclick = openMenu;
   }
   // 📱 v4.4 : plusieurs téléphones sur le même compte superviseur (un jeton chacun, Worker /sup-phones). Se connecter ailleurs avec le code ne déconnecte plus personne.
   async function sheetSupPhones(){
     openSheet(`<h2>📱 Téléphones connectés</h2><p id="spN" class="howto">Un instant…</p>
-      <p class="howto">Pour connecter un autre téléphone : sur ce téléphone, prénom <b>Éric</b> puis le code superviseur. Il a alors tous les pouvoirs, et les téléphones déjà connectés le restent (6 au plus).</p>
+      <p class="howto">Pour connecter un autre téléphone : ${store.get("wouaf-acc", null) && store.get("wouaf-acc", null).sup ? "« J'ai déjà un compte » avec l'identifiant du compte superviseur et son code" : "prénom <b>Éric</b> puis le code superviseur"}. Il a alors tous les pouvoirs, et les téléphones déjà connectés le restent (6 au plus).</p>
       <div class="btns"><button class="ghost" id="spOnly" hidden style="color:#c8452f">🚪 Déconnecter tous les autres téléphones</button><button class="ghost" id="spBack">← Superviseur</button></div><p id="spMsg" role="status"></p>`);
     $("#spBack").onclick = sheetSupMenu;
     const show = j => { const n = (j && j.phones) || 0, el = $("#spN"); if (!el) return;
@@ -3292,10 +3534,10 @@
     const fh = store.get("wouaf-fhome", null), hu = weekHunt(), t = (store.get("wouaf-tresor", []) || []).find(x => x.wk === wk);
     let clouds = [];
     try{ const j = await (await api("/clouds", supAuth())).json(); clouds = ((j && j.clouds) || []).filter(c => c.day === dayKey(Date.now())); }catch(e){}
-    const tTxt = t ? `✅ Trésor trouvé cette semaine par <b>${esc(t.by)}</b> (le prochain arrive lundi).` : hu ? `🏴‍☠️ Trésor pas encore trouvé${fixed ? " · 📌 placé à la main" : " · placé tout seul sur une rue ouverte"}.` : "🏴‍☠️ Pas encore de trésor : place d'abord la maison.";
+    const tTxt = t ? `✅ Trésor trouvé cette semaine par <b>${escN(t.by)}</b> (le prochain arrive lundi).` : hu ? `🏴‍☠️ Trésor pas encore trouvé${fixed ? " · 📌 placé à la main" : " · placé tout seul sur une rue ouverte"}.` : "🏴‍☠️ Pas encore de trésor : place d'abord la maison.";
     const hTxt = fh ? "🏠 Maison de la famille placée (arrondie à ~200 m)." : "🏠 Pas encore de maison de la famille : chaque téléphone prend sa 1re balade.";
-    const cTxt = clouds.length ? `☁️ Coffre chaud aujourd'hui : ${clouds.map(c => esc(c.w)).join(", ")}.` : "☁️ Aucun coffre chaud aujourd'hui.";
-    const sv = silverSrv(), svTxt = !sv ? "🥈 Pas de cadeau argenté : touche la carte puis « Cadeau argenté ici » (250 clebsous, un seul gagnant)." : sv.by ? `🥈 Cadeau argenté trouvé par <b>${esc(sv.by)}</b>. Tu peux en poser un nouveau.` : "🥈 Cadeau argenté posé, pas encore trouvé (il reste jusqu'à ce qu'on le trouve).";
+    const cTxt = clouds.length ? `☁️ Coffre chaud aujourd'hui : ${clouds.map(c => escN(c.w)).join(", ")}.` : "☁️ Aucun coffre chaud aujourd'hui.";
+    const sv = silverSrv(), svTxt = !sv ? "🥈 Pas de cadeau argenté : touche la carte puis « Cadeau argenté ici » (250 clebsous, un seul gagnant)." : sv.by ? `🥈 Cadeau argenté trouvé par <b>${escN(sv.by)}</b>. Tu peux en poser un nouveau.` : "🥈 Cadeau argenté posé, pas encore trouvé (il reste jusqu'à ce qu'on le trouve).";
     openSheet(`<h2>🗺️ Carte du superviseur</h2>
       <p class="howto" style="margin-top:0">${tTxt}<br>${hTxt}<br>${cTxt}<br>${svTxt}</p>
       <div id="tmap" style="height:44vh;border-radius:14px;overflow:hidden"></div>
@@ -3311,7 +3553,7 @@
     if (game.home){ L.marker([game.home.lat, game.home.lon], { icon: ic("🏠"), interactive:false, keyboard:false }).addTo(huntMap); pts.push([game.home.lat, game.home.lon]); }
     for (const c of clouds){
       hotCloud(huntMap, c, .22);
-      L.marker([c.lat, c.lon], { icon: L.divIcon({ className:"hpin", html:`<span style="font-size:12px;font-weight:700;background:#fff;border-radius:8px;padding:1px 6px;white-space:nowrap">💰 ${esc(c.w)}</span>`, iconSize:[90, 20] }), interactive:false, keyboard:false }).addTo(huntMap);
+      L.marker([c.lat, c.lon], { icon: L.divIcon({ className:"hpin", html:`<span style="font-size:12px;font-weight:700;background:#fff;border-radius:8px;padding:1px 6px;white-space:nowrap">💰 ${escN(c.w)}</span>`, iconSize:[90, 20] }), interactive:false, keyboard:false }).addTo(huntMap);
       pts.push([c.lat, c.lon]);
     }
     let pick = null, mk = null, pin = null;
@@ -3417,7 +3659,7 @@
       const box = $("#bgL"), s = $("#bgS"); if (!box) return;
       const open = l.filter(b => !b.done).length;
       s.textContent = l.length ? `${open} à regarder · ${l.length - open} réglé${l.length - open > 1 ? "s" : ""}` : "Aucun bug signalé pour l'instant. 🎉";
-      box.innerHTML = l.map(b => `<div class="entry" data-id="${esc(b.id)}" style="grid-template-columns:1fr;cursor:default;margin-bottom:8px;${b.done ? "opacity:.6" : ""}"><b>${esc(b.walker)}</b> · ${new Date(b.t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${new Date(b.t).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}${b.v ? " · v" + esc(b.v) : ""}<br>${esc(b.text)}${b.img ? `<div><button type="button" class="ghost" data-img="${esc(b.id)}">📎 Voir la capture</button></div>` : ""}
+      box.innerHTML = l.map(b => `<div class="entry" data-id="${esc(b.id)}" style="grid-template-columns:1fr;cursor:default;margin-bottom:8px;${b.done ? "opacity:.6" : ""}"><b>${escN(b.walker)}</b> · ${new Date(b.t).toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${new Date(b.t).toLocaleTimeString("fr-FR", { hour:"2-digit", minute:"2-digit" })}${b.v ? " · v" + esc(b.v) : ""}<br>${esc(b.text)}${b.img ? `<div><button type="button" class="ghost" data-img="${esc(b.id)}">📎 Voir la capture</button></div>` : ""}
         <div class="btns"><button class="${b.done ? "ghost" : ""}" data-done="${esc(b.id)}">${b.done ? "↩️ Rouvrir" : "Réglé ✓"}</button><button class="ghost" data-del="${esc(b.id)}" style="color:#c8452f">Supprimer</button></div></div>`).join("");
       box.querySelectorAll("[data-done]").forEach(btn => btn.onclick = async () => {
         const b = l.find(x => x.id === btn.dataset.done); if (!b) return;
@@ -3469,7 +3711,7 @@
       ${PUSH_API && !isTester() ? ic("muRap", "🔔", rap.on ? "Rappels ✓" : "Rappels") : ""}
       ${ic("muSon", soundOn() ? "🔊" : "🔇", soundOn() ? "Sons" : "Sons coupés")}
       ${ic("muShort", "📲", "Raccourci")}
-      ${ic("muWho", "👤", "Prénom")}
+      ${ic("muWho", "👤", acc ? "Mon compte" : "Prénom")}
       ${PUSH_API && !isTester() ? ic("muPriv", "🔒", "Vie privée") : ""}
       </div>
       <div class="mfoot">${PUSH_API && !supToken() ? `<button class="sup" id="muSup">Superviseur</button>` : ""}<button id="muAbout">À propos · version ${APP_LABEL}</button></div>`);
@@ -3734,7 +3976,7 @@
       <p>${v.lost ? `Retiré de ta tirelire : <b>${v.lost.toLocaleString("fr-FR")} 🪙</b>.` : "Rien à retirer."}${v.fine ? ` Comme c'était ta seule balade de la journée : <b>amende −${Math.round(dayFine(v.ent ? dIso(new Date(v.ent.date).getTime()) : null) * CS)} 🪙</b>.` : ""}</p>` });
     syncHunt();
     { const hu = game.hunt; if (hu && hu.gone && game.huntNote !== hu.wk){ game.huntNote = hu.wk; saveGame();
-        cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${esc(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
+        cards.push({ html: `<div class="dc-ic">🏴‍☠️</div><h2>${escN(hu.gone)} a trouvé le trésor !</h2><p>Le trésor de la semaine a disparu pour tout le monde. Rendez-vous lundi pour le prochain 🐾</p>` }); } }
     if (duelOK()){ await loadDuels(); cards.push(...duelCards()); }
     if (statsAsk()) cards.unshift({ html: statsCardHTML(), bind: el => bindStats(el) });
     if (profile.walker && !isTester() && !store.get("wouaf-sc-tip", 0)){   // 📲 une fois par téléphone : le bouton « Sortir Roxy »
@@ -4107,9 +4349,9 @@
   const prevMonthKey = () => { const d = new Date(); return monthKey(new Date(d.getFullYear(), d.getMonth() - 1, 15).getTime()); };
   const monthLabel = k => { const [y, m] = k.split("-").map(Number); return new Date(y, m - 1, 15).toLocaleDateString("fr-FR", { month:"long", year:"numeric" }); };
   function payText(k){
-    if (k.length > 7){ const eur = (game.weeks || {})[k] || 0; return `💶 Paie de ${profile.walker || "Promeneur"} · ${weekLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}`; }
+    if (k.length > 7){ const eur = (game.weeks || {})[k] || 0; return `💶 Paie de ${myName() || "Promeneur"} · ${weekLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}`; }
     const eur = moneyOf(k), cb = (game.bonus || {})[k] || 0;
-    return `💶 Paie de ${profile.walker || "Promeneur"} · ${monthLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}${cb ? ` (dont ${fmtEur(cb)} de coffre${cb > CHEST_EUR ? "s" : ""})` : ""}`;
+    return `💶 Paie de ${myName() || "Promeneur"} · ${monthLabel(k)} : ${Math.round(eur * CS).toLocaleString("fr-FR")} clebsous = ${fmtEur(eur)}${cb ? ` (dont ${fmtEur(cb)} de coffre${cb > CHEST_EUR ? "s" : ""})` : ""}`;
   }
   function offerPayday(then){
     return false;   // v2.6 : paie à la semaine dans le « Quoi de neuf » (paydayCardData)
@@ -4512,7 +4754,7 @@
     const l = lastWalk();
     if (!l) return { e:"🥺", s:"Attend sa 1re balade", ago:"", t:`${DOG} attend sa première balade avec toi`, p:30, c:"#e0a21f" };
     const h = (Date.now() - l.t) / 3600000;
-    const who = l.w && l.w !== profile.walker ? ` avec ${l.w}` : "";
+    const who = l.w && l.w !== profile.walker ? ` avec ${nm(l.w)}` : "";
     const ago = h < 1 ? "il y a moins d'1 h" : `il y a ${Math.round(h)} h`;
     const last = `sortie${who} ${ago}`;
     if (h < 4) return { e:"😍", s:"Aux anges", ago: last, t:`${DOG} est aux anges (${last})`, p:100, c:"#4c8a5a" };
@@ -4545,7 +4787,7 @@
       if (lab !== last){ html += `<div class="flabel">${esc(lab)}</div>`; last = lab; }
       const start = new Date(t - x.min * 60000);
       const own = x.w === profile.walker && getLog().find(e => Math.abs(Math.round(new Date(e.date).getTime() / 1000) - x.e) < 180);
-      html += `<div class="entry${x.v ? " void" : ""}${own ? " tap" : ""}"${own ? ` data-wk="${own.id}"` : ""}><div><h4>${x.v ? "❌ " : ""}${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.v ? " · annulée" : x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
+      html += `<div class="entry${x.v ? " void" : ""}${own ? " tap" : ""}"${own ? ` data-wk="${own.id}"` : ""}><div><h4>${x.v ? "❌ " : ""}${x.w === profile.walker ? "🧑 Toi" : "🧑 " + escN(x.w)} · ${hm(start)} → ${hm(new Date(t))}</h4><div class="when">⏱️ ${fmtMin(x.min)} · 📏 ${fmtKm(x.m || 0)}${x.pp ? " · 💧" : ""}${x.cc ? " · 💩" : ""}${x.v ? " · annulée" : x.min < MONEY_MIN ? " · courte" : ""}</div></div></div>`;
     }
     openSheet(`<h2>🐾 Les dernières sorties de ${DOG}</h2>
       ${list.length ? `<div class="props">${html}</div>` : `<p>Pas encore de sortie enregistrée.</p>`}
@@ -4568,7 +4810,7 @@
     const kmh = e.min ? (e.m / 1000) / (e.min / 60) : 0;
     const cell = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
     openSheet(`<h2>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${esc(e.title || "Balade")}</h2>
-      <p style="margin-top:0">${e.walker ? "🧑 " + esc(e.walker) + " · " : ""}${end.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} · ${hm(start)} → ${hm(end)}</p>
+      <p style="margin-top:0">${e.walker ? "🧑 " + escN(e.walker) + " · " : ""}${end.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} · ${hm(start)} → ${hm(end)}</p>
       ${e.line && e.line.length > 1 ? `<div id="wkmap" style="height:38vh;border-radius:14px;overflow:hidden"></div>` : `<p class="howto">Pas de trajet enregistré pour cette balade.</p>`}
       <div class="rgrid" style="margin-top:10px">${cell(fmtMin(e.min), "de balade")}${cell(fmtKm(e.m), "parcourus")}${cell(kmh ? kmh.toFixed(1).replace(".", ",") + " km/h" : "—", "en moyenne")}${cell(r.eu ? "🪙 +" + Math.round(r.eu * CS) : "—", e.void ? "annulée" : "gagnés")}</div>
       <p class="howto" style="text-align:center">${[r.pp || pins.some(x => x.k === "p") ? "💧 pipi" : "", r.cc || pins.some(x => x.k === "c") ? "💩 caca" : "", pins.some(x => x.k === "d") ? "🐕 copain" : "", r.cb ? "💰 coffre !" : "", pins.some(x => x.k === "t") ? "🏴‍☠️ trésor !" : "", r.df ? "🎯 défi réussi" : ""].filter(Boolean).join(" · ") || "Une belle balade avec " + DOG + " 🐾"}</p>
@@ -4613,7 +4855,7 @@
     const big = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
     const ws = (j && j.walkers) || [];
     const pp = ws.reduce((s, x) => s + x.pp, 0), cc = ws.reduce((s, x) => s + x.cc, 0);
-    const wRows = ws.map(x => `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + esc(x.w)}</h4><div class="when">Cette semaine : ${x.n7} balade${x.n7 > 1 ? "s" : ""} (${fmtMin(x.min7)})<br>30 jours : ${x.n30} balade${x.n30 > 1 ? "s" : ""} (${fmtMin(x.min30)})${x.last ? ` · dernière ${new Date(x.last * 1000).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}` : ""}</div></div><div class="dur">${fmtKm(x.m)}<div class="when">record ${fmtMin(x.best)}</div></div></div>`).join("");
+    const wRows = ws.map(x => `<div class="entry"><div><h4>${x.w === profile.walker ? "🧑 Toi" : "🧑 " + escN(x.w)}</h4><div class="when">Cette semaine : ${x.n7} balade${x.n7 > 1 ? "s" : ""} (${fmtMin(x.min7)})<br>30 jours : ${x.n30} balade${x.n30 > 1 ? "s" : ""} (${fmtMin(x.min30)})${x.last ? ` · dernière ${new Date(x.last * 1000).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })}` : ""}</div></div><div class="dur">${fmtKm(x.m)}<div class="when">record ${fmtMin(x.best)}</div></div></div>`).join("");
     const mRows = mine.slice(0, 30).map(e => `<div class="entry tap" data-wk="${e.id}"><div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"short", day:"numeric", month:"short" })} · ${fmtHour(new Date(e.date))}</h4><div class="when">⏱️ ${fmtMin(e.min)} · 📏 ${fmtKm(e.m)}${e.recap && e.recap.pp ? " · 💧" : ""}${e.recap && e.recap.cc ? " · 💩" : ""}</div></div><div class="dur">🗺️ ›</div></div>`).join("");
     openSheet(`<h2>📖 Le journal de ${DOG}</h2>${head}
       <div class="flabel">Depuis le début, en famille</div>
@@ -4652,7 +4894,7 @@
     try{ const j = await (await api("/honors")).json(); if (j && Array.isArray(j.honors)){ store.set("wouaf-honors", j.honors); return j.honors; } }catch(e){}
     return store.get("wouaf-honors", []);
   }
-  const winnersTxt = w => (w || []).map(x => sameN(x, profile.walker) ? "Toi" : esc(x)).join(" & ") + (w && w.length > 1 ? " (ex æquo)" : "");
+  const winnersTxt = w => (w || []).map(x => sameN(x, profile.walker) ? "Toi" : escN(x)).join(" & ") + (w && w.length > 1 ? " (ex æquo)" : "");
   // 😂 le résumé drôle de Roxy : des chiffres, des phrases qui ne se prennent pas au sérieux (variantes tirées du chiffre, donc stables)
   function funnyLines(f){
     const l = [], km = Math.round((f.m || 0) / 100) / 10, cc = f.cc || 0, pp = f.pp || 0, nc = f.nc || 0, min = f.min || 0;
@@ -4735,7 +4977,7 @@
           game.bonus[k] = Math.round(((game.bonus[k] || 0) + RECORD_CS / CS) * 100) / 100;
           game.recWins = game.recWins || {}; game.recWins[q[0].walk.e] = k; saveGame();
           store.set("wouaf-record", { walker: profile.walker, min: j.record.min }); store.set("wouaf-record-vu", profile.walker + j.record.min);
-          whenFree(() => { openSheet(`<div style="text-align:center;font-size:64px">🏅</div><h2 style="text-align:center">Nouveau record !</h2><p style="text-align:center">${fmtMin(j.record.min)} : la plus longue balade du mois${j.record.prev ? ` (avant : ${fmtMin(j.record.prev.min)} par ${esc(j.record.prev.walker)})` : ""}.<br><b>+${RECORD_CS} clebsous</b> dans ta tirelire !</p><div class="btns"><button id="rcOk">Trop bien ! 🐾</button></div>`); confetti(); $("#rcOk").onclick = closeSheet; renderHome(); });
+          whenFree(() => { openSheet(`<div style="text-align:center;font-size:64px">🏅</div><h2 style="text-align:center">Nouveau record !</h2><p style="text-align:center">${fmtMin(j.record.min)} : la plus longue balade du mois${j.record.prev ? ` (avant : ${fmtMin(j.record.prev.min)} par ${escN(j.record.prev.walker)})` : ""}.<br><b>+${RECORD_CS} clebsous</b> dans ta tirelire !</p><div class="btns"><button id="rcOk">Trop bien ! 🐾</button></div>`); confetti(); $("#rcOk").onclick = closeSheet; renderHome(); });
         }
       }catch(e){ break; }
       q.shift(); store.set("wouaf-envois", q);
@@ -4754,7 +4996,7 @@
       const s = d.sum || {}, w = d.walks || [], ok = w.filter(x => !x.v);
       const week = ok.filter(x => x.e >= wk0), last = ok[0];
       const l = last ? new Date(last.e * 1000) : null;
-      return `<div class="wk"><h4>${esc(d.walker)}${s.test ? " 🧪 testeur" : ""} · ${esc(s.lv || "")}</h4><div class="s">
+      return `<div class="wk"><h4>${escN(d.walker)}${s.test ? " 🧪 testeur" : ""} · ${esc(s.lv || "")}</h4><div class="s">
         🪙 Tirelire du mois : <b>${(s.cs || 0).toLocaleString("fr-FR")} clebsous = ${fmtEur((s.cs || 0) / CS)}</b>${s.mal ? ` (malus −${s.mal} : ${esc(s.malt || "")})` : ""}<br>
         📅 Cette semaine : ${week.length} balade${week.length > 1 ? "s" : ""}, ${fmtMin(week.reduce((n, x) => n + x.min, 0))} · 🔥 série ${s.n || 0} j${s.fog != null ? ` · 🗺️ exploration ${s.fog} %` : ""}<br>
         ${(() => { const us = (j.usage || []).find(x => sameN(x.walker, d.walker)); if (!us) return "";
@@ -4763,26 +5005,26 @@
           const top = Object.entries(pg).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([p, n]) => `${esc(p)} ${n}`).join(" · ");
           return `📱 7 derniers jours : ${o} ouverture${o > 1 ? "s" : ""} · ${fmtMin(Math.round(sec / 60))} dans l'app${top ? `<br><small>👀 ${top}</small>` : ""}<br>`; })()}
         ${(() => { const du = (j.duels || []).find(x => sameN(x.from, d.walker) || sameN(x.to, d.walker)); if (!du) return ""; const me = sameN(du.from, d.walker), op = me ? du.to : du.from, sc = du.score;
-          return `⚔️ Duel avec ${esc(op)} : ${du.status === "pending" ? "en attente de réponse" : `${me ? sc.a : sc.b} – ${me ? sc.b : sc.a}`} (${DUEL_TYPE[du.type]})<br>`; })()}
+          return `⚔️ Duel avec ${escN(op)} : ${du.status === "pending" ? "en attente de réponse" : `${me ? sc.a : sc.b} – ${me ? sc.b : sc.a}`} (${DUEL_TYPE[du.type]})<br>`; })()}
         ${l ? `🐾 Dernière : ${l.toLocaleDateString("fr-FR", { weekday:"short", day:"numeric" })} à ${hm(l)}, ${fmtMin(last.min)} · ${fmtKm(last.m)} · +${last.cs} 🪙${last.pp ? " · 💧" : ""}${last.cc ? " · 💩" : ""}` : "Pas encore de balade"}
         ${w.length ? `<details${voidMode ? " open" : ""} style="margin-top:4px"><summary>10 dernières balades</summary>${w.slice(0, 10).map(x => { const t = new Date(x.e * 1000);
           const txt = `${t.toLocaleDateString("fr-FR", { day:"numeric", month:"short" })} ${hm(t)} · ${fmtMin(x.min)} · ${fmtKm(x.m)} · +${x.cs} 🪙${x.pp ? " 💧" : ""}${x.cc ? " 💩" : ""}${x.cb ? " 💰" : ""}${x.tr ? " 🏴‍☠️" : ""}${x.ms ? " ⏱️ trop courte" : ""}`;
           return x.v ? `<div class="dwalk void"><s>${txt}</s> ❌ annulée (${esc(x.v)})</div>`
-            : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${esc(d.walker)}" style="padding:8px 12px;font-size:14px;margin-top:4px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
+            : `<div class="dwalk">${txt} <button class="ghost" data-void="${x.e}" data-w="${escN(d.walker)}" style="padding:8px 12px;font-size:14px;margin-top:4px" aria-label="Annuler cette balade">❌ Annuler</button></div>`; }).join("")}</details>` : ""}
       </div></div>`;
     };
-    const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${esc(a.walker)}</b> a trouvé ${a.kind === "silver" ? "le cadeau argenté" : "le trésor de la semaine"} puis annulé sa balade : personne n'a été payé.
+    const alerts = (j.alerts || []).map(a => `<div class="warnline">🚨 <b>${escN(a.walker)}</b> a trouvé ${a.kind === "silver" ? "le cadeau argenté" : "le trésor de la semaine"} puis annulé sa balade : personne n'a été payé.
         <div class="btns" style="flex-direction:row;gap:8px;margin-top:6px"><button data-al="${a.id}" data-give="1" style="flex:1">Redonner ${a.kind === "silver" ? SILVER_CS : HUNT_FIRST}</button><button class="ghost" data-al="${a.id}" style="flex:1">Ignorer</button></div></div>`).join("");
     // 💶 paies de la semaine à verser (v2.6)
     const toPay = []; for (const pw of j.pays || []) for (const wk in pw.w || {}){ const x = pw.w[wk]; if (x.eur > 0) toPay.push({ walker: pw.walker, wk, eur: x.eur, paid: x.paid }); }
     toPay.sort((a, b) => (a.paid ? 1 : 0) - (b.paid ? 1 : 0) || b.wk.localeCompare(a.wk));
-    const payHTML = voidMode ? "" : `<div class="flabel">💶 Paies de la semaine</div>${toPay.length ? `<div class="props">${toPay.slice(0, 12).map(x => `<div class="entry"><div><h4>${esc(x.walker)} · ${fmtEur(x.eur)}</h4><div class="when">${esc(weekLabel(x.wk))} · ${Math.round(x.eur * CS).toLocaleString("fr-FR")} clebsous · ${x.paid ? "✓ versé le " + new Date(x.paid).toLocaleDateString("fr-FR") : "⏳ à verser"}</div></div>${x.paid ? "" : `<button data-pw="${esc(x.walker)}" data-wk="${x.wk}" data-eur="${x.eur}">Versé ✓</button>`}</div>`).join("")}</div>` : `<p class="howto">La paie de chaque semaine arrive ici le dimanche soir, quand le promeneur ouvre l'app.</p>`}`;
+    const payHTML = voidMode ? "" : `<div class="flabel">💶 Paies de la semaine</div>${toPay.length ? `<div class="props">${toPay.slice(0, 12).map(x => `<div class="entry"><div><h4>${escN(x.walker)} · ${fmtEur(x.eur)}</h4><div class="when">${esc(weekLabel(x.wk))} · ${Math.round(x.eur * CS).toLocaleString("fr-FR")} clebsous · ${x.paid ? "✓ versé le " + new Date(x.paid).toLocaleDateString("fr-FR") : "⏳ à verser"}</div></div>${x.paid ? "" : `<button data-pw="${escN(x.walker)}" data-wk="${x.wk}" data-eur="${x.eur}">Versé ✓</button>`}</div>`).join("")}</div>` : `<p class="howto">La paie de chaque semaine arrive ici le dimanche soir, quand le promeneur ouvre l'app.</p>`}`;
     openSheet(`<h2>${voidMode ? "❌ Annuler une balade" : "📊 Tableau de bord"}</h2>
       ${alerts}
       ${payHTML}
       ${voidMode ? `<p class="howto">Choisis la balade à annuler (bouton ❌). Le téléphone du promeneur retirera ses gains à sa prochaine ouverture.</p>` : ""}
-      ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${esc(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
-      ${(j.duels || []).length ? `<div class="flabel">⚔️ Duels</div><div class="props">${j.duels.map(d => `<div class="entry"><div><h4>${esc(d.from)} contre ${esc(d.to)} · ${d.score ? `${d.score.a} – ${d.score.b}` : "en attente"}</h4><div class="when">${DUEL_TYPE[d.type]} · ${d.days} j${d.stake ? ` · mise ${d.stake}` : ""}${d.end ? ` · fin le ${new Date(d.end + "T12:00:00").toLocaleDateString("fr-FR")}` : ""}</div></div><button class="ghost" data-dcan="${d.id}">Annuler</button></div>`).join("")}</div>` : ""}
+      ${j.last ? `<p>🐕 Dernière sortie de ${DOG} : ${escN(j.last.walker)}, ${new Date(j.last.t * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric" })} à ${hm(new Date(j.last.t * 1000))}</p>` : ""}
+      ${(j.duels || []).length ? `<div class="flabel">⚔️ Duels</div><div class="props">${j.duels.map(d => `<div class="entry"><div><h4>${escN(d.from)} contre ${escN(d.to)} · ${d.score ? `${d.score.a} – ${d.score.b}` : "en attente"}</h4><div class="when">${DUEL_TYPE[d.type]} · ${d.days} j${d.stake ? ` · mise ${d.stake}` : ""}${d.end ? ` · fin le ${new Date(d.end + "T12:00:00").toLocaleDateString("fr-FR")}` : ""}</div></div><button class="ghost" data-dcan="${d.id}">Annuler</button></div>`).join("")}</div>` : ""}
       <div class="dash">${ws.length ? ws.map(card).join("") : `<p class="howto">Aucune balade reçue pour l'instant. Les chiffres arrivent après chaque balade terminée.</p>`}</div>
       <p class="howto">Seulement des chiffres : aucun trajet ni position n'est envoyé.</p>
       <div class="btns"><button id="dsClose">Fermer</button></div>`);
@@ -4799,7 +5041,7 @@
   // ❌ motif obligatoire, puis POST /void
   function openVoidForm(auth, walker, e, label, voidMode){
     openSheet(`<h2>❌ Annuler cette balade ?</h2>
-      <p><b>${esc(walker)}</b> · ${esc(label)}</p>
+      <p><b>${escN(walker)}</b> · ${esc(label)}</p>
       <p class="howto">Tous ses gains seront retirés (durée, bonus, défi, trésor, coffre). Si c'était sa seule balade de 20 min ou plus ce jour-là : amende de ${Math.round(dayFine() * CS)} clebsous, sans joker.</p>
       <label for="vdWhy">Motif (le promeneur le verra)</label><input id="vdWhy" placeholder="ex. balade faite en voiture" autocomplete="off">
       <div class="btns"><button id="vdGo" style="background:#c8452f">❌ Annuler cette balade</button><button class="ghost" id="vdNo">Retour</button></div><p id="vdMsg" role="status"></p>`);
@@ -4813,7 +5055,7 @@
         if (r.status === 403){ $("#vdMsg").textContent = "Code incorrect."; return; }
         if (r.status === 404){ $("#vdMsg").textContent = "Cette balade n'existe plus sur le serveur."; return; }
         if (!r.ok){ $("#vdMsg").textContent = "Ça n'a pas marché, réessaie."; return; }
-        openSheet(`<h2>✓ Balade annulée</h2><p>${esc(walker)} la verra barrée, avec le motif, à sa prochaine ouverture de l'app.</p><div class="btns"><button id="vdBack">Retour au tableau de bord</button><button class="ghost" id="vdClose">Fermer</button></div>`);
+        openSheet(`<h2>✓ Balade annulée</h2><p>${escN(walker)} la verra barrée, avec le motif, à sa prochaine ouverture de l'app.</p><div class="btns"><button id="vdBack">Retour au tableau de bord</button><button class="ghost" id="vdClose">Fermer</button></div>`);
         $("#vdBack").onclick = () => openDash(auth, voidMode); $("#vdClose").onclick = closeSheet;
       }catch(err){ $("#vdMsg").textContent = "Pas de connexion pour l'instant."; }
     };
@@ -4856,7 +5098,7 @@
     x.fillStyle = g; x.fillRect(0, 0, 1080, 1350);
     x.fillStyle = "#fff"; x.textAlign = "center";
     x.font = "700 64px Georgia, serif"; x.fillText(`Mon mois avec ${DOG}`, 540, 120);
-    x.font = "500 40px system-ui, sans-serif"; x.globalAlpha = .85; x.fillText(`${monthLabel(k)} · ${profile.walker || ""}`, 540, 180); x.globalAlpha = 1;
+    x.font = "500 40px system-ui, sans-serif"; x.globalAlpha = .85; x.fillText(`${monthLabel(k)} · ${myName()}`, 540, 180); x.globalAlpha = 1;
     if (photo){
       const s = 520, px = 280, py = 230, r = 40, sc = Math.max(s / photo.width, s / photo.height);
       x.save(); x.beginPath(); x.roundRect ? x.roundRect(px, py, s, s, r) : x.rect(px, py, s, s); x.clip();
@@ -4939,7 +5181,7 @@
     try{ const r = await api("/restore", auth); if (r.status === 403){ openSheet(`<h2>♻️ Restaurer</h2><p>Code incorrect.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; } names = (await r.json()).names || []; }
     catch(e){ openSheet(`<h2>♻️ Restaurer</h2><p>Pas de connexion.</p><div class="btns"><button id="rsClose">Fermer</button></div>`); $("#rsClose").onclick = closeSheet; return; }
     openSheet(`<h2>♻️ Restaurer un promeneur</h2><p>Sur un nouveau téléphone (ou après un effacement), récupère la tirelire, le niveau, les trophées et le carnet d'un promeneur. <b>Ça remplace ce qu'il y a sur ce téléphone.</b></p>
-      <div class="btns">${names.length ? names.map(n => `<button class="ghost" data-rs="${esc(n)}">👤 ${esc(n)}</button>`).join("") : "<p>Aucune sauvegarde pour l'instant.</p>"}<button id="rsClose">Fermer</button></div><p id="rsMsg" role="status"></p>`);
+      <div class="btns">${names.length ? names.map(n => `<button class="ghost" data-rs="${esc(n)}">👤 ${escN(n)}</button>`).join("") : "<p>Aucune sauvegarde pour l'instant.</p>"}<button id="rsClose">Fermer</button></div><p id="rsMsg" role="status"></p>`);
     $("#rsClose").onclick = closeSheet;
     document.querySelectorAll("[data-rs]").forEach(b => b.onclick = async () => {
       $("#rsMsg").textContent = "Un instant…";
@@ -5556,7 +5798,7 @@
     return null;
   }
   async function sendSos(item, pos){
-    const text = `${item.msg(DOG)} ${profile.walker || ""} · ${hm(new Date())}\n📍 https://maps.apple.com/?q=${pos.lat.toFixed(5)},${pos.lon.toFixed(5)}`;
+    const text = `${item.msg(DOG)} ${myName()} · ${hm(new Date())}\n📍 https://maps.apple.com/?q=${pos.lat.toFixed(5)},${pos.lon.toFixed(5)}`;
     try{ if (navigator.share){ await navigator.share({ text }); return; } }catch(e){ if (e && e.name === "AbortError") return; }
     location.href = "sms:&body=" + encodeURIComponent(text);
   }
@@ -5670,7 +5912,7 @@
       if (!r.f && r.cov != null && r.cov < 70) notes.push(`🧭 parcours suivi à ${r.cov} %`);
       if (r.gm > 2) notes.push(`📡 GPS coupé ${fmtMin(r.gm)}`);
     }
-    return `🐾 ${r.d} · ${r.w} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${needs}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
+    return `🐾 ${r.d} · ${nm(r.w)} · ${hm(s)} → ${hm(e)} · ${fmtMin(dur)} · ${fmtKm(r.m)} ${notes.length ? "· " + notes.join(" · ") : "✅"}${needs}${r.eu ? ` · 🪙 +${fmtCs(r.eu)}` : ""}${r.cb ? ` · 💰 coffre +${fmtCs(r.cb)}` : ""}${r.lu ? ` · 🎁 niveau ${r.lu}` : ""}${r.al ? " · 🎁 album de saison complet" : ""}${r.df ? " · 🎯 défi réussi" : ""}${r.ms ? ` · ⏱️ trop courte −${fmtCs(r.ms)}` : ""}${r.tro ? ` · 🏆 ${r.tro.join(", ")}` : ""}`;
   }
 
   // 📲 v45 : les récaps partent dans le groupe WhatsApp « Roxy » (retour du 16/11 : récap envoyé au mauvais contact par erreur)
@@ -5788,7 +6030,7 @@
     openSheet(`<div class="ticket">${hero}
         <div class="tk-sum">${isTester() ? "🧪 test" : `${r.eu ? `+${Math.round(r.eu * CS)}` : "0"} 🪙`}</div>
         <div class="tk-sub">${isTester() ? "mode testeur : rien n'est compté" : r.eu ? "clebsous dans ta tirelire" : res && res.short ? "moins de 15 min : rien cette fois" : "clebsous"}</div>
-        <h2>Bravo ${esc(r.w)} ! 🐶</h2><p>${esc(title || "")} · ${new Date(r.s * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}</p></div>
+        <h2>Bravo ${escN(r.w)} ! 🐶</h2><p>${esc(title || "")} · ${new Date(r.s * 1000).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}</p></div>
       <div class="rgrid">
         <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
         <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
@@ -5893,7 +6135,7 @@
     const s = new Date(r.s*1000), e = new Date(r.e*1000), dur = (r.e - r.s)/60;
     $("#recapbox").innerHTML = `<div class="card">
         <h2>🐾 ${r.f ? "Balade libre" : "Balade"} de ${esc(r.d)}</h2>
-        <p style="margin:2px 0 8px;color:var(--muted)">par <b>${esc(r.w)}</b> · ${s.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}, ${fmtHour(s)} → ${fmtHour(e)}</p>
+        <p style="margin:2px 0 8px;color:var(--muted)">par <b>${escN(r.w)}</b> · ${s.toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })}, ${fmtHour(s)} → ${fmtHour(e)}</p>
         <div class="rgrid">
           <div><b>${fmtMin(dur)}</b><span>de balade</span></div>
           <div><b>${fmtKm(r.m)}</b><span>parcourus</span></div>
@@ -6065,7 +6307,7 @@
         </div>` + bar + warn + info +
         `<div class="props">${log.map(e => `
           <div class="entry${logSel === e.id ? " sel" : ""}${e.void ? " void" : ""}" tabindex="0" data-id="${e.id}">
-            <div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${e.void ? `annulée${e.void.why ? " : " + esc(e.void.why) : ""} · ` : ""}${e.walker ? esc(e.walker) + " · " : ""}${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
+            <div><h4>${e.void ? "❌ " : ""}${e.icon || "🐾"} ${esc(e.title)}</h4><div class="when">${e.void ? `annulée${e.void.why ? " : " + esc(e.void.why) : ""} · ` : ""}${e.walker ? escN(e.walker) + " · " : ""}${new Date(e.date).toLocaleDateString("fr-FR", { weekday:"long", day:"numeric", month:"long" })} à ${fmtHour(new Date(e.date))}</div></div>
             <div class="dur">${fmtMin(e.min)}<div class="when">${fmtKm(e.m)}</div></div>
             <div class="acts">${e.line && e.line.length > 1 ? `<button data-redo="${e.id}">🐾 ${e.cat === "free" ? "Refaire ce trajet" : "Refaire"}</button>` : ""}${e.recap ? `<button class="ghost" data-send="${e.id}">📩 Renvoyer</button>` : ""}<button class="ghost" data-del="${e.id}">Supprimer</button></div>
           </div>`).join("")}</div>` + keepSel;
@@ -6214,7 +6456,7 @@
     const alive = n >= 2 && (done || streakAlive(game.streak.day));
     const l = lastWalk(); let roxy;
     if (l){ const d = new Date(l.t), h = (Date.now() - l.t) / 3600000, me = !l.w || normName(l.w) === normName(profile.walker);
-      roxy = dayKey(l.t) === today ? `🐕 ${me ? "toi" : esc(l.w)} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}` : `🐕 attend depuis ${h >= 48 ? Math.floor(h / 24) + " j" : Math.round(h) + " h"}`; }
+      roxy = dayKey(l.t) === today ? `🐕 ${me ? "toi" : escN(l.w)} à ${d.getHours()} h ${String(d.getMinutes()).padStart(2, "0")}` : `🐕 attend depuis ${h >= 48 ? Math.floor(h / 24) + " j" : Math.round(h) + " h"}`; }
     else roxy = "🐕 1re balade !";
     const st = $("#goStat");
     if (st){ st.classList.toggle("ok", done);
@@ -6361,7 +6603,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6480,8 +6722,13 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 56, APP_LABEL = "4.3";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 57, APP_LABEL = "4.4";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    57: [
+      "👤 Chaque promeneur a son compte : un identifiant (à retenir, il ne change jamais) et un code.",
+      "✏️ Ton prénom se change quand tu veux : ☰ › 👤 Mon compte. Tout le monde voit le nouveau.",
+      "📱 Nouveau téléphone ? « J'ai déjà un compte » et tu retrouves ta sauvegarde."
+    ],
     56: [
       "🐾 Sur les cartes, une petite patte montre où tu es."
     ],
@@ -6711,7 +6958,7 @@
       <div class="btns"><button id="newsOk">OK</button></div>`);
     $("#newsOk").onclick = () => { store.set("wouaf-vu", APP_NUM); closeSheet(); };
   }
-  setTimeout(() => { if (document.body.classList.contains("recap")) return; if (store.get(WELCOME2, 0)) showWelcome2(); else if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }, 1500);
+  setTimeout(() => { if (document.body.classList.contains("recap")) return; accGate(() => { if (store.get(WELCOME2, 0)) showWelcome2(); else if (store.get("wouaf-tuto", 0)) startupDigest(); else showTuto(); }); }, 1500);
   setTimeout(() => { try{ useOpen(); useTrack("🏠 Accueil"); }catch(e){} }, 1200);
   setTimeout(async () => { try{ await autoClaim(); }catch(e){} try{ sendUsage(true); }catch(e){} try{ await loadPauses(); if (await applyReset()) return; }catch(e){} pushState(false); flushWalks(); backupNow(false); }, 5000);
   // retour dans l'app (sans balade) : on regarde si une remise à zéro attend
@@ -6752,7 +6999,7 @@
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetSupPhones, sheetSupMenu, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

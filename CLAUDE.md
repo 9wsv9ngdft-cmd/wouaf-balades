@@ -603,3 +603,28 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - App : Superviseur › 📱 **Téléphones connectés** (`sheetSupPhones`, double toucher pour « Déconnecter tous les autres ») ; textes « connecter aussi ce téléphone » (`#supMine`, `#wCodeGo`).
   Un 2e téléphone se connecte comme avant : prénom Éric + code. Les vrais comptes (identifiant, code, inscriptions) viendront ensuite.
 - Tests : `tests/worker.test.mjs` (2 téléphones, ancien format, 6 max, déconnecter les autres), `tests/e2e_claim.py`.
+
+## Version 4.4 « Croquette » (APP_NUM 57, décidé le 20/11 entre 15 h 22 et 16 h 18, codé à 16 h 30 sur demande : comptes)
+- 👤 **Comptes** (Worker) : KV `acc:<identifiant>` = `{ login, key, name, h, salt, at, toks, sup?, nocode? }` ; code (4 chiffres ou mot de passe ≥ 6) **haché** (PBKDF2-SHA256, sel,
+  5 000 tours : limite CPU des Workers), jamais en clair ; 10 codes ratés par jour et par identifiant (`ACC_FAILS`). `acck:<clé>` = identifiant ; `names` = `{ slug(clé): { k, n } }`
+  (public, sans identifiant), renvoyé par `GET /pause` avec `signup` (inscriptions ouvertes ?).
+- 🔑 **Clé ≠ prénom affiché** : la clé = le prénom sous lequel le serveur range tout (`d: b: a: use: pays…`, `profile.walker` sur le téléphone, envoyée partout comme avant) ;
+  pour un promeneur d'avant = son prénom actuel (rien à migrer), pour un nouveau = son identifiant. **Elle ne change jamais.** Le prénom affiché (`acc.name`) se change quand on veut
+  (`/acc-rename`, refusé s'il est déjà le prénom ou la clé de quelqu'un d'autre, « Éric » réservé). Les notifications remplacent la clé par le prénom (`withNames` dans `pushTo`).
+- Routes : `/acc-status` · `/acc-signup` (`key` = prénom actuel du téléphone ; inscriptions fermées = seulement si la clé a déjà des balades ou une sauvegarde) · `/acc-login`
+  (`needCode` si le code a été remis à zéro → `newCode`) · `/acc-rename` `/acc-code` `/acc-backup` (jeton du compte) · `/acc-sup-create` (jeton superviseur : crée LE compte
+  superviseur, clé = `admin.walker` « Éric », KV `supacc`) · `/acc-sup-me` (autre téléphone superviseur : se rattache) · superviseur : `/acc-list`, `/acc-open` (KV `signup` = "closed"),
+  `/acc-reset` (pas pour le compte superviseur).
+- 🔐 **Bascule** : une fois `supacc` créé, **`SUPERVISOR_CODE` ne marche plus** (`supOk`, `/claim`) ; les jetons superviseur déjà donnés restent valables ; se connecter au compte
+  superviseur (`/acc-login`) donne aussi un jeton superviseur (plusieurs téléphones, voir plus haut). Le code du compte superviseur ne se remet pas à zéro depuis l'app.
+- App : `acc` (clé `wouaf-acc` : login, key, name, tok, sup), `namesMap` (`wouaf-names`), `nm(w)` / `escN(w)` = prénom affiché d'une clé (partout où un prénom vient du serveur :
+  sorties, journal, explorateurs, duels, trophées, tableau de bord…), `myName()` = mon prénom affiché (Salut, récaps, paies, carte du mois).
+- 🚪 **Écran d'entrée** (`accGate`, avant le tuto / le « Quoi de neuf », une fois par téléphone, sans croix : `gateOpen`) : « ✨ Je m'inscris » (`accSignup` : identifiant proposé sans
+  accent, ⚠️ « Retiens bien ton identifiant », prénom déjà rempli, code 4 chiffres ou mot de passe + confirmation) / « 🔑 J'ai déjà un compte » (`accLogin`, `accNewCode`,
+  `accLoggedIn` : téléphone vide → propose sa sauvegarde `/acc-backup`). Sans réseau : « Continuer sans compte pour l'instant » (redemandé à la prochaine ouverture) pour un
+  promeneur d'avant. Inscriptions fermées : « Je m'inscris » grisé (sauf promeneur d'avant). Téléphone superviseur : `accSupCreate` (« Plus tard » = redemandé le lendemain),
+  ou rattachement automatique si le compte existe déjà.
+- ☰ › 👤 **Mon compte** (`sheetAccount`, remplace « Prénom ») : identifiant, prénom affiché, 🔒 changer de code. Superviseur › 👥 **Comptes** (`sheetAccounts` : interrupteur
+  « Inscriptions ouvertes / fermées », liste, « 🔓 Code oublié ») et 🔐 **Créer le compte superviseur** (tant qu'il n'existe pas sur ce téléphone).
+- Pas encore fait : « Fusionner deux prénoms » (le doublon de l'ado qui a changé de prénom avant les comptes reste à regrouper).
+- Tests : `tests/accounts.test.mjs`, `tests/e2e_v54.py`. `e2e_common.new_phone(..., acc=True)` pour voir l'écran d'entrée ; sinon `wouaf-acc-skip` le saute.

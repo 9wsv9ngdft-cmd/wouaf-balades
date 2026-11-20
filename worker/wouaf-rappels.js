@@ -187,7 +187,7 @@ const safeEq = (a, b) => { a = String(a); b = String(b); if (a.length !== b.leng
 const newToken = () => b64u(crypto.getRandomValues(new Uint8Array(24)));
 async function supOk(env, b){
   if (!b) return false;
-  if (env.SUPERVISOR_CODE && b.code != null && safeEq(b.code, env.SUPERVISOR_CODE)) return true;
+  if (env.SUPERVISOR_CODE && b.code != null && safeEq(b.code, env.SUPERVISOR_CODE) && !(await env.WOUAF.get("supacc"))) return true;   // v4.4 : l'ancien code s'arrête à la bascule
   if (typeof b.token === "string" && b.token.length >= 16){
     const a = await env.WOUAF.get("admin", "json");
     if (a && supTokens(a).some(t => safeEq(t.t, b.token))) return true;
@@ -198,6 +198,38 @@ async function supOk(env, b){
 const SUP_MAX_PHONES = 6;
 const supTokens = a => (a && Array.isArray(a.tokens) && a.tokens.length) ? a.tokens.filter(x => x && typeof x.t === "string") : (a && a.token ? [{ t: a.token, at: a.at || 0 }] : []);
 const supSave = (env, a, list) => env.WOUAF.put("admin", JSON.stringify(Object.assign({}, a, { token: list[0].t, tokens: list })));
+
+// 👤 v4.4 : comptes. Identifiant fixe (sert à se reconnecter), prénom affiché modifiable, code (4 chiffres ou mot de passe) jamais gardé en clair.
+// KV acc:<identifiant> = { login, key, name, h, salt, at, toks:[{t,at}], sup?, nocode? } ; acck:<clé> = identifiant ; names = { <clé>: { k, n } } (public, sans identifiant)
+// La « clé » = le prénom sous lequel le serveur range tout (d: b: a: use: pays…) : pour un promeneur d'avant, son prénom actuel ; pour un nouveau, son identifiant.
+// Elle ne change jamais : changer de prénom ne change que l'affichage (plus de doublon côté serveur).
+const ACC_FAILS = 10;   // codes ratés par jour et par identifiant
+const okLogin = l => typeof l === "string" && /^[\p{L}\p{N}_.-]{2,20}$/u.test(l.trim());
+const okCode = c => typeof c === "string" && (/^\d{4}$/.test(c) || (c.length >= 6 && c.length <= 64));
+const cleanName = n => String(n || "").replace(/\s+/g, " ").trim().slice(0, 30);
+async function hashCode(code, salt){
+  const k = await crypto.subtle.importKey("raw", enc.encode(String(code)), "PBKDF2", false, ["deriveBits"]);
+  return b64u(await crypto.subtle.deriveBits({ name:"PBKDF2", hash:"SHA-256", salt: unb64u(salt), iterations: 5000 }, k, 256));
+}
+const accGet = (env, login) => env.WOUAF.get("acc:" + slug(normName(login)), "json");
+const accPut = (env, a) => env.WOUAF.put("acc:" + slug(normName(a.login)), JSON.stringify(a));
+const accTokOk = (a, t) => !!(a && typeof t === "string" && t.length >= 16 && (a.toks || []).some(x => safeEq(x.t, t)));
+async function accNewTok(env, a){ const t = newToken(); a.toks = (a.toks || []).concat([{ t, at: Date.now() }]).slice(-6); await accPut(env, a); return t; }
+async function namesGet(env){ return (await env.WOUAF.get("names", "json")) || {}; }
+async function namesSet(env, key, name){ const m = await namesGet(env); m[slug(key)] = { k: key, n: name }; await env.WOUAF.put("names", JSON.stringify(m)); }
+// prénom affiché déjà utilisé par quelqu'un d'autre (son prénom affiché ou sa clé) ?
+async function nameTaken(env, name, myKey){
+  const m = await namesGet(env), n = normName(name);
+  return Object.values(m).some(x => !(myKey != null && slug(x.k) === slug(myKey)) && (normName(x.n) === n || normName(x.k) === n));
+}
+const accView = a => ({ login: a.login, key: a.key, name: a.name, sup: a.sup ? 1 : 0 });
+// remplace les clés par les prénoms affichés dans le texte d'une notification
+async function withNames(env, txt){
+  try{ const m = await namesGet(env);
+    for (const x of Object.values(m)) if (x.n && x.n !== x.k) txt = txt.replace(new RegExp("(^|[^\\p{L}])" + x.k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\p{L}])", "gu"), "$1" + x.n);
+  }catch(e){}
+  return txt;
+}
 async function isTester(env, walker){ return normName(walker) === SUP_NAME && !!(await env.WOUAF.get("admin")); }
 // efface toutes les clés d'un préfixe : on relit la liste depuis le début tant qu'il en reste (pas de curseur à garder entre deux suppressions)
 async function wipe(env, prefix){
@@ -245,6 +277,7 @@ const otherOf = (du, w) => same(du.from, w) ? du.to : du.from;
 const isOpen = du => du.status === "pending" || du.status === "active";
 async function pushTo(env, walker, title, body, tag){   // notification à un promeneur (s'il a activé les rappels)
   try{
+    body = await withNames(env, body);
     const v = await vapid(env, false); if (!v) return;
     const l = await env.WOUAF.list({ prefix:"u:" });
     const lt = local(Date.now()), nm = lt.h * 60 + lt.min;
@@ -452,9 +485,97 @@ export default {
       if (f.min == null){ f.min = famMin; await env.WOUAF.put("fam", JSON.stringify(f)); }
       return json({ walkers: out, fam: { n: f.n, m: f.m, nc: f.nc, min: f.min } });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json"), silver: await silverView(env) });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json"), silver: await silverView(env), names: await namesGet(env), signup: (await env.WOUAF.get("signup")) !== "closed" });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
+    if (path === "/acc-status"){   // 👤 inscriptions ouvertes ? identifiant déjà pris ? compte superviseur créé ?
+      const out = { open: (await env.WOUAF.get("signup")) !== "closed", supacc: !!(await env.WOUAF.get("supacc")) };
+      if (b.login != null) out.exists = !!(await accGet(env, b.login));
+      return json(out);
+    }
+    if (path === "/acc-signup"){   // ✨ « Je m'inscris » (key = prénom actuel du téléphone pour un promeneur d'avant)
+      const login = String(b.login || "").trim(), name = cleanName(b.name), key = b.key != null ? cleanName(b.key) : login;
+      if (!okLogin(login)) return json({ error:"bad login" }, 400);
+      if (!name || !key) return json({ error:"bad name" }, 400);
+      if (!okCode(b.code)) return json({ error:"bad code" }, 400);
+      if ([login, name, key].some(x => normName(x) === SUP_NAME)) return json({ error:"reserved" }, 403);   // Éric = le superviseur (bascule à part)
+      if (await accGet(env, login)) return json({ error:"login taken" }, 409);
+      if (await env.WOUAF.get("acck:" + slug(key))) return json({ error:"key taken" }, 409);
+      if (await nameTaken(env, name, key)) return json({ error:"name taken" }, 409);
+      if (b.key == null && (await nameTaken(env, key, key))) return json({ error:"login taken" }, 409);
+      if ((await env.WOUAF.get("signup")) === "closed"){   // fermées : seuls les promeneurs qui ont déjà des balades peuvent créer leur compte
+        const known = (await env.WOUAF.get("d:" + slug(key))) || (await env.WOUAF.get("b:" + slug(key)));
+        if (b.key == null || !known) return json({ error:"closed" }, 403);
+      }
+      const salt = b64u(crypto.getRandomValues(new Uint8Array(16)));
+      const a = { login, key, name, salt, h: await hashCode(b.code, salt), at: Date.now(), toks: [] };
+      const t = await accNewTok(env, a);
+      await env.WOUAF.put("acck:" + slug(key), slug(normName(login)));
+      await namesSet(env, key, name);
+      return json({ ok:true, token: t, acc: accView(a) });
+    }
+    if (path === "/acc-login"){   // 🔑 « J'ai déjà un compte » (code remis à zéro par le superviseur → newCode choisit le nouveau)
+      const a = await accGet(env, b.login);
+      const fk = "accf:" + slug(normName(b.login)) + ":" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
+      if (fails >= ACC_FAILS) return json({ error:"too many" }, 429);
+      if (!a){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad" }, 403); }
+      if (a.nocode){
+        if (b.newCode == null) return json({ needCode:true, name: a.name });
+        if (!okCode(b.newCode)) return json({ error:"bad code" }, 400);
+        a.salt = b64u(crypto.getRandomValues(new Uint8Array(16))); a.h = await hashCode(b.newCode, a.salt); delete a.nocode;
+      } else if (!okCode(String(b.code || "")) || !safeEq(await hashCode(b.code, a.salt), a.h)){
+        await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad" }, 403);
+      }
+      const t = await accNewTok(env, a), out = { ok:true, token: t, acc: accView(a) };
+      if (a.sup){   // 🔑 compte superviseur : ce téléphone reçoit aussi son jeton superviseur (les autres téléphones restent connectés)
+        const ad = await env.WOUAF.get("admin", "json"), st = newToken();
+        await supSave(env, ad || { walker: a.key, at: Date.now() }, supTokens(ad).concat([{ t: st, at: Date.now() }]).slice(-SUP_MAX_PHONES));
+        out.supToken = st;
+      }
+      return json(out);
+    }
+    if (path === "/acc-rename" || path === "/acc-code" || path === "/acc-backup"){   // réglages du compte : jeton du compte
+      const a = await accGet(env, b.login);
+      if (!accTokOk(a, b.token)) return json({ error:"forbidden" }, 403);
+      if (path === "/acc-rename"){   // ✏️ prénom affiché : modifiable tout le temps, la clé ne bouge pas
+        const name = cleanName(b.name);
+        if (!name) return json({ error:"bad name" }, 400);
+        if (normName(name) === SUP_NAME && !a.sup) return json({ error:"reserved" }, 403);
+        if (await nameTaken(env, name, a.key)) return json({ error:"name taken" }, 409);
+        a.name = name; await accPut(env, a); await namesSet(env, a.key, name);
+        return json({ ok:true, acc: accView(a) });
+      }
+      if (path === "/acc-code"){   // 🔒 changer de code (avec l'ancien)
+        if (!okCode(b.code) || !safeEq(await hashCode(String(b.old || ""), a.salt), a.h)) return json({ error:"bad code" }, 403);
+        a.salt = b64u(crypto.getRandomValues(new Uint8Array(16))); a.h = await hashCode(b.code, a.salt); await accPut(env, a);
+        return json({ ok:true });
+      }
+      const d = await env.WOUAF.get("b:" + slug(a.key), "json");   // ♻️ sa propre sauvegarde (nouveau téléphone)
+      return d ? json({ ok:true, backup: d }) : json({ error:"none" }, 404);
+    }
+    if (path === "/acc-sup-create"){   // 🔐 bascule : le téléphone superviseur crée LE compte superviseur ; ensuite l'ancien code ne marche plus
+      if (!(typeof b.token === "string" && await supOk(env, { token: b.token }))) return json({ error:"forbidden" }, 403);
+      if (await env.WOUAF.get("supacc")) return json({ error:"exists" }, 409);
+      const login = String(b.login || "").trim(), name = cleanName(b.name);
+      if (!okLogin(login) || !name) return json({ error:"bad login" }, 400);
+      if (!okCode(b.code)) return json({ error:"bad code" }, 400);
+      if (await accGet(env, login)) return json({ error:"login taken" }, 409);
+      const ad = await env.WOUAF.get("admin", "json"), key = (ad && ad.walker) || "Éric";
+      if (await nameTaken(env, name, key)) return json({ error:"name taken" }, 409);
+      const salt = b64u(crypto.getRandomValues(new Uint8Array(16)));
+      const a = { login, key, name, salt, h: await hashCode(b.code, salt), at: Date.now(), toks: [], sup: 1 };
+      const t = await accNewTok(env, a);
+      await env.WOUAF.put("acck:" + slug(key), slug(normName(login)));
+      await env.WOUAF.put("supacc", slug(normName(login)));
+      await namesSet(env, key, name);
+      return json({ ok:true, token: t, acc: accView(a) });
+    }
+    if (path === "/acc-sup-me"){   // 📱 autre téléphone déjà superviseur (jeton) : il se rattache au compte superviseur sans rien taper
+      if (!(typeof b.token === "string" && await supOk(env, { token: b.token }))) return json({ error:"forbidden" }, 403);
+      const l = await env.WOUAF.get("supacc"); if (!l) return json({ none:true });
+      const a = await env.WOUAF.get("acc:" + l, "json"); if (!a) return json({ none:true });
+      return json({ ok:true, token: await accNewTok(env, a), acc: accView(a) });
+    }
     if (path === "/claim"){   // 🔑 le 1er téléphone qui prend le prénom Éric devient superviseur ; les autres sont refusés
       if (!b || normName(b.walker) !== SUP_NAME) return json({ error:"not supervisor name" }, 400);
       let a = await env.WOUAF.get("admin", "json");
@@ -465,7 +586,7 @@ export default {
         return json({ ok:true, token, created:true });
       }
       if (typeof b.token === "string" && supTokens(a).some(t => safeEq(t.t, b.token))) return json({ ok:true, token: b.token });
-      if (b.code != null && env.SUPERVISOR_CODE){   // 🔑 v4.4 : un autre téléphone se connecte avec le code ; les téléphones déjà connectés le restent (6 max, le plus ancien sort)
+      if (b.code != null && env.SUPERVISOR_CODE && !(await env.WOUAF.get("supacc"))){   // 🔑 v4.4 : un autre téléphone se connecte avec le code ; les téléphones déjà connectés le restent (6 max, le plus ancien sort)
         const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
         if (fails >= 20) return json({ error:"too many" }, 429);
         if (!safeEq(b.code, env.SUPERVISOR_CODE)){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
@@ -511,12 +632,28 @@ export default {
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/silver-set" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/silver-set" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img" || path === "/acc-list" || path === "/acc-open" || path === "/acc-reset"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
       if (!(await supOk(env, b))){ await env.WOUAF.put(fk, String(fails + 1), { expirationTtl: 172800 }); return json({ error:"bad code" }, 403); }
       if (path === "/check") return json({ ok:true });   // vérifie seulement le code
+      if (path === "/acc-list"){   // 👥 comptes (identifiant, prénom affiché, date) + inscriptions ouvertes
+        const l = await env.WOUAF.list({ prefix:"acc:" }), out = [];
+        for (const k of l.keys){ const a = await env.WOUAF.get(k.name, "json"); if (a) out.push({ login: a.login, key: a.key, name: a.name, at: a.at, sup: a.sup ? 1 : 0, nocode: a.nocode ? 1 : 0 }); }
+        out.sort((x, y) => (y.sup - x.sup) || x.name.localeCompare(y.name, "fr"));
+        return json({ ok:true, accounts: out, open: (await env.WOUAF.get("signup")) !== "closed" });
+      }
+      if (path === "/acc-open"){   // 🛡️ interrupteur « Inscriptions ouvertes / fermées » (ouvertes par défaut)
+        if (b.open) await env.WOUAF.delete("signup"); else await env.WOUAF.put("signup", "closed");
+        return json({ ok:true, open: !!b.open });
+      }
+      if (path === "/acc-reset"){   // 🔓 code oublié : remis à zéro, le promeneur en choisit un nouveau à sa prochaine connexion
+        const a = await accGet(env, b.login); if (!a) return json({ error:"not found" }, 404);
+        if (a.sup) return json({ error:"sup" }, 403);
+        a.nocode = 1; delete a.h; await accPut(env, a);
+        return json({ ok:true });
+      }
       if (path === "/home-set"){   // 🏠 maison de la famille, placée par Éric, ARRONDIE à ~200 m (le dépôt est public : jamais l'adresse exacte) ; clear = chacun la sienne
         const cur = await env.WOUAF.get("hpos", "json");
         if (cur && cur.auto) await env.WOUAF.delete("hpos");   // le trésor automatique était calculé autour de l'ancienne maison
