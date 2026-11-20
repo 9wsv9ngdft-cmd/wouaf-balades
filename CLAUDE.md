@@ -580,3 +580,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   en décembre, un sapin 🎄 touchable (pastille rouge si la case du jour n'est pas ouverte). Mis à jour par `renderHome` et après l'ouverture d'une case.
 - 🗒️ Pop-up du jour, carte « À gagner » : en novembre, 1re ligne « 🎄 Calendrier de l'Avent dans N jours… ouvre l'app chaque jour pour n'en rater aucune ! ».
 - Tests : `tests/e2e_v53.py` (J-6 le 25/11, sapin avec pastille le 1/12).
+
+## Version 4.2 « Croquette » (APP_NUM 55, décidé le 20/11 à 14 h 38)
+- 🎅 **Bonnet de Noël sur Roxy** (`xmasHat` : du 20 novembre au 31 décembre ; `SANTA_SVG` dessiné, classe `.a-hat.santa`, posé de côté pour ne pas cacher la couronne fantôme) ;
+  pas de bonnet si Roxy porte déjà la couronne, un chapeau ou le chapeau d'anniversaire.
+- 🚶🐕 **Marqueur « moi » sur les cartes (balade, exploration) = promeneur qui tient un chien en laisse** (`WALKER_SVG`, `youIcon`, `.youmk`), plus la photo de Roxy
+  (Éric : trop de Roxy partout). La mini-carte de l'accueil garde Roxy à la maison.
+- 🎄 Compte à rebours plus visible (« on voit pas bien ») : pastille rouge à bord doré, texte blanc 17 px, qui pulse (`.evchip`, `evpulse`).

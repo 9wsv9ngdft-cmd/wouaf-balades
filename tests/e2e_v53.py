@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','54');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','55');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 EV = lambda P, js: P.evaluate(js)
 is_open = lambda P: P.evaluate("document.querySelector('#modal').classList.contains('open')")
 sheet = lambda P: P.inner_text("#sheet") if is_open(P) else ""
@@ -40,7 +40,7 @@ with sync_playwright() as pw:
     check("le journal de bord s'ouvre depuis le pop-up", "journal" in sheet(P).lower(), sheet(P)[:120])
     P.click("#sheetX"); P.wait_for_timeout(400)
     check("compte à rebours « 🎄 J-6 » en haut", "J-6" in P.inner_text("#evDeco"), P.inner_text("#evDeco"))
-    P.click("#evDeco .evchip"); P.wait_for_timeout(500)
+    P.click("#evDeco .evchip", force=True); P.wait_for_timeout(500)
     check("le toucher ouvre l'annonce du calendrier", "arrive le 1er décembre" in sheet(P))
     P.click("#evClose"); P.wait_for_timeout(300)
     P.click("#menuBtn"); P.wait_for_timeout(500)

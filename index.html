@@ -722,8 +722,12 @@
   .poptip{font-size:16px;line-height:1.5} .popwhy{background:var(--sand);color:#3a2f1e;border-radius:12px;padding:10px 12px;font-size:14px}
   .popdots{display:flex;justify-content:center;gap:6px;margin:8px 0 0} .popdots i{width:7px;height:7px;border-radius:50%;background:var(--line)} .popdots i.on{background:var(--accent)}
   .popghost{position:fixed;z-index:9999;background:var(--card);border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.3);transition:all .45s cubic-bezier(.5,0,.3,1);pointer-events:none}
-  .evchip{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:999px;padding:3px 10px;margin-left:4px;vertical-align:middle;background:linear-gradient(135deg,#f6d36b,#e0a52a);color:#3b2a00;cursor:pointer;position:relative}
-  .evchip.tree{font-size:18px;padding:1px 6px;background:none}
+  .roxy .a-hat.santa{top:-12px;left:80%;transform:translateX(-50%) rotate(28deg);line-height:0}
+  .heroDog .roxy .a-hat.santa{top:-16px;font-size:24px} .bigdog .roxy .a-hat.santa{top:-30px;font-size:36px} .tama-dog .roxy .a-hat.santa{top:-40px;font-size:50px}
+  .youmk{filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));line-height:0}
+  .evchip{font-family:system-ui,-apple-system,sans-serif;font-size:17px;font-weight:800;letter-spacing:.3px;border:2px solid #f6d36b;border-radius:999px;padding:5px 12px 5px 9px;margin-left:6px;vertical-align:middle;background:linear-gradient(135deg,#d8433a,#9e1f1a);color:#fff;cursor:pointer;position:relative;box-shadow:0 0 0 0 rgba(246,211,107,.7);animation:evpulse 2s ease-in-out infinite;white-space:nowrap}
+  @keyframes evpulse{50%{box-shadow:0 0 0 6px rgba(246,211,107,0);transform:scale(1.06)}}
+  .evchip.tree{font-size:22px;padding:2px 8px}
   .evchip.ping::after{content:"";position:absolute;top:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:#e2483c;border:2px solid #fff}
   .heroDog.ping::after{content:"";position:absolute;top:0;right:0;width:13px;height:13px;border-radius:50%;background:#e2483c;border:2px solid #fff;animation:avglow 1.6s ease-in-out infinite}
 </style>
@@ -839,7 +843,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.143535";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.144454";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -981,10 +985,24 @@
   const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
   // photo de Roxy : celle choisie sur ce téléphone, sinon la photo officielle (roxy.jpg)
   const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || "roxy.jpg"; }catch(e){ return "roxy.jpg"; } };
-  const roxyHTML = list => { if (wearCrown()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("👑"); if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
+  // 🎅 v4.2 : bonnet de Noël sur Roxy du 20 novembre au 31 décembre (s'il n'y a ni couronne ni chapeau d'anniversaire)
+  const xmasHat = () => { const d = new Date(Date.now() - 4 * 3600000), m = d.getMonth() + 1; return (m === 11 && d.getDate() >= 20) || m === 12; };
+  const SANTA_SVG = `<svg viewBox="0 0 40 32" width="1.35em" height="1.1em" aria-hidden="true"><path d="M5 27 C9 12 19 3 31 6 C35 7 37 11 36 16 L30 13 C24 12 18 18 15 27Z" fill="#d23a33"/><path d="M30 13 C33 14 35 16 36 16" stroke="#a82822" stroke-width="1.2" fill="none"/><rect x="2" y="24" width="27" height="7" rx="3.5" fill="#fff"/><circle cx="36" cy="18" r="4" fill="#fff"/></svg>`;
+  const roxyHTML = list => { if (wearCrown()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("👑"); if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); try{ if (xmasHat() && !list.some(e => ACC_SLOT[e] === "a-hat" || e === "🥳")) list = list.concat("🎅"); }catch(e){} const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => e === "🎅" ? `<i class="a-hat santa">${SANTA_SVG}</i>` : `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
+  // 🚶🐕 v4.2 (Éric, 20/11 : « plus Roxy sur la carte, le promeneur et un chien ») : marqueur « moi » = promeneur qui tient son chien en laisse
+  const WALKER_SVG = `<svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+    <circle cx="24" cy="24" r="22" fill="#fffdf7" stroke="#2f5d3a" stroke-width="3"/>
+    <circle cx="17" cy="11.5" r="3.6" fill="#2f5d3a"/>
+    <path d="M17 15.5 L16 27 M16.5 18 L22 23.5 M16.5 18 L12 24 M16 27 L12.5 36 M16 27 L20.5 35.5" stroke="#2f5d3a" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+    <path d="M22 23.5 Q27 30 30.5 28.5" stroke="#8a5a2b" stroke-width="1.4" fill="none"/>
+    <ellipse cx="34" cy="30.5" rx="6.2" ry="3.4" fill="#c9712e"/>
+    <circle cx="39.5" cy="27" r="3" fill="#c9712e"/><path d="M38.3 25 l-1.2 4" stroke="#8a4a1c" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="40.6" cy="26.4" r=".6" fill="#222"/><path d="M38 31 l1.4 1.2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M28.2 29.5 q-3 -3 -1.5 -5" stroke="#c9712e" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M30 33 l-1 4.5 M33 33.5 l-.4 4.3 M36 33.5 l.4 4.3 M38.4 32.6 l1 4.4" stroke="#c9712e" stroke-width="1.8" stroke-linecap="round"/>
+  </svg>`;
   function youIcon(){
-    let a = []; try{ a = accList(JSON.parse(localStorage.getItem("wouaf-jeu") || "{}").acc); }catch(e){}
-    return L.divIcon({ className:"", html: roxyHTML(a), iconSize:[34,34], iconAnchor:[17,17] });
+    return L.divIcon({ className:"", html: `<div class="youmk">${WALKER_SVG}</div>`, iconSize:[44,44], iconAnchor:[22,22] });
   }
   function showStart(p){
     layers.me.clearLayers();
@@ -6335,7 +6353,7 @@
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -6454,8 +6472,12 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 54, APP_LABEL = "4.1";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 55, APP_LABEL = "4.2";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    55: [
+      "🎅 Roxy a mis son bonnet de Noël !",
+      "🚶🐕 Sur la carte, c'est maintenant toi qui promènes Roxy en laisse."
+    ],
     54: [
       "🎄 Le compte à rebours est lancé : le calendrier de l'Avent de Roxy commence le 1er décembre. Touche « 🎄 J-… » en haut pour tout savoir."
     ],

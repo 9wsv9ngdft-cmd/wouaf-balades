@@ -56,7 +56,7 @@ with sync_playwright() as pw:
     check("pas de bulle de Roxy tant qu'on ne la touche pas", Cc.locator("#sayBtn").count() == 0)
     check("plus de « Combien de temps ? » ni de ligne Bonus", Cc.evaluate("getComputedStyle(document.querySelector('#durLabel')).display") == "none" and Cc.locator("#goBon").count() == 0)
     foot = Cc.evaluate("document.querySelector('#homeFoot').innerText")
-    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v4.1" in foot, foot)
+    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v4.2" in foot, foot)
     check("pas de « Bravo » collé en bas", "Bravo" not in Cc.evaluate("document.querySelector('#status').innerText"))
     t0 = Cc.evaluate("JSON.parse(localStorage.getItem('wouaf-jeu')).bonus")
     for i in range(16): Cc.click("#homeFoot")
