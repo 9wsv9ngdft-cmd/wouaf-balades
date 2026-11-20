@@ -587,3 +587,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - 🚶🐕 **Marqueur « moi » sur les cartes (balade, exploration) = promeneur qui tient un chien en laisse** (`WALKER_SVG`, `youIcon`, `.youmk`), plus la photo de Roxy
   (Éric : trop de Roxy partout). La mini-carte de l'accueil garde Roxy à la maison.
 - 🎄 Compte à rebours plus visible (« on voit pas bien ») : pastille rouge à bord doré, texte blanc 17 px, qui pulse (`.evchip`, `evpulse`).
+
+## Version 4.3 « Croquette » (APP_NUM 56, décidé le 20/11 à 14 h 51 : retours d'Éric sur la 4.2)
+- 🎅 Bonnet de Noël **retiré** (« très moche ») : plus de `xmasHat` / `SANTA_SVG`.
+- 🐾 **Marqueur « moi » = une patte de chien** (« le promeneur + chien, très dégueulasse… une patte de chien, on sait où on est ») : `PAW_SVG` (patte vert foncé) dans un rond blanc
+  avec un halo vert doux qui respire (`youIcon`, `.youmk .halo/.dot`, `youhalo`), en balade et en exploration. **Mini-carte de l'accueil : la même patte** à la place de la photo
+  de Roxy (`#miniDog.paw`). `WALKER_SVG` supprimé.
+- 🎄 Compte à rebours encore un peu plus gros (19 px).
