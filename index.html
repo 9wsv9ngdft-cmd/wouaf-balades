@@ -812,6 +812,11 @@
   .pcard .pbtns #propFree{grid-column:1 / -1}
   .pcard .pbtns button[hidden]{display:none}
   .pcard.wait .ptop b{font-weight:600;font-size:15px}
+  /* v4.5.1 (maquette « descendu » A, choisie par Éric le 20/11 17 h 47) : de l'air sous l'heure, tuiles juste au-dessus de la barre de l'iPhone */
+  body.nuit header{padding-top:calc(env(safe-area-inset-top) + 18px)}
+  body.nuit .hero{margin-top:18px}
+  body.nuit #goCard{margin-top:16px}
+  body.nuit #homeFoot{padding-bottom:calc(env(safe-area-inset-bottom) + 4px)}
   .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
 
   /* ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 16 h 49–17 h 27) : arcade d'habitude, Noël en décembre ---------- */
@@ -979,7 +984,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.173453";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-20.175154";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -6713,12 +6718,14 @@
     if (state.tab !== "walks") switchTab("walks");
     generate({ cat: state.cat !== "all" ? state.cat : null });
   }
+  var locGen = 0;   // v4.5.1 : une position qui arrive après le ✕ de « Propose-moi » est ignorée
   function locate(){
     if (!navigator.geolocation){ askPick("La localisation n'est pas disponible ici."); return; }
     setStatus(`<span class="spinner"></span>Localisation en cours…`);
+    const g = ++locGen;
     navigator.geolocation.getCurrentPosition(
-      pos => setStart({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      err => askPick(err.code === 1
+      pos => { if (g === locGen) setStart({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+      err => g === locGen && askPick(err.code === 1
         ? "Localisation refusée (sur iPhone : Réglages › Confidentialité › Service de localisation › Safari)."
         : "Position introuvable pour le moment."),
       { enableHighAccuracy:true, timeout:15000, maximumAge:30000 }
@@ -6876,7 +6883,7 @@
     mm.style.height = "70px";
     const last = $("#homeFoot").textContent ? $("#homeFoot") : $("#home");
     const extra = window.innerHeight - (last.getBoundingClientRect().bottom + window.scrollY) - 12;
-    let h = Math.max(70, Math.min(420, 70 + extra)); mm.style.height = h + "px";
+    let h = Math.max(70, Math.min(900, 70 + extra)); mm.style.height = h + "px";   // v4.5.1 (maquette « descendu » A) : la carte remplit tout, plus de vide en bas
     const over = document.documentElement.scrollHeight - window.innerHeight;   // sécurité : jamais de défilement à cause de la carte
     if (over > 0 && h > 70){ h = Math.max(70, h - over); mm.style.height = h + "px"; }
     drawMiniMap();
@@ -7068,7 +7075,8 @@
     $("#propNext").disabled = shown.length < 2; $("#propDice").disabled = shown.length < 2;
   }
   function propClose(){
-    genId++; document.body.classList.remove("propose", "hasmap"); state.pi = null;
+    genId++; locGen++; document.body.classList.remove("propose", "hasmap"); state.pi = null;
+    $("#props").innerHTML = ""; $("#toolbar").style.display = "none"; $("#meteo").innerHTML = "";   // v4.5.1 : plus de liste de parcours sous l'accueil
     try{ layers.routes.clearLayers(); layers.sel.clearLayers(); }catch(e){}
     resetSearch(); state.results = []; state.sel = null; state.start = null; state.picking = false; $("#map").classList.remove("picking");
     $("#status").innerHTML = ""; renderHome(); setTimeout(fitHome, 60);
@@ -7125,7 +7133,7 @@
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 58, APP_LABEL = "4.5.1";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",

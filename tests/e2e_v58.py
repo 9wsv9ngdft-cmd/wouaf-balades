@@ -26,6 +26,10 @@ with sync_playwright() as pw:
     check("accueil sombre (réglage du téléphone)", "nuit" in body(P))
     h = P.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     check("accueil sans défilement", h[0] <= h[1], h)
+    P.set_viewport_size({"width": 393, "height": 852}); P.wait_for_timeout(500)
+    g = EV(P, "[document.querySelector('#miniMap').offsetHeight, innerHeight - document.querySelector('#homeFoot').getBoundingClientRect().bottom, document.documentElement.scrollHeight - innerHeight]")
+    check("v4.5.1 (iPhone 393 × 852) : la carte remplit, plus de vide en bas, pas de défilement", g[0] > 420 and g[1] < 30 and g[2] <= 0, g)
+    P.set_viewport_size({"width": 393, "height": 760}); P.wait_for_timeout(400)
     check("3 tuiles collées en bas", P.locator(".btiles .bt").count() == 3)
     check("« Ta semaine » sous la carte", "Ta semaine" in P.inner_text("#weekBar"), P.inner_text("#weekBar"))
     # ---- mode clair ----
@@ -52,6 +56,13 @@ with sync_playwright() as pw:
     check("Suivant encore : on revient au premier", "1/2" in P.inner_text("#propIdx"))
     P.click("#propX"); P.wait_for_timeout(500)
     check("✕ : retour à l'accueil (on peut revenir en arrière)", "propose" not in body(P) and "hasmap" not in body(P) and P.locator("#miniMap").is_visible())
+    # ---- v4.5.1 : ✕ avant que la position arrive : on reste sur l'accueil, pas de liste en dessous ----
+    EV(P, "window.__geoSlow = navigator.geolocation.getCurrentPosition; navigator.geolocation.getCurrentPosition = (ok) => setTimeout(() => ok({ coords: { latitude: 48.8566, longitude: 2.3522, accuracy: 10 } }), 1500); 0")
+    P.click("#miniMap"); P.wait_for_timeout(400); P.click("#chRoute"); P.wait_for_timeout(400)
+    P.click("#propX"); P.wait_for_timeout(2500)
+    check("v4.5.1 : ✕ avant la position : toujours l'accueil (pas de carte qui revient)", "hasmap" not in body(P) and "propose" not in body(P) and P.locator("#miniMap").is_visible(), body(P))
+    check("v4.5.1 : ✕ : plus de liste de parcours sous l'accueil", EV(P, "document.querySelector('#props').innerHTML.trim() === ''") and not P.locator("#props .prop").count())
+    EV(P, "navigator.geolocation.getCurrentPosition = window.__geoSlow; 0")
     # ---- J'y vais ----
     P.click("#miniMap"); P.wait_for_timeout(400); P.click("#chRoute"); P.wait_for_timeout(800); EV(P, FAKE); P.wait_for_timeout(200)
     P.click("#propGo"); P.wait_for_timeout(800)

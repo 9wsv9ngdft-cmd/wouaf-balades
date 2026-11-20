@@ -663,3 +663,10 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   - **Pop-up du jour** (`popJudge`, appelé par `closeSheet`) : les 3 cartes vues en ≥ 9 s = **bien lu** → « BIEN LU ! » / « LUTIN MODÈLE ! » et **+10 clebsous** (`READ_CS`, `addMoney`,
     une fois par jour, pas pour Éric) ; fermé en < 4 s = **zappé** → juste « Ah non… t'es sûr ? C'est pour Roxy. » (une fois par jour, rien d'autre). Clé `wouaf-surp`.
   - Tests : `tests/e2e_v58_surprise.py` (horloge simulée : 25/11 arcade, 3/12 Noël ; `window.__surpForce` force le hasard).
+
+## Version 4.5.1 « Croquette » (APP_NUM 58, libellé « 4.5.1 », retours d'Éric le 20/11 à 17 h 43, maquette « descendu » A choisie à 17 h 47)
+- 🏠 **Accueil descendu** (maquette A) : la mini-carte n'est plus limitée à 420 px (`fitHome`, max 900) → elle remplit l'écran, plus de vide en bas sur les grands iPhone ;
+  plus d'air en haut (`body.nuit header` + 18 px, `.hero` 18 px, `#goCard` 16 px) ; `#homeFoot` au-dessus de la barre de l'iPhone (`safe-area-inset-bottom`).
+- 🐛 **✕ de « Propose-moi »** : `propClose` vide la liste des parcours (`#props`, `#toolbar`, `#meteo`) ; `locate()` porte un numéro (`locGen`) et ignore une position
+  qui arrive après le ✕ (avant : la carte et la recherche revenaient sous l'accueil).
+- Tests : `tests/e2e_v58.py` (✕ avant la position, carte qui remplit à 393 × 852) ; `e2e_v49.py` attend « 4.5.1 ».
