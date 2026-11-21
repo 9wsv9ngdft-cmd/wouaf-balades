@@ -488,7 +488,7 @@ export default {
       if (f.min == null){ f.min = famMin; await env.WOUAF.put("fam", JSON.stringify(f)); }
       return json({ walkers: out, fam: { n: f.n, m: f.m, nc: f.nc, min: f.min } });
     }
-    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json"), silver: await silverView(env), names: await namesGet(env), signup: (await env.WOUAF.get("signup")) !== "closed" });
+    if (req.method === "GET" && path === "/pause") return json({ pauses: (await env.WOUAF.get("pauses", "json")) || [], boosts: (await env.WOUAF.get("boosts", "json")) || [], last: await env.WOUAF.get("last", "json"), reset: (await env.WOUAF.get("reset", "json")) || 0, treasure: await treasures(env), record: await env.WOUAF.get("rec:" + isoDay(Date.now()).slice(0, 7), "json"), explo: await explorers(env, Date.now()), fam: await famGet(env), paid: await paidMap(env), hpos: await env.WOUAF.get("hpos", "json"), home: await env.WOUAF.get("home", "json"), opts: (await env.WOUAF.get("opts", "json")) || {}, silver: await silverView(env), names: await namesGet(env), signup: (await env.WOUAF.get("signup")) !== "closed" });
     if (req.method !== "POST") return json({ error:"not found" }, 404);
     let b; try{ b = JSON.parse(await req.text()); }catch(e){ return json({ error:"bad json" }, 400); }
     if (path === "/acc-status"){   // 👤 inscriptions ouvertes ? identifiant déjà pris ? compte superviseur créé ?
@@ -635,7 +635,7 @@ export default {
       const eur = Math.max(0, Math.min(200, +b.eur || 0));
       return json({ ok: await payPut(env, b.walker, b.wk, { eur: Math.round(eur * 100) / 100, at: Date.now() }) });
     }
-    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/silver-set" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img" || path === "/acc-list" || path === "/acc-open" || path === "/acc-reset"){
+    if (path === "/check" || path === "/pause" || path === "/boost" || path === "/dash" || path === "/pay-mark" || path === "/restore" || path === "/adjust" || path === "/reset" || path === "/void" || path === "/alert-resolve" || path === "/duel-admin" || path === "/hunt-move" || path === "/silver-set" || path === "/home-set" || path === "/clouds" || path === "/bugs" || path === "/bug-done" || path === "/bug-img" || path === "/acc-list" || path === "/acc-open" || path === "/acc-reset" || path === "/opts-set"){
       // routes superviseur : jeton d'Éric OU code superviseur (20 essais ratés par jour au plus)
       const fk = "fails:" + isoDay(Date.now()), fails = +((await env.WOUAF.get(fk)) || 0);
       if (fails >= 20) return json({ error:"too many" }, 429);
@@ -656,6 +656,17 @@ export default {
         if (a.sup) return json({ error:"sup" }, 403);
         a.nocode = 1; delete a.h; await accPut(env, a);
         return json({ ok:true });
+      }
+      if (path === "/opts-set"){   // 🎛️ Superviseur › Options : réglages de jeu pour toute la famille (interrupteurs et montants, rien de privé)
+        const o = b.opts && typeof b.opts === "object" ? b.opts : {}, out = {};
+        for (const k of Object.keys(o).slice(0, 40)){
+          if (!/^[a-zA-Z0-9]{1,24}$/.test(k)) continue;
+          const v = o[k];
+          if (typeof v === "boolean") out[k] = v;
+          else if (typeof v === "number" && isFinite(v)) out[k] = Math.max(0, Math.min(100000, Math.round(v * 100) / 100));
+        }
+        await env.WOUAF.put("opts", JSON.stringify(out));
+        return json({ ok:true, opts: out });
       }
       if (path === "/home-set"){   // 🏠 maison de la famille, placée par Éric, ARRONDIE à ~200 m (le dépôt est public : jamais l'adresse exacte) ; clear = chacun la sienne
         const cur = await env.WOUAF.get("hpos", "json");
