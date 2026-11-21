@@ -592,6 +592,7 @@
   #walkbar .wbig.end span{position:relative;display:flex;flex-direction:column;align-items:center;line-height:1.1} #walkbar .wbig.end small{font-size:12.5px;font-weight:600;opacity:.85}
   #walkbar .wbig.end .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(255,255,255,.3)}
   #walkbar .wbig.end.holding .fill{width:100%;transition:width 1s linear}
+  #walkbar .needs{display:flex;gap:10px;width:100%;margin:0 0 10px} #walkbar .needs button{flex:1;padding:14px 4px;font-size:18px;font-weight:900;border-radius:16px;color:#fff;background:#2a6fb0} #walkbar .needs #needC{background:#7a5232} #walkbar .needs button.on{background:#fff;color:#1f2a22} #walkbar.mini .needs{margin-bottom:6px} #walkbar.mini .needs button{padding:9px 4px;font-size:16px}
   #walkbar.mini{padding-top:8px} #walkbar.mini .wline,#walkbar.mini .wbtns{display:none} #walkbar.mini #wGain{font-size:26px} #walkbar.mini #wGain .csi{width:22px;height:22px} #walkbar.mini #wTime{font-size:22px}
   #walkbar.mini::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#555;margin:0 auto 6px}
   #wChips,#wFlair,#wTreasure,#roxyMenu,#coach{display:none}
@@ -982,10 +983,10 @@
 <div id="walkbar" role="region" aria-label="Balade en cours">
   <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
   <div class="in">
+    <div class="needs"><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wnums"><b id="wGain">+0 🪙</b><span class="wtm"><b id="wTime">0 min</b><small id="wDist"></small></span></div>
     <div class="wline" id="wLine"></div>
     <div class="wstats" hidden><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
-    <div class="needs" hidden><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
     <div class="wbtns">
       <button class="photo hid" id="moreBtn" aria-label="Plus : alerte, balade à deux, sons">⋯</button>
       <button class="photo hid" id="sosBtn" aria-label="Alerte : envoyer ma position">🆘</button>
@@ -1019,7 +1020,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-21.012523";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-21.124955";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -4552,7 +4553,7 @@
   // Un truc qui déboule plein pot, rare, au hasard : style arcade / manga / années 80 d'habitude, et une version Noël en décembre
   // (« les trucs spéciaux » ; Halloween et Pâques auront la leur plus tard, en attendant : arcade).
   // Moments : à l'ouverture (court, ~2 s, Roxy attend), au retour de balade (le grand spectacle, ~15–20 s), pop-up du jour bien lu (+10),
-  // pop-up zappé trop vite (juste « Ah non… t'es sûr ? C'est pour Roxy. »). Toujours passable d'un toucher. Rien n'est envoyé.
+  // pop-up zappé trop vite (juste « Ah non… vraiment ? C'est pour Roxy. »). Toujours passable d'un toucher. Rien n'est envoyé.
   var SURP_KEY = "wouaf-surp", READ_CS = 10;
   const surpTheme = t => new Date(t || Date.now()).getMonth() === 11 ? "xmas" : "arcade";
   const surpSt = () => store.get(SURP_KEY, {}) || {};
@@ -4582,7 +4583,7 @@
       { id:"ho", bg:"#0f3d2e", ms:800, html: spSnow(26) + `<div class="big zoom wht" style="font-size:46px;color:#b3121f">HO HO HO…</div>` },
       { id:"wouaf", bg:"#b3121f", ms:1700, cls:"shake", html: spSnow(34) + `<div class="big slam gold" style="font-size:66px;color:#0f5132">JOYEUX</div><div class="big slam gold" style="font-size:66px;color:#0f5132;animation-delay:.12s">WOUAF !</div>` + SP_FLASH }];
     return [
-      { id:"ready", bg:"#14161f", ms:700, html: SP_LINES.replace("lines", "lines\" style=\"opacity:.5") + `<div class="big zoom" style="font-size:54px">PRÊTE ?</div>` + SP_SCAN },
+      { id:"ready", bg:"#14161f", ms:700, html: SP_LINES.replace("lines", "lines\" style=\"opacity:.5") + `<div class="big zoom" style="font-size:54px">ON Y VA ?</div>` + SP_SCAN },
       { id:"wouaf", bg:"#c1121f", ms:1500, cls:"shake", html: SP_LINES + `<div class="big slam gold" style="font-size:92px;color:#c1121f">WOUAF</div><div class="big slam gold" style="font-size:92px;color:#c1121f;animation-delay:.12s">!!</div>` + SP_SCAN + SP_FLASH }];
   }
   function surpReadScenes(th){
@@ -4590,7 +4591,7 @@
     if (th === "xmas") return [{ id:"read", bg:"#0f5132", ms:2400, cls:"shake", html: spSnow(30) + `<div class="big slam gold" style="font-size:54px;color:#b3121f">LUTIN</div><div class="big slam gold" style="font-size:54px;color:#b3121f;animation-delay:.1s">MODÈLE !</div>${coin}` + SP_FLASH }];
     return [{ id:"read", bg:"#1d4ed8", ms:2200, cls:"shake", html: SP_LINES + `<div class="big slam gold" style="font-size:72px;color:#1d4ed8">BIEN</div><div class="big slam gold" style="font-size:72px;color:#1d4ed8;animation-delay:.1s">LU !</div>${coin}` + SP_SCAN + SP_FLASH }];
   }
-  const surpJabScenes = () => [{ id:"jab", bg:"rgba(5,8,12,.6)", ms:2800, html: `<div class="jab">Ah non… t'es sûr ?<small>C'est pour ${esc(DOG)}.</small></div>` }];
+  const surpJabScenes = () => [{ id:"jab", bg:"rgba(5,8,12,.6)", ms:2800, html: `<div class="jab">Ah non… vraiment ?<small>C'est pour ${esc(DOG)}.</small></div>` }];
   function surpBackScenes(th, c){
     const x = th === "xmas", sc = [], km = (c.m || 0) / 1000;
     const rows = [["DISTANCE", `${km.toFixed(1).replace(".", ",")} KM`], ["DURÉE", `${Math.round(c.min)} MIN`]];
@@ -4647,7 +4648,7 @@
     });
     $("#spsBack").onclick = sheetSupMenu;
   }
-  // pop-up du jour : bien lu (les 3 cartes, sans se presser) → récompense ; zappé (fermé en moins de 4 s) → « Ah non… t'es sûr ? »
+  // pop-up du jour : bien lu (les 3 cartes, sans se presser) → récompense ; zappé (fermé en moins de 4 s) → « Ah non… vraiment ? »
   var popT0 = 0, popMax = 0;
   function popJudge(){
     const dt = Date.now() - popT0, st = surpSt(), today = dIso(Date.now());
