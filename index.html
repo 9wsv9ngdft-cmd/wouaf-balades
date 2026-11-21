@@ -824,6 +824,31 @@
   html.shortvp body:not(.walking):not(.recap):not(.choosing):not(.page):not(.explore) main.wrap{padding-bottom:4px}
   html.shortvp #homeFoot,html.shortvp body.nuit #homeFoot{padding-bottom:4px}
   .minimap .mtap.up{bottom:48px}   /* v4.5.3 : moins de noir sous les tuiles (la ligne de version peut frôler la barre de l'iPhone) */
+  /* ---------- v4.6 (lot 2, maquette B2 choisie par Éric le 21/11 0 h 54) : bulle de Roxy + carte jusqu'en bas, tuiles qui flottent dessus ---------- */
+  .lvlRow{display:none}
+  html.homeb2 .hero{flex-wrap:wrap;row-gap:10px;padding:12px 14px;border-radius:26px;background:var(--hb-card);border:1px solid var(--hb-line);cursor:pointer;margin-top:14px}
+  html.homeb2 body.nuit .hero{background:#141922;border-color:rgba(243,239,230,.14)}
+  html.homeb2 .lvlRow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;flex-basis:100%;cursor:pointer;font-size:13px;font-weight:700;color:var(--hb-muted);min-height:24px}
+  html.homeb2 .lvlRow b{color:var(--hb-ink);font-weight:800;white-space:nowrap}
+  html.homeb2 .lvlRow .lb{flex:1;position:relative;height:8px;border-radius:4px;background:rgba(127,127,127,.2);overflow:hidden}
+  html.homeb2 .lvlRow .lb i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:linear-gradient(90deg,#2a9d78,#c6ff3d)}
+  html.homeb2 .lvlRow .ln{white-space:nowrap} html.homeb2 .lvlRow .chev{font-size:18px;line-height:1}
+  html.homeb2 #goCard{position:fixed;left:12px;right:12px;top:var(--goTop,320px);height:var(--goH,400px);margin:0;padding:0;display:flex;flex-direction:column;z-index:5;overflow:hidden}
+  html.homeb2 #goCard .minimap{flex:1;height:auto !important;min-height:0}
+  html.homeb2 #goCard .minimap::after{display:none}
+  html.homeb2 .gofloat{position:absolute;left:0;right:0;bottom:0;z-index:6;display:flex;flex-direction:column;gap:8px;padding:46px 10px var(--goPadB,10px);background:linear-gradient(rgba(16,21,29,0),rgba(16,21,29,.88) 34%);pointer-events:none}
+  html.homeb2 body:not(.nuit) .gofloat{background:linear-gradient(rgba(233,238,230,0),rgba(244,246,241,.92) 34%)}
+  html.homeb2 .gofloat > *{pointer-events:auto}
+  html.homeb2 .gofloat .weekbar{padding:0 4px}
+  html.homeb2 .gofloat #home{margin:0}
+  html.homeb2 .gofloat .bt{height:76px;box-shadow:0 10px 24px -6px rgba(0,0,0,.6)}
+  html.homeb2 .gofloat .bt.rank{background:rgba(20,25,34,.94)} html.homeb2 body:not(.nuit) .gofloat .bt.rank{background:rgba(255,255,255,.95)}
+  html.homeb2 .gofloat #homeFoot{padding:0;font-size:11.5px;line-height:1.35}
+  html.homeb2 .gofloat #homeFoot small{display:none}
+  html.homeb2 #goCard .minimap .mtr,html.homeb2 #goCard .minimap .mpct,html.homeb2 #goCard .minimap .mtap{bottom:calc(var(--floatH,190px) + 6px)}
+  html.homeb2 #goCard .minimap .mtap.up{bottom:calc(var(--floatH,190px) + 42px)}
+  html.homeb2 main.wrap .panel{background:none;border:0;box-shadow:none;padding:0 2px}
+  html.homeb2 #heroSay,html.homeb2 body.nuit #heroSay{position:fixed;left:24px;right:24px;top:calc(var(--goTop,320px) + 10px);z-index:30}   /* la phrase de Roxy s'affiche en haut de la carte, plus sur la photo */
   .rtabs{display:flex;overflow-x:auto;gap:6px;padding:2px;scrollbar-width:none} .rtabs button{flex:none;padding:8px 12px;font-size:14px}
 
   /* ---------- 🕹️🎄 Surprises (v4.5, idée d'Éric le 20/11 16 h 49–17 h 27) : arcade d'habitude, Noël en décembre ---------- */
@@ -891,6 +916,7 @@
       <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
       <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <div class="purseCol"><button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">ce mois-ci</small></button><button class="purseUp" id="purseUp" aria-label="Ce que tu peux gagner aujourd'hui"></button></div>
+      <button class="lvlRow" id="lvlRow" aria-label="Roxy : son niveau, ses stats"><b id="lvlName"></b><span class="lb"><i id="lvlFill"></i></span><span class="ln" id="lvlNext"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
     <div id="heroSay"></div>
     <div class="flabel" id="durLabel">Combien de temps ?</div>
@@ -909,6 +935,7 @@
       <div class="dbar" aria-hidden="true"><i id="durFill"></i></div>
       <button class="gostat" id="goStat" aria-label="Où j'en suis aujourd'hui · dernières sorties de Roxy"></button>
       <button class="weekbar" id="weekBar" aria-label="Ta semaine avec Roxy"><span class="wt"><b>Ta semaine</b><span id="weekTxt"></span></span><span class="wb"><i id="weekFill"></i></span></button>
+      <div class="gofloat" id="goFloat"></div>
     </div>
     <div class="gohint" id="goHint" hidden></div>
     <button id="locate" class="ghost" style="display:none">🗺️ Proposer des parcours</button>
@@ -992,7 +1019,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-20.224029";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-21.012523";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -3143,9 +3170,24 @@
     box.innerHTML = lotsHTML();   // v2.5 : le classement = la couronne 👑 (ou fantôme) sur Roxy
     const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
     renderGoCard(); renderFoot(); loadWx(); try{ renderEvDeco(); }catch(e){}
+    try{ renderLvl(); }catch(e){}
     setTimeout(fitHome, 0);
     bindLots();
   }
+  // v4.6 (lot 2) : la rangée du niveau dans la bulle de Roxy (« 🐶 Chiot ━━━ Fouineuse dans 480 🪙 ›»)
+  function renderLvl(){
+    const t = game.total || 0, lv = levelOf(t), nm = $("#lvlName"); if (!nm) return;
+    nm.textContent = lv.name;
+    const pct = lv.next ? Math.max(3, Math.round(100 * (t - lv.from) / (lv.next[0] - lv.from))) : 100;
+    $("#lvlFill").style.width = pct + "%";
+    $("#lvlNext").textContent = lv.next ? `${lv.next[1].split(" ").slice(1).join(" ")} dans ${Math.round(lv.next[0] - t).toLocaleString("fr-FR")} 🪙` : "niveau max";
+  }
+  // toucher la bulle (ailleurs que sur la photo, la cagnotte ou la petite ligne) = Roxy, ses stats
+  { const hero = document.querySelector(".hero"); if (hero) hero.addEventListener("click", e => {
+      if (!document.documentElement.classList.contains("homeb2")) return;
+      if (e.target.closest && e.target.closest("#heroDog, #purse, #purseUp, #hLine, #crownBtn, #editWho")) return;
+      sheetRoxy();
+    }); }
   // ---------- ❓ Aide (v2.4) : tuto, règles, questions fréquentes, bulles d'aide ----------
   function sheetHelp(){
     const q = (t, a) => `<details class="entry" style="display:block"><summary style="font-weight:700;cursor:pointer">${t}</summary><p style="margin:8px 0 2px">${a}</p></details>`;
@@ -3253,8 +3295,11 @@
         <button id="blSilver"><span>🥈</span>${sv ? `<b>Cadeau argenté : ${SILVER_CS}</b> · caché par Éric sous un nuage argenté, un seul gagnant` : "Cadeau argenté : pas de cadeau caché en ce moment"}</button>
         <button id="blChest"><span>${ch > 0 ? "🔥" : "💰"}</span><b>Coffre : ${Math.round(chestValue() * CS)}</b> · ${ch > 0 ? "il est chaud, cherche les rues pas faites depuis 7 jours !" : "il dort pour l'instant"}</button>
       </div>
+      <div class="btns" style="flex-wrap:wrap">${sv ? `<button class="ghost" id="blSvCloud">☁️ Voir le nuage argenté</button>` : ""}${ch > 0 ? `<button class="ghost" id="blChCloud">☁️ Voir le nuage orange</button>` : ""}</div>
       <p class="howto">🌧️ Et quand il pleut, des billets tombent devant toi pendant la balade.</p>
       <div class="btns"><button id="blGo">▶️ J'y vais</button></div>`);
+    { const b = $("#blSvCloud"); if (b) b.onclick = () => { closeSheet(); setTimeout(() => openExplore("silver"), 150); }; }   // v4.6 : comme pour le trésor, sans passer par la fiche du cadeau
+    { const b = $("#blChCloud"); if (b) b.onclick = () => { closeSheet(); setTimeout(() => openExplore("chest"), 150); }; }
     $("#blSilver").onclick = () => { closeSheet(); setTimeout(sheetSilver, 150); };
     $("#blChest").onclick = () => { closeSheet(); setTimeout(sheetChest, 150); };
     $("#blGo").onclick = () => { closeSheet(); setTimeout(startQuestion, 200); };
@@ -6919,7 +6964,47 @@
       return r.width && r.left < a.right + 6 && r.right > a.left - 6 && r.top < a.bottom + 4 && r.bottom > a.top - 4; });
     t.classList.toggle("up", hit);
   }
+  // v4.6 (lot 2, B2) : l'accueil ne mesure plus la page. La carte est un bloc fixe, du bas de la bulle jusqu'au bas VISIBLE de l'écran
+  // (comme les menus du bas de Bouffe / Souffle / Penderie) ; les tuiles flottent sur le bas de la carte.
+  // Bas visible : zone visible de l'iPhone (visualViewport) ; app de l'écran d'accueil en portrait sans décalage : la hauteur de l'écran elle-même
+  // (l'iPhone annonce parfois 793 au lieu de 852 alors que tout l'écran est visible).
+  const homeB2On = () => { const b = document.body.classList; return !["walking", "page", "recap", "choosing", "hasmap", "explore", "propose"].some(k => b.contains(k)); };
+  function visBottom(){
+    const vv = window.visualViewport, top = vv ? vv.offsetTop : 0;
+    let bot = vv ? vv.offsetTop + vv.height : (window.innerHeight || document.documentElement.clientHeight);
+    try{
+      const stand = navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+      if (stand && top >= 0 && screen.height > screen.width && window.innerHeight > window.innerWidth) bot = Math.max(bot, screen.height - top);
+    }catch(e){}
+    return bot;
+  }
+  function placeHome(){
+    const h = document.documentElement, on = homeB2On();
+    h.classList.toggle("homeb2", on);
+    const fl = $("#goFloat");
+    if (fl && !fl.dataset.ok){ fl.dataset.ok = 1; ["#weekBar", "#home", "#homeFoot"].forEach(sel => { const e = $(sel); if (e) fl.appendChild(e); }); }
+    if (!on) return;
+    const hero = document.querySelector(".hero"); if (!hero) return;
+    const top = Math.round(hero.getBoundingClientRect().bottom + 12), bot = Math.round(visBottom()), safeB = 34;
+    const gh = Math.max(220, bot - 8 - top);
+    let padB = 10;
+    try{ const pr = document.createElement("div"); pr.style.cssText = "position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)"; document.body.appendChild(pr); padB = Math.max(10, (parseFloat(getComputedStyle(pr).paddingBottom) || 0) - 8 + 4); pr.remove(); }catch(e){}
+    const key = top + "/" + gh + "/" + padB;
+    h.style.setProperty("--goTop", top + "px"); h.style.setProperty("--goH", gh + "px"); h.style.setProperty("--goPadB", padB + "px");
+    if (fl) h.style.setProperty("--floatH", Math.round(fl.getBoundingClientRect().height) + "px");
+    if (placeHome.key !== key){ placeHome.key = key; try{ drawMiniMap(); miniTapPlace(); }catch(e){} }
+  }
+  // l'iPhone change ses mesures après l'ouverture et au retour dans l'app : on se recale souvent pendant 15 s, puis à chaque changement
+  function placeWatch(){ const t0 = Date.now(); clearInterval(placeWatch.t); placeWatch.t = setInterval(() => { try{ placeHome(); }catch(e){} if (Date.now() - t0 > 15000) clearInterval(placeWatch.t); }, 300); }
+  try{ if (window.visualViewport){ visualViewport.addEventListener("resize", () => placeHome()); visualViewport.addEventListener("scroll", () => placeHome()); } }catch(e){}
+  window.addEventListener("scroll", () => { try{ placeHome(); }catch(e){} }, { passive:true });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) placeWatch(); });
+  window.addEventListener("pageshow", placeWatch);
+  new MutationObserver(() => { try{ placeHome(); }catch(e){} }).observe(document.body, { attributes:true, attributeFilter:["class"] });
+  setTimeout(placeWatch, 0);
   function fitHome(){
+    try{ placeHome(); }catch(e){}
+    if (document.documentElement.classList.contains("homeb2")){ try{ homeFix(); }catch(e){} drawMiniMap(); try{ miniTapPlace(); }catch(e){} return; }
     try{ shortVp(); }catch(e){}
     const b = document.body.classList; if (["walking", "page", "recap", "choosing", "hasmap", "explore"].some(k => b.contains(k))) return;
     const mm = $("#miniMap"); if (!mm) return;
@@ -7042,7 +7127,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette", 59: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -7223,8 +7308,13 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 58, APP_LABEL = "4.5.6";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 59, APP_LABEL = "4.6";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    59: [
+      "🐶 En haut, la bulle de Roxy : touche-la pour lui parler et voir ses stats. Ta barre de niveau est dedans : combien il te manque pour le suivant.",
+      "🗺️ La carte va maintenant jusqu'en bas, les tuiles flottent dessus. Le classement : ⚔️ Défier. Le menu ☰ est plus léger.",
+      "☁️ Billets : « Voir le nuage argenté » directement depuis la tuile."
+    ],
     58: [
       "👆 Pour partir, touche la carte : « Je gère » (balade libre) ou « Propose-moi » (un parcours qui rapporte plus, directement sur la carte).",
       "🗺️ Sur la carte de l'accueil : en fluo, les rues que tu n'as pas faites depuis 7 jours. ☁️ en haut à droite = carte d'exploration.",

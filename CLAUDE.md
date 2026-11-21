@@ -714,3 +714,18 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Les 59 points que l'iPhone garde pour lui restent vides (impossible à remplir sans risque). Le diagnostic affiche « page courte ✓ ».
 - `miniTapPlace()` (après `drawMiniMap` et `fitHome`) : « 👆 Touche la carte pour partir » monte d'un cran (`.mtap.up`) quand elle touche « ☁️🏴‍☠️ x km » ou « x % ».
 - Tests : `tests/e2e_lot1.py` (navigator.standalone et écran 852 simulés).
+
+## Version 4.6 « Croquette » (APP_NUM 59, lot 2 : maquette B2 choisie par Éric le 21/11 à 0 h 54, « go » à 1 h 04)
+- Maquettes : https://claude.ai/artifact/Ui8d2A6LU26Hu9rsfc6WoT (Aujourd'hui, A, B, **B2**, fiche Billets).
+- 🐶 **Bulle de Roxy** (`.hero` en carte, `html.homeb2`) : photo (toucher = pop-up du jour, caresse), « Salut X » + petite ligne, cagnotte ; 2e étage `#lvlRow`
+  (`renderLvl` : « 🐶 Chiot ━━ Fouineuse dans 480 🪙 › »). Toucher la bulle ailleurs que sur la photo / la cagnotte / la petite ligne = `sheetRoxy`.
+  La phrase de Roxy (`#heroSay`) s'affiche en haut de la carte.
+- 🗺️ **Carte jusqu'en bas, sans mesurer la page** (comme les menus du bas de Bouffe / Souffle / Penderie) : `placeHome()` met `html.homeb2` sur l'accueil
+  (pas en balade, page, récap, carte, exploration, « Propose-moi ») et place `#goCard` en `position:fixed` du bas de la bulle (+12) jusqu'au **bas visible** (`visBottom` :
+  `visualViewport.offsetTop + height` ; app de l'écran d'accueil en portrait sans décalage : la hauteur de l'écran, car l'iPhone annonce parfois 793 au lieu de 852) − 8.
+  Recalé toutes les 300 ms pendant 15 s après l'ouverture / le retour, et sur resize / scroll / changement de classe. `fitHome` ne calcule plus de hauteur en mode B2.
+  On garde la barre d'état « black-translucent » (piste 1 : pas d'icône à remettre).
+- **Tuiles qui flottent sur le bas de la carte** : `#weekBar`, `#home` (tuiles / arène) et `#homeFoot` sont déplacés dans `#goFloat` (dégradé, ombres) ; la distance du nuage,
+  le % et « Touche la carte » remontent au-dessus (`--floatH`).
+- ☁️ **Fiche Billets** : « Voir le nuage argenté » (`#blSvCloud` → `openExplore("silver")`) et, coffre chaud, « Voir le nuage orange » (`#blChCloud`), sans passer par la fiche du cadeau.
+- Tests : `tests/e2e_lot1.py` (bulle, niveau, carte sous la bulle, tuiles flottantes, iPhone 852 qui annonce 793, fiche Billets) ; tests passés à `wouaf-vu` = 59.

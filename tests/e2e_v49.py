@@ -25,7 +25,7 @@ with sync_playwright() as pw:
     check("envoyé : fiche fermée", not P.evaluate("document.querySelector('#modal').classList.contains('open')"))
     st, body = local_api("POST", "/bugs", json.dumps({"code": "1234"}).encode())
     l = json.loads(body).get("bugs", [])
-    check("le serveur a reçu le bug de Léa", st == 200 and len(l) == 1 and l[0]["walker"] == "Léa" and l[0]["v"] == "4.5.6" and l[0]["img"] is True, body[:200])
+    check("le serveur a reçu le bug de Léa", st == 200 and len(l) == 1 and l[0]["walker"] == "Léa" and l[0]["v"] == "4.6" and l[0]["img"] is True, body[:200])
     # Éric : liste + Réglé
     bE, cE, E = new_phone(pw, errors=errs, init=INIT.replace("'Léa'", "'Éric'")); E.set_viewport_size({"width": 393, "height": 760}); open_app(E, 6000)
     E.evaluate("__wouaf.openMenu()"); E.click("#muSupAll"); E.wait_for_timeout(300); E.click("#muSupB"); E.wait_for_timeout(1200)
