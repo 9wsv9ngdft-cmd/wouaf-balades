@@ -60,7 +60,7 @@ with sync_playwright() as pw:
     check("« Pas besoin » : plus de rappel", EV(P, "__wouaf.unsentRecaps().length") == 0)
     # 4e balade : une autre fenêtre s'ouvre juste après le récap → le rappel attend qu'elle se ferme
     P.evaluate(START); P.wait_for_timeout(400); EV(P, "__wouaf.stopWalk()"); P.wait_for_timeout(1800)
-    P.click("#closeRecap"); P.evaluate("setTimeout(() => document.querySelector('#menuBtn').click(), 50)"); P.wait_for_timeout(1200)
+    P.click("#closeRecap"); P.evaluate("setTimeout(() => document.querySelector('#tabbar [data-t=moi]').click(), 50)"); P.wait_for_timeout(1200)
     check("une autre fenêtre est ouverte : pas de rappel par-dessus", "oublié le récap" not in P.inner_text("#sheet"))
     P.click("#sheetX"); P.wait_for_timeout(2200)
     check("elle se ferme : le rappel arrive", open_(P) and "oublié le récap" in P.inner_text("#sheet"), P.inner_text("#sheet")[:100] if open_(P) else "fermé")

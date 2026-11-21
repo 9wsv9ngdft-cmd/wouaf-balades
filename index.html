@@ -143,6 +143,7 @@
   .bark{position:absolute;left:50px;top:-12px;background:#fff;color:var(--green);font-weight:800;font-size:13px;padding:3px 8px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.2);white-space:nowrap;pointer-events:none;animation:barkpop .3s ease-out}
   @keyframes barkpop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
   @keyframes wag{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  #sheet .optr{display:flex !important;align-items:center;justify-content:space-between;gap:12px;margin:0 !important} #sheet .optr > span:first-child{flex:1;min-width:0} #sheet .optr input[type=checkbox]{width:26px !important;height:26px;margin:0;flex:none;accent-color:#2a9d78} #sheet .optn{display:flex;align-items:center;gap:6px;flex:none;white-space:nowrap} #sheet .optn input{width:86px !important;margin:0 !important;padding:8px !important}
   .optr{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:15px} .optr small{display:block;font-size:12.5px;color:var(--muted)} .optr input[type=checkbox]{width:24px;height:24px;flex:none} .optn input{width:84px;padding:8px;font-size:16px;text-align:right} .optt{margin:14px 0 2px;font-size:15px}
   .heroTxt{flex:1;min-width:0} .hero .hi{font-family:Fraunces,Georgia,serif;font-size:21px;font-weight:700;line-height:1.15} .hero .sub{color:var(--muted);font-size:14px}
   .seg.durs button{padding:13px 2px;font-size:15px}
@@ -908,7 +909,7 @@
   html.homeb2 .hero .hi{font-size:18px} html.homeb2 .hero .sub{font-size:12.5px}
   html.homeb2 .lvlRow{font-size:11.5px !important;min-height:0 !important;opacity:.9} html.homeb2 .lvlRow .lb{height:5px !important}
   html.homeb2 .heroRow .purseCol{align-items:center} html.homeb2 .heroRow .purse{background:linear-gradient(135deg,#d9a42b,#f1cf6a) !important;color:#3a2a05 !important;border:0 !important;border-radius:16px;padding:8px 12px;min-width:0;box-shadow:0 6px 14px -8px rgba(0,0,0,.5)}
-  html.homeb2 .heroRow .purse small{font-size:10.5px;font-weight:800;letter-spacing:.08em} html.homeb2 .heroRow .purseUp{display:none}
+  html.homeb2 .heroRow .purse small,html.homeb2 body.nuit .heroRow .purse small{display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em} html.homeb2 .heroRow .purseUp{display:none}
   .rxtop{margin-bottom:10px} .rxlog{all:unset;box-sizing:border-box;display:block;width:100%;cursor:pointer;background:linear-gradient(135deg,#2a9d78,#1f6f5a);color:#fff;border-radius:16px;padding:12px 14px} .rxlog b{display:block;font-size:17px} .rxlog small{display:block;font-size:12.5px;opacity:.9;margin-top:2px}
   .rxmini{display:flex;gap:6px;margin-top:6px} .rxmini button{flex:1;font-size:12.5px;padding:8px 4px}
   /* 🧊 v4.7 (lot 3, Éric 21/11) : bandeaux du haut et du bas en verre dépoli — nuit #1a2130 en mode sombre, bleu glacier #d6e2f0 en mode clair ; page gris bleuté clair #eef1f5 ; barre d'onglets en bas à la place du ☰ */
@@ -923,7 +924,7 @@
   body.walking #tabbar,body.recap #tabbar,body.choosing #tabbar,body.hasmap #tabbar,body.explore #tabbar,body.propose #tabbar{display:none}
   body:not(.walking):not(.recap):not(.choosing):not(.hasmap):not(.explore):not(.propose) main.wrap{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
   html.homeb2 main.wrap{padding-bottom:0 !important}
-  body.walking #walkbar{background:var(--glass) !important;color:var(--glass-ink);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid var(--glass-line)}
+  body.walking #walkbar{background:rgba(26,33,48,.84) !important;color:#f3efe6;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid rgba(243,239,230,.14)}
   body.walking #walkbar .wline,body.walking #walkbar #wDist{color:inherit;opacity:.85}
 </style>
 </head>
@@ -1049,7 +1050,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-21.130218";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-21.133052";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2031,9 +2032,9 @@
   // Sortie obligatoire : 1 balade d'au moins 20 min par jour (MONEY_MIN). Elle ne rapporte rien pour la durée (seulement les bonus) :
   // la durée ne paie qu'au-delà de 20 min. Plafond doux : au-delà de 15 € dans le mois, gains ÷ 4 ; plafond final 20 € (secrets).
   // 🎛️ v4.7 Superviseur › Options : réglages de jeu communs à la famille (interrupteurs et montants), posés par Éric, lus via /pause, gardés sur le téléphone (`wouaf-opts`).
-  const OPT_DEF = { surp:false, sOpen:true, sBack:true, sRead:true, sJab:true, jabPen:false, jabAmt:1, fine:true, fineAmt:150, minWalk:20, weekMin:210, plus:15 };
+  const OPT_DEF = { surp:false, sOpen:true, sBack:true, sRead:true, sJab:true, jabPen:false, jabAmt:1, fine:true, fineAmt:150, weekMin:210, plus:15 };
   const opt = k => { let o = {}; try{ o = JSON.parse(localStorage.getItem("wouaf-opts") || "{}") || {}; }catch(e){} return (k in o) ? o[k] : OPT_DEF[k]; };
-  let MONEY_MIN = 20; const applyOpts = () => { const m = +opt("minWalk"); MONEY_MIN = m >= 5 && m <= 120 ? Math.round(m) : 20; }; applyOpts();
+  const MONEY_MIN = 20; const applyOpts = () => {};   // la balade minimum reste 20 min (la changer serait rétroactif : gains et amendes passées)
   const REF_MIN = 25, REF_EUR = 0.35, MONEY_SOFT = 15, MONEY_MAX = 20, MONEY_POW = 1.5;
   const walkRaw = min => REF_EUR * Math.pow(min / REF_MIN, MONEY_POW);
   const walkEuros = min => min <= MONEY_MIN ? 0 : Math.round((walkRaw(min) - walkRaw(MONEY_MIN)) * 100) / 100;
@@ -3832,7 +3833,7 @@
       ${sw("sOpen", "Écran d'ouverture « ON Y VA ? »")}${sw("sBack", "Retour de balade")}${sw("sRead", "« BIEN LU ! »", "0 clebsou")}${sw("sJab", "« Ah non… vraiment ? »")}
       ${sw("jabPen", "Pénalité si on zappe le pop-up", "éteinte par défaut, une fois par jour")}${nb("jabAmt", "Montant de la pénalité", "🪙")}
       <h3 class="optt">💸 Amende</h3>
-      ${sw("fine", "Amende un jour sans balade")}${nb("fineAmt", "Montant", "🪙", "dès le 1er décembre")}${nb("minWalk", "Balade minimum", "min")}
+      ${sw("fine", "Amende un jour sans balade")}${nb("fineAmt", "Montant", "🪙", "dès le 1er décembre")}
       <h3 class="optt">🎯 Objectifs</h3>
       ${nb("weekMin", "Objectif « Ta semaine »", "min", "3 h 30 = 210")}${nb("plus", "« Propose-moi » un peu plus long", "%")}
       <div class="btns"><button id="opSave">Enregistrer</button><button class="ghost" id="opBack">← Superviseur</button></div><p id="opMsg" role="status"></p>`);
@@ -4561,7 +4562,7 @@
     "🌙 Mode poche : l'écran devient noir mais la balade et le GPS continuent. Pour revenir, glisse la patte.",
     "📷 Une photo de Roxy pendant la balade quand elle te le demande = des clebsous en plus.",
     "🗺️ Les rues que tu n'as pas faites depuis une semaine sont « neuves » : elles rapportent plus.",
-    "💧💩 Touche Roxy pendant la balade pour noter pipi et caca : ça compte pour les trophées du mois.",
+    "💧💩 Pendant la balade, les gros boutons Pipi et Caca en bas : ça compte pour les trophées du mois.",
     "📩 À la fin de la balade, envoie le récap au groupe WhatsApp « Roxy ».",
     "🏴‍☠️ Le trésor doré change chaque lundi. Un seul gagnant : le premier arrivé !",
     "🔥 Quand le nuage orange apparaît, le coffre est chaud : passe dedans pendant ta balade.",
@@ -4791,7 +4792,7 @@
         h:"Les bonus", t:`En marchant, tu ramasses des objets cachés sur la carte : ils s'envolent vers ton compteur. Les rues que tu n'as pas faites depuis ${FRESH_DAYS} jours comptent double. Il y a aussi le défi du jour, et 7 jours sur 7 = +${cs(PERFECT_WEEK)} 🏆.` },
       { pic: fogSvg, h:"La carte de la balade", t:`La carte est sous le brouillard : il se lève là où tu marches, et tes pas 🐾 restent dessinés. Ce qui est encore dans le noir, ce sont des rues neuves. En haut, tes missions de la balade (objets, rues neuves, photo) se cochent toutes seules ✅.` },
       { pic:`<div style="width:88%"><div class="mockbar"><span>💧</span><span>💩</span><span>📷</span><span>⋯</span></div><div class="row" style="margin-top:10px"><span class="chip">🌙 Poche</span><span class="chip">⏹ Fini : garde appuyé</span></div></div>`,
-        h:`Toucher ${DOG}`, t:`Pendant la balade, touche ${DOG} sur la carte : 💧 pipi, 💩 caca, 📷 photo (aussi en bas : 📷 Photo), et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, glisse la patte pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
+        h:`Toucher ${DOG}`, t:`Pendant la balade, 💧 Pipi et 💩 Caca sont en gros en bas. Touche ${DOG} sur la carte pour 📷 photo (aussi en bas : 📷 Photo), 🐕 copain et ⋯ (balade à deux, alerte). En bas, 🌙 Poche met l'écran en noir (la balade continue, glisse la patte pour revenir) et pour finir, garde le doigt une seconde sur ⏹ Fini. La barre du bas se fait discrète : touche-la pour la rouvrir.` },
       { pic:`<div><div class="big bob">👃</div><div class="row" style="margin-top:10px"><span class="chip">toutes les 15 min</span><span class="chip">🐾 3 min</span><span class="chip">+${FLAIR_CS} 🪙</span></div></div>`,
         h:"Le flair", t:`Toutes les 15 minutes de balade, ${DOG} flaire une piste fraîche : ton téléphone sonne (accepte les notifications : menu ☰ › 🔔), et des pattes 🐾 apparaissent tout près. Rejoins-les avant 3 minutes : +${FLAIR_CS} !` },
       { pic:`<div class="row"><span class="chip">🏴‍☠️ trésor ${HUNT_FIRST}</span><span class="chip">🥈 cadeau ${SILVER_CS}</span><span class="chip">💰 coffre ${cs(chestValue())}</span><span class="chip">🏅 record +${RECORD_CS}</span></div>`,
@@ -4806,7 +4807,7 @@
     return [
       { pic: full[0].pic, h:`Salut ! Voici ${DOG} 🐾`, t:`Chaque jour, tu sors ${DOG} au moins 20 minutes avec l'app ouverte (sinon −${cs(dayFine())}). Elle te parle dans sa bulle et adore les caresses : glisse ton doigt sur sa photo ❤️.` },
       { pic: full[2].pic, h:"Tu gagnes des clebsous", t:`Au-delà de 20 min, chaque minute rapporte. En marchant, tu ramasses des objets 🦴 🎾 ⭐ et les rues neuves comptent double (un coin d'environ 100 m où tu n'es pas passé depuis 7 jours). Toutes les 15 min, ${DOG} flaire une piste fraîche 👃 : attrape-la vite ! Chaque dimanche soir, tes clebsous de la semaine deviennent de vrais sous 💶.` },
-      { pic: full[4].pic, h:"C'est parti !", t:`Pour partir, touche la carte de l'accueil 👆. Pendant la balade, touche ${DOG} sur la carte pour 💧 pipi, 💩 caca ou 📷 photo, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
+      { pic: full[4].pic, h:"C'est parti !", t:`Pour partir, touche la carte de l'accueil 👆. Pendant la balade, note 💧 Pipi et 💩 Caca avec les gros boutons en bas, et garde le doigt sur ⏹ Fini pour terminer. Tout le reste est dans le menu ☰, et en cas de doute : ☰ › ❓ Aide. Astuce : ☰ › 📲 pour sortir ${DOG} en un seul geste.` }
     ];
   }
   function showTuto(step, replay){
@@ -7692,7 +7693,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

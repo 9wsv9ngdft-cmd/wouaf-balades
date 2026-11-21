@@ -58,7 +58,7 @@ with sync_playwright() as pw:
     check("pas de bulle de Roxy tant qu'on ne la touche pas", Cc.locator("#sayBtn").count() == 0)
     check("plus de « Combien de temps ? » ni de ligne Bonus", Cc.evaluate("getComputedStyle(document.querySelector('#durLabel')).display") == "none" and Cc.locator("#goBon").count() == 0)
     foot = Cc.evaluate("document.querySelector('#homeFoot').innerText")
-    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v4.6" in foot, foot)
+    check("ligne du bas : version et nom de code (toujours Croquette)", "CROQUETTE" in foot and "v4.7" in foot, foot)
     check("pas de « Bravo » collé en bas", "Bravo" not in Cc.evaluate("document.querySelector('#status').innerText"))
     t0 = Cc.evaluate("JSON.parse(localStorage.getItem('wouaf-jeu')).bonus")
     for i in range(16): Cc.click("#homeFoot")
@@ -84,7 +84,7 @@ with sync_playwright() as pw:
     say = lambda: Cc.evaluate("document.querySelector('#sheet .jsay') ? document.querySelector('#sheet .jsay').textContent : ''")
     # v4.0 : toucher Roxy = pop-up du jour ; le journal est dans sa 1re carte (📖)
     def journal(w=1200):
-        Cc.click("#heroDog"); Cc.wait_for_timeout(900); Cc.click("#popJournal"); Cc.wait_for_timeout(w)
+        Cc.evaluate("__wouaf.sheetRoxyOpen()"); Cc.wait_for_timeout(400); Cc.click("#rxJournal"); Cc.wait_for_timeout(w)   # v4.7 : bulle › menu de Roxy › journal en premier
     journal()
     s1 = say()
     check("toucher Roxy : journal, Roxy dit « première balade » (aucune sortie)", "première balade" in s1, s1)

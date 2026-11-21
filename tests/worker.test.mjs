@@ -324,3 +324,13 @@ test("bugs avec capture : image gardée à part, lue seulement par le superviseu
   await api.post("/bug-done", { token: j.token, id: lea.id, del: true });
   assert.equal((await api.post("/bug-img", { token: j.token, id: lea.id })).j.img, "");
 });
+
+test("v4.7 options du superviseur : seulement le superviseur, valeurs nettoyées, renvoyées à tous par /pause", async () => {
+  const { api } = await setup();
+  assert.equal((await api.post("/opts-set", { opts: { surp: true } })).status, 403);
+  const r = await api.post("/opts-set", { code: "1234", opts: { surp: true, fineAmt: 200, jabAmt: -5, "bad key!": 1, txt: "<b>", big: 1e9 } });
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.j.opts, { surp: true, fineAmt: 200, jabAmt: 0, big: 100000 });
+  const p = await api.get("/pause");
+  assert.deepEqual(p.j.opts, { surp: true, fineAmt: 200, jabAmt: 0, big: 100000 });
+});

@@ -729,3 +729,28 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   le % et « Touche la carte » remontent au-dessus (`--floatH`).
 - ☁️ **Fiche Billets** : « Voir le nuage argenté » (`#blSvCloud` → `openExplore("silver")`) et, coffre chaud, « Voir le nuage orange » (`#blChCloud`), sans passer par la fiche du cadeau.
 - Tests : `tests/e2e_lot1.py` (bulle, niveau, carte sous la bulle, tuiles flottantes, iPhone 852 qui annonce 793, fiche Billets) ; tests passés à `wouaf-vu` = 59.
+
+## Version 4.7 « Croquette » (APP_NUM 60, lot 3 : maquettes A et B validées par Éric le 21/11 entre 2 h 24 et 12 h 44, « go » à 12 h 50 ; relu et corrigé à 13 h 06)
+- Maquettes : https://claude.ai/artifact/Ui8d2A6LU26Hu9rsfc6WoT (2e rangée) et https://claude.ai/artifact/NuXdDhdPXrgRTus8PJPLok.
+- 💧💩 **Pipi / Caca en gros** : `#needP` / `#needC` (déjà là, cachés) en haut de la barre de balade (bleu / marron, avec le nombre), visibles aussi en `.mini`.
+  Toucher Roxy sur la carte marche toujours. Textes d'aide / tuto mis à jour.
+- 🧭 **Barre d'onglets** `#tabbar` (Accueil · Roxy · Classement · Album · Moi, `tabGo`) à la place du ☰ (`#menuBtn` caché ; Moi = `openMenu`).
+  Cachée en balade, récap, carte, exploration, Propose-moi.
+- 🧊 **Verre dépoli** (`--glass`) : bandeau du haut (`header` collant) et barre d'onglets : nuit `#1a2130` en mode sombre, bleu glacier `#d6e2f0` en mode clair ;
+  page claire `#eef1f5`. **Barre de balade : verre nuit dans les deux modes** (maquette validée).
+- 🐛 **Bas de la carte** (`placeHome`) : calé sur **le haut de la barre d'onglets réellement dessinée** − 8 (plus sur la hauteur de l'écran : l'iPhone ne dessine rien sous 793).
+- 🫧 **Bulle fine** (avatar 42, niveau en petit) ; 🐷 **tirelire à part** (`.heroRow` : pastille dorée « TIRELIRE » à côté de la bulle) ; petite ligne « ☁️ 9° · ✓ sortie à 19 h 24 »
+  (plus le prénom, seulement l'heure).
+- 🐶 **Toucher l'avatar = caresses / saut seulement**. **Bulle = menu de Roxy** (`sheetRoxy`) : 📖 Journal de bord en premier (`#rxJournal`), puis 🗒️ Point du jour (`#rxPop`),
+  🐾 Dernières sorties, 💬 Parle-moi, stats et progrès.
+- 🚶 **Départ** : « ☁️ Explorer la carte » (`#chExplo`) à côté de Je gère / Propose-moi.
+- 🎛️ **Superviseur › Options** (`sheetOptions`) : Worker `POST /opts-set` (superviseur ; clés `[a-zA-Z0-9]`, booléens ou nombres 0–100 000), KV `opts`, renvoyé par `GET /pause` (`opts`)
+  → `wouaf-opts` sur le téléphone, lu par `opt(k)` (défauts `OPT_DEF`). Branché : surprises (général `surp`, **éteint par défaut**) + `sOpen` `sBack` `sRead` `sJab` ;
+  pénalité du pop-up zappé `jabPen` (**éteinte par défaut**) + `jabAmt` (1) ; amende `fine` + `fineAmt` (150, `dayFine`) ; « Ta semaine » `weekMin` (210) ; « Propose-moi » `plus` (15 %).
+  **Pas d'option « balade minimum »** : `MONEY_MIN` reste 20 (la changer modifierait les gains et les amendes rattrapées = rétroactif).
+- ➖ **Pop-up zappé** (option allumée) : « −1 » dans « Ah non… vraiment ? » et clebsou vraiment retiré (`game.adj[mois]` et `game.total`), une fois par jour, pas pour Éric.
+  📖 **Bien lu = 0 clebsou** (plus de pièce, plus d'`addMoney`).
+- ⚧ Textes unisexes : « ON Y VA ? » (ouverture), « Ah non… vraiment ? ».
+- Pas encore fait : avatar du niveau (la photo reste), « une seule carte » pour Exploration / Consulter la balade, options des montants (trésor, cadeau, coffre, Avent), couronne / défis / pop-up du jour / 📏 dans Options.
+- Tests : `tests/worker.test.mjs` (/opts-set), `e2e_v58_surprise.py` (options posées sur le serveur, −1, bien lu = 0, « ON Y VA ? »), `e2e_balade.py` (Pipi / Caca visibles),
+  `e2e_lot1.py` / `e2e_v58.py` (bas = barre d'onglets), `e2e_accueil.py` / `e2e_v53.py` (menu de Roxy), `e2e_v52.py` / `e2e_v53.py` (onglet Moi), tests passés à `wouaf-vu` = 60.

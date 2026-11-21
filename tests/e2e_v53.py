@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','59');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','60');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 EV = lambda P, js: P.evaluate(js)
 is_open = lambda P: P.evaluate("document.querySelector('#modal').classList.contains('open')")
 sheet = lambda P: P.inner_text("#sheet") if is_open(P) else ""
@@ -34,8 +34,8 @@ with sync_playwright() as pw:
     check("puis Roxy dit qu'on peut la toucher", "Touche-moi" in (P.inner_text("#heroSay") or ""), P.inner_text("#heroSay"))
     EV(P, "__wouaf.startupDigest()"); P.wait_for_timeout(3000)
     check("une seule fois par jour", "Aujourd'hui avec Roxy" not in sheet(P))
-    P.click("#heroDog"); P.wait_for_timeout(900)
-    check("toucher Roxy rouvre le point du jour", "Aujourd'hui avec Roxy" in sheet(P))
+    EV(P, "__wouaf.sheetRoxyOpen()"); P.wait_for_timeout(400); P.click("#rxPop"); P.wait_for_timeout(900)
+    check("v4.7 : menu de Roxy › Point du jour rouvre le pop-up", "Aujourd'hui avec Roxy" in sheet(P))
     P.click("#popJournal"); P.wait_for_timeout(900)
     check("le journal de bord s'ouvre depuis le pop-up", "journal" in sheet(P).lower(), sheet(P)[:120])
     P.click("#sheetX"); P.wait_for_timeout(400)
@@ -43,7 +43,7 @@ with sync_playwright() as pw:
     P.click("#evDeco .evchip", force=True); P.wait_for_timeout(500)
     check("le toucher ouvre l'annonce du calendrier", "arrive le 1er décembre" in sheet(P))
     P.click("#evClose"); P.wait_for_timeout(300)
-    P.click("#menuBtn"); P.wait_for_timeout(500)
+    P.click("#tabbar [data-t=moi]"); P.wait_for_timeout(500)
     check("menu ☰ : Événements spéciaux", P.locator("#muEvt").count() == 1)
     P.click("#muEvt"); P.wait_for_timeout(600)
     t = sheet(P)

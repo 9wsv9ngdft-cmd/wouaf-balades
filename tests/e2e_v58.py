@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','59');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','60');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 EV = lambda P, js: P.evaluate(js)
 is_open = lambda P: P.evaluate("document.querySelector('#modal').classList.contains('open')")
 sheet = lambda P: P.inner_text("#sheet") if is_open(P) else ""
@@ -27,8 +27,8 @@ with sync_playwright() as pw:
     h = P.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     check("accueil sans défilement", h[0] <= h[1], h)
     P.set_viewport_size({"width": 393, "height": 852}); P.wait_for_timeout(500)
-    g = EV(P, "[document.querySelector('#miniMap').offsetHeight, innerHeight - document.querySelector('#homeFoot').getBoundingClientRect().bottom, document.documentElement.scrollHeight - innerHeight]")
-    check("v4.5.1 (iPhone 393 × 852) : la carte remplit, plus de vide en bas, pas de défilement", g[0] > 420 and g[1] < 30 and g[2] <= 0, g)
+    g = EV(P, "[document.querySelector('#miniMap').offsetHeight, document.querySelector('#tabbar').getBoundingClientRect().top - document.querySelector('#goCard').getBoundingClientRect().bottom, document.documentElement.scrollHeight - innerHeight]")
+    check("v4.7 (iPhone 393 × 852) : la carte remplit jusqu'à la barre d'onglets, pas de défilement", g[0] > 420 and 0 <= g[1] < 30 and g[2] <= 0, g)
     # ---- v4.5.2 : accueil fixe ----
     check("v4.5.2 : l'accueil est fixe (classe homefix)", EV(P, "document.documentElement.classList.contains('homefix')"))
     EV(P, "window.scrollTo(0, 300)"); P.wait_for_timeout(200)

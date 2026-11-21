@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','59');"
+def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','60');"
     "localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');"
     "localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-surp', JSON.stringify({ o:'2099-01-01' }));localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % who)
 EV = lambda P, js: P.evaluate(js)
@@ -60,11 +60,8 @@ with sync_playwright() as pw:
     for short in (False, True):
         b, c, P = new_phone(pw, errors=errs, init=init("Léa") + (IOS if short else ""))
         P.emulate_media(color_scheme="dark"); P.set_viewport_size({"width": 393, "height": 793}); open_app(P, 2500)
-        g = EV(P, "[Math.round(document.querySelector('#goCard').getBoundingClientRect().bottom), Math.round(document.querySelector('.btiles').getBoundingClientRect().bottom), document.documentElement.scrollHeight - innerHeight]")
-        if short:
-            check("v4.6 (B2) : iPhone qui annonce 793 : la carte descend quand même jusqu'au bas de l'écran (852 − 8)", g[0] == 844 and g[1] > 793 and g[2] <= 0, g)
-        else:
-            check("v4.6 (B2) : navigateur normal : la carte s'arrête au bas de la fenêtre (793 − 8)", g[0] == 785 and g[2] <= 0, g)
+        g = EV(P, "[Math.round(document.querySelector('#goCard').getBoundingClientRect().bottom), Math.round(document.querySelector('#tabbar').getBoundingClientRect().top), document.documentElement.scrollHeight - innerHeight, Math.round(document.querySelector('.btiles').getBoundingClientRect().bottom)]")
+        check(f"v4.7 ({'iPhone 852 / 793' if short else 'navigateur'}) : la carte s'arrête juste au-dessus de la barre d'onglets dessinée, tuiles comprises, pas de défilement", g[0] == g[1] - 8 and g[3] <= g[1] and g[2] <= 0, g)
         # chevauchement de l'aide et de la flèche du trésor
         EV(P, "document.querySelector('#miniTap').hidden = false; document.querySelector('#miniTr').textContent = '↙ ☁️🏴‍☠️ 1,7 km'; __wouaf.miniTapPlace()")
         ov = EV(P, "(() => { const a = document.querySelector('#miniTap').getBoundingClientRect(), r = document.querySelector('#miniTr').getBoundingClientRect(); return r.left < a.right && r.right > a.left && r.top < a.bottom && r.bottom > a.top; })()")

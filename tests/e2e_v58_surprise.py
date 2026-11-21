@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','59');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
+INIT = "if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','60');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Léa'}));}"
 EV = lambda P, js: P.evaluate(js)
 on = lambda P: EV(P, "document.querySelector('#surp').classList.contains('on')")
 txt = lambda P: EV(P, "document.querySelector('#surp').innerText")
@@ -17,6 +17,8 @@ T = lambda m, d, h=10: datetime.datetime(2026, m, d, h, 0, 0)
 errs = []
 with sync_playwright() as pw:
     for month, day, theme in [(11, 25, "arcade"), (12, 3, "xmas")]:
+        st, body = local_api("POST", "/opts-set", json.dumps({"code": "1234", "opts": {"surp": True, "jabPen": True, "jabAmt": 1}}).encode())   # v4.7 : surprises éteintes par défaut, allumées par le superviseur
+        check("v4.7 : Superviseur › Options enregistrées sur le serveur", st == 200 and json.loads(body)["opts"]["surp"] is True, body[:120])
         b, c, P = new_phone(pw, errors=errs, init=INIT)
         P.clock.install(time=T(month, day)); P.set_viewport_size({"width": 393, "height": 760}); open_app(P, 2500)
         P.clock.run_for(4000)
@@ -30,7 +32,7 @@ with sync_playwright() as pw:
         check(f"{theme} : ouverture : ça déboule", EV(P, "__wouaf.surpOpenMaybe()") and on(P))
         t1 = txt(P); P.clock.run_for(900); t2 = txt(P)
         if theme == "arcade":
-            check("arcade : « PRÊTE ? » puis « WOUAF !! »", "PRÊTE" in t1 and "WOUAF" in t2, (t1, t2))
+            check("arcade : v4.7 « ON Y VA ? » puis « WOUAF !! » (unisexe)", "ON Y VA ?" in t1 and "WOUAF" in t2, (t1, t2))
         else:
             check("Noël : « HO HO HO… » puis « JOYEUX WOUAF ! » sous la neige", "HO HO HO" in t1 and "JOYEUX" in t2 and EV(P, "document.querySelectorAll('#surp .snow').length") > 10, (t1, t2))
         P.clock.run_for(2000)
@@ -57,10 +59,12 @@ with sync_playwright() as pw:
         EV(P, "document.querySelector('#surp .skip').click()")
         check(f"{theme} : un toucher et c'est passé", not on(P))
         # ---- pop-up du jour zappé ----
+        jt0 = EV(P, "__wouaf.getGame().total || 0")
         EV(P, "localStorage.removeItem('wouaf-surp'); __wouaf.dailyPop()"); P.clock.run_for(1500)
         EV(P, "document.querySelector('#sheetX').click()"); P.clock.run_for(900)
-        check(f"{theme} : pop-up zappé : « Ah non… t'es sûr ? C'est pour Roxy. »", "Ah non… t'es sûr ?" in txt(P) and "C'est pour Roxy." in txt(P), txt(P))
+        check(f"{theme} : v4.7 pop-up zappé : « Ah non… vraiment ? » et −1", "Ah non… vraiment ?" in txt(P) and "C'est pour Roxy." in txt(P) and "−1" in txt(P), txt(P))
         P.clock.run_for(3500)
+        check(f"{theme} : v4.7 le clebsou du zappé est vraiment retiré", EV(P, "__wouaf.getGame().total || 0") == max(0, jt0 - 1), (jt0, EV(P, "__wouaf.getGame().total")))
         # ---- pop-up du jour bien lu ----
         tot0 = EV(P, "__wouaf.getGame().total || 0")
         EV(P, "__wouaf.dailyPop()")
@@ -69,10 +73,10 @@ with sync_playwright() as pw:
         P.clock.run_for(4000); EV(P, "document.querySelector('#popNext').click()"); P.clock.run_for(900)
         t = txt(P)
         if theme == "arcade":
-            check("arcade : pop-up bien lu : « BIEN LU ! +10 »", "BIEN" in t and "LU !" in t and "+10" in t, t)
+            check("arcade : pop-up bien lu : « BIEN LU ! » sans pièce", "BIEN" in t and "LU !" in t and "+10" not in t, t)
         else:
-            check("Noël : pop-up bien lu : « LUTIN MODÈLE ! +10 »", "LUTIN" in t and "MODÈLE" in t and "+10" in t, t)
-        check(f"{theme} : +10 clebsous", EV(P, "__wouaf.getGame().total || 0") == tot0 + 10, (tot0, EV(P, "__wouaf.getGame().total")))
+            check("Noël : pop-up bien lu : « LUTIN MODÈLE ! » sans pièce", "LUTIN" in t and "MODÈLE" in t and "+10" not in t, t)
+        check(f"{theme} : v4.7 bien lu = 0 clebsou", EV(P, "__wouaf.getGame().total || 0") == tot0, (tot0, EV(P, "__wouaf.getGame().total")))
         b.close()
     # ---- v4.5.4 : Superviseur › Voir les surprises ----
     b, c, P = new_phone(pw, errors=errs, init=INIT); P.set_viewport_size({"width": 393, "height": 760}); open_app(P, 2500)
