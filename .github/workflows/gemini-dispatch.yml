@@ -7,8 +7,8 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
+  issues: read
+  pull-requests: read
 
 jobs:
   gemini:
@@ -21,19 +21,26 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Run Gemini
         uses: google-github-actions/run-gemini-cli@v0
-        env:
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           prompt: |
-            Tu es le développeur IA du projet Wouaf Balades.
-            Lis le dépôt et comprends son architecture.
-            Analyse la demande suivante :
-            ${{ github.event.comment.body }}
+            Tu es l'assistant développeur du projet Wouaf Balades.
 
-            Commence par proposer un plan précis.
-            Ne modifie aucun fichier avant approbation explicite.
+            Analyse le dépôt et comprends son architecture.
+            Étudie attentivement la demande ci-dessous.
+
+            IMPORTANT :
+            - Tu es en mode ANALYSE UNIQUEMENT.
+            - Ne crée, ne supprime et ne modifie aucun fichier.
+            - Ne lance aucune commande qui modifie le projet.
+            - Ne publie aucun changement.
+            - Fournis un diagnostic et un plan détaillé.
+            - Indique les fichiers qui seraient concernés.
+
+            Demande :
+            ${{ github.event.comment.body }}
