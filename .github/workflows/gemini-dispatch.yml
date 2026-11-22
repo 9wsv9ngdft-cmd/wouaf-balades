@@ -21,17 +21,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        env:
-          GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
           persist-credentials: false
 
       - name: Run Gemini
         uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
         with:
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          prompt: |
-            Tu es l'assistant développeur du projet Wouaf Balades.
+            Tu es       - name: Run Gemini
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+        with: développeur du projet Wouaf Balades.
 
             Analyse le dépôt et comprends son architecture.
             Étudie attentivement la demande ci-dessous.
