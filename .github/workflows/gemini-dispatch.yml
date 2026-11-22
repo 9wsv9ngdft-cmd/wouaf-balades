@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+          - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Run Gemini
         uses: google-github-actions/run-gemini-cli@v0
         env:
