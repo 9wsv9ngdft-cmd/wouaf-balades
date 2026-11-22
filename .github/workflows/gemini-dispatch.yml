@@ -1,0 +1,36 @@
+
+name: Gemini Dispatch
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  gemini:
+    if: >-
+      github.event.issue.pull_request == null &&
+      startsWith(github.event.comment.body, '@gemini-cli') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Gemini
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GEMINI_CLI_TRUST_WORKSPACE: 'true'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            Tu es le développeur IA du projet Wouaf Balades.
+            Lis le dépôt et comprends son architecture.
+            Analyse la demande suivante :
+            ${{ github.event.comment.body }}
+
+            Commence par proposer un plan précis.
+            Ne modifie aucun fichier avant approbation explicite.
