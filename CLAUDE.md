@@ -754,3 +754,21 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
 - Pas encore fait : avatar du niveau (la photo reste), « une seule carte » pour Exploration / Consulter la balade, options des montants (trésor, cadeau, coffre, Avent), couronne / défis / pop-up du jour / 📏 dans Options.
 - Tests : `tests/worker.test.mjs` (/opts-set), `e2e_v58_surprise.py` (options posées sur le serveur, −1, bien lu = 0, « ON Y VA ? »), `e2e_balade.py` (Pipi / Caca visibles),
   `e2e_lot1.py` / `e2e_v58.py` (bas = barre d'onglets), `e2e_accueil.py` / `e2e_v53.py` (menu de Roxy), `e2e_v52.py` / `e2e_v53.py` (onglet Moi), tests passés à `wouaf-vu` = 60.
+
+## Version 4.8 « Croquette » (APP_NUM 61 : retours d'Éric sur la 4.7 (21/11 13 h 36 → 14 h 28) + lot 4 Noël ; « Code. Go » d'Éric le 24/11 à 8 h 57, sans maquette)
+- 🧭 **Barre d'onglets** : Accueil · ⚔️ **Défier** · 🐶 **Roxy** (au milieu, icône plus grosse) · Album · Moi. L'onglet Classement sort de la barre ;
+  Défier = `tabDuel()` (`sheetDuels`, aperçu `duelPreview` pour Éric). **Un seul endroit pour défier** : plus de bouton « ⚔️ Défier » (`#rkDuel`) dans la fiche du classement.
+- 🔴 **Tuile du podium** : « EN DIRECT » revient (point rouge qui pulse, `.live.red`), garde le top 3, ouvre `sheetRanks("week")`.
+- 🔢 **« v4.8 · CROQUETTE »** : `#homeFoot` est déplacé dans `#tabbar` (`placeHome`), en 10 px tout en bas, dans la zone de sécurité sous les onglets
+  (`bottom: max(2px, zone sûre − 15px)`, barre au moins 18 px de marge en bas) ; la ligne « km en famille » n'y est plus. Le secret des 17 touchers marche toujours.
+- 💬 **« Salut … »** : n'ouvre plus rien (exclu du clic de la bulle) ; plus petit (`.hi.long`, 15 px) dès 8 lettres de prénom. Dessous, **bulle de tchat** `#chatPill`
+  « 💬 Demande-moi ••• » → `sheetChat` (aussi « 💬 Parle-moi » du menu de Roxy). **Version simple, tout sur le téléphone, rien n'est envoyé** : questions toutes faites
+  (`CHAT_Q`) — « Quelle rue on n'a pas faite ? » / « Un coin pas fait depuis longtemps ? » / « Où on en est ? » / « Ça va, Roxy ? ». `chatSectors()` range les coins vus
+  (`game.seen`, 120 m – 2,2 km de la maison) en 8 directions (`DIRS`) : rue = direction avec le plus de coins connus pas faits depuis `FRESH_DAYS` ; coin oublié = direction
+  dont la dernière visite est la plus ancienne (sinon une direction jamais faite) ; « où on en est » = semaine / série / place / niveau ; « ça va » = `sayNext()`.
+  Réponses en fil de discussion (« … » 0,5 s), boutons « 🗺️ Voir sur la carte » (`openExplore`) et « ▶️ On y va » (`startQuestion`). Pas de vrai tchat IA (vie privée, coût).
+- 🎄 **Noël (décembre, `xmasOn()`)** : **guirlande** discrète sous le bandeau du haut (`.garland` dans `header`, SVG en motif, `html.xmas` posé par `renderHome`) ;
+  **bonnet de Noël dessiné** sur Roxy (`SANTA_HAT`, `.a-hat.a-xmas`, dans `roxyHTML` : remplace couvre-chef et 👑 ; **petite couronne sur le pompon** si on porte la couronne ;
+  le chapeau d'anniversaire passe avant) ; **neige à la place des confettis** (`confetti()` → `snowfall()`, même calque `canvas.confetti`, 7 s).
+- Tests : `tests/e2e_v61.py` (barre, pied, EN DIRECT, Défier, Salut, tchat, décembre) ; `e2e_lot1.py`, `e2e_v58.py`, `e2e_accueil.py`, `e2e_v49.py`, `e2e_v53.py`, `e2e_v58_surprise.py` adaptés
+  (`wouaf-vu` = 61). `e2e_balade.py` : « flèche du trésor » échoue déjà avant (Overpass injoignable d'ici).

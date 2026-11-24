@@ -926,6 +926,35 @@
   html.homeb2 main.wrap{padding-bottom:0 !important}
   body.walking #walkbar{background:rgba(26,33,48,.84) !important;color:#f3efe6;-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border-top:1px solid rgba(243,239,230,.14)}
   body.walking #walkbar .wline,body.walking #walkbar #wDist{color:inherit;opacity:.85}
+
+  /* v4.8 (retours d'Éric sur la 4.7, 21/11 13 h 36 → 14 h 28 ; lot 4 Noël) */
+  #tabbar{padding-bottom:max(calc(env(safe-area-inset-bottom) + 4px), 18px)}
+  #tabbar button[data-t="roxy"]{opacity:.92} #tabbar button[data-t="roxy"] i{font-size:28px;line-height:1} #tabbar button[data-t="roxy"] span{font-weight:800}
+  #tabbar #homeFoot{position:absolute;left:0;right:0;bottom:max(2px, calc(env(safe-area-inset-bottom) - 15px));padding:0 !important;margin:0;font-size:10px !important;line-height:12px !important;letter-spacing:.6px;text-align:center;color:var(--glass-ink) !important;opacity:.5}
+  #tabbar #homeFoot small{display:none !important} #tabbar #homeFoot b{font-weight:600}
+  .bt.rank .live.red{color:#d43c41} body.nuit .bt.rank .live.red{color:#ff8a8d}
+  .hero .hi.long,html.homeb2 .hero .hi.long,body.nuit .hero .hi.long{font-size:15px}
+  .chatpill{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:4px 11px 4px 9px;border-radius:14px 14px 14px 4px;font-size:12.5px;font-weight:700;cursor:pointer;background:rgba(42,157,120,.13);color:#1f6f5a;border:1px solid rgba(42,157,120,.35);-webkit-tap-highlight-color:transparent}
+  .chatpill[hidden]{display:none} body.nuit .chatpill{background:rgba(127,209,174,.12);color:#9fe0c3;border-color:rgba(127,209,174,.32)}
+  .chatpill .dots{display:inline-flex;gap:2px} .chatpill .dots i{width:3.5px;height:3.5px;border-radius:50%;background:currentColor;opacity:.4;animation:chatdot 1.4s infinite} .chatpill .dots i:nth-child(2){animation-delay:.2s} .chatpill .dots i:nth-child(3){animation-delay:.4s}
+  @keyframes chatdot{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.9;transform:translateY(-2px)}}
+  .chat{display:flex;flex-direction:column;gap:8px;margin:6px 0 2px}
+  .chat .me{align-self:flex-end;background:#2a7de1;color:#fff;border-radius:16px 16px 4px 16px;padding:8px 12px;max-width:80%;font-size:14.5px;line-height:1.4}
+  .chat .rx{align-self:flex-start;display:flex;gap:8px;align-items:flex-end;max-width:94%}
+  .chat .rx .roxy{width:30px;height:30px;flex:none;border-width:2px;font-size:16px}
+  .chat .rx p{margin:0;background:rgba(127,150,180,.17);border-radius:16px 16px 16px 4px;padding:9px 12px;font-size:14.5px;line-height:1.45}
+  .chat .rx p.typing{letter-spacing:3px;font-weight:800;opacity:.6}
+  .chat .acts{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 0 38px} .chat .acts button{font-size:13px;padding:7px 11px}
+  .chatq{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px} .chatq button{font-size:13.5px;padding:8px 12px;border-radius:999px}
+  /* 🎄 guirlande discrète sous le bandeau du haut, en décembre */
+  .garland{display:none;position:absolute;left:0;right:0;bottom:-11px;height:18px;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='18' viewBox='0 0 80 18'%3E%3Cpath d='M0 3 Q40 13 80 3' fill='none' stroke='%23506050' stroke-width='1.1'/%3E%3Cg stroke='%23707a70' stroke-width='.6'%3E%3Crect x='8.9' y='5' width='2.2' height='1.6' fill='%23959c95'/%3E%3Crect x='28.9' y='7.4' width='2.2' height='1.6' fill='%23959c95'/%3E%3Crect x='48.9' y='7.4' width='2.2' height='1.6' fill='%23959c95'/%3E%3Crect x='68.9' y='5' width='2.2' height='1.6' fill='%23959c95'/%3E%3C/g%3E%3Cellipse cx='10' cy='9.6' rx='2.3' ry='3.2' fill='%23e5484d'/%3E%3Cellipse cx='30' cy='12' rx='2.3' ry='3.2' fill='%23f1c24b'/%3E%3Cellipse cx='50' cy='12' rx='2.3' ry='3.2' fill='%233fae6a'/%3E%3Cellipse cx='70' cy='9.6' rx='2.3' ry='3.2' fill='%234a8fe7'/%3E%3Cg fill='%23fff' opacity='.65'%3E%3Cellipse cx='9.2' cy='8.6' rx='.7' ry='1.1'/%3E%3Cellipse cx='29.2' cy='11' rx='.7' ry='1.1'/%3E%3Cellipse cx='49.2' cy='11' rx='.7' ry='1.1'/%3E%3Cellipse cx='69.2' cy='8.6' rx='.7' ry='1.1'/%3E%3C/g%3E%3C/svg%3E") repeat-x 6px 0;filter:drop-shadow(0 0 2px rgba(255,214,120,.55));animation:garglow 3.2s ease-in-out infinite}
+  html.xmas .garland{display:block}
+  body.nuit .garland{filter:drop-shadow(0 0 3px rgba(255,214,120,.7)) brightness(1.08)}
+  @keyframes garglow{0%,100%{opacity:.86}50%{opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .garland,.chatpill .dots i{animation:none} }
+  /* 🎅 bonnet de Noël dessiné (décembre), petite couronne sur le pompon si on l'a */
+  .roxy .a-xmas{margin-top:-.42em;margin-left:.12em} .roxy .a-xmas svg{display:block;width:1.95em;height:auto;transform:rotate(-8deg);filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.3))}
+  html.homeb2 .heroDog .roxy .a-xmas{font-size:18px;top:-19px}
 </style>
 </head>
 <body>
@@ -934,6 +963,7 @@
     <h1><span class="hpaw">🐾 </span>Wouaf Balades <span id="evDeco"></span></h1>
     <button id="menuBtn" aria-label="Menu : progrès, tirelire, carte, carnet, réglages">☰</button>
   </div>
+  <div class="garland" aria-hidden="true"></div>
 </header>
 
 <main class="wrap">
@@ -942,7 +972,7 @@
     <div class="heroRow"><div class="hero">
       <button class="heroDog" id="heroDog" aria-label="Caresser Roxy"></button>
       <button class="crownBtn ghost" id="crownBtn" hidden aria-label="Classement des explorateurs">👑</button>
-      <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="linkish" id="editWho" hidden>renseigner</button></div>
+      <div class="heroTxt"><div class="hi" id="whoText"></div><div class="sub" id="heroSub"></div><button class="chatpill" id="chatPill" type="button" hidden aria-label="Poser une question à Roxy">💬 Demande-moi <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></button><button class="linkish" id="editWho" hidden>renseigner</button></div>
       <button class="lvlRow" id="lvlRow" aria-label="Roxy : son niveau, ses stats"><b id="lvlName"></b><span class="lb"><i id="lvlFill"></i></span><span class="ln" id="lvlNext"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
     <div class="purseCol"><button class="purse" id="purse" aria-label="Ma tirelire"><b id="purseV">🪙 0</b><small id="purseL">TIRELIRE</small></button><button class="purseUp" id="purseUp" aria-label="Ce que tu peux gagner aujourd'hui"></button></div>
@@ -1008,7 +1038,7 @@
   </details></footer>
 </main>
 
-<nav id="tabbar" aria-label="Navigation"><button data-t="home" class="on"><i>🏠</i><span>Accueil</span></button><button data-t="roxy"><i>🐶</i><span>Roxy</span></button><button data-t="rank"><i>🏆</i><span>Classement</span></button><button data-t="album"><i>📸</i><span>Album</span></button><button data-t="moi"><i>👤</i><span>Moi</span></button></nav>
+<nav id="tabbar" aria-label="Navigation"><button data-t="home" class="on"><i>🏠</i><span>Accueil</span></button><button data-t="duel"><i>⚔️</i><span>Défier</span></button><button data-t="roxy"><i>🐶</i><span>Roxy</span></button><button data-t="album"><i>📸</i><span>Album</span></button><button data-t="moi"><i>👤</i><span>Moi</span></button></nav>
 
 <div id="walkbar" role="region" aria-label="Balade en cours">
   <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
@@ -1050,7 +1080,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-21.133052";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-24.091408";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -1193,7 +1223,17 @@
   const accList = a => Array.isArray(a) ? a : (a ? [a] : []);
   // photo de Roxy : celle choisie sur ce téléphone, sinon la photo officielle (roxy.jpg)
   const avatar = () => { try{ return localStorage.getItem("wouaf-avatar") || "roxy.jpg"; }catch(e){ return "roxy.jpg"; } };
-  const roxyHTML = list => { if (wearCrown()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("👑"); if (isBday()) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}</div>`; };
+  // 🎅 v4.8 (lot 4) : bonnet de Noël dessiné sur Roxy en décembre ; si elle a la couronne, une petite couronne sur le pompon. Le chapeau d'anniversaire passe avant.
+  const xmasOn = t => new Date(t || Date.now()).getMonth() === 11;
+  const SANTA_HAT = crown => `<svg viewBox="0 0 44 36" aria-hidden="true"><defs><linearGradient id="shR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2434a"/><stop offset="1" stop-color="#a4151f"/></linearGradient></defs>`
+    + `<path d="M7 27 C8 16 14 7 24 5 C32 3.5 37.5 8 38.5 16 C35.5 12.6 31.5 11.6 28.6 13.6 C31.4 17.6 33 22.4 33.6 27 Z" fill="url(#shR)"/>`
+    + `<path d="M12 24 C13.5 16 18 10 24.5 8 C20.5 11.5 17.5 17 16.6 24 Z" fill="#fff" opacity=".18"/>`
+    + `<rect x="3.5" y="23.2" width="34" height="8.6" rx="4.3" fill="#fbf8f2" stroke="#ddd5c6" stroke-width=".8"/>`
+    + `<path d="M7 26.2 h4 M14 28.6 h5 M23 26.4 h4 M29.5 28.4 h4" stroke="#e6dfd2" stroke-width="1" stroke-linecap="round"/>`
+    + `<circle cx="38.6" cy="17" r="4.6" fill="#fbf8f2" stroke="#ddd5c6" stroke-width=".8"/><circle cx="37.3" cy="15.6" r="1.4" fill="#fff"/>`
+    + (crown ? `<path d="M34.2 12 L35 6.6 L37 8.6 L38.6 5.2 L40.2 8.6 L42.2 6.6 L43 12 Z" fill="#e3bf5c" stroke="#a8842c" stroke-width=".6" stroke-linejoin="round"/>` : "")
+    + `</svg>`;
+  const roxyHTML = list => { const cr = wearCrown(), bd = isBday(), santa = xmasOn() && !bd; if (cr && !santa) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("👑"); if (bd) list = list.filter(e => ACC_SLOT[e] !== "a-hat").concat("🥳"); if (santa) list = list.filter(e => ACC_SLOT[e] !== "a-hat"); const av = avatar(); return `<div class="roxy${av ? " ph" : ""}"${av ? ` style="background-image:url(${av})"` : ""}>${av ? "" : "<span>🐕</span>"}${list.map(e => `<i class="${e === "🥳" ? "a-hat" : (ACC_SLOT[e] || "a-bow")}">${e === "🥳" ? "🎉" : e}</i>`).join("")}${santa ? `<i class="a-hat a-xmas">${SANTA_HAT(cr)}</i>` : ""}</div>`; };
   // 🚶🐕 v4.2 (Éric, 20/11 : « plus Roxy sur la carte, le promeneur et un chien ») : marqueur « moi » = promeneur qui tient son chien en laisse
   // 🐾 v4.3 (Éric, 20/11 14 h 51 : « une patte de chien, on sait où on est ») : marqueur « moi » = une patte dans un rond blanc, avec un halo doux qui respire
   const PAW_SVG = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="currentColor"><ellipse cx="12" cy="16.2" rx="5" ry="4.2"/><ellipse cx="5.6" cy="10.4" rx="2.1" ry="2.7" transform="rotate(-18 5.6 10.4)"/><ellipse cx="9.6" cy="6.6" rx="2.1" ry="2.8" transform="rotate(-6 9.6 6.6)"/><ellipse cx="14.4" cy="6.6" rx="2.1" ry="2.8" transform="rotate(6 14.4 6.6)"/><ellipse cx="18.4" cy="10.4" rx="2.1" ry="2.7" transform="rotate(18 18.4 10.4)"/></g></svg>`;
@@ -1894,6 +1934,8 @@
   }
   function renderWho(){
     $("#whoText").textContent = profile.walker ? `Salut ${myName()}` : `Qui promène ${DOG} ?`;
+    $("#whoText").classList.toggle("long", !!profile.walker && myName().length >= 8);   // v4.8 : « Salut … » plus petit quand le prénom est long
+    { const cp = $("#chatPill"); if (cp) cp.hidden = !profile.walker; }
     if (profile.walker){
       // v2.5 : une seule petite ligne « météo · où j'en suis · série » ; Roxy ne parle que quand on touche sa photo
       $("#heroSub").innerHTML = `<button class="hline" id="hLine" aria-label="Où j'en suis · dernières sorties de ${esc(DOG)}">${heroLine()}</button>`;
@@ -3207,6 +3249,7 @@
     box.innerHTML = lotsHTML();   // v2.5 : le classement = la couronne 👑 (ou fantôme) sur Roxy
     const ex = $("#exploCard"); if (ex) ex.onclick = sheetExplo;
     renderGoCard(); renderFoot(); loadWx(); try{ renderEvDeco(); }catch(e){}
+    document.documentElement.classList.toggle("xmas", xmasOn());   // 🎄 v4.8 : guirlande en décembre
     try{ renderLvl(); }catch(e){}
     setTimeout(fitHome, 0);
     bindLots();
@@ -3222,9 +3265,82 @@
   // toucher la bulle (ailleurs que sur la photo, la cagnotte ou la petite ligne) = Roxy, ses stats
   { const hero = document.querySelector(".hero"); if (hero) hero.addEventListener("click", e => {
       if (!document.documentElement.classList.contains("homeb2")) return;
-      if (e.target.closest && e.target.closest("#heroDog, #purse, #purseUp, #hLine, #crownBtn, #editWho")) return;
+      if (e.target.closest && e.target.closest("#heroDog, #purse, #purseUp, #hLine, #crownBtn, #editWho, #whoText, #chatPill")) return;   // v4.8 : « Salut … » n'ouvre plus rien (journal déjà dans l'onglet Roxy)
       sheetRoxy();
     }); }
+
+  // ---------- 💬 v4.8 : tchat avec Roxy (questions toutes faites, réponses calculées sur le téléphone : rien n'est envoyé) ----------
+  // Les coins (~100 m) déjà vus (game.seen) sont rangés en 8 directions autour de la maison, à 2,2 km au plus.
+  function chatSectors(){
+    ensureGame(); const h = game.home; if (!h) return null;
+    const today = dayNum(), sec = DIRS.map((d, i) => ({ i, dir: d, known: 0, fresh: 0, last: -1, m: 0 }));
+    for (const [c, d] of Object.entries(game.seen || {})){
+      const ab = c.split(":").map(Number); if (ab.length !== 2 || ab.some(isNaN)) continue;
+      const p = { lat: (ab[0] + .5) * 0.0009, lon: (ab[1] + .5) * 0.0013 }, m = dist(h, p);
+      if (m < 120 || m > 2200) continue;
+      const s = sec[Math.round(bearing(h, p) / 45) % 8]; s.known++; s.m += m;
+      if (today - d >= FRESH_DAYS) s.fresh++;
+      if (d > s.last) s.last = d;
+    }
+    return { sec, today };
+  }
+  const chatVers = s => "vers " + s.dir;
+  const chatKm = m => m >= 1000 ? `${(m / 1000).toFixed(1).replace(".", ",")} km` : `${Math.round(m / 50) * 50} m`;
+  function chatAnswer(q){
+    const S = chatSectors();
+    const goBtns = [["map", "🗺️ Voir sur la carte"], ["go", "▶️ On y va"]];
+    if (q === "mood"){ let t = "Wouaf !"; try{ t = sayNext(); }catch(e){} return { t: esc(t), acts: [["go", "▶️ On sort ?"]] }; }
+    if (q === "status"){
+      const w = weekStats(Date.now()), goal = Math.max(30, +opt("weekMin") || 210), n = game.streak.n || 0;
+      const alive = n && (game.streak.day === dayKey(Date.now()) || streakAlive(game.streak.day));
+      const lv = levelOf(game.total || 0), { mine } = exploMe();
+      return { t: `Cette semaine : <b>${fmtMin(w.min)}</b> sur ${fmtMin(goal)} (${Math.min(100, Math.round(100 * w.min / goal))} %).`
+        + `<br>🔥 Série : <b>${alive ? n : 0} jour${alive && n > 1 ? "s" : ""}</b>.`
+        + (isTester() ? "" : `<br>🧭 Classement : ${mine ? `<b>${mine.r === 1 ? "1er 👑" : mine.r + "e"}</b>` : "pas encore classé cette semaine"}.`)
+        + (lv.next ? `<br>${esc(lv.name)} → ${esc(lv.next[1])} dans <b>${Math.round(lv.next[0] - (game.total || 0)).toLocaleString("fr-FR")} 🪙</b>.` : ""), acts: [["go", "▶️ On y va"]] };
+    }
+    if (!S) return { t: "Pas encore de balade sur ce téléphone : fais-en une et je te dirai où on n'est pas allés ! 🐾", acts: [["go", "▶️ C'est parti"]] };
+    const { sec, today } = S, known = sec.filter(s => s.known >= 2);
+    if (q === "street"){
+      const best = sec.slice().sort((a, b) => b.fresh - a.fresh)[0];
+      if (best && best.fresh >= 2) return { t: `${chatVers(best)[0].toUpperCase() + chatVers(best).slice(1)} (à ${chatKm(best.m / best.known)} environ), il y a <b>${best.fresh} coins</b> qu'on connaît mais qu'on n'a pas faits depuis ${FRESH_DAYS} jours. Ce sont les rues en fluo sur la carte : elles rapportent plus ! 👃`, acts: goBtns };
+      const wild = sec.slice().sort((a, b) => a.known - b.known)[0];
+      return { t: `Tu as tout refait ces ${FRESH_DAYS} derniers jours, bravo ! 🏅 Alors on découvre : ${chatVers(wild)}, presque tout est encore inconnu 🗺️.`, acts: goBtns };
+    }
+    if (q === "hood"){
+      const old = known.slice().sort((a, b) => a.last - b.last)[0];
+      if (old && today - old.last >= FRESH_DAYS) return { t: `${chatVers(old)[0].toUpperCase() + chatVers(old).slice(1)}, on n'y est pas allés depuis <b>${today - old.last} jours</b> ! Ça doit sentir plein de nouvelles choses 👃`, acts: goBtns };
+      const never = sec.find(s => s.known === 0);
+      if (never) return { t: `Tous nos coins ont été faits il y a moins de ${FRESH_DAYS} jours. Mais ${chatVers(never)}, on n'y est <b>jamais</b> allés ! On tente ? 🧭`, acts: goBtns };
+      return { t: old ? `On est passés partout récemment ! Le coin le moins frais : ${chatVers(old)}, il y a ${today - old.last} jour${today - old.last > 1 ? "s" : ""}.` : "On est passés partout récemment !", acts: goBtns };
+    }
+    return { t: "Wouaf ?", acts: [] };
+  }
+  const CHAT_Q = [["street", "Quelle rue on n'a pas faite ?"], ["hood", "Un coin pas fait depuis longtemps ?"], ["status", "Où on en est ?"], ["mood", "Ça va, Roxy ?"]];
+  function sheetChat(){
+    try{ useTrack("💬 Tchat"); }catch(e){}
+    ensureGame();
+    const av = () => roxyHTML([]);
+    openSheet(`<h2>💬 ${esc(DOG)}</h2><p class="howto" style="margin-top:-6px">Tout est calculé sur ton téléphone, rien n'est envoyé.</p>
+      <div class="chat" id="chatLog"><div class="rx">${av()}<p>Pose-moi une question, je flaire tout ! 🐾</p></div></div>
+      <div class="chatq" id="chatQ">${CHAT_Q.map(([k, l]) => `<button class="ghost" data-q="${k}">${esc(l.replace("Roxy", DOG))}</button>`).join("")}</div>`);
+    const log = $("#chatLog");
+    const scroll = () => { try{ log.lastElementChild.scrollIntoView({ behavior:"smooth", block:"nearest" }); }catch(e){} };
+    document.querySelectorAll("#chatQ button").forEach(b => b.onclick = () => {
+      const q = b.dataset.q;
+      log.querySelectorAll(".acts").forEach(a => a.remove());
+      log.insertAdjacentHTML("beforeend", `<div class="me">${esc(b.textContent)}</div><div class="rx">${av()}<p class="typing">…</p></div>`); scroll();
+      setTimeout(() => {
+        let a; try{ a = chatAnswer(q); }catch(e){ a = { t: "Wouaf ! Je n'ai pas compris… 🐾", acts: [] }; }
+        const ty = log.querySelector("p.typing"); if (!ty) return;
+        ty.classList.remove("typing"); ty.innerHTML = a.t;
+        if (a.acts.length) ty.closest(".rx").insertAdjacentHTML("afterend", `<div class="acts">${a.acts.map(([k, l]) => `<button class="${k === "go" ? "" : "ghost"}" data-ca="${k}">${l}</button>`).join("")}</div>`);
+        log.querySelectorAll("[data-ca]").forEach(x => x.onclick = () => { closeSheet(); setTimeout(x.dataset.ca === "map" ? () => openExplore() : startQuestion, 200); });
+        scroll();
+      }, 550);
+    });
+  }
+  { const cp = document.getElementById("chatPill"); if (cp) cp.addEventListener("click", e => { e.stopPropagation(); sheetChat(); }); }
   // ---------- ❓ Aide (v2.4) : tuto, règles, questions fréquentes, bulles d'aide ----------
   function sheetHelp(){
     const q = (t, a) => `<details class="entry" style="display:block"><summary style="font-weight:700;cursor:pointer">${t}</summary><p style="margin:8px 0 2px">${a}</p></details>`;
@@ -3322,7 +3438,7 @@
         return `<span class="r${x.r === 1 ? " c1" : ""}${isMe ? " me" : ""}"><b>${x.r}</b>${isMe ? "Toi" : escN(x.w)}${x.r === 1 ? CROWN_SVG : ""}</span>`; }).join("")
         : `<span class="r none">${me && !isTester() ? "Personne encore : prends la tête !" : "Personne encore cette semaine"}</span>`;
     }catch(e){ rows = `<span class="r none">Le classement arrive</span>`; }
-    return `<button class="bt rank" data-lot="rank" aria-label="Classement : touche pour voir le podium et défier quelqu'un"><span class="live">⚔️ DÉFIER</span>${rows}</button>`;   // v4.6 (Éric, 20/11 20 h 07) : « Défier » à la place de « en direct »
+    return `<button class="bt rank" data-lot="rank" aria-label="Classement en direct : touche pour voir le podium"><span class="live red"><i></i>EN DIRECT</span>${rows}</button>`;   // v4.8 (Éric, 21/11) : « EN DIRECT » revient ; Défier = l'onglet ⚔️ de la barre
   }
   // 💰 tuile argent « Billets » : le cadeau argenté d'Éric et le coffre
   function sheetBills(){
@@ -3398,13 +3514,11 @@
       body = `<div class="props">${lead("cc", "💩", "Le roi du caca")}${lead("pp", "💧", "L'arroseur du quartier")}${lead("nc", "🗺️", "Celui qui connaît toutes les rues")}${lead("km", "📏", "Les jambes les plus longues")}${lead("best", "⏱️", "Le plus patient")}${lead("early", "🌅", "Debout avant les poules")}${lead("rain", "🌧️", "Même pas peur de la pluie")}</div>
         ${Object.keys(f).length ? `<p class="howto" style="line-height:1.6;margin-top:10px">${funnyLines(f).map(esc).join("<br>")}${f.ob ? `<br>🐾 ${f.ob} objet${f.ob > 1 ? "s" : ""} ramassé${f.ob > 1 ? "s" : ""} en route.` : ""}</p>` : `<p class="howto" style="text-align:center;margin-top:18px">Les chiffres marrants arrivent avec les premières balades du mois.</p>`}`;
     }
-    const canDuel = duelOK(), prev = isTester() && PUSH_API;
     openSheet(`<h2 style="text-align:center">🏆 Le classement</h2>
       <div class="seg rtabs" role="tablist">${RANK_TABS.map(([k, l]) => `<button role="tab" data-rt="${k}" class="${k === rankTab ? "on" : ""}" aria-selected="${k === rankTab}">${l}</button>`).join("")}</div>
       <p class="howto" style="text-align:center;margin:8px 0 0">${esc(sub)}</p>${body}
-      <div class="btns">${canDuel || prev ? `<button id="rkDuel">⚔️ Défier${prev ? " (aperçu)" : ""}</button>` : ""}<button class="ghost" id="rkGo">▶️ Partir explorer</button></div>`);
+      <div class="btns"><button id="rkGo">▶️ Partir explorer</button></div>`);
     document.querySelectorAll("[data-rt]").forEach(b => b.onclick = () => sheetRanks(b.dataset.rt));
-    if ($("#rkDuel")) $("#rkDuel").onclick = async () => { closeSheet(); if (prev) return duelPreview(); try{ await loadDuels(); }catch(e){} setTimeout(sheetDuels, 120); };
     $("#rkGo").onclick = () => { closeSheet(); setTimeout(startQuestion, 200); };
   }
   // 👑 v4.5 : la couronne se vole. Si je l'avais (1er en direct) et que quelqu'un passe devant : « 😱 X m'a piqué la couronne ! »
@@ -4092,7 +4206,12 @@
     go("muSupZ", () => openReset(supAuth()));
   }
   $("#menuBtn").addEventListener("click", openMenu);
-  // 🧭 v4.7 barre d'onglets : Accueil · Roxy · Classement · Album · Moi (remplace le ☰)
+  // 🧭 barre d'onglets (v4.7) ; v4.8 : Accueil · ⚔️ Défier · 🐶 Roxy (au milieu) · Album · Moi — le classement s'ouvre par la tuile du podium
+  function tabDuel(){
+    if (isTester() && PUSH_API) return duelPreview();
+    if (duelOK()) return sheetDuels();
+    toast(profile.walker ? "⚔️ Les défis ont besoin du réseau : réessaie dans un moment" : "⚔️ Dis-nous d'abord qui tu es pour défier les autres", 2800);
+  }
   function tabGo(t){
     const sheetOpen = $("#modal") && $("#modal").classList.contains("open");
     if (sheetOpen) closeSheet();
@@ -4101,9 +4220,10 @@
       if (t === "home"){ if (document.body.classList.contains("page")) switchTab("walks"); }
       else if (t === "roxy") sheetRoxy();
       else if (t === "rank") sheetRanks();
+      else if (t === "duel") tabDuel();
       else if (t === "album"){ switchTab("prog"); setTimeout(() => { const g = $("#phGrid"); if (g) g.scrollIntoView({ behavior:"smooth", block:"center" }); }, 80); }
       else if (t === "moi") openMenu();
-      mark(t === "roxy" || t === "rank" || t === "moi" ? "home" : t);
+      mark(t === "roxy" || t === "rank" || t === "moi" || t === "duel" ? "home" : t);
     }, sheetOpen ? 140 : 0);
   }
   document.querySelectorAll("#tabbar button").forEach(b => b.addEventListener("click", () => tabGo(b.dataset.t)));
@@ -4175,7 +4295,7 @@
     $("#rxJournal").onclick = () => { closeSheet(); setTimeout(sheetJournal, 120); };
     $("#rxPop").onclick = () => { closeSheet(); setTimeout(dailyPop, 120); };
     $("#rxOuts").onclick = () => { closeSheet(); setTimeout(sheetOuts, 120); };
-    $("#rxSay").onclick = () => { closeSheet(); setTimeout(() => { try{ showSay(sayNext()); }catch(e){ toast("🐶 Wouaf !", 1600); } }, 160); };
+    $("#rxSay").onclick = () => { closeSheet(); setTimeout(sheetChat, 160); };   // v4.8 : « Parle-moi » = le tchat
     $("#tamaProg").onclick = () => { closeSheet(); switchTab("prog"); setTimeout(() => $("#views").scrollIntoView({ behavior:"smooth" }), 50); };
     $("#tamaClose").onclick = closeSheet;
   }
@@ -5604,6 +5724,7 @@
 
   // ---------- 🎉 Confettis ----------
   function confetti(){
+    if (xmasOn()) return snowfall();   // v4.8 (lot 4) : en décembre, de la neige partout où il y avait des confettis
     try{
       const c = document.createElement("canvas"); c.className = "confetti"; c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
       document.body.appendChild(c);
@@ -5615,6 +5736,25 @@
         x.clearRect(0, 0, c.width, c.height);
         for (const p of ps){ p.x += p.vx * k; p.y += p.vy * k; p.vy += .05 * dpr * k; p.r += p.vr * k; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.c; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); }
         if (ps.some(p => p.y < c.height + 20 * dpr) && now - t0c < 7000) requestAnimationFrame(step); else c.remove();   // jusqu'en bas de l'écran
+      };
+      requestAnimationFrame(step);
+    }catch(e){}
+  }
+
+  function snowfall(){
+    try{
+      const c = document.createElement("canvas"), dpr = devicePixelRatio || 1; c.className = "confetti"; c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+      document.body.appendChild(c);
+      const x = c.getContext("2d");
+      const fl = Array.from({ length: 110 }, () => ({ x: Math.random() * c.width, y: -Math.random() * c.height * .7, r: (1.6 + Math.random() * 3.4) * dpr, vy: (1 + Math.random() * 1.8) * dpr, ph: Math.random() * 6.28, sw: .4 + Math.random() * .9 }));
+      const t0 = performance.now(); let last = t0;
+      const step = now => {
+        const k = Math.min(4, (now - last) / 16.7), age = now - t0; last = now;
+        x.clearRect(0, 0, c.width, c.height);
+        x.globalAlpha = age > 6000 ? Math.max(0, 1 - (age - 6000) / 1000) : 1;
+        x.fillStyle = "rgba(255,255,255,.96)"; x.shadowColor = "rgba(60,90,130,.55)"; x.shadowBlur = 4 * dpr;
+        for (const p of fl){ p.y += p.vy * k; p.x += Math.sin(p.ph + age / 650 * p.sw) * .55 * dpr * k; x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.2832); x.fill(); }
+        if (age < 7000 && fl.some(p => p.y < c.height + 10 * dpr)) requestAnimationFrame(step); else c.remove();
       };
       requestAnimationFrame(step);
     }catch(e){}
@@ -7071,7 +7211,8 @@
     const h = document.documentElement, on = homeB2On();
     h.classList.toggle("homeb2", on);
     const fl = $("#goFloat");
-    if (fl && !fl.dataset.ok){ fl.dataset.ok = 1; ["#weekBar", "#home", "#homeFoot"].forEach(sel => { const e = $(sel); if (e) fl.appendChild(e); }); }
+    if (fl && !fl.dataset.ok){ fl.dataset.ok = 1; ["#weekBar", "#home"].forEach(sel => { const e = $(sel); if (e) fl.appendChild(e); }); }
+    { const tb = $("#tabbar"), hf = $("#homeFoot"); if (tb && hf && hf.parentNode !== tb) tb.appendChild(hf); }   // v4.8 : « v4.8 · CROQUETTE » tout en bas, sous les onglets
     if (!on) return;
     const hero = document.querySelector(".hero"); if (!hero) return;
     const tb = $("#tabbar"), tbOn = !!(tb && getComputedStyle(tb).display !== "none");   // v4.7 : le bas = le haut de la barre d'onglets telle qu'elle est dessinée (plus la hauteur de l'écran : l'iPhone ne dessine rien sous 793)
@@ -7218,7 +7359,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 60: "Croquette", 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette", 59: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 61: "Croquette", 60: "Croquette", 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette", 59: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -7401,8 +7542,13 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 60, APP_LABEL = "4.7";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 61, APP_LABEL = "4.8";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    61: [
+      "⚔️ En bas : Accueil · Défier · Roxy (au milieu) · Album · Moi. Le classement s'ouvre en touchant le podium « EN DIRECT ».",
+      "💬 Sous « Salut », pose des questions à Roxy : quelle rue on n'a pas faite, un coin oublié… (tout reste sur ton téléphone).",
+      "🎄 En décembre : guirlande, bonnet de Noël pour Roxy et de la neige à la place des confettis."
+    ],
     60: [
       "🧭 Une barre d'onglets en bas : Accueil · Roxy · Classement · Album · Moi.",
       "💧💩 Pipi et Caca : deux gros boutons tout en haut de la barre de balade.",
@@ -7693,7 +7839,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), sheetChat, chatAnswer, chatSectors, confetti, xmasOn, roxyHTML, tabGo, sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

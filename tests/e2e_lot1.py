@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','60');"
+def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','61');"
     "localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');"
     "localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-surp', JSON.stringify({ o:'2099-01-01' }));localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % who)
 EV = lambda P, js: P.evaluate(js)
@@ -18,7 +18,7 @@ with sync_playwright() as pw:
     c.route(API_HOST + "/honors", lambda r: None)   # le serveur ne répond pas (réseau lent) : la fiche doit s'ouvrir quand même
     P.emulate_media(color_scheme="dark"); P.set_viewport_size({"width": 393, "height": 852}); open_app(P, 2500)
     rt = P.inner_text("[data-lot='rank']")
-    check("tuile classement : « ⚔️ DÉFIER », plus « EN DIRECT »", "DÉFIER" in rt and "EN DIRECT" not in rt, rt)
+    check("v4.8 : tuile classement : « EN DIRECT » revient, plus « DÉFIER »", "EN DIRECT" in rt and "DÉFIER" not in rt, rt)
     P.click("[data-lot='rank']"); P.wait_for_timeout(400)
     check("toucher le classement : la fiche s'ouvre tout de suite, même si le serveur ne répond pas", is_open(P) and "Le classement" in P.inner_text("#sheet"), P.inner_text("#sheet")[:100] if is_open(P) else "fermée")
     tabs = P.locator("#sheet [data-rt]").all_inner_texts()
