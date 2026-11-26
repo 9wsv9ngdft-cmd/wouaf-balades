@@ -597,6 +597,47 @@
   #walkbar .needs{display:flex;gap:10px;width:100%;margin:0 0 10px} #walkbar .needs button{flex:1;padding:14px 4px;font-size:18px;font-weight:900;border-radius:16px;color:#fff;background:#2a6fb0} #walkbar .needs #needC{background:#7a5232} #walkbar .needs button.on{background:#fff;color:#1f2a22} #walkbar.mini .needs{margin-bottom:6px} #walkbar.mini .needs button{padding:9px 4px;font-size:16px}
   #walkbar.mini{padding-top:8px} #walkbar.mini .wline,#walkbar.mini .wbtns{display:none} #walkbar.mini #wGain{font-size:26px} #walkbar.mini #wGain .csi{width:22px;height:22px} #walkbar.mini #wTime{font-size:22px}
   #walkbar.mini::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:#555;margin:0 auto 6px}
+  /* 🕵️ v4.9 : Les Enquêtes de Roxy (dossier kraft, polices du téléphone) */
+  #wEnq{background:#c9a56f;color:#261e16;border-radius:8px;padding:9px 11px 8px;margin:0 0 10px}
+  #wEnq[hidden],body.express #wEnq{display:none !important}
+  #wEnq .eh{display:flex;justify-content:space-between;gap:8px;font-family:"American Typewriter","Courier New",monospace;font-size:11.5px;letter-spacing:.8px;color:#4a3519;text-transform:uppercase}
+  #wEnq .eh span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #wEnq .er{display:flex;align-items:center;gap:10px;margin-top:5px}
+  #walkbar #wEnq #wePause{width:44px;height:44px;flex:none;border-radius:22px;background:#261e16;color:#f3ead6;display:flex;align-items:center;justify-content:center;padding:0}
+  #walkbar #wEnq .et{display:block;flex:1;min-width:0;background:none;color:#261e16;padding:0;text-align:left;border-radius:0;box-shadow:none}
+  #wEnq .et b{display:block;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:17px;line-height:1.1}
+  #wEnq .et small{display:block;font-size:13px;color:#3b2a14;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-weight:500}
+  #wEnq .eb{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-top:8px} #wEnq .eb:empty{display:none}
+  #wEnq .eb i{height:6px;border-radius:3px;background:rgba(38,30,22,.22)} #wEnq .eb i.on{background:#261e16} #wEnq .eb i.now{background:#9e2a1e}
+  #wEnq .ef{font-family:"American Typewriter","Courier New",monospace;font-size:12px;color:#4a3519;margin-top:5px;text-align:center} #wEnq .ef:empty{display:none}
+  #walkbar.mini #wEnq .et small,#walkbar.mini #wEnq .eb,#walkbar.mini #wEnq .ef{display:none}
+  #sheet button.enqcard{display:block;width:100%;text-align:left;background:#c9a56f;color:#261e16;border-radius:8px;padding:16px 14px 14px;margin:0 0 12px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.25);font-weight:400}
+  .enqcard .k{display:block;max-width:215px;font-family:"American Typewriter","Courier New",monospace;font-size:11.5px;letter-spacing:1.5px;color:#5a3f1c}
+  .enqcard b.t{display:block;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:25px;line-height:1.05;margin:5px 0 6px;max-width:250px}
+  .enqcard .d{display:block;font-size:14px;line-height:1.4;color:#3b2a14;max-width:245px}
+  .enqcard .go{display:inline-flex;align-items:center;gap:6px;background:#261e16;color:#f3ead6;border-radius:999px;padding:10px 15px;font-weight:800;font-size:14.5px;margin-top:11px}
+  .enqcard .m{font-family:"American Typewriter","Courier New",monospace;font-size:13px;color:#4a3519;margin-left:10px}
+  .enqcard .st{position:absolute;right:14px;bottom:66px;border:3px solid #9e2a1e;color:#9e2a1e;font-family:"American Typewriter","Courier New",monospace;font-size:11.5px;letter-spacing:2px;padding:2px 7px;transform:rotate(-8deg);opacity:.9}
+  .enqcard .tape,.enqv .tape{position:absolute;right:-62px;top:12px;transform:rotate(28deg);background:#f2c230;color:#1b1407;font-family:"American Typewriter","Courier New",monospace;font-size:9.5px;letter-spacing:1px;padding:3px 50px;white-space:nowrap}
+  .enqv{position:relative;overflow:hidden;background:#d8b97f;color:#261e16;border-radius:8px;padding:34px 14px 14px;margin:-2px 0 0}
+  .enqv .tape{left:-20px;right:-20px;top:8px;transform:rotate(-2deg);text-align:center;padding:3px 0;overflow:hidden}
+  .enqv .k{font-family:"American Typewriter","Courier New",monospace;font-size:11.5px;letter-spacing:1.2px;color:#5a3f1c;margin:6px 0 4px}
+  .enqv h2{font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:27px;line-height:1.05;margin:0 0 6px;color:#261e16}
+  .enqv .rc,.enqv .nt{font-size:14px;line-height:1.45;color:#3b2a14;margin:0 0 10px}
+  .enqv .ech{display:flex;flex-direction:column;gap:8px}
+  #sheet .enqv .ech button{display:flex;align-items:center;justify-content:flex-start;gap:10px;min-height:60px;width:100%;padding:9px 12px;border-radius:10px;background:#f3ead6;color:#261e16;border:2px solid #261e16;text-align:left;font-weight:400}
+  #sheet .enqv .ech button.on{background:#261e16;color:#f3ead6}
+  .enqv .ech .l{font-family:"American Typewriter","Courier New",monospace;font-size:18px;width:24px;flex:none}
+  .enqv .ech button>span:last-child{text-align:left;flex:1;min-width:0} .enqv .ech b{display:block;font-size:16px} .enqv .ech small{display:block;font-size:13px;opacity:.85}
+  .enqv .seal{margin:12px 0 8px;border:3px solid #9e2a1e;color:#9e2a1e;font-family:"American Typewriter","Courier New",monospace;font-size:13px;letter-spacing:1.2px;padding:7px 8px;transform:rotate(-2deg);text-align:center}
+  .enqv .seal[hidden]{display:none}
+  #sheet .enqv .btns button{color:#261e16;border-color:#261e16}
+  .enqbook{background:#c9a56f;color:#261e16;border-radius:8px;padding:6px 12px;margin:0 0 12px}
+  .enqbook .er{display:flex;align-items:center;gap:10px;min-height:56px;border-bottom:1px dashed rgba(38,30,22,.35)} .enqbook .er:last-child{border-bottom:0}
+  .enqbook .nn{font-family:"American Typewriter","Courier New",monospace;font-size:13px;width:20px;color:#5a3f1c}
+  .enqbook .tt{flex:1;min-width:0} .enqbook .tt b{display:block;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:16.5px;line-height:1.1} .enqbook .tt small{display:block;font-size:12.5px;color:#4a3519;margin-top:2px}
+  .enqbook .stp{font-family:"American Typewriter","Courier New",monospace;font-size:11px;letter-spacing:1px;padding:2px 6px;border:2px solid;white-space:nowrap;transform:rotate(-6deg)}
+  .enqbook .stp.red{color:#9e2a1e} .enqbook .stp.blue{color:#2d3e55;transform:rotate(4deg)} .enqbook .stp.grey{color:#6a5a48}
   #wChips,#wFlair,#wTreasure,#roxyMenu,#coach{display:none}
   body.walking #wChips{display:flex;position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top) + 8px);z-index:1001;gap:6px}
   #wChips span{flex:1;background:rgba(23,28,24,.92);color:#eef1ec;border-radius:14px;padding:6px 4px;text-align:center;font-size:19px;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.45);line-height:1.15}
@@ -1044,6 +1085,7 @@
   <div id="walkBanner" class="wbanner" hidden><span id="wbText"></span><div class="wbb"><button id="wbA"></button><button id="wbB"></button></div></div>
   <div class="in">
     <div class="needs"><button id="needP" aria-label="Roxy a fait pipi">💧 Pipi</button><button id="needC" aria-label="Roxy a fait caca">💩 Caca</button></div>
+    <div id="wEnq" hidden><div class="eh"><span id="weEp"></span><span id="weN"></span></div><div class="er"><button id="wePause" aria-label="Mettre l'enquête en pause"></button><button class="et" id="weReplay" aria-label="Réécouter ce passage"><b id="weTitle"></b><small id="weSub"></small></button></div><div class="eb" id="weBar"></div><div class="ef" id="weNext"></div></div>
     <div class="wnums"><b id="wGain">+0 🪙</b><span class="wtm"><b id="wTime">0 min</b><small id="wDist"></small></span></div>
     <div class="wline" id="wLine"></div>
     <div class="wstats" hidden><div id="walkstats"><b>0 min</b><br>C'est parti !</div><div class="tip" id="walktip">📱 Garde l'app ouverte, ne verrouille pas l'écran</div><div class="tip radar" id="radar"></div></div>
@@ -1080,7 +1122,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-24.091408";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-26.202152";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -2074,7 +2116,7 @@
   // Sortie obligatoire : 1 balade d'au moins 20 min par jour (MONEY_MIN). Elle ne rapporte rien pour la durée (seulement les bonus) :
   // la durée ne paie qu'au-delà de 20 min. Plafond doux : au-delà de 15 € dans le mois, gains ÷ 4 ; plafond final 20 € (secrets).
   // 🎛️ v4.7 Superviseur › Options : réglages de jeu communs à la famille (interrupteurs et montants), posés par Éric, lus via /pause, gardés sur le téléphone (`wouaf-opts`).
-  const OPT_DEF = { surp:false, sOpen:true, sBack:true, sRead:true, sJab:true, jabPen:false, jabAmt:1, fine:true, fineAmt:150, weekMin:210, plus:15 };
+  const OPT_DEF = { surp:false, sOpen:true, sBack:true, sRead:true, sJab:true, jabPen:false, jabAmt:1, fine:true, fineAmt:150, weekMin:210, plus:15, enq:true, enqLieux:true, enqRues:true, enqDur:20, enqCs:50 };
   const opt = k => { let o = {}; try{ o = JSON.parse(localStorage.getItem("wouaf-opts") || "{}") || {}; }catch(e){} return (k in o) ? o[k] : OPT_DEF[k]; };
   const MONEY_MIN = 20; const applyOpts = () => {};   // la balade minimum reste 20 min (la changer serait rétroactif : gains et amendes passées)
   const REF_MIN = 25, REF_EUR = 0.35, MONEY_SOFT = 15, MONEY_MAX = 20, MONEY_POW = 1.5;
@@ -3011,7 +3053,7 @@
     if ($("#modal").classList.contains("open") || document.body.classList.contains("recap")) return false;   // récap ouvert : on attend qu'il soit fermé
     // téléphone neuf (rien à effacer) : pas d'écran « tout repart », juste le tuto normal
     if (!localStorage.getItem(GAME_KEY) && !store.get("wouaf-tuto", 0) && !getLog().length){ store.set(RESET_VU, r); return false; }
-    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-hpos", "wouaf-cl-sent", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu"]) try{ localStorage.removeItem(k); }catch(e){}
+    for (const k of [GAME_KEY, LOG_KEY, TRACE_KEY, "wouaf-envois", "wouaf-autres", "wouaf-last", "wouaf-tresor", "wouaf-hpos", "wouaf-cl-sent", "wouaf-duels", "wouaf-record", "wouaf-explo", "wouaf-fam", "wouaf-bk", SAVED_KEY, CUR_KEY, END_KEY, "wouaf-tuto", "wouaf-vu", "wouaf-enq"]) try{ localStorage.removeItem(k); }catch(e){}
     try{ await phTx("readwrite", st => st.clear()); }catch(e){}         // album photo (IndexedDB)
     // le jeu en mémoire repart aussi de zéro (sinon un enregistrement avant le rechargement ramènerait l'ancien) ;
     // premier jour d'utilisation = demain : les amendes repartent demain
@@ -3937,6 +3979,12 @@
   // 🔑 tout ce que fait le superviseur, au même endroit
   // 🎛️ v4.7 Superviseur › Options (Éric, 21/11 12 h 10 / 12 h 28) : interrupteurs et montants pour toute la famille, gardés côté serveur (/opts-set), lus par chaque téléphone via /pause.
   // Montants changés = appliqués à partir de maintenant, jamais rétroactifs.
+  function enqWho(){   // 🕵️ qui écoute les Enquêtes (option « enqNo<prénom> » = n'écoute pas)
+    const seen = {}, l = [];
+    for (const v of Object.values(namesMap || {})){ const k = v && v.k; if (!k || seen[enqSlug(k)] || /^[ée]ric$/i.test(String(k).normalize("NFD").replace(/[\u0300-\u036f]/g, ""))) continue; seen[enqSlug(k)] = 1; l.push(k); }
+    if (!l.length) return "";
+    return `<p class="howto" style="margin:10px 0 4px"><b>Qui écoute les Enquêtes</b></p>` + l.map(k => `<label class="optr"><span>${esc(nm(k))}</span><input type="checkbox" data-o="enqNo${enqSlug(k)}" data-inv="1" ${opt("enqNo" + enqSlug(k)) ? "" : "checked"}></label>`).join("");
+  }
   function sheetOptions(){
     const cur = {}; Object.keys(OPT_DEF).forEach(k => { cur[k] = opt(k); });
     const sw = (k, t, sub) => `<label class="optr"><span>${t}${sub ? `<small>${sub}</small>` : ""}</span><input type="checkbox" data-o="${k}" ${cur[k] ? "checked" : ""}></label>`;
@@ -3950,10 +3998,14 @@
       ${sw("fine", "Amende un jour sans balade")}${nb("fineAmt", "Montant", "🪙", "dès le 1er décembre")}
       <h3 class="optt">🎯 Objectifs</h3>
       ${nb("weekMin", "Objectif « Ta semaine »", "min", "3 h 30 = 210")}${nb("plus", "« Propose-moi » un peu plus long", "%")}
+      <h3 class="optt">🕵️ Les Enquêtes de ${esc(DOG)}</h3>
+      ${sw("enq", "Enquêtes allumées", "éteintes : rien ne change dans l'app")}${sw("enqLieux", "Vrais lieux du quartier", "faits d'histoire à moins de 500 m, cherchés sur le téléphone")}${sw("enqRues", "Indices vers les rues pas faites", "la piste mène là où personne n'est passé")}
+      ${nb("enqDur", "Durée d'un épisode", "min", "15, 20 ou 30")}${nb("enqCs", "Bonne réponse", "🪙")}
+      ${enqWho()}
       <div class="btns"><button id="opSave">Enregistrer</button><button class="ghost" id="opBack">← Superviseur</button></div><p id="opMsg" role="status"></p>`);
     $("#opBack").onclick = sheetSupMenu;
     $("#opSave").onclick = async () => {
-      const o = {}; document.querySelectorAll("#sheet [data-o]").forEach(el => { o[el.dataset.o] = el.type === "checkbox" ? el.checked : Math.max(0, +el.value || 0); });
+      const o = {}; document.querySelectorAll("#sheet [data-o]").forEach(el => { o[el.dataset.o] = el.type === "checkbox" ? (el.dataset.inv ? !el.checked : el.checked) : Math.max(0, +el.value || 0); });
       const m = $("#opMsg"); m.textContent = "Un instant…";
       try{ const r = await api("/opts-set", Object.assign({}, supAuth(), { opts: o })); const j = await r.json(); if (!r.ok || !j.ok) throw 0;
         store.set("wouaf-opts", j.opts); applyOpts(); try{ renderHome(); }catch(e){} m.textContent = "✅ Enregistré pour toute la famille."; }
@@ -4160,6 +4212,7 @@
       ${li("muAlbum", "📸", "Album photo", "")}
       ${li("muEvt", "🎄", "Événements spéciaux", aventDayNum() ? (aventPending() ? "ta case t'attend !" : "calendrier de l'Avent") : "")}
       ${li("muToday", "📋", "Missions du jour", "")}
+      ${enqOn() ? li("muEnq", "🕵️", "Les Enquêtes de " + esc(DOG), "carnet d'enquête") : ""}
       ${li("muHelp", "❓", "Aide", "comment ça marche, règles, questions")}
       ${PUSH_API ? li("muBug", bugIcon(22), "Signaler un bug", "") : ""}
       ${PUSH_API && supToken() ? li("muSupAll", "🔑", "Superviseur", "") : ""}
@@ -4188,7 +4241,7 @@
     go("muShort", sheetShortcut);
     { const b = $("#muSon"); if (b) b.onclick = () => { setSound(!soundOn()); openMenu(); toast(soundOn() ? "🔊 Sons activés" : "🔇 Sons coupés"); }; }
     go("muTuto", () => showTuto(0, true));
-    go("muToday", sheetToday);
+    go("muToday", sheetToday); go("muEnq", sheetEnquetes);
     go("muEvt", () => sheetEvents());
     go("muHelp", sheetHelp);
     go("muBug", sheetBug);
@@ -6294,6 +6347,7 @@
     if (!resume) setTimeout(() => { if (state.walk) coach("roxy", `👆 Touche ${DOG} sur la carte pour pipi, caca ou photo`, "mid"); }, 4000);
   }
   function walkUIEnd(){
+    try{ enqEnd(); }catch(e){}
     clearInterval(flairIv); flairIv = null; clearTimeout(miniT); $("#walkbar").classList.remove("mini");
     if (pawLayer) pawLayer.clearLayers(); lastPaw = null; if (trailLayer) trailLayer.clearLayers();
     ["#wFlair", "#wTreasure", "#roxyMenu", "#coach"].forEach(k => { $(k).hidden = true; });
@@ -6303,6 +6357,7 @@
     const p = state.walk; if (!p) return;
     const elapsed = (Date.now() - t0) / 60000;
     try{ checkForgot(); }catch(e){}
+    try{ enqTick(); }catch(e){}
     if (q){
       let best = 0, bd = Infinity;
       for (let k = 0; k < p.line.length; k++){
@@ -7359,7 +7414,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
 
   // ---------- 🔢 Ligne du bas (v2.4) : version + nom de code + compteur de la famille ; 🤫 un secret derrière ----------
-  var CODENAMES = { 61: "Croquette", 60: "Croquette", 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette", 59: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
+  var CODENAMES = { 62: "Croquette", 61: "Croquette", 60: "Croquette", 38: "Croquette", 39: "Croquette", 40: "Croquette", 41: "Croquette", 42: "Croquette", 43: "Croquette", 44: "Croquette", 45: "Croquette", 46: "Croquette", 47: "Croquette", 48: "Croquette", 49: "Croquette", 50: "Croquette", 51: "Croquette", 52: "Croquette", 53: "Croquette", 54: "Croquette", 55: "Croquette", 56: "Croquette", 57: "Croquette", 58: "Croquette", 59: "Croquette" };   // décidé le 15/11 : toujours « Croquette »
   function renderFoot(){
     const f = $("#homeFoot"); if (!f) return;
     const fam = store.get("wouaf-fam", null), km = fam && fam.m ? fam.m / 1000 : 0;
@@ -7436,11 +7491,223 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
       return PROP_VALS.find(v => v >= want && v >= 30) || 90;
     }catch(e){ return 30; }
   }
+  // ---------- 🕵️ v4.9 : Les Enquêtes de Roxy (maquette validée par Éric le 26/11 à 20 h 06) ----------
+  // Une série audio lue par la voix du téléphone (comme Fediv), qui ne s'écoute qu'en balade. Un passage tous les « durée / 5 » minutes ;
+  // si on rentre avant la fin, on reprend au dernier indice. Fin d'épisode = « Qui a fait le coup ? » (3 choix), réponse à la balade suivante.
+  // Tout reste sur le téléphone (`wouaf-enq`). Vrais lieux : `enquetes-lieux.json` (faits d'histoire de Fediv, sans crimes ni attentats, avant 1991),
+  // le fichier entier est chargé et filtré ICI (rien sur le quartier dans le dépôt, aucune position envoyée).
+  const ENQ_KEY = "wouaf-enq", ENQ_TOTAL = 8;
+  const ENQ_EPS = [
+    { n: 1, title: "L'odeur de cannelle", next: "Le témoin du nord",
+      pitch: "Chaque nuit, une décoration de Noël disparaît dans le quartier. Roxy a flairé quelque chose.",
+      ch: [
+        { t: "Générique", sub: "Une nouvelle affaire", say: "Les Enquêtes de Roxy. Épisode un : L'odeur de cannelle. Depuis trois nuits, quelque chose cloche dans le quartier. Une guirlande arrachée à un balcon. Un ruban rouge envolé d'une couronne de porte. Personne n'a rien vu. Personne… sauf un nez. Celui de Roxy. Ce soir, elle tire sur la laisse plus fort que d'habitude. Elle a flairé une piste. Toi, tu tiens la laisse. À vous deux, vous êtes la seule brigade du quartier encore en service. On y va ?" },
+        { t: "La cannelle", sub: "« Laisse Roxy renifler au prochain coin… »", say: "Indice numéro un. Arrête-toi au prochain coin de rue. Laisse Roxy renifler, prends ton temps : une enquête, ça ne se presse pas. Tu sens ? Non, bien sûr, tu n'as pas son nez. Mais Roxy, elle, a reconnu l'odeur. La même que sur chaque balcon dévalisé : de la cannelle. Pas un parfum, pas une bougie. De la vraie cannelle, celle des gâteaux. Quelqu'un est passé ici avec ça sur les mains. Note-le dans un coin de ta tête. Pièce numéro un." },
+        { t: "Des brins de laine rouge", sub: "« …juste à hauteur de main… »", extra: true, say: "Indice numéro deux. Roxy s'arrête net devant une haie. Accrochés aux branches, juste à hauteur de main, trois brins de laine rouge. De la laine tricotée, toute douce. Comme celle d'un bonnet… ou d'une paire de gants. Pas à hauteur de patte : à hauteur de main. Ça, c'est important. Pièce numéro deux." },
+        { t: "L'heure", sub: "Entre 17 h et 17 h 30", say: "Indice numéro trois. Une voisine a entendu la guirlande tomber hier. Elle en est sûre : c'était entre dix-sept heures et dix-sept heures trente, pendant son feuilleton. À cette heure-là, il fait déjà nuit. Pièce numéro trois. Et ce n'est pas tout. Elle dit qu'un témoin a tout vu depuis sa fenêtre. Il habite {dir}, {rue}. Si tu veux le trouver un jour, c'est par là." },
+        { t: "Les suspects", sub: "Brioche · Fermoir · Moustache", say: "Trois noms reviennent dans le quartier. Madame Brioche, la boulangère. Elle sent la cannelle du matin au soir. Mais sa boutique ferme à dix-neuf heures, et elle ne quitte jamais son comptoir l'après-midi. Monsieur Fermoir, l'horloger. Hiver comme été, il porte des gants en laine rouge tricotés par sa sœur. Et tous les jours, à dix-sept heures pile, il passe acheter un roulé à la cannelle. Et Moustache, le chat du numéro douze. Il rôde toutes les nuits, il grimpe partout… mais un chat, ça n'a pas de mains." },
+        { t: "Qui a fait le coup ?", sub: "À toi de choisir", say: "La cannelle. La laine rouge, à hauteur de main. Entre dix-sept heures et dix-sept heures trente. À toi de jouer : qui a laissé l'odeur de cannelle ? Choisis sur l'écran. Tu auras la réponse à la prochaine balade. Mais avant de rentrer… Roxy s'est retournée. Elle fixe une fenêtre allumée, {dir}. Derrière le rideau, une silhouette vous regarde. Et elle tient quelque chose de rouge à la main. Fin de l'épisode un. La suite : Le témoin du nord." }
+      ],
+      q: { text: "Qui a laissé l'odeur de cannelle ?", recap: "Trois pièces au dossier : la cannelle, la laine rouge, et l'heure, entre 17 h et 17 h 30.", answer: "b",
+        choices: [["a", "Mme Brioche, la boulangère", "Elle sent toujours la cannelle"], ["b", "M. Fermoir, l'horloger", "Il ne quitte jamais ses gants"], ["c", "Moustache, le chat du n° 12", "Il rôde toutes les nuits"]],
+        reveal: "C'était bien Monsieur Fermoir qui est passé sous ce balcon : ses gants rouges, son roulé à la cannelle, dix-sept heures pile. Madame Brioche était derrière son comptoir, et Moustache n'a pas de mains. Mais Monsieur Fermoir jure qu'il n'a rien volé. Il dit qu'il suivait quelqu'un…" } }
+  ];
+  const enqLoad = () => Object.assign({ ep: 1, ch: -1, ans: {}, rev: {}, ok: {}, pieces: [], wait: 0, live: null }, store.get(ENQ_KEY, {}) || {});
+  let enq = enqLoad(), enqTimer = null, enqPlaces = null;
+  const enqSave = () => store.set(ENQ_KEY, enq);
+  const enqSlug = w => wslug(w).replace(/[^a-z0-9]/g, "").slice(0, 19);
+  const enqOn = () => !!opt("enq") && !!profile.walker && !opt("enqNo" + enqSlug(profile.walker));
+  const enqDur = () => Math.min(60, Math.max(10, +opt("enqDur") || 20));
+  const enqEp = n => ENQ_EPS[n - 1] || null;
+  function enqWhat(){   // ce que la fiche de départ propose : verdict à choisir, réponse à écouter, épisode (nouveau ou à reprendre)
+    const r = { verdict: enq.wait && enqEp(enq.wait) && !enq.ans[enq.wait] ? enq.wait : 0, reveal: 0, ep: enqEp(enq.ep) };
+    for (const k of Object.keys(enq.ans)) if (!enq.rev[k] && enqEp(+k)){ r.reveal = +k; break; }
+    return r;
+  }
+  function enqSpeak(text, onend){
+    if (!("speechSynthesis" in window)){ if (onend) setTimeout(onend, 50); return false; }
+    try{
+      const u = new SpeechSynthesisUtterance(String(text).replace(/\s+/g, " ").trim());
+      u.lang = "fr-FR";
+      const vs = speechSynthesis.getVoices().filter(v => /^fr/i.test(v.lang || ""));
+      u.voice = vs.find(v => /Thomas|Amélie|Audrey|Aurélie|Daniel|Henri/i.test(v.name)) || vs[0] || null;
+      u.rate = 0.96; if (onend) u.onend = onend;
+      speechSynthesis.speak(u); return true;
+    }catch(e){ if (onend) setTimeout(onend, 50); return false; }
+  }
+  function enqLoadPlaces(){ if (enqPlaces || !opt("enqLieux")) return; fetch("enquetes-lieux.json").then(r => r.json()).then(j => { if (Array.isArray(j)) enqPlaces = j; }).catch(() => {}); }
+  function enqHere(){ return (typeof track !== "undefined" && track.length) ? track[track.length - 1] : (state.start || game.home || null); }
+  function enqNear(){   // le vrai lieu le plus proche à moins de 500 m (Fediv), calculé sur le téléphone
+    const h = enqHere(); if (!h || !enqPlaces) return null;
+    let best = null;
+    for (const x of enqPlaces){ if (Math.abs(x[1] - h.lat) > 0.006 || Math.abs(x[2] - h.lon) > 0.009) continue;
+      const m = dist(h, { lat: x[1], lon: x[2] }); if (m <= 500 && (!best || m < best.m)) best = { m, title: x[0], date: x[3], cat: x[4], desc: x[5], dir: DIRS[Math.round(bearing(h, { lat: x[1], lon: x[2] }) / 45) % 8] }; }
+    return best;
+  }
+  function enqDir(){   // la piste : direction des rues pas faites depuis 7 jours (comme le tchat), sinon un coin jamais fait
+    const L = enq.live; if (L && L.dir) return L.dir;
+    let dir = "pas très loin d'ici", rue = "dans une rue du quartier";
+    try{ if (opt("enqRues")){ const S = chatSectors(); if (S){
+      const best = S.sec.slice().sort((a, b) => b.fresh - a.fresh)[0];
+      if (best && best.fresh >= 2){ dir = "vers " + best.dir; rue = `dans une rue où personne n'est passé depuis ${FRESH_DAYS} jours`; }
+      else { const wild = S.sec.slice().sort((a, b) => a.known - b.known)[0]; if (wild){ dir = "vers " + wild.dir; rue = "dans un coin où on n'est presque jamais allés"; } }
+    } } }catch(e){}
+    if (L){ L.dir = { dir, rue }; enqSave(); }
+    return { dir, rue };
+  }
+  function enqStart(){   // appelé dans le toucher du départ : la 1re phrase doit partir pendant le geste (iPhone)
+    const w = enqWhat(); if (!w.reveal && !w.ep) return;
+    enq.live = { t0: Date.now(), ep: w.ep ? w.ep.n : 0, first: w.ep ? Math.max(0, enq.ch) : 0, played: {}, paused: 0, dir: null, extra: null };
+    enqSave(); enqLoadPlaces();
+    try{ useTrack("🕵️ Enquête"); }catch(e){}
+    if (w.reveal) enqReveal(w.reveal);
+    enqTick(); enqTimerOn();
+  }
+  function enqTimerOn(){ if (!enqTimer) enqTimer = setInterval(enqTick, 5000); }
+  function enqEnd(){
+    clearInterval(enqTimer); enqTimer = null;
+    if (enq.live){ try{ speechSynthesis.cancel(); }catch(e){} enq.live = null; enqSave(); }
+    const s = $("#wEnq"); if (s) s.hidden = true;
+  }
+  function enqTick(){
+    const L = enq.live; if (!L) return;
+    if (!state.walk){ enqEnd(); return; }
+    enqTimerOn();
+    const ep = enqEp(L.ep);
+    if (ep && !L.paused && !L.done){
+      const el = (Date.now() - L.t0) / 60000, step = enqDur() / 5;
+      for (let c = L.first; c < ep.ch.length; c++){
+        if (L.played[c]) continue;
+        if (el >= (c - L.first) * step) enqPlay(ep, c);
+        break;
+      }
+    }
+    enqUI();
+  }
+  function enqText(s){ const d = enqDir(); return s.replace(/\{dir\}/g, d.dir).replace(/\{rue\}/g, d.rue).replace(/Roxy/g, DOG); }
+  function enqPlay(ep, c){
+    const L = enq.live, last = c === ep.ch.length - 1, x = ep.ch[c];
+    L.played[c] = 1; enq.ch = c;
+    let say = (c === L.first && c > 0 ? "On reprend l'enquête. " : "") + enqText(x.say);
+    if (x.extra && opt("enqLieux")){
+      const f = enqNear();
+      if (f){ L.extra = f; say += ` Extra ! Extra ! À ${Math.max(10, Math.round(f.m / 10) * 10)} mètres, vers ${f.dir} : ${f.title}. ${f.date}. ${f.desc ? f.desc.replace(/\.$/, "") + "." : ""} Roxy renifle le trottoir. Ce quartier a déjà connu des histoires… Retiens bien ce lieu.`;
+        if (!enq.pieces.some(p => p.t === f.title)){ enq.pieces.push({ t: f.title, d: f.date, ep: ep.n }); enq.pieces = enq.pieces.slice(-60); } }
+    }
+    if (last){ L.done = 1; enq.ep = ep.n + 1; enq.ch = -1; enq.wait = ep.n; }
+    enqSave();
+    try{ haptic(1); }catch(e){}
+    enqSpeak(say, last ? () => setTimeout(() => enqVerdictSoon(ep.n), 600) : null);
+    if (last && !("speechSynthesis" in window)) enqVerdictSoon(ep.n);
+  }
+  function enqVerdictSoon(n, tries){   // la fiche du verdict, sans écraser une autre fiche ouverte
+    if (enq.ans[n]) return;
+    tries = tries || 0;
+    if ($("#modal").classList.contains("open") || $("#pocket").hidden === false){ if (tries < 40) setTimeout(() => enqVerdictSoon(n, tries + 1), 4000); return; }
+    enqVerdict(n);
+  }
+  function enqReveal(n){
+    const ep = enqEp(n); if (!ep) return;
+    const good = enq.ans[n] === ep.q.answer, cs = Math.round(+opt("enqCs") || 0);
+    enq.rev[n] = 1; enq.ok[n] = good ? 1 : 0;
+    if (good && cs && !isTester()){ aventPay(cs); saveGame(); }
+    enqSave();
+    enqSpeak(`La réponse de l'épisode ${n}. ${ep.q.reveal} ${good ? `Bien vu, ${myName()} ! ${cs && !isTester() ? `Tu gagnes ${cs} clebsous.` : ""}` : "Ce n'était pas ta réponse. Ce sera pour la prochaine fois !"}${enqEp(n + 1) ? "" : ` La suite, ${ep.next}, arrive bientôt.`}`);
+    setTimeout(() => toast(good ? `🕵️ Bonne réponse !${cs && !isTester() ? ` +${cs} 🪙` : ""}` : "🕵️ Raté pour cette fois… La réponse est dans tes écouteurs.", 6000), 400);
+  }
+  const ENQ_PAUSE = `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>`;
+  const ENQ_PLAY = `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9.5-5.5z" fill="currentColor"/></svg>`;
+  function enqUI(){
+    const s = $("#wEnq"); if (!s) return;
+    const L = enq.live; s.hidden = !L || !state.walk || isExpress();
+    if (s.hidden) return;
+    const ep = enqEp(L.ep), last = Object.keys(L.played).map(Number).sort((a, b) => b - a)[0];
+    $("#wePause").innerHTML = L.paused ? ENQ_PLAY : ENQ_PAUSE;
+    $("#wePause").setAttribute("aria-label", L.paused ? "Reprendre l'enquête" : "Mettre l'enquête en pause");
+    if (!ep){ $("#weEp").textContent = "Les Enquêtes de Roxy"; $("#weN").textContent = ""; $("#weTitle").textContent = "La réponse"; $("#weSub").textContent = "Écoute bien…"; $("#weBar").innerHTML = ""; $("#weNext").textContent = L.paused ? "⏸ en pause" : ""; return; }
+    const c = last == null ? -1 : last, x = ep.ch[Math.max(0, c)];
+    $("#weEp").textContent = `Épisode ${ep.n} · ${ep.title}`;
+    $("#weN").textContent = `${Math.max(1, c + 1)} / ${ep.ch.length}`;
+    $("#weTitle").textContent = c < 0 ? "Ça commence…" : x.t;
+    $("#weSub").textContent = L.extra && x.extra ? `Extra ! Extra ! ${L.extra.title}` : (c < 0 ? "Mets tes écouteurs" : x.sub);
+    $("#weBar").innerHTML = ep.ch.map((_, i) => `<i class="${i < c ? "on" : i === c ? "now" : ""}"></i>`).join("");
+    let nx = "";
+    if (L.paused) nx = "⏸ en pause : touche ▶ pour reprendre";
+    else if (L.done) nx = enq.ans[ep.n] ? "verdict scellé · réponse à la prochaine balade" : "à toi de choisir le coupable";
+    else { const m = (c + 1 - L.first) * (enqDur() / 5) - (Date.now() - L.t0) / 60000; nx = m <= 0.25 ? "indice suivant…" : `prochain indice dans ${Math.ceil(m)} min`; }
+    $("#weNext").textContent = nx;
+  }
+  function enqPauseToggle(){
+    const L = enq.live; if (!L) return;
+    if (!L.paused){ L.paused = Date.now(); try{ speechSynthesis.cancel(); }catch(e){} }
+    else { L.t0 += Date.now() - L.paused; L.paused = 0;
+      const ep = enqEp(L.ep), last = Object.keys(L.played).map(Number).sort((a, b) => b - a)[0];   // on réécoute le passage coupé
+      if (ep && last != null && !L.done){ enqSpeak(enqText(ep.ch[last].say)); }
+      else if (!ep || L.done) enqSpeak("On reprend.");
+    }
+    enqSave(); enqUI();
+  }
+  function enqReplay(){   // toucher le titre = réécouter le passage en cours (et débloque la voix après un rechargement de la page)
+    const L = enq.live; if (!L) return; const ep = enqEp(L.ep), last = Object.keys(L.played).map(Number).sort((a, b) => b - a)[0];
+    try{ speechSynthesis.cancel(); }catch(e){}
+    if (ep && last != null) enqSpeak(enqText(ep.ch[last].say));
+  }
+  function enqVerdict(n){
+    const ep = enqEp(n); if (!ep) return;
+    const cs = Math.round(+opt("enqCs") || 0), mine = enq.ans[n];
+    openSheet(`<div class="enqv"><div class="tape">SCÈNE DE CRIME — NE PAS FRANCHIR — SCÈNE DE CRIME — NE PAS FRANCHIR</div>
+      <p class="k">FIN DE L'ÉPISODE ${n} · ${esc(ep.title.toUpperCase())}</p><h2>${esc(ep.q.text)}</h2><p class="rc">${esc(ep.q.recap)}</p>
+      <div class="ech">${ep.q.choices.map(([id, name, hint], i) => `<button data-c="${id}" class="${mine === id ? "on" : ""}"><span class="l">${"ABC"[i]}</span><span><b>${esc(name)}</b><small>${esc(hint)}</small></span></button>`).join("")}</div>
+      <div class="seal" id="enqSeal"${mine ? "" : " hidden"}>VERDICT SCELLÉ · RÉPONSE À LA PROCHAINE BALADE</div>
+      <p class="nt">${cs && !isTester() ? `Bonne réponse = ${cs} 🪙. ` : ""}La suite : « Épisode ${n + 1} · ${esc(ep.next)} ».</p>
+      <div class="btns"><button class="ghost" id="enqBook">📒 Carnet d'enquête</button></div></div>`);
+    document.querySelectorAll("#sheet .ech button").forEach(b => b.onclick = () => {
+      if (enq.ans[n] && enq.rev[n]) return;
+      enq.ans[n] = b.dataset.c; if (enq.wait === n) enq.wait = 0; enqSave();
+      document.querySelectorAll("#sheet .ech button").forEach(o => o.classList.toggle("on", o === b));
+      $("#enqSeal").hidden = false; try{ ding(); haptic(2); }catch(e){}
+    });
+    $("#enqBook").onclick = () => { closeSheet(); setTimeout(sheetEnquetes, 150); };
+  }
+  function sheetEnquetes(){
+    try{ useTrack("🕵️ Carnet d'enquête"); }catch(e){}
+    const solved = Object.keys(enq.ok).filter(k => enq.ok[k]).length;
+    const rows = [];
+    for (let n = 1; n <= ENQ_TOTAL; n++){
+      const ep = enqEp(n), prev = enqEp(n - 1);
+      const title = ep ? ep.title : n === ENQ_TOTAL ? "Le grand final" : prev && n === enq.ep ? prev.next : "???";
+      let sub = "", st = "", cl = "";
+      if (enq.rev[n]){ sub = enq.ok[n] ? "Résolu · bonne réponse" : "Résolu · raté"; st = enq.ok[n] ? "RÉSOLU" : "RATÉ"; cl = enq.ok[n] ? "red" : "grey"; }
+      else if (enq.ans[n]){ sub = "Verdict scellé · réponse à la prochaine balade"; st = "SCELLÉ"; cl = "blue"; }
+      else if (enq.wait === n){ sub = "Choisis ton coupable"; st = "VERDICT"; cl = "blue"; }
+      else if (n === enq.ep && ep){ sub = enq.ch >= 0 ? "En cours · on reprend au dernier indice" : "À écouter à la prochaine balade"; st = enq.ch >= 0 ? "EN COURS" : "NOUVEAU"; cl = "blue"; }
+      else if (n === enq.ep){ sub = "Bientôt"; }
+      else if (n === ENQ_TOTAL){ sub = "Le 24 décembre"; }
+      rows.push(`<div class="er" data-n="${n}"><span class="nn">${n}</span><span class="tt"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>${st ? `<span class="stp ${cl}">${st}</span>` : ""}</div>`);
+    }
+    openSheet(`<h2>🕵️ Carnet d'enquête</h2><p class="howto" style="margin-top:-6px">Les Enquêtes de ${esc(DOG)} · saison de Noël · ${solved} résolue${solved > 1 ? "s" : ""} sur ${ENQ_TOTAL}</p>
+      <div class="enqbook">${rows.join("")}</div>
+      <p class="howto">🔎 Pièces trouvées : <b>${enq.pieces.length}</b>${enq.pieces.length ? ` (${enq.pieces.slice(-3).map(p => esc(p.t)).join(" · ")})` : ""} : les vrais lieux du quartier croisés en route.</p>
+      <p class="howto">🎧 Les épisodes ne s'écoutent qu'en balade : touche la carte de l'accueil, puis le dossier de l'enquête. Garde l'écran allumé (🌙 mode poche) : écran verrouillé, l'iPhone coupe la voix.</p>`);
+    document.querySelectorAll("#sheet .enqbook .er").forEach(r => r.onclick = () => { const n = +r.dataset.n; if (enqEp(n) && (enq.wait === n || enq.ans[n])){ closeSheet(); setTimeout(() => enqVerdict(n), 150); } });
+  }
+  function enqCardHTML(){   // dossier kraft de la fiche de départ
+    if (!enqOn()) return "";
+    const w = enqWhat(), kick = (t) => `<span class="k">LES ENQUÊTES DE ${esc(DOG.toUpperCase())}${t ? " · " + t : ""}</span>`;
+    const head = `<span class="tape">ENQUÊTE EN COURS — ENQUÊTE EN COURS</span>`;
+    if (w.verdict) return `<button id="enqGo" class="enqcard" data-a="verdict">${head}${kick("ÉPISODE " + w.verdict)}<b class="t">Qui a fait le coup ?</b><span class="d">Tu n'as pas encore choisi ton coupable.</span><span class="go">🔎 Choisir maintenant</span></button>`;
+    if (w.ep) return `<button id="enqGo" class="enqcard" data-a="walk">${head}${kick("ÉPISODE " + w.ep.n)}<b class="t">${esc(w.ep.title)}</b><span class="d">${esc(enq.ch >= 0 ? "On reprend au dernier indice." : w.ep.pitch)}${w.reveal ? " Et d'abord : la réponse de l'épisode " + w.reveal + "." : ""}</span><span class="go">🎧 Écouteurs, et on y va</span><span class="m">≈ ${enqDur()} min</span><span class="st">${enq.ch >= 0 ? "EN COURS" : "NOUVEAU"}</span></button>`;
+    if (w.reveal) return `<button id="enqGo" class="enqcard" data-a="walk">${head}${kick("ÉPISODE " + w.reveal)}<b class="t">La réponse</b><span class="d">Pars en balade : je te la dis dans les écouteurs, dès le départ.</span><span class="go">🎧 Écouter en marchant</span></button>`;
+    return "";
+  }
+  $("#wePause").addEventListener("click", e => { e.stopPropagation(); enqPauseToggle(); });
+  $("#weReplay").addEventListener("click", e => { e.stopPropagation(); enqReplay(); });
   function startQuestion(){
     if (state.walk) return;
     if (!profile.walker){ askProfile(startQuestion); return; }
     const d = propDur(), up = gainEst(d);
     openSheet(`<h2 style="text-align:center">On y va ! 🐾</h2>
+      ${enqCardHTML()}
       <p class="startq">Tu gères ta balade, ou je te propose un parcours qui peut te faire gagner plus ?</p>
       <div class="btns startbtns">
         <button id="chFree" class="big"><b>🚶 Je gère</b><span>Tu vas où tu veux, ça démarre tout de suite.</span></button>
@@ -7450,6 +7717,10 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
       <p style="text-align:center;margin:14px 0 2px"><button class="linkish" id="chExpress">⚡ Juste un petit tour de 10 min</button></p>`);
     $("#chFree").onclick = () => { closeSheet(); state.dur = d; const p = FREE(); p.min = d; startWalk(p); };
     $("#chExpress").onclick = () => { closeSheet(); startWalk(EXPRESS()); };
+    { const b = $("#enqGo"); if (b) b.onclick = () => {   // 🕵️ v4.9 : balade libre + enquête (la voix démarre pendant ce toucher)
+      closeSheet();
+      if (b.dataset.a === "verdict"){ setTimeout(() => enqVerdict(enq.wait), 150); return; }
+      const m = Math.max(d, enqDur()); state.dur = m; const p = FREE(); p.min = m; startWalk(p); enqStart(); }; }
     $("#chRoute").onclick = () => { closeSheet(); setTimeout(() => proposeRoutes(d), 150); };
     $("#chExplo").onclick = () => { closeSheet(); setTimeout(() => { try{ openExplore(); }catch(e){} }, 150); };
   }
@@ -7542,8 +7813,12 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
 
   // ---------- Numéro de version et nouveautés ----------
   // APP_NUM : numéro lisible, à augmenter (avec une entrée dans NEWS) à chaque nouveauté visible.
-  const APP_NUM = 61, APP_LABEL = "4.8";   // v34 = « version 2.0 » affichée aux promeneurs
+  const APP_NUM = 62, APP_LABEL = "4.9";   // v34 = « version 2.0 » affichée aux promeneurs
   const NEWS = {
+    62: [
+      "🕵️ Nouveau : les Enquêtes de Roxy ! Une histoire qu'on n'écoute qu'en balade, avec des écouteurs. Touche la carte pour partir, puis le dossier de l'enquête.",
+      "🔎 À la fin de l'épisode : qui a fait le coup ? La réponse arrive à la balade suivante. Garde l'écran allumé (🌙 mode poche) : écran verrouillé, l'iPhone coupe la voix."
+    ],
     61: [
       "⚔️ En bas : Accueil · Défier · Roxy (au milieu) · Album · Moi. Le classement s'ouvre en touchant le podium « EN DIRECT ».",
       "💬 Sous « Salut », pose des questions à Roxy : quelle rue on n'a pas faite, un coin oublié… (tout reste sur ton téléphone).",
@@ -7839,7 +8114,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), sheetChat, chatAnswer, chatSectors, confetti, xmasOn, roxyHTML, tabGo, sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), enqStart, enqTick, enqEnd, enqVerdict, sheetEnquetes, enqCardHTML, enqWhat, enqNear, enqDir, enqPauseToggle, enqOn, getEnq: () => enq, enqShift: m => { if (enq.live) enq.live.t0 -= m * 60000; }, sheetChat, chatAnswer, chatSectors, confetti, xmasOn, roxyHTML, tabGo, sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>

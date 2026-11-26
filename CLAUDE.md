@@ -772,3 +772,26 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   le chapeau d'anniversaire passe avant) ; **neige à la place des confettis** (`confetti()` → `snowfall()`, même calque `canvas.confetti`, 7 s).
 - Tests : `tests/e2e_v61.py` (barre, pied, EN DIRECT, Défier, Salut, tchat, décembre) ; `e2e_lot1.py`, `e2e_v58.py`, `e2e_accueil.py`, `e2e_v49.py`, `e2e_v53.py`, `e2e_v58_surprise.py` adaptés
   (`wouaf-vu` = 61). `e2e_balade.py` : « flèche du trésor » échoue déjà avant (Overpass injoignable d'ici).
+
+## Version 4.9 « Croquette » (APP_NUM 62 : 🕵️ Les Enquêtes de Roxy ; maquette https://claude.ai/artifact/NkpeJfQfiSMACMF3WDwDeK validée par Éric le 26/11 à 20 h 06, « Code »)
+- 🎧 **Série audio qu'on n'écoute qu'en balade** (principe de Zombies, Run!), lue par la voix du téléphone (`enqSpeak` : `speechSynthesis`, fr-FR, voix Thomas / Amélie…,
+  vitesse 0,96, repris de **Fediv** `9wsv9ngdft-cmd/FEDIV`). Épisodes dans `ENQ_EPS` (pour l'instant **l'épisode 1 « L'odeur de cannelle »**, saison de Noël sur `ENQ_TOTAL` = 8) :
+  6 passages (`ch` : générique, 3 indices, suspects, « Qui a fait le coup ? »), un passage tous les `enqDur() / 5` minutes (option `enqDur`, 20 min par défaut).
+  Textes en « tu », neutres ; `{dir}` / `{rue}` = la piste vers les rues pas faites depuis 7 jours (`enqDir`, calcul de `chatSectors`, option `enqRues`).
+- 🚶 **Départ** : dossier kraft en tête de « On y va ! » (`enqCardHTML`, `#enqGo`) → balade libre (objectif ≥ durée de l'épisode) + `enqStart()` **dans le toucher**
+  (l'iPhone n'accepte la voix qu'après un geste). Si on rentre avant la fin : `enq.ch` garde le dernier passage, l'épisode reprend dessus à la balade suivante (« On reprend l'enquête »).
+- 🗺️ **Bandeau kraft** dans la barre de balade (`#wEnq`, sous Pipi / Caca) : épisode, n / 6, ⏸ pause (`enqPauseToggle` : rien n'est lu, l'horloge de l'épisode s'arrête),
+  toucher le titre = réécouter (`enqReplay`, sert aussi à relancer la voix après un rechargement), barre de progression, « prochain indice dans N min ». Caché en express.
+  Horloge propre (`enq.live.t0`, `setInterval` 5 s + `updateWalk`) ; `walkUIEnd` → `enqEnd` (voix coupée).
+- 📰 **Extra ! Extra !** (passage marqué `extra`, option `enqLieux`) : vrai lieu à moins de 500 m de la dernière position (`enqNear`) dans **`enquetes-lieux.json`**
+  (218 faits de Fediv : `histoire.json` sans Crime / Attentat / Affaire judiciaire, avant 1991, + `local.json` ; [titre, lat, lon, date, rubrique, description]).
+  Fichier entier chargé et filtré **sur le téléphone** : rien sur le quartier dans le dépôt, aucune position envoyée. Pièce rangée au carnet (`enq.pieces`).
+- 🔎 **Verdict** (`enqVerdict`) à la fin du dernier passage (attend qu'aucune fiche ni le mode poche ne soit ouvert) : 3 choix, « VERDICT SCELLÉ » ; pas choisi = dossier
+  « Qui a fait le coup ? » au prochain départ. **Réponse lue au début de la balade suivante** (`enqReveal`) ; bonne réponse = `enqCs` (50) clebsous **hors plafond** (`aventPay`, pas pour Éric).
+  Tant que l'épisode suivant n'est pas écrit, le dossier propose seulement « La réponse ».
+- 📒 **Carnet d'enquête** (`sheetEnquetes`, ☰ › 🕵️ `#muEnq`, et depuis le verdict) : 8 épisodes avec tampons (NOUVEAU, EN COURS, SCELLÉ, RÉSOLU, RATÉ), pièces trouvées.
+- 🎛️ **Superviseur › Options › 🕵️** : `enq` (allumées), `enqLieux`, `enqRues`, `enqDur`, `enqCs`, et **qui écoute** : `enqNo<prénom>` (`enqSlug`, cocher = écoute ; liste tirée de `namesMap`, sans Éric).
+- État sur le téléphone : `wouaf-enq` = `{ ep, ch, ans, rev, ok, pieces, wait, live }` (effacé par la remise à zéro).
+- ⚠️ Écran verrouillé : l'iPhone coupe la voix d'une page web → garder l'écran allumé (le mode poche 🌙 le fait ; la balade demande déjà le Wake Lock). Non vérifié sur un vrai iPhone.
+- Tests : `tests/e2e_v62.py` (voix simulée, horloge décalée avec `enqShift`) ; tests passés à `wouaf-vu` = 62, libellé 4.9 (`e2e_accueil`, `e2e_v49`, `e2e_v61`).
+  `e2e_v51.py` (« addMoney … coupée deux fois ») et `e2e_balade.py` (flèche du trésor, Overpass) échouaient déjà avant la 4.9.
