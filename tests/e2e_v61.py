@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-def INIT(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','63');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % who)
+def INIT(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','64');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % who)
 EV = lambda P, js: P.evaluate(js)
 is_open = lambda P: P.evaluate("document.querySelector('#modal').classList.contains('open')")
 sheet = lambda P: P.inner_text("#sheet") if is_open(P) else ""
@@ -21,7 +21,7 @@ with sync_playwright() as pw:
     check("barre : Accueil · Défier · Roxy · Album · Moi", [t.split("\n")[-1] for t in tabs] == ["Accueil", "Défier", "Roxy", "Album", "Moi"], tabs)
     check("plus d'onglet Classement", P.locator("#tabbar [data-t=rank]").count() == 0)
     g = EV(P, "(() => { const f = document.querySelector('#homeFoot'), tb = document.querySelector('#tabbar'), bt = tb.querySelector('button').getBoundingClientRect(), fr = f.getBoundingClientRect(); return [f.parentNode === tb, Math.round(fr.top), Math.round(bt.bottom), Math.round(fr.bottom), innerHeight, f.textContent]; })()")
-    check("« v4.8 · CROQUETTE » sous les onglets, en bas de l'écran", g[0] and g[1] >= g[2] - 1 and g[3] <= g[4] and "v4.9.1" in g[5] and "CROQUETTE" in g[5], g)
+    check("« v4.8 · CROQUETTE » sous les onglets, en bas de l'écran", g[0] and g[1] >= g[2] - 1 and g[3] <= g[4] and "v4.9.2" in g[5] and "CROQUETTE" in g[5], g)
     rt = P.inner_text("[data-lot='rank']")
     check("tuile du podium : EN DIRECT", "EN DIRECT" in rt and "DÉFIER" not in rt, rt)
     P.click("[data-lot='rank']"); P.wait_for_timeout(500)
