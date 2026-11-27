@@ -1128,7 +1128,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-27.082412";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-27.085028";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -7516,7 +7516,20 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
       ],
       q: { text: "Qui a laissé l'odeur de cannelle ?", recap: "Trois pièces au dossier : la cannelle, la laine rouge, et l'heure, entre 17 h et 17 h 30.", answer: "b",
         choices: [["a", "Mme Brioche, la boulangère", "Elle sent toujours la cannelle"], ["b", "M. Fermoir, l'horloger", "Il ne quitte jamais ses gants"], ["c", "Moustache, le chat du n° 12", "Il rôde toutes les nuits"]],
-        reveal: "C'était bien Monsieur Fermoir qui est passé sous ce balcon : ses gants rouges, son roulé à la cannelle, dix-sept heures pile. Madame Brioche était derrière son comptoir, et Moustache n'a pas de mains. Mais Monsieur Fermoir jure qu'il n'a rien volé. Il dit qu'il suivait quelqu'un…" } }
+        reveal: "C'était bien Monsieur Fermoir qui est passé sous ce balcon : ses gants rouges, son roulé à la cannelle, dix-sept heures pile. Madame Brioche était derrière son comptoir, et Moustache n'a pas de mains. Mais Monsieur Fermoir jure qu'il n'a rien volé. Il dit qu'il suivait quelqu'un…" } },
+    { n: 2, title: "Le témoin du nord", next: "Les grelots",
+      pitch: "Une silhouette vous regardait derrière un rideau, avec quelque chose de rouge à la main. Qui était-ce ?",
+      ch: [
+        { t: "Générique", sub: "Deux mystères pour le prix d'un", say: "Les Enquêtes de Roxy. Épisode deux : Le témoin du nord. Hier soir, une silhouette vous regardait derrière un rideau. Elle tenait quelque chose de rouge à la main. Et Monsieur Fermoir jure qu'il suivait quelqu'un. Deux mystères pour le prix d'un. Roxy, elle, n'a qu'une idée en tête : retrouver cette fenêtre. Alors on suit son nez. Et cette fois, on ouvre grand les yeux." },
+        { t: "Les fenêtres", sub: "« Lève la tête… »", say: "Indice numéro un. Lève la tête. Regarde les fenêtres de la rue : celles qui ont des guirlandes, celles qui sont encore éteintes. Laisse Roxy renifler le pied d'un lampadaire pendant ce temps : chez elle, c'est la lecture du journal. Une seule fenêtre a vu toute la scène. Au premier étage, avec un rideau à petits carreaux, et sur le rebord… un panier rempli de pelotes de laine. Qui garde des pelotes de laine à sa fenêtre ? Quelqu'un qui tricote beaucoup. Pièce numéro un." },
+        { t: "La chose rouge", sub: "Un petit bout de fil rouge", extra: true, say: "Indice numéro deux. Roxy s'arrête et tend le museau vers le haut. Sous la fenêtre, sur le trottoir, il y a un petit bout de fil rouge, enroulé sur lui-même. Pas une guirlande. Pas un ruban. Un fil de laine, qui s'est déroulé d'une pelote tombée du rebord. La chose rouge dans la main de la silhouette, ce n'était donc pas un objet volé. C'était une pelote de laine. Pièce numéro deux." },
+        { t: "Les genoux", sub: "La dame du premier ne sort plus le soir", say: "Indice numéro trois. Le boulanger d'en face s'en souvient très bien. La dame du premier étage ne sort plus le soir depuis l'automne : ses genoux lui font mal dans les escaliers. Le soir, elle tricote à sa fenêtre et elle regarde la rue. Rien ne lui échappe. Pièce numéro trois. Elle aurait donc tout vu, du premier étage. Il paraît qu'en ce moment, elle tricote une écharpe très, très longue, pour quelqu'un qui habite {dir}, {rue}." },
+        { t: "Les suspects", sub: "Tricot · Fermoir · Gravier", say: "Alors, qui était derrière le rideau ? Trois possibilités. Madame Tricot. Elle habite au premier étage, elle tricote du matin au soir, et c'est elle qui fait les gants rouges de son frère, Monsieur Fermoir. Monsieur Fermoir lui-même. Il a des gants rouges, et il était dans la rue à dix-sept heures. Mais peut-on être sur le trottoir et derrière un rideau en même temps ? Et Monsieur Gravier, le facteur. Il connaît toutes les fenêtres du quartier… mais sa tournée se termine à midi, et il habite à l'autre bout de la ville." },
+        { t: "Qui a fait le coup ?", sub: "À toi de choisir", say: "Un panier de pelotes. Un fil de laine rouge. Une personne qui ne sort plus le soir. À toi de jouer : qui était derrière le rideau ? Choisis sur l'écran. La réponse à la prochaine balade. Mais écoute bien… Pendant que tu réfléchis, Roxy dresse les oreilles. Au loin, dans la nuit, un petit bruit. Ding. Ding-ding. Comme des grelots qui sautent dans un sac. Quelqu'un court. Et ça s'éloigne. Fin de l'épisode deux. La suite : Les grelots." }
+      ],
+      q: { text: "Qui était derrière le rideau ?", recap: "Trois pièces au dossier : un panier de pelotes, un fil de laine rouge, et une personne qui ne sort plus le soir.", answer: "a",
+        choices: [["a", "Mme Tricot, la tricoteuse du 1er étage", "Elle ne sort plus le soir"], ["b", "M. Fermoir, l'horloger", "Il a des gants rouges"], ["c", "M. Gravier, le facteur", "Il connaît toutes les fenêtres"]],
+        reveal: "C'était bien Madame Tricot, la sœur de Monsieur Fermoir. Elle a tout vu depuis sa fenêtre. À dix-sept heures dix, son frère est passé, comme tous les jours. Mais juste devant lui marchait quelqu'un avec un bonnet à pompon vert et un grand sac sur l'épaule. Un sac qui faisait ding, ding-ding. Monsieur Fermoir le suivait pour voir où il allait… et il l'a perdu au coin de la rue." } }
   ];
   const enqLoad = () => Object.assign({ ep: 1, ch: -1, ans: {}, rev: {}, ok: {}, pieces: [], wait: 0, live: null }, store.get(ENQ_KEY, {}) || {});
   let enq = enqLoad(), enqTimer = null, enqPlaces = null;
