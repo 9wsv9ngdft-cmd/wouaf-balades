@@ -143,7 +143,7 @@ with sync_playwright() as pw:
     bad = EV(P, """__wouaf.enqEps().map(e => (e.ch.length === 6 && e.q.choices.length === 3 && e.q.choices.some(c => c[0] === e.q.answer) && e.ch.some(c => c.extra) && !JSON.stringify(e).match(/\\{(?!dir\\}|rue\\}|")/)) ? 0 : e.n).filter(Boolean)""")
     check("12 épisodes, 6 passages, 3 choix, réponse valide, une étape « Extra »", EV(P, "__wouaf.enqEps().length") == 12 and not bad, bad)
     dates = EV(P, "__wouaf.enqEps().map(e => e.from || '')")
-    check("un épisode tous les 2 jours (28/11 → 14/12), grand final le 24/12", dates == ["", "", "2026-11-28", "2026-11-30", "2026-12-02", "2026-12-04", "2026-12-06", "2026-12-08", "2026-12-10", "2026-12-12", "2026-12-14", "2026-12-24"], dates)
+    check("un épisode tous les 3 jours (28/11 → 22/12), grand final le 24/12", dates == ["", "", "2026-11-28", "2026-12-01", "2026-12-04", "2026-12-07", "2026-12-10", "2026-12-13", "2026-12-16", "2026-12-19", "2026-12-22", "2026-12-24"], dates)
     check("le 28/11 : épisode 4 bloqué, épisode 12 bloqué", EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[3])") is True and EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[11])") is True)
     EV(P, "localStorage.setItem('wouaf-enq', JSON.stringify({ ep: 12, ch: -1, ans: {1:'b',2:'a',3:'b',4:'b',5:'b',6:'b',7:'a',8:'b',9:'b',10:'b',11:'b'}, rev: {1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,9:1,10:1,11:1}, ok: {}, pieces: [], wait: 0 })); location.reload()")
     P.wait_for_function("window.__wouaf !== undefined"); P.wait_for_timeout(2000)
