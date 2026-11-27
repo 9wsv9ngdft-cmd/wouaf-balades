@@ -780,6 +780,9 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Textes en « tu », neutres ; `{dir}` / `{rue}` = la piste vers les rues pas faites depuis 7 jours (`enqDir`, calcul de `chatSectors`, option `enqRues`).
 - 🚶 **Départ** : dossier kraft en tête de « On y va ! » (`enqCardHTML`, `#enqGo`) → balade libre (objectif ≥ durée de l'épisode) + `enqStart()` **dans le toucher**
   (l'iPhone n'accepte la voix qu'après un geste). Si on rentre avant la fin : `enq.ch` garde le dernier passage, l'épisode reprend dessus à la balade suivante (« On reprend l'enquête »).
+- 🎚️ **Mode enquête oui / non** (Éric, 27/11 8 h 19) : interrupteur `#enqSw` en haut de « On y va ! » (`enqSwHTML`), retenu sur le téléphone (`enq.mode`, oui par défaut).
+  Oui = l'enquête part avec **« Je gère »** (`#chFree`) **et avec « Propose-moi »** (`enqWant` → `enqAfterProp` après `#propGo` / `#propFree` / 🎲 ; `enqUnlock` = phrase muette
+  pendant le toucher pour que l'iPhone accepte la voix plus tard) ; non = pas de dossier (`#enqWrap` caché), balade sans enquête. Toucher le dossier = « Je gère » avec l'enquête.
 - 🗺️ **Bandeau kraft** dans la barre de balade (`#wEnq`, sous Pipi / Caca) : épisode, n / 6, ⏸ pause (`enqPauseToggle` : rien n'est lu, l'horloge de l'épisode s'arrête),
   toucher le titre = réécouter (`enqReplay`, sert aussi à relancer la voix après un rechargement), barre de progression, « prochain indice dans N min ». Caché en express.
   Horloge propre (`enq.live.t0`, `setInterval` 5 s + `updateWalk`) ; `walkUIEnd` → `enqEnd` (voix coupée).

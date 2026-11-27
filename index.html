@@ -611,6 +611,12 @@
   #wEnq .eb i{height:6px;border-radius:3px;background:rgba(38,30,22,.22)} #wEnq .eb i.on{background:#261e16} #wEnq .eb i.now{background:#9e2a1e}
   #wEnq .ef{font-family:"American Typewriter","Courier New",monospace;font-size:12px;color:#4a3519;margin-top:5px;text-align:center} #wEnq .ef:empty{display:none}
   #walkbar.mini #wEnq .et small,#walkbar.mini #wEnq .eb,#walkbar.mini #wEnq .ef{display:none}
+  #sheet label.enqsw{display:flex;flex-direction:row;align-items:center;gap:12px;background:#f3ead6;border:2px solid #c9a56f;border-radius:12px;padding:10px 12px;margin:0 0 10px;color:#261e16;cursor:pointer}
+  .enqsw .tx{flex:1;min-width:0} .enqsw b{display:block;font-size:15.5px} .enqsw small{display:block;font-size:12.5px;color:#4a3519;margin-top:2px}
+  #sheet .enqsw input#enqSw{appearance:none;-webkit-appearance:none;width:52px;height:32px;flex:none;border-radius:16px;background:#b9ad99;position:relative;margin:0;padding:0;border:0;transition:background .2s}
+  #sheet .enqsw input#enqSw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:13px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}
+  #sheet .enqsw input#enqSw:checked{background:#261e16} #sheet .enqsw input#enqSw:checked::after{left:23px}
+  #enqWrap[hidden]{display:none}
   #sheet button.enqcard{display:block;width:100%;text-align:left;background:#c9a56f;color:#261e16;border-radius:8px;padding:16px 14px 14px;margin:0 0 12px;position:relative;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.25);font-weight:400}
   .enqcard .k{display:block;max-width:215px;font-family:"American Typewriter","Courier New",monospace;font-size:11.5px;letter-spacing:1.5px;color:#5a3f1c}
   .enqcard b.t{display:block;font-family:Georgia,"Times New Roman",serif;font-weight:900;font-size:25px;line-height:1.05;margin:5px 0 6px;max-width:250px}
@@ -1122,7 +1128,7 @@
 <script>
 (() => {
   "use strict";
-  const APP_VERSION = "2026-11-26.202152";   // à changer à chaque mise en ligne (voir CLAUDE.md)
+  const APP_VERSION = "2026-11-27.082412";   // à changer à chaque mise en ligne (voir CLAUDE.md)
 
   // ---------- Réglages ----------
   const SPEED_KMH = 3.5;
@@ -7700,6 +7706,18 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
     if (w.reveal) return `<button id="enqGo" class="enqcard" data-a="walk">${head}${kick("ÉPISODE " + w.reveal)}<b class="t">La réponse</b><span class="d">Pars en balade : je te la dis dans les écouteurs, dès le départ.</span><span class="go">🎧 Écouter en marchant</span></button>`;
     return "";
   }
+  // Mode enquête oui / non (Éric, 27/11 8 h 19) : interrupteur en haut du départ, retenu sur le téléphone (`enq.mode`, oui par défaut) ;
+  // oui = l'enquête part avec « Je gère » ET avec « Propose-moi » ; non = pas de dossier sur la fiche.
+  const enqMode = () => enq.mode !== false;
+  const enqCanWalk = () => { if (!enqOn()) return false; const w = enqWhat(); return !!(w.ep || w.reveal); };
+  let enqWant = false;
+  function enqUnlock(){   // iPhone : une 1re phrase (muette) pendant un toucher autorise la voix plus tard (parcours « Choisis pour moi »)
+    try{ if (!("speechSynthesis" in window)) return; const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); }catch(e){}
+  }
+  function enqSwHTML(){
+    if (!enqCanWalk()) return "";
+    return `<label class="enqsw"><span class="tx"><b>🕵️ Mode enquête</b><small id="enqSwTx">${enqMode() ? "L'épisode part avec ta balade, dans les écouteurs." : "Pas d'enquête cette fois."}</small></span><input type="checkbox" id="enqSw" role="switch" aria-label="Mode enquête" ${enqMode() ? "checked" : ""}></label>`;
+  }
   $("#wePause").addEventListener("click", e => { e.stopPropagation(); enqPauseToggle(); });
   $("#weReplay").addEventListener("click", e => { e.stopPropagation(); enqReplay(); });
   function startQuestion(){
@@ -7707,7 +7725,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
     if (!profile.walker){ askProfile(startQuestion); return; }
     const d = propDur(), up = gainEst(d);
     openSheet(`<h2 style="text-align:center">On y va ! 🐾</h2>
-      ${enqCardHTML()}
+      ${enqSwHTML()}<div id="enqWrap"${enqCanWalk() && !enqMode() ? " hidden" : ""}>${enqCardHTML()}</div>
       <p class="startq">Tu gères ta balade, ou je te propose un parcours qui peut te faire gagner plus ?</p>
       <div class="btns startbtns">
         <button id="chFree" class="big"><b>🚶 Je gère</b><span>Tu vas où tu veux, ça démarre tout de suite.</span></button>
@@ -7715,13 +7733,17 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
         <button id="chExplo" class="big"><b>☁️ Explorer la carte</b><span>Regarder ton quartier et les nuages, sans partir.</span></button>
       </div>
       <p style="text-align:center;margin:14px 0 2px"><button class="linkish" id="chExpress">⚡ Juste un petit tour de 10 min</button></p>`);
-    $("#chFree").onclick = () => { closeSheet(); state.dur = d; const p = FREE(); p.min = d; startWalk(p); };
+    const withEnq = () => enqCanWalk() && enqMode();
+    $("#chFree").onclick = () => { closeSheet(); const m = withEnq() ? Math.max(d, enqDur()) : d; state.dur = m; const p = FREE(); p.min = m; startWalk(p); if (withEnq()) enqStart(); };
+    { const sw = $("#enqSw"); if (sw) sw.onchange = () => { enq.mode = sw.checked; enqSave(); $("#enqWrap").hidden = !sw.checked;
+      $("#enqSwTx").textContent = sw.checked ? "L'épisode part avec ta balade, dans les écouteurs." : "Pas d'enquête cette fois."; if (sw.checked) enqUnlock(); }; }
     $("#chExpress").onclick = () => { closeSheet(); startWalk(EXPRESS()); };
     { const b = $("#enqGo"); if (b) b.onclick = () => {   // 🕵️ v4.9 : balade libre + enquête (la voix démarre pendant ce toucher)
       closeSheet();
       if (b.dataset.a === "verdict"){ setTimeout(() => enqVerdict(enq.wait), 150); return; }
-      const m = Math.max(d, enqDur()); state.dur = m; const p = FREE(); p.min = m; startWalk(p); enqStart(); }; }
-    $("#chRoute").onclick = () => { closeSheet(); setTimeout(() => proposeRoutes(d), 150); };
+      if (!enqMode()){ enq.mode = true; enqSave(); }
+      $("#chFree").onclick(); }; }
+    $("#chRoute").onclick = () => { enqWant = withEnq(); if (enqWant) enqUnlock(); closeSheet(); setTimeout(() => proposeRoutes(d), 150); };
     $("#chExplo").onclick = () => { closeSheet(); setTimeout(() => { try{ openExplore(); }catch(e){} }, 150); };
   }
   $("#freeWalk").addEventListener("click", startQuestion);
@@ -7755,6 +7777,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
     $("#propNext").disabled = shown.length < 2; $("#propDice").disabled = shown.length < 2;
   }
   function propClose(){
+    enqWant = false;
     genId++; locGen++; document.body.classList.remove("propose", "hasmap"); state.pi = null;
     $("#props").innerHTML = ""; $("#toolbar").style.display = "none"; $("#meteo").innerHTML = "";   // v4.5.1 : plus de liste de parcours sous l'accueil
     try{ layers.routes.clearLayers(); layers.sel.clearLayers(); }catch(e){}
@@ -7763,15 +7786,17 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   $("#propX").addEventListener("click", propClose);
   $("#propNext").addEventListener("click", () => propShow((state.pi || 0) + 1));
-  $("#propGo").addEventListener("click", () => { const p = state.results[state.sel]; if (p) startWalk(p); });
-  $("#propFree").addEventListener("click", () => { const d = state.dur; propClose(); const p = FREE(); p.min = d; startWalk(p); });
+  const enqAfterProp = () => { if (enqWant && state.walk){ enqWant = false; enqStart(); } };   // 🕵️ « Propose-moi » avec le mode enquête
+  $("#propGo").addEventListener("click", () => { const p = state.results[state.sel]; if (p){ startWalk(p); enqAfterProp(); } });
+  $("#propFree").addEventListener("click", () => { const d = state.dur, w = enqWant; propClose(); enqWant = w; const p = FREE(); p.min = d; startWalk(p); enqAfterProp(); });
   $("#propDice").addEventListener("click", () => {
     const n = visible().length; if (n < 2) return;
     let i = Math.floor(Math.random() * n); if (i === state.pi) i = (i + 1) % n;
     propShow(i, true); ding();
     $("#propGo").hidden = $("#propNext").hidden = $("#propDice").hidden = true;
     const p = state.results[state.sel];
-    setTimeout(() => { if (document.body.classList.contains("propose") && p) startWalk(p); }, 1300);
+    if (enqWant) enqUnlock();
+    setTimeout(() => { if (document.body.classList.contains("propose") && p){ startWalk(p); enqAfterProp(); } }, 1300);
   });
 
 
@@ -8114,7 +8139,7 @@ zones sûres ↑${Math.round(parseFloat(cs.paddingTop) || 0)} ↓${Math.round(pa
   }
   window.addEventListener("hashchange", () => { if (location.hash === "#go") goFromShortcut(); });
 
-  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), enqStart, enqTick, enqEnd, enqVerdict, sheetEnquetes, enqCardHTML, enqWhat, enqNear, enqDir, enqPauseToggle, enqOn, getEnq: () => enq, enqShift: m => { if (enq.live) enq.live.t0 -= m * 60000; }, sheetChat, chatAnswer, chatSectors, confetti, xmasOn, roxyHTML, tabGo, sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
+  window.__wouaf = { sheetRoxyOpen: () => sheetRoxy(), enqStart, enqTick, enqEnd, enqVerdict, sheetEnquetes, enqCardHTML, enqWhat, enqNear, enqDir, enqPauseToggle, enqOn, getEnq: () => enq, enqShift: m => { if (enq.live) enq.live.t0 -= m * 60000; }, getEnqWant: () => enqWant, enqMode, sheetChat, chatAnswer, chatSectors, confetti, xmasOn, roxyHTML, tabGo, sheetOptions, opt, applyOpts, shortVp, miniTapPlace, duelPreview, switchTab, screenDiag, diagOn, sheetSurprises, surpPlay, surpOpenScenes, surpBackScenes, surpReadScenes, surpOpenMaybe, surpBackMaybe, surpTheme, popJudge, startQuestion, proposeRoutes, propShow, propClose, propDur, sheetRanks, sheetBills, rankTileHTML, crownWatch, wearCrown, sheetSupPhones, sheetSupMenu, accGate, sheetAccount, sheetAccounts, accSupCreate, getAcc: () => acc, nm, myName, renderEvDeco, aventSoon, sheetEvents, aventOpen, aventState, aventPlan, aventDayNum, aventDefiCheck, aventTotal, aventScene, dailyPop, dailyPopMaybe, dayFine, unsentRecaps, unsentCard, markSent, recapNudge, waSentList, showRecapSheet, silverCheck, silverLive, sheetSilver, billsTick, objVal, objScale, honorsCard, sheetPalmares, funnyLines, fetchHonors, startupDigest, startGps, gpsCheck, finishWalk, saveTrace, fogData, getTraces, openExplore, closeExplore, liveMoney, renderProg, ensureGame, snapshot, fogStats, chestChance, showChest, finishGame,  gameFix, renderShop, getGame: () => game, getGw: () => gw, newShare, checkHome, chooseRoute, backToWalk, cancelWalk, persist, renderLog, exportCsv, backupLog, purgeLog, map, state, setStart, generate, findPlaces, ideasFor, startWalk, stopWalk, getLog, packRecap, unpackRecap, encPoly, decPoly, recapText, showRecapPage, onFix, motivLines, defiOf, weekStats, offerWeek, pushStateData, savePhoto, fillGallery, openRappels, getRap: () => rap, renderHome, processMalus, loadPauses, sheetOuts, backupNow, applyAdjust, openRestore, openAdjust, seasonEvent, isBday, malusIn, shortMalus, weekHunt, mood, monthCard, addMoney, paceAllowed, chestValue, EXPRESS, sheetJournal, sheetWalk, sheetWeekWalks, checkForgot, stillSince, getTrack: () => track, sheetTreasure, sheetChest, openHuntAdmin, applyFamilyHome, sendCloud, publishHunt, openDash, queueWalk, flushWalks, pocketOn, pocketOff, setPauses: p => { pauses = p; }, openSuper, streakAlive, applyReset, applyVoid, fetchAdjust, openReset, openMenu, huntCheck, syncHunt, isTester, supToken, autoClaim, sendUsage, askProfile, shadowCheck, getShadow: () => shadow, sheetDuels, sheetDuelNew, loadDuels, duelCards, getDuelData: () => duelData, renderHome, showWelcome2, startupDigest, missions, spawnTrail, flairTick, eggOpen, fitHome, drawMiniMap, openRoxyMenu, sheetHelp, getWx: () => wx, setWx: v => { wx = v; }, sheetHeat, heatData, sheetCopains, copains, copAdd, weekPayRoll, paydayCardData, moneyAll, chestCloud, huntCloud, soundOn, setSound, careBox, roxyNumbers, openDash };
 })();
 </script>
 </body>
