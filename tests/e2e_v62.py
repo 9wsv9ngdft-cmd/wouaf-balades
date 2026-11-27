@@ -8,8 +8,8 @@ def check(n, c, x=""):
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
 INIT = ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','64');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}"
-  # horloge décalée (toujours le 27/11/2026 à 12 h au début du test, qui avance normalement) ; __dOff modifiable
-  "if(!window.__dOffSet){window.__dOffSet=1;const _D=Date;const k='e2e-doff';let o=sessionStorage.getItem(k);if(o===null){o=String(new _D(2026,10,27,12).getTime()-_D.now());sessionStorage.setItem(k,o);}"
+  # horloge décalée (toujours le 3/12/2026 à 12 h au début du test, qui avance normalement) ; __dOff modifiable
+  "if(!window.__dOffSet){window.__dOffSet=1;const _D=Date;const k='e2e-doff';let o=sessionStorage.getItem(k);if(o===null){o=String(new _D(2026,11,3,12).getTime()-_D.now());sessionStorage.setItem(k,o);}"
   "window.__dOff=+o;class D extends _D{constructor(...a){if(a.length)super(...a);else super(_D.now()+window.__dOff);}static now(){return _D.now()+window.__dOff;}}window.Date=D;}"
   "window.__said=[];window.SpeechSynthesisUtterance=function(t){this.text=t;};"
   "Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{speak:u=>{window.__said.push(u.text);if(u.onend)setTimeout(()=>u.onend(),30);},cancel:()=>{window.__said.push('[cancel]');},getVoices:()=>[],pause(){},resume(){},speaking:false}});")
@@ -22,6 +22,12 @@ errs = []
 with sync_playwright() as pw:
     b, c, P = new_phone(pw, errors=errs, init=INIT)
     P.set_viewport_size({"width": 393, "height": 852}); open_app(P, 2500)
+    # avant le 1er décembre (27/11) : épisode 1 fermé, carte « s'ouvre mardi 1er décembre »
+    EV(P, "window.__dOff -= 6*86400000; __wouaf.startQuestion()"); P.wait_for_timeout(400)
+    t = sheet(P)
+    check("27/11 : pas de dossier, « 🔒 Épisode 1 · L'odeur de cannelle : s'ouvre mardi 1er décembre »", P.locator("#enqGo").count() == 0 and "L'odeur de cannelle" in t and "mardi 1er décembre" in t, t[:300])
+    P.click("#sheetX"); P.wait_for_timeout(300)
+    EV(P, "window.__dOff += 6*86400000")
     EV(P, "__wouaf.startQuestion()"); P.wait_for_timeout(400)
     t = sheet(P)
     check("départ : dossier « Épisode 1 · L'odeur de cannelle »", P.locator("#enqGo").count() == 1 and "L'odeur de cannelle" in t and "ÉPISODE 1" in t and "NOUVEAU" in t, t[:300])
@@ -82,25 +88,25 @@ with sync_playwright() as pw:
     EV(P, "__wouaf.cancelWalk()"); P.wait_for_timeout(400)
     EV(P, "__wouaf.startQuestion()"); P.wait_for_timeout(400)
     t = sheet(P)
-    check("27/11 : épisode 3 pas encore ouvert → carte « La réponse » + « 🔒 Les grelots : s'ouvre samedi 28 novembre »", "La réponse" in t and "Les grelots" in t and "samedi 28 novembre" in t and "ÉPISODE 2" in t, t[:400])
+    check("3/12 : épisode 3 pas encore ouvert → carte « La réponse » + « 🔒 Les grelots : s'ouvre samedi 5 décembre »", "La réponse" in t and "Les grelots" in t and "samedi 5 décembre" in t and "ÉPISODE 2" in t, t[:400])
     P.click("#enqGo"); P.wait_for_timeout(1500)
     s = said(P)
-    check("réponse de l'épisode 2 (Mme Tricot, pompon vert), suite annoncée pour samedi, pas d'épisode 3", "C'était bien Madame Tricot" in s and "pompon vert" in s and "samedi 28 novembre" in s and "Épisode trois" not in s, s[-300:])
+    check("réponse de l'épisode 2 (Mme Tricot, pompon vert), suite annoncée pour samedi, pas d'épisode 3", "C'était bien Madame Tricot" in s and "pompon vert" in s and "samedi 5 décembre" in s and "Épisode trois" not in s, s[-300:])
     EV(P, "__wouaf.cancelWalk()"); P.wait_for_timeout(400)
     EV(P, "__wouaf.sheetEnquetes()"); P.wait_for_timeout(300)
     t = sheet(P)
-    check("carnet le 27/11 : « Les grelots » BIENTÔT, s'ouvre samedi 28 novembre ; épisode 12 le 24 décembre", "BIENTÔT" in t and "S'ouvre samedi 28 novembre" in t and "S'ouvre jeudi 24 décembre" in t and "sur 12" in t, t[:600])
+    check("carnet le 3/12 : « Les grelots » BIENTÔT, s'ouvre samedi 5 décembre ; épisode 12 le 24 décembre", "BIENTÔT" in t and "S'ouvre samedi 5 décembre" in t and "S'ouvre jeudi 24 décembre" in t and "sur 12" in t, t[:600])
     P.click("#sheetX"); P.wait_for_timeout(300)
-    # le lendemain (28/11) : l'épisode 3 s'ouvre
-    EV(P, "window.__dOff += 86400000; sessionStorage.setItem('e2e-doff', String(window.__dOff))")
+    # deux jours plus tard (5/12) : l'épisode 3 s'ouvre
+    EV(P, "window.__dOff += 2*86400000; sessionStorage.setItem('e2e-doff', String(window.__dOff))")
     EV(P, "window.__said = []; __wouaf.startQuestion()"); P.wait_for_timeout(400)
     t = sheet(P)
-    check("28/11 : dossier « Épisode 3 · Les grelots »", P.locator("#enqGo").count() == 1 and "Les grelots" in t and "ÉPISODE 3" in t and "s'ouvre" not in t, t[:300])
+    check("5/12 : dossier « Épisode 3 · Les grelots »", P.locator("#enqGo").count() == 1 and "Les grelots" in t and "ÉPISODE 3" in t and "s'ouvre" not in t, t[:300])
     P.click("#enqGo"); P.wait_for_timeout(1500)
-    check("28/11 : « Épisode trois : Les grelots » est lu", "Épisode trois : Les grelots" in said(P), said(P)[:200])
+    check("5/12 : « Épisode trois : Les grelots » est lu", "Épisode trois : Les grelots" in said(P), said(P)[:200])
     EV(P, "__wouaf.cancelWalk()"); P.wait_for_timeout(400)
-    check("épisode commencé : jamais bloqué, même si on recule l'horloge", EV(P, "window.__dOff -= 86400000; __wouaf.enqLocked(__wouaf.enqEps()[2])") is False)
-    EV(P, "window.__dOff += 86400000")
+    check("épisode commencé : jamais bloqué, même si on recule l'horloge", EV(P, "window.__dOff -= 2*86400000; __wouaf.enqLocked(__wouaf.enqEps()[2])") is False)
+    EV(P, "window.__dOff += 2*86400000")
     EV(P, "__wouaf.sheetEnquetes()"); P.wait_for_timeout(300)
     t = sheet(P)
     check("carnet : épisodes 1 et 2 résolus, épisode 3 « Les grelots » en cours", t.count("RÉSOLU") == 2 and "Les grelots" in t and "EN COURS" in t and "Pièces trouvées" in t, t[:400])
@@ -143,8 +149,8 @@ with sync_playwright() as pw:
     bad = EV(P, """__wouaf.enqEps().map(e => (e.ch.length === 6 && e.q.choices.length === 3 && e.q.choices.some(c => c[0] === e.q.answer) && e.ch.some(c => c.extra) && !JSON.stringify(e).match(/\\{(?!dir\\}|rue\\}|")/)) ? 0 : e.n).filter(Boolean)""")
     check("12 épisodes, 6 passages, 3 choix, réponse valide, une étape « Extra »", EV(P, "__wouaf.enqEps().length") == 12 and not bad, bad)
     dates = EV(P, "__wouaf.enqEps().map(e => e.from || '')")
-    check("un épisode tous les 3 jours (28/11 → 22/12), grand final le 24/12", dates == ["", "", "2026-11-28", "2026-12-01", "2026-12-04", "2026-12-07", "2026-12-10", "2026-12-13", "2026-12-16", "2026-12-19", "2026-12-22", "2026-12-24"], dates)
-    check("le 28/11 : épisode 4 bloqué, épisode 12 bloqué", EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[3])") is True and EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[11])") is True)
+    check("du 1er décembre, un épisode tous les 2 jours (1/12 → 21/12), grand final le 24/12", dates == ["2026-12-01", "2026-12-03", "2026-12-05", "2026-12-07", "2026-12-09", "2026-12-11", "2026-12-13", "2026-12-15", "2026-12-17", "2026-12-19", "2026-12-21", "2026-12-24"], dates)
+    check("le 5/12 : épisode 4 bloqué, épisode 12 bloqué", EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[3])") is True and EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[11])") is True)
     EV(P, "localStorage.setItem('wouaf-enq', JSON.stringify({ ep: 12, ch: -1, ans: {1:'b',2:'a',3:'b',4:'b',5:'b',6:'b',7:'a',8:'b',9:'b',10:'b',11:'b'}, rev: {1:1,2:1,3:1,4:1,5:1,6:1,7:1,8:1,9:1,10:1,11:1}, ok: {}, pieces: [], wait: 0 })); location.reload()")
     P.wait_for_function("window.__wouaf !== undefined"); P.wait_for_timeout(2000)
     EV(P, "__wouaf.startQuestion()"); P.wait_for_timeout(400)

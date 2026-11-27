@@ -780,11 +780,11 @@ Web app (un seul `index.html`) publiée sur GitHub Pages : https://9wsv9ngdft-cm
   Textes en « tu », neutres ; `{dir}` / `{rue}` = la piste vers les rues pas faites depuis 7 jours (`enqDir`, calcul de `chatSectors`, option `enqRues`).
 - 🚶 **Départ** : dossier kraft en tête de « On y va ! » (`enqCardHTML`, `#enqGo`) → balade libre (objectif ≥ durée de l'épisode) + `enqStart()` **dans le toucher**
   (l'iPhone n'accepte la voix qu'après un geste). Si on rentre avant la fin : `enq.ch` garde le dernier passage, l'épisode reprend dessus à la balade suivante (« On reprend l'enquête »).
-- 📅 **Saison à 12 épisodes, un tous les 3 jours** (v4.9.2, APP_NUM 64 ; épisodes 7–10 validés par Éric le 27/11 à 13 h 51, « Décale pour arriver au 24 » à 14 h 06) : 6 « La liste du 25 » (suite « Le ruban volé »),
+- 📅 **Saison à 12 épisodes du 1er au 24 décembre, un tous les 2 jours** (v4.9.2, APP_NUM 64 ; épisodes 7–10 validés par Éric le 27/11 à 13 h 51 ; « Décale pour arriver au 24 » à 14 h 06 ; « il faudrait que ça commence le 1er décembre » à 15 h 37) : 6 « La liste du 25 » (suite « Le ruban volé »),
   7 « Le ruban volé » (A), 8 « L'invitation refusée » (B), 9 « La chorale secrète » (B), 10 « L'étui de Monsieur Gravier » (B), 11 « Le sapin », 12 « Le grand final » ; texte source :
-  doc du projet `claude/enquetes-episodes-3-12.py`. Chaque épisode a `from` (3 : 28/11, 4 : 1/12, 5 : 4/12, 6 : 7/12, 7 : 10/12, 8 : 13/12, 9 : 16/12, 10 : 19/12, 11 : 22/12, 12 : 24/12). `enqLocked` : avant la date, pas de dossier, sauf un épisode
+  doc du projet `claude/enquetes-episodes-3-12.py`. Chaque épisode a `from` (1 : 1/12, 2 : 3/12, 3 : 5/12, 4 : 7/12, 5 : 9/12, 6 : 11/12, 7 : 13/12, 8 : 15/12, 9 : 17/12, 10 : 19/12, 11 : 21/12, 12 : 24/12 ; `enqDay` écrit « 1er »). `enqLocked` : avant la date, pas de dossier, sauf un épisode
   **déjà commencé** (`enq.ep === n && enq.ch >= 0`, jamais bloqué). Départ : carte « 🔒 Épisode N · titre : s'ouvre samedi 28 novembre » (`.enqsoon`, sous « La réponse » s'il y en a une) ;
-  carnet « S'ouvre … » / BIENTÔT ; réponse lue et verdict annoncent le jour (`enqDay`). Test : `e2e_v62.py` (horloge décalée au 27/11 12 h, `__dOff`).
+  carnet « S'ouvre … » / BIENTÔT ; réponse lue et verdict annoncent le jour (`enqDay`). Test : `e2e_v62.py` (horloge décalée au 3/12 12 h, `__dOff` ; vérifie aussi que tout est fermé le 27/11).
 - 🎚️ **Mode enquête oui / non** (Éric, 27/11 8 h 19) : interrupteur `#enqSw` en haut de « On y va ! » (`enqSwHTML`), retenu sur le téléphone (`enq.mode`, oui par défaut).
   Oui = l'enquête part avec **« Je gère »** (`#chFree`) **et avec « Propose-moi »** (`enqWant` → `enqAfterProp` après `#propGo` / `#propFree` / 🎲 ; `enqUnlock` = phrase muette
   pendant le toucher pour que l'iPhone accepte la voix plus tard) ; non = pas de dossier (`#enqWrap` caché), balade sans enquête. Toucher le dossier = « Je gère » avec l'enquête.
