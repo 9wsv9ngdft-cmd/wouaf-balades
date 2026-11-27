@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-INIT = ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','62');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}"
+INIT = ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','63');localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');localStorage.setItem('wouaf-profil', JSON.stringify({walker:'Zoé'}));}"
   "window.__said=[];window.SpeechSynthesisUtterance=function(t){this.text=t;};"
   "Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{speak:u=>{window.__said.push(u.text);if(u.onend)setTimeout(()=>u.onend(),30);},cancel:()=>{window.__said.push('[cancel]');},getVoices:()=>[],pause(){},resume(){},speaking:false}});")
 EV = lambda P, js: P.evaluate(js)
@@ -124,6 +124,19 @@ with sync_playwright() as pw:
     EV(P, "document.querySelector('#propFree').click()"); P.wait_for_timeout(1500)
     check("départ depuis « Propose-moi » : l'enquête démarre", P.locator("#wEnq").is_visible() and "Épisode un" in said(P), said(P)[:150])
     EV(P, "__wouaf.cancelWalk()"); P.wait_for_timeout(400)
+    # saison complète : 8 épisodes bien formés, épisode 8 bloqué avant le 24 décembre
+    bad = EV(P, """__wouaf.enqEps().map(e => (e.ch.length === 6 && e.q.choices.length === 3 && e.q.choices.some(c => c[0] === e.q.answer) && e.ch.some(c => c.extra) && !JSON.stringify(e).match(/\\{(?!dir\\}|rue\\}|")/)) ? 0 : e.n).filter(Boolean)""")
+    check("8 épisodes, 6 passages, 3 choix, réponse valide, une étape « Extra »", EV(P, "__wouaf.enqEps().length") == 8 and not bad, bad)
+    check("épisode 8 bloqué avant le 24 décembre", EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[7])") is True and EV(P, "__wouaf.enqLocked(__wouaf.enqEps()[6])") is False)
+    EV(P, "localStorage.setItem('wouaf-enq', JSON.stringify({ ep: 8, ch: -1, ans: {1:'b',2:'a',3:'b',4:'b',5:'b',6:'b',7:'b'}, rev: {1:1,2:1,3:1,4:1,5:1,6:1,7:1}, ok: {}, pieces: [], wait: 0 })); location.reload()")
+    P.wait_for_function("window.__wouaf !== undefined"); P.wait_for_timeout(2000)
+    EV(P, "__wouaf.startQuestion()"); P.wait_for_timeout(400)
+    check("avant le 24/12 : pas de dossier pour le grand final", P.locator("#enqGo").count() == 0)
+    P.click("#sheetX"); P.wait_for_timeout(300)
+    EV(P, "__wouaf.sheetEnquetes()"); P.wait_for_timeout(300)
+    t = sheet(P)
+    check("carnet : « Le grand final », BIENTÔT, le 24 décembre", "Le grand final" in t and "BIENTÔT" in t and "Le 24 décembre" in t, t[:500])
+    P.click("#sheetX"); P.wait_for_timeout(300)
     check("aucune erreur JavaScript", not errs, errs[:3])
     b.close()
 print("\n" + ("TOUT VERT" if not FAILS else "ÉCHECS : " + ", ".join(FAILS)))

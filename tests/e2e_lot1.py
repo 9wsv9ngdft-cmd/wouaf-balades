@@ -7,7 +7,7 @@ def check(n, c, x=""):
     print(("PASS " if c else "FAIL ") + n + ((" → " + str(x)) if (x != "" and not c) else ""))
     if not c: FAILS.append(n)
 local_api("GET", "/__wipe")
-def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','62');"
+def init(who): return ("if(!localStorage.getItem('wouaf-init')){localStorage.setItem('wouaf-init','1');localStorage.setItem('wouaf-tuto','1');localStorage.setItem('wouaf-vu','63');"
     "localStorage.setItem('wouaf-stats-ok','false');localStorage.setItem('wouaf-sc-tip','1');localStorage.setItem('wouaf-hon-vu','2099-01');localStorage.setItem('wouaf-wa-sent','[]');"
     "localStorage.setItem('wouaf-welcome2','0');localStorage.setItem('wouaf-surp', JSON.stringify({ o:'2099-01-01' }));localStorage.setItem('wouaf-profil', JSON.stringify({walker:'%s'}));}" % who)
 EV = lambda P, js: P.evaluate(js)
